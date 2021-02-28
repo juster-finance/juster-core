@@ -10,7 +10,7 @@ const initialStorage = {
   betsAgainstLedger: new MichelsonMap(),
   oracleAddress: "KT1RCNpUEDjZAYhabjzgz1ZfxQijCDVMEaTZ",
   // adminAddress: pkh,
-  isClosed: Boolean,
+  isClosed: false,
   closedTime: "",
   closedRate: 0,
   betsForSum: 0,

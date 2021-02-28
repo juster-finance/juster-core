@@ -47,7 +47,9 @@ block {
     case Big_map.find_opt(Tezos.sender, s.betsForLedger) of
     | Some(acc) -> failwith("Account already made betFor")
     | None -> s.betsForLedger[Tezos.sender] := Tezos.amount
-    end
+    end;
+
+    s.betsForSum := s.betsForSum + Tezos.amount;
 
 } with s
 
@@ -62,8 +64,10 @@ block {
     case Big_map.find_opt(Tezos.sender, s.betsAgainstLedger) of
     | Some(acc) -> failwith("Account already made betAgainst")
     | None -> s.betsAgainstLedger[Tezos.sender] := Tezos.amount
-    end
-    
+    end;
+
+    s.betsAgainstSum := s.betsAgainstSum + Tezos.amount;
+
 } with s
 
 
