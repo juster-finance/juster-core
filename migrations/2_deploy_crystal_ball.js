@@ -9,9 +9,13 @@ const initialStorage = {
   betsForLedger: new MichelsonMap(),
   betsAgainstLedger: new MichelsonMap(),
   oracleAddress: "KT1RCNpUEDjZAYhabjzgz1ZfxQijCDVMEaTZ",
-  adminAddress: pkh,
-  debugTime: "",  // TODO: remove me!
-  debugRate: 0,  // TODO: remove me!
+  // adminAddress: pkh,
+  isClosed: Boolean,
+  closedTime: "",
+  closedRate: 0,
+  betsForSum: 0,
+  betsAgainstSum: 0,
+  isBetsForWin: false,
 };
 
 module.exports = deployer => {
