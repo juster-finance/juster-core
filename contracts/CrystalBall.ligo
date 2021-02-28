@@ -30,8 +30,8 @@ type storage is record [
     isClosed : bool;
     closedTime : timestamp;
     closedRate : nat;
-    betsForSum : nat;
-    betsAgainstSum : nat;
+    betsForSum : tez;
+    betsAgainstSum : tez;
     isBetsForWin : bool;
 ]
 
@@ -60,7 +60,7 @@ block {
     (* TODO: check if this sender already in ledger, if it is add Tezos.amount
         to already existing bets. Now it is just disallowed to make another bet to same ledger: *)
     case Big_map.find_opt(Tezos.sender, s.betsAgainstLedger) of
-    | Some acc -> failwith("Account already made betAgainst")
+    | Some(acc) -> failwith("Account already made betAgainst")
     | None -> s.betsAgainstLedger[Tezos.sender] := Tezos.amount
     end
     
@@ -86,21 +86,15 @@ block {
 
 function closeCallback(var p : callbackReturnedValueMichelson; var s : storage) : storage is
 block {
+    const param : callbackReturnedValue = Layout.convert_from_right_comb(p);
+
     // Check that callback runs from right address and with right currency pair:
-    if Tezos.sender =/= s.oracleAddress then (failwith("Unknown sender") : storage)
-    else skip;
-
-    if p.currencyPair =/= s.currencyPair then (failwith("Unexpected currency pair"): storage)
-    else skip;
-
-    if p.targetTime > s.lastUpdate then (failwith("Can't close until reached targetTime"): storage)
-    else skip;
-
-    if s.isClosed then (failwith("Contract already closed. Can't close contract twice"): storage)
-    else skip;
+    if Tezos.sender =/= s.oracleAddress then failwith("Unknown sender") else skip;
+    if param.currencyPair =/= s.currencyPair then failwith("Unexpected currency pair") else skip;
+    if s.targetTime > param.lastUpdate then failwith("Can't close until reached targetTime") else skip;
+    if s.isClosed then failwith("Contract already closed. Can't close contract twice") else skip;
 
     // Closing contract:
-    const param : callbackReturnedValue = Layout.convert_from_right_comb(p);
     s.closedTime := param.lastUpdate;
     s.closedRate := param.rate;
     s.isClosed := True;
@@ -121,15 +115,18 @@ block {
     else failwith("Withdraw is not allowed until contract is closed");
 
     // Calculating payoutAmount:
-    const winBetsSum : if s.isBetsForWin then s.betsForSum else s.betsAgainstSum;
-    const winLedger : if s.isBetsForWin then s.betsForLedger else s.betsAgainstLedger;
+    const winBetsSum : tez =
+        if s.isBetsForWin then s.betsForSum else s.betsAgainstSum;
+    const winLedger : big_map(address, tez) =
+        if s.isBetsForWin then s.betsForLedger else s.betsAgainstLedger;
 
     const participantSum : tez =
         case winLedger[Tezos.sender] of
         | Some (val) -> val
         | None -> (failwith("Participant is not win") : tez)
+        end;
 
-    const totalBets : nat = s.betsForSum + s.betsAgainstSum;
+    const totalBets : tez = s.betsForSum + s.betsAgainstSum;
     const payoutAmount : tez = participantSum / winBetsSum * totalBets;
 
     // Getting reciever:
@@ -148,7 +145,7 @@ block {
 
     const payoutOperation : operation = Tezos.transaction(unit, payoutAmount, receiver);
 
-} with list[payoutOperation], s
+} with (list[payoutOperation], s)
 
 
 function main (var params : action; var s : storage) : (list(operation) * storage) is
