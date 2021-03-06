@@ -5,4 +5,5 @@ yarn.lock
 faucet.json
 pytezos-jupyter-present/test-keys/*
 */.ipynb_checkpoints/*
+**/__pycache__/*
 
