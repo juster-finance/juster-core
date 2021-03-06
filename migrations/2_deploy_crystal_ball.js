@@ -8,7 +8,7 @@ const initialStorage = {
   targetTime: "",
   betsForLedger: new MichelsonMap(),
   betsAgainstLedger: new MichelsonMap(),
-  oracleAddress: "KT1Age13nBE2VXxTPjwVJiE8Jbt73kumwxYx",
+  oracleAddress: "KT1RCNpUEDjZAYhabjzgz1ZfxQijCDVMEaTZ",
   isClosed: false,
   closedTime: "",
   closedRate: 0,
