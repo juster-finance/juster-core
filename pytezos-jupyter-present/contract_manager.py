@@ -54,13 +54,30 @@ class ContractManager:
         new_settings = self.settings.copy()
         new_settings.update(CONTRACT_ADDRESS=originated_contract_address)
 
-        return ContractManager(self.pytezos, new_settings)
+        # return ContractManager(self.pytezos, new_settings)
+        return self.__class__(self.pytezos, new_settings)
+
+    def use_instance(self, pytezos_instance):
+        """ Returns copy of itself with another pytezos_instance """
+
+        return self.__class__(pytezos_instance, self.settings)
 
     
 class CrystalContractManager(ContractManager):
     """ Python interface to work with Crystal Contract """
 
-    def betAgainst(self, amount):
-        self.contract.betAgainst().with_amount(414_000).as_transaction().autofill().sign().inject(_async=False)
+    def bet_against(self, amount):
+        transaction = self.contract.betAgainst().with_amount(amount).as_transaction()
+        return transaction.autofill().sign().inject(_async=self.is_async_enabled)
 
-        ''' UNDER DEVELOPMENT '''
+    def bet_for(self, amount):
+        transaction = self.contract.contract.betFor().with_amount(amount).as_transaction()
+        return transaction.autofill().sign().inject(_async=self.is_async_enabled)
+
+    def close(self):
+        transaction = self.contract.close().as_transaction()
+        return transaction.autofill().sign().inject(_async=self.is_async_enabled)
+
+    def withdraw(self):
+        transaction = self.contract.withdraw().as_transaction()
+        return transaction.autofill().sign().inject(_async=self.is_async_enabled)
