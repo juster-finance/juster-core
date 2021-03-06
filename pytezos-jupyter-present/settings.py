@@ -6,9 +6,9 @@ settings = dict(
 
     # default storage used to deploy new contract:
     DEFAULT_INITIAL_CONTRACT_STORAGE = {
-        'betsAgainstLedger': 0,
+        'betsAgainstLedger': 83876,
         'betsAgainstSum': 0,
-        'betsForLedger': 0,
+        'betsForLedger': 83877,
         'betsForSum': 0,
         'closedRate': 0,
         'closedTime': 0,
