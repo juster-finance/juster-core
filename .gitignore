@@ -6,4 +6,6 @@ faucet.json
 pytezos-jupyter-present/test-keys/*
 */.ipynb_checkpoints/*
 **/__pycache__/*
+2021-04-02-concept.txt
+*.tz
 
