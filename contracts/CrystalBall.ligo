@@ -131,8 +131,7 @@ block {
         end;
 
     const totalBets : tez = s.betsForSum + s.betsAgainstSum;
-    const participantShare : nat = participantSum * 1000000n / winBetsSum;
-    const payoutAmount : tez = participantShare * totalBets / 1000000n;
+    const payoutAmount : tez = participantSum / 1mutez * totalBets / winBetsSum * 1mutez;
 
     // Getting reciever:
     const receiver : contract(unit) =
