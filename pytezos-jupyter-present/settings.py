@@ -1,7 +1,7 @@
 settings = dict(
     SHELL_URL = 'https://edonet-tezos.giganode.io/',
     # SHELL_URL = 'https://edonet.smartpy.io',
-    CONTRACT_ADDRESS = 'KT1HbiznMedpC5BcQnUCUd5zCaXcemsU25Sk',
+    CONTRACT_ADDRESS = 'KT1M5SGy45gn1z3FQvruzQrKwn5eX7vnQJtK',
     KEYS_DIRECTORY = 'test-keys',
 
     # default storage used to deploy new contract:
