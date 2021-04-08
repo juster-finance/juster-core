@@ -1,7 +1,7 @@
 settings = dict(
-    SHELL_URL = 'https://edonet-tezos.giganode.io/',
-    # SHELL_URL = 'https://edonet.smartpy.io',
-    CONTRACT_ADDRESS = 'KT1M5SGy45gn1z3FQvruzQrKwn5eX7vnQJtK',
+    SHELL_URL = 'https://florence-tezos.giganode.io/',
+    # SHELL_URL = 'https://florencenet.smartpy.io',
+    CONTRACT_ADDRESS = 'KT1Sr27vuBCx7au4e4yqvRdkgfYnyG3P4ekp',
     KEYS_DIRECTORY = 'test-keys',
 
     # default storage used to deploy new contract:
@@ -17,10 +17,10 @@ settings = dict(
         'isClosed': False,
 
         # edonet:
-        'oracleAddress': 'KT1RCNpUEDjZAYhabjzgz1ZfxQijCDVMEaTZ',
+        # 'oracleAddress': 'KT1RCNpUEDjZAYhabjzgz1ZfxQijCDVMEaTZ',
 
-        # delphinet:
-        # 'oracleAddress': 'KT1Age13nBE2VXxTPjwVJiE8Jbt73kumwxYx',
+        # florencenet:
+        'oracleAddress': 'KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn',
         'targetRate': 0,
         'targetTime': 0
     },
