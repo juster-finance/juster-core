@@ -96,6 +96,16 @@ block {
 } with ledgerAmount
 
 
+function minNat(var a : nat; var b : nat) : nat is
+block {
+    var minValue : nat := a;
+    if (a > b) then minValue := b else skip;
+} with minValue
+
+
+function tezToNat(var t : tez) : nat is t / 1mutez;
+
+
 // TODO: need to figure out how to create method with params:
 function bet(var p : betParams; var s : storage) : storage is
 block {
@@ -120,16 +130,28 @@ block {
         s.betsAgainstSum := s.betsAgainstSum + betAgainst;
     } else skip;
 
-    // TODO MUST: add liquidity bonus as minimal from betFor and betAgainst 
+    (* Adding liquidity bonus:
+        Liquidity represent added value, that goes both to betFor and betAgainst pools.
+        Liquidity is important at the begining of the event and useless at the end. To evaluate
+        liquidity bonus, contract calculates remained time (seconds till betsCloseTime) and used
+        it as a linear multiplicator for minimal amount between betAgainst and betFor
+     *)
     if (betAgainst > 0tez) and (betFor > 0tez) then {
-        // const liquidityBonus = Tezos.now
-        // TODO: calculate liquidity bonus as minimal from betAgainst & betFor
-        // and multiply it by time difference Tezos.now - s.createdTime
-        const elapsedTime = Tezos.now - s.createdTime;
-        // TODO MUST: instead of abs(elapsedTime) need to return Max(0, elapsedTime)?
-        s.liquidityLedger[Tezos.sender] := abs(elapsedTime) * 1mutez;
-        // TODO MUST: instead time write time difference as constant in mutez
-        // TODO: remember to add this to s.liquiditySum
+        const elapsedTime : int = Tezos.now - s.createdTime;
+        if (elapsedTime < 0) then
+            failwith("Bet adding before contract createdTime (possible wrong createdTime?)")
+        else skip;
+
+        // TODO: s.betsCloseTime SHOULD be more than s.createdTime, need to have check in contract creation
+        const totalBettingTime : nat = abs(s.betsCloseTime - s.createdTime);
+        const remainedTime : int = totalBettingTime - elapsedTime;
+
+        const addedLiquidity : nat = minNat(tezToNat(betAgainst), tezToNat(betFor));
+        const liquidityBonus : tez = abs(remainedTime) * addedLiquidity * 1mutez / totalBettingTime;
+
+        const newAmount : tez = getLedgerAmount(Tezos.sender, s.liquidityLedger) + liquidityBonus;
+        s.liquidityLedger[Tezos.sender] := newAmount;
+        s.liquiditySum := s.liquiditySum + liquidityBonus;
     } else skip;
 } with s
 
@@ -142,6 +164,7 @@ block {
 
 function startMeasurementCallback(var p : callbackReturnedValueMichelson; var s : storage) : storage is
 block {skip} with s
+// ^^TODO: do not forget to pay expirationFee!
 
 
 function close(var s : storage) : list(operation) is
@@ -189,6 +212,9 @@ block {
 
     (* TODO: what should be done if all bets were For and all of them are loose?
         All raised funds will be freezed. Should they all be winners anyway? *)
+
+    // TODO: do not forget to distribute liquidity bonuses!
+    // TODO: do not forget to pay expirationFee!
 
 } with s
 
