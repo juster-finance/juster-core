@@ -7,7 +7,7 @@ const initialStorage = {
   createdTime: "1617976565",
   targetDynamics: 1000000,
   betsCloseTime: "1618062965", // TODO: get current time here and add 24h
-  measuseStartTime: "",
+  measureStartTime: "",
   measureOracleStartTime: "",
   isMeasurementStarted: false,
   startRate: 0,

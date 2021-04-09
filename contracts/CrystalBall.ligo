@@ -48,9 +48,9 @@ type storage is record [
     // TODO: need to decide, if betsCloseTime equal to measureStartTime or it is needed
     // to add another time instance?
 
-    // measuseStartTime is a time, after betsClosedTime, that setted when someone calls
+    // measureStartTime is a time, after betsClosedTime, that setted when someone calls
     // startMeasurement
-    measuseStartTime : timestamp;
+    measureStartTime : timestamp;
     // this is time from oracle call, need to decide what time is better to keep:
     measureOracleStartTime : timestamp;
     isMeasurementStarted : bool;
@@ -197,7 +197,7 @@ block {
     // Closing contract:
     s.measureOracleStartTime := param.lastUpdate;
     s.startRate := param.rate;
-    s.measuseStartTime := Tezos.now;
+    s.measureStartTime := Tezos.now;
     s.isMeasurementStarted := True;
 
     // TODO: do not forget to pay expirationFee!
@@ -219,9 +219,9 @@ block {
         failwith("Can't close contract before measurement period started")
     else skip;
 
-    const endTime : timestamp = s.measuseStartTime + int(s.measurePeriod);
+    const endTime : timestamp = s.measureStartTime + int(s.measurePeriod);
     if endTime < param.lastUpdate then
-        failwith("Can't close until lastUpdate reached measuseStartTime + measurePeriod") else skip;
+        failwith("Can't close until lastUpdate reached measureStartTime + measurePeriod") else skip;
     if s.isClosed then failwith("Contract already closed. Can't close contract twice") else skip;
 
     // Closing contract:
