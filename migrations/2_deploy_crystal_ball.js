@@ -30,6 +30,7 @@ const initialStorage = {
   liquiditySum: 0,
 
   liquidityPercent: 0,
+  measureStartFee: 0,
   expirationFee: 0,
 };
 

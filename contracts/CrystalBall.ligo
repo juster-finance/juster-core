@@ -84,6 +84,9 @@ type storage is record [
     liquiditySum : tez;
 
     liquidityPercent : nat;  // natural number from 0 to 1_000_000 that represent share
+
+    // TODO: Fees should be provided during contract origination!
+    measureStartFee : tez;
     expirationFee : tez;
 ]
 
@@ -181,6 +184,13 @@ function startMeasurement(var s : storage) : list(operation) is
     makeCallToOracle(s, (Tezos.self("%startMeasurementCallback") : callbackEntrypoint));
 
 
+function getReceiver(var a : address) : contract(unit) is
+    case (Tezos.get_contract_opt(a): option(contract(unit))) of
+    | Some (con) -> con
+    | None -> (failwith ("Not a contract") : (contract(unit)))
+    end;
+
+
 function startMeasurementCallback(
     var p : callbackReturnedValueMichelson;
     var s : storage) : (list(operation) * storage) is
@@ -200,9 +210,13 @@ block {
     s.measureStartTime := Tezos.now;
     s.isMeasurementStarted := True;
 
-    // TODO: do not forget to pay expirationFee!
+    // Paying measureStartFee for this method initiator:
+    const receiver : contract(unit) = getReceiver(Tezos.source);
+    // TODO: somehow check that s.measureStartFee is provided (maybe I need init method that requires
+    // to be supported with measureStartFee + liquidationFee?)
+    const payoutOperation : operation = Tezos.transaction(unit, s.measureStartFee, receiver);
 
-} with ((nil: list(operation)), s)
+} with (list[payoutOperation], s)
 
 
 function closeCallback(
@@ -232,19 +246,19 @@ block {
     s.isClosed := True;
     s.isBetsForWin := s.closedDynamics > s.targetDynamics;
 
-    // TODO: change this method to measure difference between currency rate
-    // !!! TODO: who would call oracle when measureStartTime / betsCloseTime starts?
-
-    // TODO: calculate luqidity bonus and expirationFee
+    // TODO: calculate luqidity bonus and payout liquidity bonus
     // TODO: make all transactions inside closeCallback instead of calling withdraws?
 
     (* TODO: what should be done if all bets were For and all of them are loose?
         All raised funds will be freezed. Should they all be winners anyway? *)
 
-    // TODO: do not forget to distribute liquidity bonuses!
-    // TODO: do not forget to pay expirationFee!
+    // Paying expirationFee for this method initiator:
+    const receiver : contract(unit) = getReceiver(Tezos.source);
+    // TODO: AGAIN: somehow check that s.expirationFee is provided (maybe I need init method
+    // that requires to be supported with measureStartFee + liquidationFee?)
+    const expirationFeeOperation : operation = Tezos.transaction(unit, s.expirationFee, receiver);
 
-} with ((nil: list(operation)), s)
+} with (list[expirationFeeOperation], s)
 
 
 (* TODO: would it be better if it would make all withdraw operations inside closeCallback? *)
@@ -271,11 +285,7 @@ block {
     const payoutAmount : tez = participantSum / 1mutez * totalBets / winBetsSum * 1mutez;
 
     // Getting reciever:
-    const receiver : contract(unit) =
-        case (Tezos.get_contract_opt(Tezos.sender): option(contract(unit))) of
-        | Some (con) -> con
-        | None -> (failwith ("Not a contract") : (contract(unit)))
-        end;
+    const receiver : contract(unit) = getReceiver(Tezos.sender);
 
     // Removing sender from ledger:
     const updatedLedger = Big_map.remove(Tezos.sender, winLedger);
