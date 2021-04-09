@@ -109,15 +109,15 @@ block {
     if s.isClosed then failwith("Contract already closed") else skip;
 
     if (betFor > 0tez) then {
-        const newAmount : tez = getLedgerAmount(Tezos.sender, s.betsForLedger) + Tezos.amount;
+        const newAmount : tez = getLedgerAmount(Tezos.sender, s.betsForLedger) + betFor;
         s.betsForLedger[Tezos.sender] := newAmount;
-        s.betsForSum := s.betsForSum + Tezos.amount;
+        s.betsForSum := s.betsForSum + betFor;
     } else skip;
 
     if (betAgainst > 0tez) then {
-        const newAmount : tez = getLedgerAmount(Tezos.sender, s.betsAgainstLedger) + Tezos.amount;
-        s.betsAgainstLedger[Tezos.sender] := newAmount; 
-        s.betsAgainstSum := s.betsAgainstSum + Tezos.amount;
+        const newAmount : tez = getLedgerAmount(Tezos.sender, s.betsAgainstLedger) + betAgainst;
+        s.betsAgainstLedger[Tezos.sender] := newAmount;
+        s.betsAgainstSum := s.betsAgainstSum + betAgainst;
     } else skip;
 
     // TODO MUST: add liquidity bonus as minimal from betFor and betAgainst 
