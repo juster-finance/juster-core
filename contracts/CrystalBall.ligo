@@ -6,6 +6,8 @@ type callbackReturnedValue is record [
 
 type callbackReturnedValueMichelson is michelson_pair_right_comb(callbackReturnedValue)
 
+type callbackEntrypoint is contract(callbackReturnedValueMichelson)
+
 type oracleParam is string * contract(callbackReturnedValueMichelson)
 
 type betParams is record [
@@ -156,20 +158,8 @@ block {
 } with s
 
 
-function startMeasurement(var s : storage) : list(operation) is
+function makeCallToOracle(var s : storage; var entrypoint : callbackEntrypoint) : list(operation) is
 block {
-    const operations : list(operation) = nil;
-} with operations // TODO: list[callback]
-
-
-function startMeasurementCallback(var p : callbackReturnedValueMichelson; var s : storage) : storage is
-block {skip} with s
-// ^^TODO: do not forget to pay expirationFee!
-
-
-function close(var s : storage) : list(operation) is
-block {
-
     const callToOracle : contract(oracleParam) =
         case (Tezos.get_entrypoint_opt("%get", s.oracleAddress) : option(contract(oracleParam))) of
         | None -> (failwith("No oracle found") : contract(oracleParam))
@@ -177,22 +167,60 @@ block {
         end;
 
     const callback : operation = Tezos.transaction(
-        (s.currencyPair, (Tezos.self("%closeCallback") : contract(callbackReturnedValueMichelson))),
+        (s.currencyPair, entrypoint),
         0tez,
         callToOracle);
-
 } with list[callback]
 
 
-function closeCallback(var p : callbackReturnedValueMichelson; var s : storage) : storage is
+function close(var s : storage) : list(operation) is
+    makeCallToOracle(s, (Tezos.self("%closeCallback") : callbackEntrypoint));
+
+
+function startMeasurement(var s : storage) : list(operation) is
+    makeCallToOracle(s, (Tezos.self("%startMeasurementCallback") : callbackEntrypoint));
+
+
+function startMeasurementCallback(
+    var p : callbackReturnedValueMichelson;
+    var s : storage) : (list(operation) * storage) is
 block {
     const param : callbackReturnedValue = Layout.convert_from_right_comb(p);
 
     // Check that callback runs from right address and with right currency pair:
     if Tezos.sender =/= s.oracleAddress then failwith("Unknown sender") else skip;
     if param.currencyPair =/= s.currencyPair then failwith("Unexpected currency pair") else skip;
+    if s.isMeasurementStarted then failwith("Measurement period already started") else skip;
+    if s.betsCloseTime > param.lastUpdate then
+        failwith("Can't start measurement untill betsCloseTime (maybe oracle have outdated info?)") else skip;
+
+    // Closing contract:
+    s.measureOracleStartTime := param.lastUpdate;
+    s.startRate := param.rate;
+    s.measuseStartTime := Tezos.now;
+    s.isMeasurementStarted := True;
+
+    // TODO: do not forget to pay expirationFee!
+
+} with ((nil: list(operation)), s)
+
+
+function closeCallback(
+    var p : callbackReturnedValueMichelson;
+    var s : storage) : (list(operation) * storage) is
+block {
+    const param : callbackReturnedValue = Layout.convert_from_right_comb(p);
+
+    // Check that callback runs from right address and with right currency pair:
+    if Tezos.sender =/= s.oracleAddress then failwith("Unknown sender") else skip;
+    if param.currencyPair =/= s.currencyPair then failwith("Unexpected currency pair") else skip;
+
+    if not s.isMeasurementStarted then
+        failwith("Can't close contract before measurement period started")
+    else skip;
+
     const endTime : timestamp = s.measuseStartTime + int(s.measurePeriod);
-    if endTime > param.lastUpdate then
+    if endTime < param.lastUpdate then
         failwith("Can't close until lastUpdate reached measuseStartTime + measurePeriod") else skip;
     if s.isClosed then failwith("Contract already closed. Can't close contract twice") else skip;
 
@@ -216,7 +244,7 @@ block {
     // TODO: do not forget to distribute liquidity bonuses!
     // TODO: do not forget to pay expirationFee!
 
-} with s
+} with ((nil: list(operation)), s)
 
 
 (* TODO: would it be better if it would make all withdraw operations inside closeCallback? *)
@@ -265,8 +293,8 @@ function main (var params : action; var s : storage) : (list(operation) * storag
 case params of
 | Bet(p) -> ((nil: list(operation)), bet(p, s))
 | StartMeasurement -> (startMeasurement(s), s)
-| StartMeasurementCallback(p) -> ((nil: list(operation)), startMeasurementCallback(p, s))
+| StartMeasurementCallback(p) -> (startMeasurementCallback(p, s))
 | Close -> (close(s), s)
-| CloseCallback(p) -> ((nil: list(operation)), closeCallback(p, s))
+| CloseCallback(p) -> (closeCallback(p, s))
 | Withdraw -> withdraw(s)
 end
