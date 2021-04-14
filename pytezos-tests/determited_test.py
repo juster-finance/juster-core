@@ -103,10 +103,12 @@ class DeterminedTest(TestCase):
             of the bets / provided liquidity
         """
 
-        with self.assertRaises(MichelsonRuntimeError):
+        with self.assertRaises(MichelsonRuntimeError) as cm:
             transaction = self.contract.bet(betAgainst=0, betFor=50_000).with_amount(100_000)
             res = transaction.interpret(
                 storage=self.storage, sender=self.a, now=RUN_TIME)
+
+        self.assertTrue('Sum of bets is not equal to send amount' in str(cm.exception))
 
 
     def _participant_B_bets_for(self):
@@ -179,9 +181,11 @@ class DeterminedTest(TestCase):
             'rate': 6_000_000
         }
 
-        with self.assertRaises(MichelsonRuntimeError):
+        with self.assertRaises(MichelsonRuntimeError) as cm:
             res = self.contract.closeCallback(callback_values).interpret(
                 storage=self.storage, sender=self.oracle_address, now=RUN_TIME + 24*ONE_HOUR)
+
+        self.assertTrue("Can't close contract before measurement period started" in str(cm.exception))
 
 
     def _assert_wrong_currency_pair_return_from_oracle(self):
@@ -193,9 +197,11 @@ class DeterminedTest(TestCase):
             'rate': 6_000_000
         }
 
-        with self.assertRaises(MichelsonRuntimeError):
+        with self.assertRaises(MichelsonRuntimeError) as cm:
             res = self.contract.startMeasurementCallback(callback_values).interpret(
                 storage=self.storage, sender=self.oracle_address, now=RUN_TIME + 26*ONE_HOUR)
+
+        self.assertTrue("Unexpected currency pair" in str(cm.exception))
 
 
     def _assert_measurement_during_bets_time(self):
@@ -246,8 +252,7 @@ class DeterminedTest(TestCase):
             res = self.contract.startMeasurementCallback(callback_values).interpret(
                 storage=self.storage, sender=self.c, now=RUN_TIME + 12*ONE_HOUR)
 
-        print(cm)
-        # TODO: check message in all asserts
+        self.assertTrue('Unknown sender' in str(cm.exception))
 
 
     def _measurement_callback(self):
@@ -285,12 +290,14 @@ class DeterminedTest(TestCase):
     def _assert_betting_in_measurement_period(self):
         """ Test that betting during measurement period is fails """
 
-        with self.assertRaises(MichelsonRuntimeError):
+        with self.assertRaises(MichelsonRuntimeError) as cm:
             transaction = self.contract.bet(
                 betAgainst=50_000, betFor=50_000).with_amount(100_000)
 
             res = transaction.interpret(
                 storage=self.storage, sender=self.a, now=RUN_TIME + 28*ONE_HOUR)
+
+        self.assertTrue('Bets after betCloseTime is not allowed' in str(cm.exception))
 
 
     def _assert_double_measurement(self):
@@ -302,9 +309,11 @@ class DeterminedTest(TestCase):
             'rate': 7_000_000
         }
 
-        with self.assertRaises(MichelsonRuntimeError):
+        with self.assertRaises(MichelsonRuntimeError) as cm:
             res = self.contract.startMeasurementCallback(callback_values).interpret(
                 storage=self.storage, sender=self.oracle_address, now=RUN_TIME + 30*ONE_HOUR)
+
+        self.assertTrue('Measurement period already started' in str(cm.exception))
 
 
     def _close_call(self):
@@ -369,7 +378,7 @@ class DeterminedTest(TestCase):
         self._running_measurement()
         self._assert_callback_from_unknown_address()
         self._measurement_callback()
-        # self._assert_betting_in_measurement_period()  # ASSERT IS NOT RAISED
+        self._assert_betting_in_measurement_period()
         self._assert_double_measurement()
         self._close_call()
         self._close_callback()
