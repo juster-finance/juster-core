@@ -116,7 +116,11 @@ function bet(var p : betParams; var s : storage) : storage is
 block {
     const betFor : tez = p.betFor;
     const betAgainst : tez = p.betAgainst;
-    (* TODO: check that current time is less than betsCloseTime *)
+
+    if (Tezos.now > s.betsCloseTime) then
+        failwith("Bets after betCloseTime is not allowed")
+    else skip;
+
     if (betFor + betAgainst) =/= Tezos.amount then
         failwith("Sum of bets is not equal to send amount")
     else skip;
