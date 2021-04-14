@@ -279,24 +279,34 @@ block {
     const winLedger : big_map(address, tez) =
         if s.isBetsForWin then s.betsForLedger else s.betsAgainstLedger;
 
-    const participantSum : tez =
-        case winLedger[Tezos.sender] of
-        | Some (val) -> val
-        | None -> (failwith("Participant is not win") : tez)
-        end;
+    const participantSum : tez = getLedgerAmount(Tezos.sender, winLedger);
+    const participantLiquidity : tez = getLedgerAmount(Tezos.sender, s.liquidityLedger);
 
     const totalBets : tez = s.betsForSum + s.betsAgainstSum;
-    const payoutAmount : tez = participantSum / 1mutez * totalBets / winBetsSum * 1mutez;
+    const totalWinPayoutAmount : tez = totalBets * abs (1_000_000n - s.liquidityPercent) / 1_000_000n;
+    const totalLiquidityBonus : tez = totalBets * s.liquidityPercent / 1_000_000n;
+
+    const winPayoutAmount : tez = (
+        participantSum / 1mutez * totalWinPayoutAmount / winBetsSum * 1mutez);
+    const liquidityBonusAmount : tez = (
+        participantLiquidity / 1mutez * totalLiquidityBonus / s.liquiditySum * 1mutez);
+
+    const payoutAmount : tez = winPayoutAmount + liquidityBonusAmount;
 
     // Getting reciever:
     const receiver : contract(unit) = getReceiver(Tezos.sender);
 
-    // Removing sender from ledger:
+    // Removing sender from wins ledger:
     const updatedLedger = Big_map.remove(Tezos.sender, winLedger);
     if s.isBetsForWin then block {
         s.betsForLedger := updatedLedger
     }
     else s.betsAgainstLedger := updatedLedger;
+
+    // Removing sender from liquidity ledger:
+    s.liquidityLedger := Big_map.remove(Tezos.sender, s.liquidityLedger);
+
+    if (payoutAmount = 0tez) then failwith("Nothing to withdraw") else skip;
 
     const payoutOperation : operation = Tezos.transaction(unit, payoutAmount, receiver);
 
