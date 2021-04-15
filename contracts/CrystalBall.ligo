@@ -11,27 +11,21 @@ type callbackEntrypoint is contract(callbackReturnedValueMichelson)
 type oracleParam is string * contract(callbackReturnedValueMichelson)
 
 type betParams is record [
+    eventId : nat;
     betFor : tez;
     betAgainst : tez;
 ]
 
-type action is
-| Bet of betParams
-| StartMeasurement of unit
-| StartMeasurementCallback of callbackReturnedValueMichelson
-| Close of unit
-| CloseCallback of callbackReturnedValueMichelson
-| Withdraw of unit
-(* TODO: reopen with new state? (no, I feel that it is better keep it simple) *)
+type ledgerKey is (address*nat)
 
-
-type ledger is big_map(address, tez);
+(* ledger key is address and event ID *)
+type ledgerType is big_map(ledgerKey, tez)
 
 
 // THIS STORAGE SHOULD BE IN MAP/BIGMAP (each event should have this storage)
 // All ledgers (betsForLedger, betsAgainstLedger and liquidityLedger) should be
 // in three BigMaps with structured key (eventId + address)
-type storage is record [
+type eventType is record [
     currencyPair : string;
 
     // createdTime is time when contract created, used to ajust liquidity bonus:
@@ -72,11 +66,6 @@ type storage is record [
     closedDynamics : nat;
     isBetsForWin : bool;
 
-    (* TODO: maybe it should be one ledger with record that contains bet type? *)
-    betsForLedger : ledger;
-    betsAgainstLedger : ledger;
-    liquidityLedger : ledger;
-
     oracleAddress : address;
 
     betsForSum : tez;
@@ -90,8 +79,79 @@ type storage is record [
     expirationFee : tez;
 ]
 
+
+type newEventParams is record [
+    currencyPair : string;
+    targetDynamics : nat;
+    betsCloseTime : timestamp;
+    measurePeriod : nat;
+    oracleAddress :  address;
+    liquidityPercent : nat;
+    measureStartFee : tez;
+    expirationFee : tez;
+]
+
+
+type action is
+| NewEvent of newEventParams
+| Bet of betParams
+| StartMeasurement of unit
+| StartMeasurementCallback of callbackReturnedValueMichelson
+| Close of unit
+| CloseCallback of callbackReturnedValueMichelson
+| Withdraw of unit
+(* TODO: reopen with new state? (no, I feel that it is better keep it simple) *)
+
+
+type storage is record [
+    events : big_map(address, eventType);
+    betsForLedger : ledgerType;
+    betsAgainstLedger : ledgerType;
+    liquidityLedger : ledgerType;
+    lastEventId : nat;
+]
+
+
+function newEvent(var eventParams : newEventParams; var s : storage) : storage is
+block {
+    (* TODO: decide, should newEvent creator provide liquidity or not? maybe it is not important? *)
+    (* TODO: Checking that betsCloseTime of this event is in the future: *)
+    (* TODO: Checking that measurePeriod is more than some minimal amount and maybe less than amount *)
+    (* TODO: Check that liquidityPercent is less than 1_000_000 *)
+    (* TODO: Check that measureStartFee and expirationFee is equal to Tezos.amount *)
+
+    const newEvent : eventType = record[
+        currencyPair = eventParams.currencyPair;
+        createdTime = Tezos.now;
+        targetDynamics = eventParams.targetDynamics;
+        betsCloseTime = eventParams.eventParams.targetDynamics;
+        measureStartTime = 0;
+        measureOracleStartTime = 0;
+        isMeasurementStarted = False;
+        startRate = 0;
+        measurePeriod = 0;
+        isClosed = False;
+        closedTime = 0;
+        closedOracleTime = 0;
+        closedRate = 0;
+        closedDynamics = 0;
+        isBetsForWin = False;
+        oracleAddress = eventParams.oracleAddress;
+        betsForSum = 0tez;
+        betsAgainstSum = 0tez;
+        liquiditySum = 0tez;
+        liquidityPercent = eventParams.liquidityPercent;
+        measureStartFee = eventParams.measureStartFee;
+        expirationFee = eventParams.expirationFee;
+    ];
+
+    s.events[s.lastEventId] := newEvent;
+    s.lastEventId := s.lastEventId + 1;
+} with s
+
+
 (* Returns current amount of tez in ledger, if key is not in ledger return 0tez *)
-function getLedgerAmount(var k : address; var l : ledger) : tez is
+function getLedgerAmount(var k : ledgerKey; var l : ledgerType) : tez is
 block {
     var ledgerAmount : tez := 0tez;
     case Big_map.find_opt(k, l) of
@@ -111,13 +171,22 @@ block {
 function tezToNat(var t : tez) : nat is t / 1mutez;
 
 
+function getEvent(var s : storage; var eventId : nat) is
+case Big_map.find_opt(eventId, s.events) of
+| Some(value) -> value
+| None -> failwith("Event is not found")
+end;
+
+
 // TODO: need to figure out how to create method with params:
 function bet(var p : betParams; var s : storage) : storage is
 block {
     const betFor : tez = p.betFor;
     const betAgainst : tez = p.betAgainst;
+    const eventId : p.eventId;
+    const event : eventType = getEvent(s, eventId)
 
-    if (Tezos.now > s.betsCloseTime) then
+    if (Tezos.now > event.betsCloseTime) then
         failwith("Bets after betCloseTime is not allowed")
     else skip;
 
@@ -125,18 +194,25 @@ block {
         failwith("Sum of bets is not equal to send amount")
     else skip;
 
-    if s.isClosed then failwith("Contract already closed") else skip;
+    if event.isClosed then failwith("Event already closed") else skip;
+
+    const elapsedTime : int = Tezos.now - event.createdTime;
+    if (elapsedTime < 0) then
+        failwith("Bet adding before contract createdTime (possible wrong createdTime?)")
+    else skip;
+
+    const key : ledgerKey = (Tezos.sender, eventId);
 
     if (betFor > 0tez) then {
-        const newAmount : tez = getLedgerAmount(Tezos.sender, s.betsForLedger) + betFor;
-        s.betsForLedger[Tezos.sender] := newAmount;
-        s.betsForSum := s.betsForSum + betFor;
+        const newAmount : tez = getLedgerAmount(ledgerKey, s.betsForLedger) + betFor;
+        s.betsForLedger[ledgerKey] := newAmount;
+        event.betsForSum := event.betsForSum + betFor;
     } else skip;
 
     if (betAgainst > 0tez) then {
-        const newAmount : tez = getLedgerAmount(Tezos.sender, s.betsAgainstLedger) + betAgainst;
-        s.betsAgainstLedger[Tezos.sender] := newAmount;
-        s.betsAgainstSum := s.betsAgainstSum + betAgainst;
+        const newAmount : tez = getLedgerAmount(ledgerKey, s.betsAgainstLedger) + betAgainst;
+        s.betsAgainstLedger[ledgerKey] := newAmount;
+        event.betsAgainstSum := event.betsAgainstSum + betAgainst;
     } else skip;
 
     (* Adding liquidity bonus:
@@ -146,21 +222,16 @@ block {
         it as a linear multiplicator for minimal amount between betAgainst and betFor
      *)
     if (betAgainst > 0tez) and (betFor > 0tez) then {
-        const elapsedTime : int = Tezos.now - s.createdTime;
-        if (elapsedTime < 0) then
-            failwith("Bet adding before contract createdTime (possible wrong createdTime?)")
-        else skip;
-
         // TODO: s.betsCloseTime SHOULD be more than s.createdTime, need to have check in contract creation
-        const totalBettingTime : nat = abs(s.betsCloseTime - s.createdTime);
+        const totalBettingTime : nat = abs(event.betsCloseTime - event.createdTime);
         const remainedTime : int = totalBettingTime - elapsedTime;
 
         const addedLiquidity : nat = minNat(tezToNat(betAgainst), tezToNat(betFor));
         const liquidityBonus : tez = abs(remainedTime) * addedLiquidity * 1mutez / totalBettingTime;
 
-        const newAmount : tez = getLedgerAmount(Tezos.sender, s.liquidityLedger) + liquidityBonus;
-        s.liquidityLedger[Tezos.sender] := newAmount;
-        s.liquiditySum := s.liquiditySum + liquidityBonus;
+        const newAmount : tez = getLedgerAmount(ledgerKey, s.liquidityLedger) + liquidityBonus;
+        s.liquidityLedger[ledgerKey] := newAmount;
+        event.liquiditySum := event.liquiditySum + liquidityBonus;
     } else skip;
 } with s
 
@@ -315,6 +386,7 @@ block {
 
 function main (var params : action; var s : storage) : (list(operation) * storage) is
 case params of
+| NewEvent(p) -> ((nil: list(operation)), newEvent(p, s))
 | Bet(p) -> ((nil: list(operation)), bet(p, s))
 | StartMeasurement -> (startMeasurement(s), s)
 | StartMeasurementCallback(p) -> (startMeasurementCallback(p, s))
@@ -322,3 +394,5 @@ case params of
 | CloseCallback(p) -> (closeCallback(p, s))
 | Withdraw -> withdraw(s)
 end
+
+(* TODO: should it be some kind of destroy event method? or it is not important? *)
