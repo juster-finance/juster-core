@@ -10,17 +10,18 @@ type callbackEntrypoint is contract(callbackReturnedValueMichelson)
 
 type oracleParam is string * contract(callbackReturnedValueMichelson)
 
+type eventIdType is option(nat)
+
 type betParams is record [
-    eventId : nat;
+    eventId : eventIdType;
     betFor : tez;
     betAgainst : tez;
 ]
 
-type ledgerKey is (address*nat)
+type ledgerKey is (address*eventIdType)
 
 (* ledger key is address and event ID *)
 type ledgerType is big_map(ledgerKey, tez)
-
 
 // THIS STORAGE SHOULD BE IN MAP/BIGMAP (each event should have this storage)
 // All ledgers (betsForLedger, betsAgainstLedger and liquidityLedger) should be
@@ -95,22 +96,21 @@ type newEventParams is record [
 type action is
 | NewEvent of newEventParams
 | Bet of betParams
-| StartMeasurement of unit
+| StartMeasurement of eventIdType
 | StartMeasurementCallback of callbackReturnedValueMichelson
-| Close of unit
+| Close of eventIdType
 | CloseCallback of callbackReturnedValueMichelson
-| Withdraw of unit
-(* TODO: reopen with new state? (no, I feel that it is better keep it simple) *)
+| Withdraw of eventIdType
 
 
 type storage is record [
-    events : big_map(address, eventType);
+    events : big_map(eventIdType, eventType);
     betsForLedger : ledgerType;
     betsAgainstLedger : ledgerType;
     liquidityLedger : ledgerType;
-    lastEventId : nat;
-    closeCallEventId : option(nat);
-    sttartMeasurementCallEventId : option(nat);
+    lastEventId : eventIdType;
+    closeCallEventId : eventIdType;
+    measurementStartCallEventId : eventIdType;
 ]
 
 
@@ -126,17 +126,17 @@ block {
         currencyPair = eventParams.currencyPair;
         createdTime = Tezos.now;
         targetDynamics = eventParams.targetDynamics;
-        betsCloseTime = eventParams.eventParams.targetDynamics;
-        measureStartTime = 0;
-        measureOracleStartTime = 0;
+        betsCloseTime = eventParams.betsCloseTime;
+        measureStartTime = ("2018-06-30T07:07:32Z" : timestamp);
+        measureOracleStartTime = ("2018-06-30T07:07:32Z" : timestamp);
         isMeasurementStarted = False;
-        startRate = 0;
-        measurePeriod = 0;
+        startRate = 0n;
+        measurePeriod = 0n;
         isClosed = False;
-        closedTime = 0;
-        closedOracleTime = 0;
-        closedRate = 0;
-        closedDynamics = 0;
+        closedTime = ("2018-06-30T07:07:32Z" : timestamp);
+        closedOracleTime = ("2018-06-30T07:07:32Z" : timestamp);
+        closedRate = 0n;
+        closedDynamics = 0n;
         isBetsForWin = False;
         oracleAddress = eventParams.oracleAddress;
         betsForSum = 0tez;
@@ -148,7 +148,13 @@ block {
     ];
 
     s.events[s.lastEventId] := newEvent;
-    s.lastEventId := s.lastEventId + 1;
+
+    (* NOTE: This is strange construction, but I do not understand how to
+        assign value to option(nat) variable, maybe it should be changed *)
+    case s.lastEventId of
+    | Some(eventId) -> s.lastEventId := Some(eventId + 1n)
+    | None -> failwith("s.lastEventId is None, should not be here")
+    end;
 } with s
 
 
@@ -173,10 +179,10 @@ block {
 function tezToNat(var t : tez) : nat is t / 1mutez;
 
 
-function getEvent(var s : storage; var eventId : nat) is
+function getEvent(var s : storage; var eventId : eventIdType) : eventType is
 case Big_map.find_opt(eventId, s.events) of
-| Some(value) -> value
-| None -> failwith("Event is not found")
+| Some(event) -> event
+| None -> (failwith("Event is not found") : eventType)
 end;
 
 
@@ -185,8 +191,8 @@ function bet(var p : betParams; var s : storage) : storage is
 block {
     const betFor : tez = p.betFor;
     const betAgainst : tez = p.betAgainst;
-    const eventId : p.eventId;
-    const event : eventType = getEvent(s, eventId)
+    const eventId : eventIdType = p.eventId;
+    const event : eventType = getEvent(s, eventId);
 
     if (Tezos.now > event.betsCloseTime) then
         failwith("Bets after betCloseTime is not allowed")
@@ -206,14 +212,14 @@ block {
     const key : ledgerKey = (Tezos.sender, eventId);
 
     if (betFor > 0tez) then {
-        const newAmount : tez = getLedgerAmount(ledgerKey, s.betsForLedger) + betFor;
-        s.betsForLedger[ledgerKey] := newAmount;
+        const newAmount : tez = getLedgerAmount(key, s.betsForLedger) + betFor;
+        s.betsForLedger[key] := newAmount;
         event.betsForSum := event.betsForSum + betFor;
     } else skip;
 
     if (betAgainst > 0tez) then {
-        const newAmount : tez = getLedgerAmount(ledgerKey, s.betsAgainstLedger) + betAgainst;
-        s.betsAgainstLedger[ledgerKey] := newAmount;
+        const newAmount : tez = getLedgerAmount(key, s.betsAgainstLedger) + betAgainst;
+        s.betsAgainstLedger[key] := newAmount;
         event.betsAgainstSum := event.betsAgainstSum + betAgainst;
     } else skip;
 
@@ -231,51 +237,56 @@ block {
         const addedLiquidity : nat = minNat(tezToNat(betAgainst), tezToNat(betFor));
         const liquidityBonus : tez = abs(remainedTime) * addedLiquidity * 1mutez / totalBettingTime;
 
-        const newAmount : tez = getLedgerAmount(ledgerKey, s.liquidityLedger) + liquidityBonus;
-        s.liquidityLedger[ledgerKey] := newAmount;
+        const newAmount : tez = getLedgerAmount(key, s.liquidityLedger) + liquidityBonus;
+        s.liquidityLedger[key] := newAmount;
         event.liquiditySum := event.liquiditySum + liquidityBonus;
     } else skip;
 } with s
 
 
-function makeCallToOracle(var s : storage; var entrypoint : callbackEntrypoint) : list(operation) is
+function makeCallToOracle(
+    var eventId : eventIdType;
+    var s : storage;
+    var entrypoint : callbackEntrypoint) : list(operation) is
 block {
+
+    const event = getEvent(s, eventId);
     const callToOracle : contract(oracleParam) =
-        case (Tezos.get_entrypoint_opt("%get", s.oracleAddress) : option(contract(oracleParam))) of
+        case (Tezos.get_entrypoint_opt("%get", event.oracleAddress) : option(contract(oracleParam))) of
         | None -> (failwith("No oracle found") : contract(oracleParam))
         | Some(con) -> con
         end;
 
     const callback : operation = Tezos.transaction(
-        (s.currencyPair, entrypoint),
+        (event.currencyPair, entrypoint),
         0tez,
         callToOracle);
 } with list[callback]
 
 
-function close(var eventId : nat; var s : storage) : (list(operation) * storage) is
+function close(var eventId : eventIdType; var s : storage) : (list(operation) * storage) is
 block {
-
-    if (s.closeCallEventId =/= None) then
-        failwith("Another call to oracle in process (should not be here)")
-    else skip;
+    case s.closeCallEventId of
+    | Some(closeCallEventId) -> skip
+    | None -> failwith("Another call to oracle in process (should not be here)")
+    end;
 
     const operations = makeCallToOracle(
-        s, (Tezos.self("%closeCallback") : callbackEntrypoint));
+        eventId, s, (Tezos.self("%closeCallback") : callbackEntrypoint));
     s.closeCallEventId := eventId;
 
 } with (operations, s)
 
 
-function startMeasurement(var eventId : nat; var s : storage) : (list(operation) * storage) is
+function startMeasurement(var eventId : eventIdType; var s : storage) : (list(operation) * storage) is
 block {
-
-    if (s.measurementStartCallEventId =/= None) then
-        failwith("Another call to oracle in process (should not be here)")
-    else skip;
+    case s.measurementStartCallEventId of
+    | Some(measurementStartCallEventId) -> skip
+    | None -> failwith("Another call to oracle in process (should not be here)")
+    end;
 
     const operations = makeCallToOracle(
-        s, (Tezos.self("%startMeasurementCallback") : callbackEntrypoint));
+        eventId, s, (Tezos.self("%startMeasurementCallback") : callbackEntrypoint));
     s.measurementStartCallEventId := eventId;
 
 } with (operations, s)
@@ -294,9 +305,12 @@ function startMeasurementCallback(
 block {
     const param : callbackReturnedValue = Layout.convert_from_right_comb(p);
 
-    const eventId : nat = s.measurementStartCallEventId;
-    if (eventId = None) then failwith("measurementStartCallEventId is empty")
-    else skip;
+    const eventId : eventIdType = s.measurementStartCallEventId;
+
+    case eventId of
+    | Some(measurementStartCallEventId) -> skip
+    | None -> failwith("measurementStartCallEventId is empty")
+    end;
 
     const event : eventType = getEvent(s, eventId);
 
@@ -321,7 +335,7 @@ block {
     const payoutOperation : operation = Tezos.transaction(unit, event.measureStartFee, receiver);
 
     // Cleaning up event ID:
-    s.measurementStartCallEventId := None;
+    s.measurementStartCallEventId := (None : eventIdType);
 
 } with (list[payoutOperation], s)
 
@@ -331,9 +345,12 @@ function closeCallback(
     var s : storage) : (list(operation) * storage) is
 block {
 
-    const eventId : nat = s.closeCallEventId;
-    if (eventId = None) then failwith("closeCallEventId is empty")
-    else skip;
+    const eventId : eventIdType = s.closeCallEventId;
+
+    case eventId of
+    | Some(closeCallEventId) -> skip
+    | None -> failwith("closeCallEventId is empty")
+    end;
 
     const param : callbackReturnedValue = Layout.convert_from_right_comb(p);
 
@@ -371,20 +388,20 @@ block {
     const expirationFeeOperation : operation = Tezos.transaction(unit, event.expirationFee, receiver);
 
     // Cleaning up event ID:
-    s.closeCallEventId := None;
+    s.closeCallEventId := (None : eventIdType);
 
 } with (list[expirationFeeOperation], s)
 
 
-function withdraw(var eventId : nat; var s: storage) : (list(operation) * storage) is
+function withdraw(var eventId : eventIdType; var s: storage) : (list(operation) * storage) is
 block {
-
-    // Checks that this method can be runned:
-    if s.isClosed then skip
-    else failwith("Withdraw is not allowed until contract is closed");
 
     const event : eventType = getEvent(s, eventId);
     const key : ledgerKey = (Tezos.sender, eventId);
+
+    // Checks that this method can be runned:
+    if event.isClosed then skip
+    else failwith("Withdraw is not allowed until contract is closed");
 
     // Calculating payoutAmount:
     const winBetsSum : tez =
@@ -411,7 +428,7 @@ block {
 
     // Removing sender from wins ledger:
     const updatedLedger = Big_map.remove(key, winLedger);
-    if s.isBetsForWin then
+    if event.isBetsForWin then
         s.betsForLedger := updatedLedger
     else s.betsAgainstLedger := updatedLedger;
 
@@ -433,7 +450,7 @@ case params of
 | StartMeasurementCallback(p) -> (startMeasurementCallback(p, s))
 | Close(p) -> (close(p, s))
 | CloseCallback(p) -> (closeCallback(p, s))
-| Withdraw -> withdraw(s)
+| Withdraw(p) -> withdraw(p, s)
 end
 
 (* TODO: should it be some kind of destroy event method? or it is not important? *)
