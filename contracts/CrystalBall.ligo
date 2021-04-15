@@ -109,6 +109,8 @@ type storage is record [
     betsAgainstLedger : ledgerType;
     liquidityLedger : ledgerType;
     lastEventId : nat;
+    closeCallEventId : option(nat);
+    sttartMeasurementCallEventId : option(nat);
 ]
 
 
@@ -251,12 +253,32 @@ block {
 } with list[callback]
 
 
-function close(var s : storage) : list(operation) is
-    makeCallToOracle(s, (Tezos.self("%closeCallback") : callbackEntrypoint));
+function close(var eventId : nat; var s : storage) : (list(operation) * storage) is
+block {
+
+    if (s.closeCallEventId =/= None) then
+        failwith("Another call to oracle in process (should not be here)")
+    else skip;
+
+    const operations = makeCallToOracle(
+        s, (Tezos.self("%closeCallback") : callbackEntrypoint));
+    s.closeCallEventId := eventId;
+
+} with (operations, s)
 
 
-function startMeasurement(var s : storage) : list(operation) is
-    makeCallToOracle(s, (Tezos.self("%startMeasurementCallback") : callbackEntrypoint));
+function startMeasurement(var eventId : nat; var s : storage) : (list(operation) * storage) is
+block {
+
+    if (s.measurementStartCallEventId =/= None) then
+        failwith("Another call to oracle in process (should not be here)")
+    else skip;
+
+    const operations = makeCallToOracle(
+        s, (Tezos.self("%startMeasurementCallback") : callbackEntrypoint));
+    s.measurementStartCallEventId := eventId;
+
+} with (operations, s)
 
 
 function getReceiver(var a : address) : contract(unit) is
@@ -272,24 +294,34 @@ function startMeasurementCallback(
 block {
     const param : callbackReturnedValue = Layout.convert_from_right_comb(p);
 
-    // Check that callback runs from right address and with right currency pair:
-    if Tezos.sender =/= s.oracleAddress then failwith("Unknown sender") else skip;
-    if param.currencyPair =/= s.currencyPair then failwith("Unexpected currency pair") else skip;
-    if s.isMeasurementStarted then failwith("Measurement period already started") else skip;
-    if s.betsCloseTime > param.lastUpdate then
-        failwith("Can't start measurement untill betsCloseTime (maybe oracle have outdated info?)") else skip;
+    const eventId : nat = s.measurementStartCallEventId;
+    if (eventId = None) then failwith("measurementStartCallEventId is empty")
+    else skip;
 
-    // Closing contract:
-    s.measureOracleStartTime := param.lastUpdate;
-    s.startRate := param.rate;
-    s.measureStartTime := Tezos.now;
-    s.isMeasurementStarted := True;
+    const event : eventType = getEvent(s, eventId);
+
+    // Check that callback runs from right address and with right currency pair:
+    if Tezos.sender =/= event.oracleAddress then failwith("Unknown sender") else skip;
+    if param.currencyPair =/= event.currencyPair then failwith("Unexpected currency pair") else skip;
+    if event.isMeasurementStarted then failwith("Measurement period already started") else skip;
+    if event.betsCloseTime > param.lastUpdate then
+        failwith("Can't start measurement untill betsCloseTime (maybe oracle have outdated info?)") else skip;
+    (* TODO: what should be done if time is very late? (i.e. cancel event and allow withdrawals?) *)
+
+    // Starting measurement:
+    event.measureOracleStartTime := param.lastUpdate;
+    event.startRate := param.rate;
+    event.measureStartTime := Tezos.now;
+    event.isMeasurementStarted := True;
 
     // Paying measureStartFee for this method initiator:
     const receiver : contract(unit) = getReceiver(Tezos.source);
     // TODO: somehow check that s.measureStartFee is provided (maybe I need init method that requires
     // to be supported with measureStartFee + liquidationFee?)
-    const payoutOperation : operation = Tezos.transaction(unit, s.measureStartFee, receiver);
+    const payoutOperation : operation = Tezos.transaction(unit, event.measureStartFee, receiver);
+
+    // Cleaning up event ID:
+    s.measurementStartCallEventId := None;
 
 } with (list[payoutOperation], s)
 
@@ -298,31 +330,36 @@ function closeCallback(
     var p : callbackReturnedValueMichelson;
     var s : storage) : (list(operation) * storage) is
 block {
+
+    const eventId : nat = s.closeCallEventId;
+    if (eventId = None) then failwith("closeCallEventId is empty")
+    else skip;
+
     const param : callbackReturnedValue = Layout.convert_from_right_comb(p);
 
-    // Check that callback runs from right address and with right currency pair:
-    if Tezos.sender =/= s.oracleAddress then failwith("Unknown sender") else skip;
-    if param.currencyPair =/= s.currencyPair then failwith("Unexpected currency pair") else skip;
+    const event : eventType = getEvent(s, eventId);
 
-    if not s.isMeasurementStarted then
+    // Check that callback runs from right address and with right currency pair:
+    if Tezos.sender =/= event.oracleAddress then failwith("Unknown sender") else skip;
+    if param.currencyPair =/= event.currencyPair then failwith("Unexpected currency pair") else skip;
+
+    if not event.isMeasurementStarted then
         failwith("Can't close contract before measurement period started")
     else skip;
 
-    const endTime : timestamp = s.measureStartTime + int(s.measurePeriod);
+    const endTime : timestamp = event.measureStartTime + int(event.measurePeriod);
     if endTime < param.lastUpdate then
         failwith("Can't close until lastUpdate reached measureStartTime + measurePeriod") else skip;
-    if s.isClosed then failwith("Contract already closed. Can't close contract twice") else skip;
+    (* TODO: what should be done if time is very late? (i.e. cancel event and allow withdrawals?) *)
+    if event.isClosed then failwith("Contract already closed. Can't close contract twice") else skip;
 
     // Closing contract:
-    s.closedOracleTime := param.lastUpdate;
-    s.closedRate := param.rate;
-    s.closedDynamics := param.rate * 1000000n / s.startRate;
-    s.closedTime := Tezos.now;
-    s.isClosed := True;
-    s.isBetsForWin := s.closedDynamics > s.targetDynamics;
-
-    // TODO: calculate luqidity bonus and payout liquidity bonus
-    // TODO: make all transactions inside closeCallback instead of calling withdraws?
+    event.closedOracleTime := param.lastUpdate;
+    event.closedRate := param.rate;
+    event.closedDynamics := param.rate * 1000000n / event.startRate;
+    event.closedTime := Tezos.now;
+    event.isClosed := True;
+    event.isBetsForWin := event.closedDynamics > event.targetDynamics;
 
     (* TODO: what should be done if all bets were For and all of them are loose?
         All raised funds will be freezed. Should they all be winners anyway? *)
@@ -331,36 +368,41 @@ block {
     const receiver : contract(unit) = getReceiver(Tezos.source);
     // TODO: AGAIN: somehow check that s.expirationFee is provided (maybe I need init method
     // that requires to be supported with measureStartFee + liquidationFee?)
-    const expirationFeeOperation : operation = Tezos.transaction(unit, s.expirationFee, receiver);
+    const expirationFeeOperation : operation = Tezos.transaction(unit, event.expirationFee, receiver);
+
+    // Cleaning up event ID:
+    s.closeCallEventId := None;
 
 } with (list[expirationFeeOperation], s)
 
 
-(* TODO: would it be better if it would make all withdraw operations inside closeCallback? *)
-function withdraw(var s: storage) : (list(operation) * storage) is
+function withdraw(var eventId : nat; var s: storage) : (list(operation) * storage) is
 block {
 
     // Checks that this method can be runned:
     if s.isClosed then skip
     else failwith("Withdraw is not allowed until contract is closed");
 
+    const event : eventType = getEvent(s, eventId);
+    const key : ledgerKey = (Tezos.sender, eventId);
+
     // Calculating payoutAmount:
     const winBetsSum : tez =
-        if s.isBetsForWin then s.betsForSum else s.betsAgainstSum;
-    const winLedger : big_map(address, tez) =
-        if s.isBetsForWin then s.betsForLedger else s.betsAgainstLedger;
+        if event.isBetsForWin then event.betsForSum else event.betsAgainstSum;
+    const winLedger : ledgerType =
+        if event.isBetsForWin then s.betsForLedger else s.betsAgainstLedger;
 
-    const participantSum : tez = getLedgerAmount(Tezos.sender, winLedger);
-    const participantLiquidity : tez = getLedgerAmount(Tezos.sender, s.liquidityLedger);
+    const participantSum : tez = getLedgerAmount(key, winLedger);
+    const participantLiquidity : tez = getLedgerAmount(key, s.liquidityLedger);
 
-    const totalBets : tez = s.betsForSum + s.betsAgainstSum;
-    const totalWinPayoutAmount : tez = totalBets * abs (1_000_000n - s.liquidityPercent) / 1_000_000n;
-    const totalLiquidityBonus : tez = totalBets * s.liquidityPercent / 1_000_000n;
+    const totalBets : tez = event.betsForSum + event.betsAgainstSum;
+    const totalWinPayoutAmount : tez = totalBets * abs (1_000_000n - event.liquidityPercent) / 1_000_000n;
+    const totalLiquidityBonus : tez = totalBets * event.liquidityPercent / 1_000_000n;
 
     const winPayoutAmount : tez = (
         participantSum / 1mutez * totalWinPayoutAmount / winBetsSum * 1mutez);
     const liquidityBonusAmount : tez = (
-        participantLiquidity / 1mutez * totalLiquidityBonus / s.liquiditySum * 1mutez);
+        participantLiquidity / 1mutez * totalLiquidityBonus / event.liquiditySum * 1mutez);
 
     const payoutAmount : tez = winPayoutAmount + liquidityBonusAmount;
 
@@ -368,14 +410,13 @@ block {
     const receiver : contract(unit) = getReceiver(Tezos.sender);
 
     // Removing sender from wins ledger:
-    const updatedLedger = Big_map.remove(Tezos.sender, winLedger);
-    if s.isBetsForWin then block {
+    const updatedLedger = Big_map.remove(key, winLedger);
+    if s.isBetsForWin then
         s.betsForLedger := updatedLedger
-    }
     else s.betsAgainstLedger := updatedLedger;
 
     // Removing sender from liquidity ledger:
-    s.liquidityLedger := Big_map.remove(Tezos.sender, s.liquidityLedger);
+    s.liquidityLedger := Big_map.remove(key, s.liquidityLedger);
 
     if (payoutAmount = 0tez) then failwith("Nothing to withdraw") else skip;
 
@@ -388,9 +429,9 @@ function main (var params : action; var s : storage) : (list(operation) * storag
 case params of
 | NewEvent(p) -> ((nil: list(operation)), newEvent(p, s))
 | Bet(p) -> ((nil: list(operation)), bet(p, s))
-| StartMeasurement -> (startMeasurement(s), s)
+| StartMeasurement(p) -> (startMeasurement(p, s))
 | StartMeasurementCallback(p) -> (startMeasurementCallback(p, s))
-| Close -> (close(s), s)
+| Close(p) -> (close(p, s))
 | CloseCallback(p) -> (closeCallback(p, s))
 | Withdraw -> withdraw(s)
 end
