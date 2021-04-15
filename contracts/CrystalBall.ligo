@@ -241,6 +241,8 @@ block {
         s.liquidityLedger[key] := newAmount;
         event.liquiditySum := event.liquiditySum + liquidityBonus;
     } else skip;
+
+    s.events[eventId] := event;
 } with s
 
 
