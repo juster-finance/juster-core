@@ -47,9 +47,6 @@
     A - made a lot betAgainst and loose it to B
     B - wins all that A looses
     C - just paid for liquidity because his addition at the end does not matter
-
-    NOTE: measure start and expiration fees is not taken into account here
-    TODO: need to determine which solution with fees is better (who and when provides it)
 """
 
 from pytezos import ContractInterface, pytezos, MichelsonRuntimeError
@@ -76,41 +73,74 @@ class DeterminedTest(TestCase):
 
         self.oracle_address = 'KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn'
         self.currency_pair = 'XTZ-USD'
+        self.measure_start_fee = 200_000
+        self.expiration_fee = 100_000
 
-        self.init_storage = {
+        # this is eventId that for the tests:
+        self.id = 0
+
+        self.event = {
             'currencyPair': self.currency_pair,
-            'createdTime': RUN_TIME,
             'targetDynamics': 1_000_000,
             'betsCloseTime': RUN_TIME + 24*ONE_HOUR,
-            'measureStartTime': 0,
-            'measureOracleStartTime': 0,
-            'isMeasurementStarted': False,
-            'startRate': 0,
             'measurePeriod': 12*ONE_HOUR,
-            'isClosed': False,
-            'closedTime': 0,
-            'closedOracleTime': 0,
-            'closedRate': 0,
-            'closedDynamics': 0,
-            'isBetsForWin': False,
+            'oracleAddress': self.oracle_address,
 
+            'liquidityPercent': 10_000,  # 1% of 1_000_000
+            'measureStartFee': self.measure_start_fee,  # who provides it and when?
+            'expirationFee': self.expiration_fee
+        }
+
+        self.init_storage = {
+            'events': {},
             'betsForLedger': {},
             'betsAgainstLedger': {},
             'liquidityLedger': {},
-
-            'oracleAddress': self.oracle_address,
-
-            'betsForSum': 0,
-            'betsAgainstSum': 0,
-            'liquiditySum': 0,
-
-            'liquidityPercent': 10_000,  # 1% of 1_000_000
-            'measureStartFee': 200_000,  # who provides it and when?
-            'expirationFee': 100_000
+            'lastEventId': 0,
+            'closeCallEventId': None,
+            'measurementStartCallEventId': None
         }
 
         # this self.storage will be used in all blocks:
         self.storage = self.init_storage.copy()
+
+
+    def _create_event(self):
+        """ Testing creating event with settings that should succeed """
+
+        amount = self.measure_start_fee + self.expiration_fee
+        result = self.contract.newEvent(self.event).with_amount(amount).interpret(
+            now=RUN_TIME, storage=self.storage)
+
+        self.storage = result.storage
+        event = result.storage['events'][self.id]
+
+        # Not all event parameters need to be tested, some of them can have any
+        # value at the moment of creation:
+        proper_event = self.event.copy()
+        proper_event.update({
+            'betsAgainstSum': 0,
+            'betsForSum': 0,
+            'isClosed': False,
+            'isMeasurementStarted': False,
+        })
+
+        selected_event_keys = {k: v for k, v in event.items() if k in proper_event}
+        self.assertDictEqual(proper_event, selected_event_keys)
+
+
+    def _create_evet_with_conflict_fees(self):
+        """ Testing that event creation with provided amount less than
+            measureStartFee + expirationFee leads to error
+        """
+        # TODO:
+        pass
+
+
+    def _create_more_events(self):
+        """ Testing multiple events creation """
+        # TODO:
+        pass
 
 
     def remove_none_values(self, storage):
@@ -119,9 +149,12 @@ class DeterminedTest(TestCase):
             when trying to transfer this storage to another interpret
         """
 
+        def clean_dict(dct):
+            return {key: value for key, value in dct.items() if value}
+
         return {
-            key: self.remove_none_values(value) if type(value) is dict else value
-            for key, value in storage.items() if value is not None
+            key: clean_dict(value) if type(value) is dict else value
+            for key, value in storage.items()
         }
 
 
@@ -131,37 +164,44 @@ class DeterminedTest(TestCase):
         self.assertEqual(int(operation['amount']), amount)
 
 
-    def _check_result_integrity(self, res):
+    def _check_result_integrity(self, res, event_id):
         """ Checks that sums and ledger values of the resulting storage
             is consistent """
 
-        bets_for_sum = sum(res.storage['betsForLedger'].values())
-        self.assertEqual(res.storage['betsForSum'], bets_for_sum)
+        def sum_by_id(ledger, _id):
+            return sum(value for key, value in ledger.items() if key[1] == _id)
 
-        bets_against_sum = sum(res.storage['betsAgainstLedger'].values())
-        self.assertEqual(res.storage['betsAgainstSum'], bets_against_sum)
+        bets_for_sum_ledger = sum_by_id(res.storage['betsForLedger'], event_id)
+        bets_for_sum_event = res.storage['events'][event_id]['betsForSum']
+        self.assertEqual(bets_for_sum_event, bets_for_sum_ledger)
 
-        liquidity_sum = sum(res.storage['liquidityLedger'].values())
-        self.assertEqual(res.storage['liquiditySum'], liquidity_sum)
+        bets_against_sum_ledger = sum_by_id(res.storage['betsAgainstLedger'], event_id)
+        bets_against_sum_event = res.storage['events'][event_id]['betsAgainstSum']
+        self.assertEqual(bets_against_sum_event, bets_against_sum_ledger)
+
+        liquidity_sum_ledger = sum_by_id(res.storage['liquidityLedger'], event_id)
+        liquidity_sum_event = res.storage['events'][event_id]['liquiditySum']
+        self.assertEqual(liquidity_sum_event, liquidity_sum_ledger)
 
 
     def _participant_A_adds_initial_liquidity(self):
         """ Participant A: adding liquidity 50/50 just at start """
 
         transaction = self.contract.bet(
-            betAgainst=50_000, betFor=50_000).with_amount(100_000)
+            eventId=self.id, betAgainst=50_000, betFor=50_000).with_amount(100_000)
 
         res = transaction.interpret(
             storage=self.storage, sender=self.a, now=RUN_TIME)
 
-        self.assertEqual(res.storage['betsForSum'], 50_000)
-        self.assertEqual(res.storage['betsAgainstSum'], 50_000)
+        event = res.storage['events'][self.id]
+        self.assertEqual(event['betsForSum'], 50_000)
+        self.assertEqual(event['betsAgainstSum'], 50_000)
         self.assertEqual(len(res.storage['betsForLedger']), 1)
         self.assertEqual(len(res.storage['betsAgainstLedger']), 1)
         self.assertEqual(len(res.storage['liquidityLedger']), 1)
-        self.assertEqual(res.storage['liquidityLedger'][self.a], 50_000)
+        self.assertEqual(res.storage['liquidityLedger'][(self.a, self.id)], 50_000)
 
-        self._check_result_integrity(res)
+        self._check_result_integrity(res, self.id)
         self.storage = res.storage
 
         
@@ -171,7 +211,8 @@ class DeterminedTest(TestCase):
         """
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            transaction = self.contract.bet(betAgainst=0, betFor=50_000).with_amount(100_000)
+            transaction = self.contract.bet(
+                eventId=self.id, betAgainst=0, betFor=50_000).with_amount(100_000)
             res = transaction.interpret(
                 storage=self.storage, sender=self.a, now=RUN_TIME)
 
@@ -182,18 +223,19 @@ class DeterminedTest(TestCase):
         """ Participant B: bets for 10_000 after 1 hour """
 
         transaction = self.contract.bet(
-            betAgainst=0, betFor=50_000).with_amount(50_000)
+            eventId=self.id, betAgainst=0, betFor=50_000).with_amount(50_000)
 
         res = transaction.interpret(
             storage=self.storage, sender=self.b, now=RUN_TIME + ONE_HOUR)
 
-        self.assertEqual(res.storage['betsForSum'], 100_000)
-        self.assertEqual(res.storage['betsAgainstSum'], 50_000)
+        event = res.storage['events'][self.id]
+        self.assertEqual(event['betsForSum'], 100_000)
+        self.assertEqual(event['betsAgainstSum'], 50_000)
         self.assertEqual(len(res.storage['betsForLedger']), 2)
         self.assertEqual(len(res.storage['betsAgainstLedger']), 1)
         self.assertEqual(len(res.storage['liquidityLedger']), 1)
 
-        self._check_result_integrity(res)
+        self._check_result_integrity(res, self.id)
         self.storage = res.storage
 
 
@@ -203,19 +245,20 @@ class DeterminedTest(TestCase):
         """
 
         transaction = self.contract.bet(
-            betAgainst=100_000, betFor=50_000).with_amount(150_000)
+            eventId=self.id, betAgainst=100_000, betFor=50_000).with_amount(150_000)
 
         res = transaction.interpret(
             storage=self.storage, sender=self.a, now=RUN_TIME + 12*ONE_HOUR)
 
-        self.assertEqual(res.storage['betsForSum'], 150_000)
-        self.assertEqual(res.storage['betsAgainstSum'], 150_000)
+        event = res.storage['events'][self.id]
+        self.assertEqual(event['betsForSum'], 150_000)
+        self.assertEqual(event['betsAgainstSum'], 150_000)
         self.assertEqual(len(res.storage['betsForLedger']), 2)
         self.assertEqual(len(res.storage['betsAgainstLedger']), 1)
         self.assertEqual(len(res.storage['liquidityLedger']), 1)
-        self.assertEqual(res.storage['liquiditySum'], 50_000 + 25_000)
+        self.assertEqual(event['liquiditySum'], 50_000 + 25_000)
 
-        self._check_result_integrity(res)
+        self._check_result_integrity(res, self.id)
         self.storage = res.storage
 
 
@@ -223,19 +266,20 @@ class DeterminedTest(TestCase):
         """ Participant C: adding more liquidity at the very end """
 
         transaction = self.contract.bet(
-            betAgainst=500_000, betFor=500_000).with_amount(1_000_000)
+            eventId=self.id, betAgainst=500_000, betFor=500_000).with_amount(1_000_000)
 
         res = transaction.interpret(
             storage=self.storage, sender=self.c, now=RUN_TIME + 24*ONE_HOUR)
 
-        self.assertEqual(res.storage['betsForSum'], 650_000)
-        self.assertEqual(res.storage['betsAgainstSum'], 650_000)
+        event = res.storage['events'][self.id]
+        self.assertEqual(event['betsForSum'], 650_000)
+        self.assertEqual(event['betsAgainstSum'], 650_000)
         self.assertEqual(len(res.storage['betsForLedger']), 3)
         self.assertEqual(len(res.storage['betsAgainstLedger']), 2)
         self.assertEqual(len(res.storage['liquidityLedger']), 2)
-        self.assertEqual(res.storage['liquiditySum'], 50_000 + 25_000 + 0)
+        self.assertEqual(event['liquiditySum'], 50_000 + 25_000 + 0)
 
-        self._check_result_integrity(res)
+        self._check_result_integrity(res, self.id)
         self.storage = res.storage
 
 
@@ -248,9 +292,12 @@ class DeterminedTest(TestCase):
             'rate': 6_000_000
         }
 
+        result = self.contract.close(self.id).interpret(
+            storage=self.storage, sender=self.a, now=RUN_TIME + 24*ONE_HOUR)
+
         with self.assertRaises(MichelsonRuntimeError) as cm:
             res = self.contract.closeCallback(callback_values).interpret(
-                storage=self.storage, sender=self.oracle_address, now=RUN_TIME + 24*ONE_HOUR)
+                storage=result.storage, sender=self.oracle_address, now=RUN_TIME + 24*ONE_HOUR)
 
         self.assertTrue("Can't close contract before measurement period started" in str(cm.exception))
 
@@ -264,9 +311,12 @@ class DeterminedTest(TestCase):
             'rate': 6_000_000
         }
 
+        result = self.contract.startMeasurement(self.id).interpret(
+            storage=self.storage, sender=self.a, now=RUN_TIME + 24*ONE_HOUR)
+
         with self.assertRaises(MichelsonRuntimeError) as cm:
             res = self.contract.startMeasurementCallback(callback_values).interpret(
-                storage=self.storage, sender=self.oracle_address, now=RUN_TIME + 26*ONE_HOUR)
+                storage=result.storage, sender=self.oracle_address, now=RUN_TIME + 26*ONE_HOUR)
 
         self.assertTrue("Unexpected currency pair" in str(cm.exception))
 
@@ -280,15 +330,20 @@ class DeterminedTest(TestCase):
             'rate': 6_000_000
         }
 
-        with self.assertRaises(MichelsonRuntimeError):
+        result = self.contract.startMeasurement(self.id).interpret(
+            storage=self.storage, sender=self.a, now=RUN_TIME + 24*ONE_HOUR)
+
+        with self.assertRaises(MichelsonRuntimeError) as cm:
             res = self.contract.startMeasurementCallback(callback_values).interpret(
-                storage=self.storage, sender=self.oracle_address, now=RUN_TIME + 12*ONE_HOUR)
+                storage=result.storage, sender=self.oracle_address, now=RUN_TIME + 12*ONE_HOUR)
+
+        self.assertTrue("Can't start measurement untill betsCloseTime" in str(cm.exception))
 
 
     def _running_measurement(self):
         """ Running start measurement after 26 hours """
 
-        res = self.contract.startMeasurement().interpret(
+        res = self.contract.startMeasurement(self.id).interpret(
             storage=self.storage, sender=self.a, now=RUN_TIME + 26*ONE_HOUR)
 
         self.assertEqual(len(res.operations), 1)
@@ -300,9 +355,10 @@ class DeterminedTest(TestCase):
         currency_pair = operation['parameters']['value']['args'][0]['string']
         self.assertEqual(currency_pair, self.currency_pair)
 
-        self.assertFalse(res.storage['isMeasurementStarted'])
+        event = res.storage['events'][self.id]
+        self.assertFalse(event['isMeasurementStarted'])
 
-        self._check_result_integrity(res)
+        self._check_result_integrity(res, self.id)
         self.storage = res.storage
 
 
@@ -315,9 +371,12 @@ class DeterminedTest(TestCase):
             'rate': 6_000_000
         }
 
+        result = self.contract.startMeasurement(self.id).interpret(
+            storage=self.storage, sender=self.a, now=RUN_TIME + 24*ONE_HOUR)
+
         with self.assertRaises(MichelsonRuntimeError) as cm:
             res = self.contract.startMeasurementCallback(callback_values).interpret(
-                storage=self.storage, sender=self.c, now=RUN_TIME + 12*ONE_HOUR)
+                storage=result.storage, sender=self.c, now=RUN_TIME + 12*ONE_HOUR)
 
         self.assertTrue('Unknown sender' in str(cm.exception))
 
@@ -336,21 +395,24 @@ class DeterminedTest(TestCase):
             'rate': 6_000_000
         }
 
+        self.assertEqual(self.storage['measurementStartCallEventId'], self.id)
         res = self.contract.startMeasurementCallback(callback_values).interpret(
             storage=self.storage, sender=self.oracle_address,
             now=start_running_time, source=self.a)
 
         self.assertEqual(len(res.operations), 1)
-        self.assertEqual(res.storage['startRate'], callback_values['rate'])
-        self.assertTrue(res.storage['isMeasurementStarted'])
-        self.assertEqual(res.storage['measureStartTime'], start_running_time)
-        self.assertEqual(res.storage['measureOracleStartTime'], start_oracle_time)
+        event = res.storage['events'][self.id]
+
+        self.assertEqual(event['startRate'], callback_values['rate'])
+        self.assertTrue(event['isMeasurementStarted'])
+        self.assertEqual(event['measureStartTime'], start_running_time)
+        self.assertEqual(event['measureOracleStartTime'], start_oracle_time)
 
         operation = res.operations[0]
         self.assertEqual(operation['destination'], self.a)
-        self.assertAmountEqual(operation, self.storage['measureStartFee'])
+        self.assertAmountEqual(operation, self.measure_start_fee)
 
-        self._check_result_integrity(res)
+        self._check_result_integrity(res, self.id)
         self.storage = res.storage
 
 
@@ -359,7 +421,7 @@ class DeterminedTest(TestCase):
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
             transaction = self.contract.bet(
-                betAgainst=50_000, betFor=50_000).with_amount(100_000)
+                eventId=self.id, betAgainst=50_000, betFor=50_000).with_amount(100_000)
 
             res = transaction.interpret(
                 storage=self.storage, sender=self.a, now=RUN_TIME + 28*ONE_HOUR)
@@ -376,9 +438,12 @@ class DeterminedTest(TestCase):
             'rate': 7_000_000
         }
 
+        result = self.contract.startMeasurement(self.id).interpret(
+            storage=self.storage, sender=self.a, now=RUN_TIME + 24*ONE_HOUR)
+
         with self.assertRaises(MichelsonRuntimeError) as cm:
             res = self.contract.startMeasurementCallback(callback_values).interpret(
-                storage=self.storage, sender=self.oracle_address, now=RUN_TIME + 30*ONE_HOUR)
+                storage=result.storage, sender=self.oracle_address, now=RUN_TIME + 30*ONE_HOUR)
 
         self.assertTrue('Measurement period already started' in str(cm.exception))
 
@@ -387,7 +452,7 @@ class DeterminedTest(TestCase):
         """ Test that withdraw before close raises error """
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            res = self.contract.withdraw().interpret(
+            res = self.contract.withdraw(self.id).interpret(
                 storage=self.storage, sender=self.a, now=RUN_TIME + 30*ONE_HOUR)
 
         self.assertTrue('Withdraw is not allowed until contract is closed' in str(cm.exception))
@@ -396,7 +461,7 @@ class DeterminedTest(TestCase):
     def _close_call(self):
         """ Calling close, should create opearaton with call to oracle get """
 
-        res = self.contract.close().interpret(
+        res = self.contract.close(self.id).interpret(
             storage=self.storage, sender=self.b, now=RUN_TIME + 38*ONE_HOUR)
         self.assertEqual(len(res.operations), 1)
 
@@ -406,6 +471,9 @@ class DeterminedTest(TestCase):
 
         currency_pair = operation['parameters']['value']['args'][0]['string']
         self.assertEqual(currency_pair, self.currency_pair)
+
+        self._check_result_integrity(res, self.id)
+        self.storage = res.storage
 
 
     def _close_callback(self):
@@ -427,20 +495,22 @@ class DeterminedTest(TestCase):
             storage=self.storage, sender=self.oracle_address,
             now=close_running_time, source=self.b)
         self.assertEqual(len(res.operations), 1)
-        self.assertEqual(res.storage['closedRate'], callback_values['rate'])
-        self.assertTrue(res.storage['isClosed'])
-        self.assertTrue(res.storage['isBetsForWin'])
-        self.assertEqual(res.storage['closedTime'],  close_running_time)
-        self.assertEqual(res.storage['closedOracleTime'], close_oracle_time)
+
+        event = res.storage['events'][self.id]
+        self.assertEqual(event['closedRate'], callback_values['rate'])
+        self.assertTrue(event['isClosed'])
+        self.assertTrue(event['isBetsForWin'])
+        self.assertEqual(event['closedTime'],  close_running_time)
+        self.assertEqual(event['closedOracleTime'], close_oracle_time)
 
         # dynamic 7.5 / 6.0 is +25%
-        self.assertEqual(res.storage['closedDynamics'], 1_250_000)
+        self.assertEqual(event['closedDynamics'], 1_250_000)
 
         operation = res.operations[0]
         self.assertEqual(operation['destination'], self.b)
-        self.assertAmountEqual(operation, self.storage['expirationFee'])
+        self.assertAmountEqual(operation, self.expiration_fee)
 
-        self._check_result_integrity(res)
+        self._check_result_integrity(res, self.id)
         self.storage = res.storage
 
 
@@ -448,7 +518,7 @@ class DeterminedTest(TestCase):
         """ Checking that loosed / not participated address cannot withdraw """
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            res = self.contract.withdraw().interpret(
+            res = self.contract.withdraw(self.id).interpret(
                 storage=self.storage, sender=self.d, now=RUN_TIME + 64*ONE_HOUR)
 
         self.assertTrue('Nothing to withdraw' in str(cm.exception))
@@ -462,19 +532,19 @@ class DeterminedTest(TestCase):
         """
 
         # A withdraws:
-        res = self.contract.withdraw().interpret(
+        res = self.contract.withdraw(self.id).interpret(
             storage=self.storage, sender=self.a, now=RUN_TIME + 64*ONE_HOUR)
         self.assertAmountEqual(res.operations[0], 211_000)
         self.storage = self.remove_none_values(res.storage)
 
         # B withdraws:
-        res = self.contract.withdraw().interpret(
+        res = self.contract.withdraw(self.id).interpret(
             storage=self.storage, sender=self.b, now=RUN_TIME + 64*ONE_HOUR)
         self.assertAmountEqual(res.operations[0], 99_000)
         self.storage = self.remove_none_values(res.storage)
 
         # C withdraws:
-        res = self.contract.withdraw().interpret(
+        res = self.contract.withdraw(self.id).interpret(
             storage=self.storage, sender=self.c, now=RUN_TIME + 64*ONE_HOUR)
         self.assertAmountEqual(res.operations[0], 990_000)
         self.storage = self.remove_none_values(res.storage)
@@ -485,13 +555,16 @@ class DeterminedTest(TestCase):
             nothing to withdraw """
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            res = self.contract.withdraw().interpret(
+            res = self.contract.withdraw(self.id).interpret(
                 storage=self.storage, sender=self.a, now=RUN_TIME + 64*ONE_HOUR)
 
         self.assertTrue('Nothing to withdraw' in str(cm.exception))
 
 
-    def test_interactions(self):
+    def _run_all_tests(self):
+        self._create_event()
+        self._create_evet_with_conflict_fees()
+        self._create_more_events()
         self._participant_A_adds_initial_liquidity()
         self._assert_wrong_amount_bet()
         self._participant_B_bets_for()
@@ -500,8 +573,8 @@ class DeterminedTest(TestCase):
         self._assert_closing_before_measurement()
         self._assert_wrong_currency_pair_return_from_oracle()
         self._assert_measurement_during_bets_time()
-        self._running_measurement()
         self._assert_callback_from_unknown_address()
+        self._running_measurement()
         self._measurement_callback()
         self._assert_betting_in_measurement_period()
         self._assert_double_measurement()
@@ -518,3 +591,11 @@ class DeterminedTest(TestCase):
         # test that it is not possible to bet after close?
         # test that it is not possible to call measurement after close
         #    (btw it is tested in double_measurement)
+
+        # TODO: make this tests for two - three ids in cycle?
+
+
+    def test_interactions(self):
+        for some_id in range(3):
+            self.id = some_id
+            self._run_all_tests()
