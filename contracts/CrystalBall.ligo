@@ -371,7 +371,7 @@ block {
         failwith("Can't close contract before measurement period started")
     else skip;
 
-    const endTime : timestamp = event.measureStartTime + int(event.measurePeriod);
+    const endTime : timestamp = event.measureOracleStartTime + int(event.measurePeriod);
     if param.lastUpdate < endTime then
         failwith("Can't close until lastUpdate reached measureStartTime + measurePeriod") else skip;
     (* TODO: what should be done if time is very late? (i.e. cancel event and allow withdrawals?) *)
