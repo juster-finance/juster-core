@@ -339,6 +339,8 @@ block {
     // to be supported with measureStartFee + liquidationFee?)
     const payoutOperation : operation = Tezos.transaction(unit, event.measureStartFee, receiver);
 
+    s.events[eventId] := event;
+
     // Cleaning up event ID:
     s.measurementStartCallEventId := (None : eventIdType);
 
@@ -391,6 +393,8 @@ block {
     // TODO: AGAIN: somehow check that s.expirationFee is provided (maybe I need init method
     // that requires to be supported with measureStartFee + liquidationFee?)
     const expirationFeeOperation : operation = Tezos.transaction(unit, event.expirationFee, receiver);
+
+    s.events[eventId] := event;
 
     // Cleaning up event ID:
     s.closeCallEventId := (None : eventIdType);
