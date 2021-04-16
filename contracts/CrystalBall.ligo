@@ -435,13 +435,9 @@ block {
     // Getting reciever:
     const receiver : contract(unit) = getReceiver(Tezos.sender);
 
-    // Removing sender from wins ledger:
-    const updatedLedger = Big_map.remove(key, winLedger);
-    if event.isBetsForWin then
-        s.betsForLedger := updatedLedger
-    else s.betsAgainstLedger := updatedLedger;
-
-    // Removing sender from liquidity ledger:
+    // Removing sender from all ledgers:
+    s.betsForLedger := Big_map.remove(key, s.betsForLedger);
+    s.betsAgainstLedger := Big_map.remove(key, s.betsAgainstLedger);
     s.liquidityLedger := Big_map.remove(key, s.liquidityLedger);
 
     if (payoutAmount = 0tez) then failwith("Nothing to withdraw") else skip;
