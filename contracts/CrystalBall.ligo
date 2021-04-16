@@ -131,7 +131,7 @@ block {
         measureOracleStartTime = ("2018-06-30T07:07:32Z" : timestamp);
         isMeasurementStarted = False;
         startRate = 0n;
-        measurePeriod = 0n;
+        measurePeriod = eventParams.measurePeriod;
         isClosed = False;
         closedTime = ("2018-06-30T07:07:32Z" : timestamp);
         closedOracleTime = ("2018-06-30T07:07:32Z" : timestamp);
@@ -372,7 +372,7 @@ block {
     else skip;
 
     const endTime : timestamp = event.measureStartTime + int(event.measurePeriod);
-    if endTime < param.lastUpdate then
+    if param.lastUpdate < endTime then
         failwith("Can't close until lastUpdate reached measureStartTime + measurePeriod") else skip;
     (* TODO: what should be done if time is very late? (i.e. cancel event and allow withdrawals?) *)
     if event.isClosed then failwith("Contract already closed. Can't close contract twice") else skip;
