@@ -560,10 +560,21 @@ block {
         const providedLiquidity : tez = getLedgerAmount(key, s.providedLiquidityLedger);
         const providedLiquidityBonus : tez = getLedgerAmount(key, s.liquidityBonusLedger);
 
-        (* TODO: POSSIBLE ERROR, can tez have values bellow zero? *)
-        const totalProfits : tez = Tezos.balance + event.withdrawnLiquidity - event.totalLiquidityProvided;
-        const liquidityPayout : tez = (providedLiquidity
-            + providedLiquidityBonus / 1mutez * totalProfits / event.totalLiquidityBonusSum * 1mutez);
+        (* TODO: distribute liquidity in accordance with WinLiquidityLedger if there are profits
+            and LoseLiquidityLedger if there are losses *)
+
+        (* Profits can be positive or negative (losses) *)
+        const totalProfits : int = (
+            tezToNat(Tezos.balance)
+            + tezToNat(event.withdrawnLiquidity)
+            - tezToNat(event.totalLiquidityProvided));
+
+        liquidityPayout := providedLiquidity;
+        const profitOrLoss : tez =
+            providedLiquidityBonus * abs(totalProfits) / event.totalLiquidityBonusSum * 1mutez;
+
+        if totalProfits > 0 then liquidityPayout := liquidityPayout + profitOrLoss
+        else liquidityPayout := liquidityPayout - profitOrLoss;
 
         event.withdrawnLiquidity := event.withdrawnLiquidity + liquidityPayout;
 
