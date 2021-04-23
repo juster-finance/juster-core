@@ -12,10 +12,14 @@ type oracleParam is string * contract(callbackReturnedValueMichelson)
 
 type eventIdType is option(nat)
 
+type betType is
+| For of unit
+| Against of unit
+
 type betParams is record [
     eventId : eventIdType;
-    betFor : tez;
-    betAgainst : tez;
+    bet : betType;
+    minimalWinAmount : tez;
 ]
 
 type ledgerKey is (address*eventIdType)
@@ -23,46 +27,35 @@ type ledgerKey is (address*eventIdType)
 (* ledger key is address and event ID *)
 type ledgerType is big_map(ledgerKey, tez)
 
-// THIS STORAGE SHOULD BE IN MAP/BIGMAP (each event should have this storage)
-// All ledgers (betsForLedger, betsAgainstLedger and liquidityLedger) should be
-// in three BigMaps with structured key (eventId + address)
+
 type eventType is record [
     currencyPair : string;
-
-    // createdTime is time when contract created, used to ajust liquidity bonus:
     createdTime : timestamp;
 
-    // targetDynamics is natural number in grades of 1_000_000, more than 1kk mean
-    // price is increased, less 1kk mean price is decreased;
-    // if targetDynamics === 1_000_000 -- it means betsFor are bets for any increase
-    // and betsAgainst is bets for any decrese:
+    (* targetDynamics is natural number in grades of targetDynamicsPrecision
+        more than targetDynamicsPrecision means price is increased,
+        less targetDynamicsPrecision mean price is decreased *)
     targetDynamics : nat;
+    targetDynamicsPrecision : nat;
 
-    // betsCloseTime is time when no new bets accepted:
+    (* time since new bets would not be accepted *)
     betsCloseTime : timestamp;
-    // TODO: need to decide, if betsCloseTime equal to measureStartTime or it is needed
-    // to add another time instance?
 
-    // measureStartTime is a time, after betsClosedTime, that setted when someone calls
-    // startMeasurement
-    measureStartTime : timestamp;
-    // this is time from oracle call, need to decide what time is better to keep:
+    (* time that setted when recieved callback from startMeasurement *)
     measureOracleStartTime : timestamp;
     isMeasurementStarted : bool;
 
-    // startRate: the rate at the begining of the measurement:
+    (* the rate at the begining of the measurement *)
     startRate : nat;
 
-    // measurePeriod is amount of seconds from measureStartTime before 
-    // after this period elapsed, anyone can run close() and measure dynamics:
+    (* measurePeriod is amount of seconds from measureStartTime before 
+        anyone can call close tp finish event *)
     measurePeriod : nat;
 
     isClosed : bool;
-    closedTime : timestamp;
-    // the same with closedTime, alternative is closedOracleTime:
     closedOracleTime : timestamp;
 
-    // keeping closedRate for debugging purposes, it can be deleted after:
+    (* keeping closedRate for debugging purposes, it can be deleted after *)
     closedRate : nat;
     closedDynamics : nat;
     isBetsForWin : bool;
@@ -71,13 +64,24 @@ type eventType is record [
 
     betsForSum : tez;
     betsAgainstSum : tez;
-    liquiditySum : tez;
 
-    liquidityPercent : nat;  // natural number from 0 to 1_000_000 that represent share
+    (* withdrawnSum is sum that was withdrawn by participant, needed to calculate
+        sum thatcan withdraw liquidity provider *)
+    withdrawnSum : tez;
 
-    // TODO: Fees should be provided during contract origination!
+    (* Liquidity provider bonus: numerator & denominator *)
+    liquidityPercent : nat;
+    liquidityPrecision : nat;
+
+    (* Fees, that should be provided during contract origination *)
     measureStartFee : tez;
     expirationFee : tez;
+
+    (* Fees, that taken from participants *)
+    rewardCallFee : tez;
+
+    (* Participants count, provider can withdraw liquidity only when participants is 0 *)
+    participants : nat;
 ]
 
 
@@ -90,6 +94,8 @@ type newEventParams is record [
     liquidityPercent : nat;
     measureStartFee : tez;
     expirationFee : tez;
+    betFor : tez;
+    betAgainst : tez;
 ]
 
 
@@ -107,7 +113,6 @@ type storage is record [
     events : big_map(eventIdType, eventType);
     betsForLedger : ledgerType;
     betsAgainstLedger : ledgerType;
-    liquidityLedger : ledgerType;
     lastEventId : eventIdType;
     closeCallEventId : eventIdType;
     measurementStartCallEventId : eventIdType;
@@ -116,6 +121,10 @@ type storage is record [
 
 function newEvent(var eventParams : newEventParams; var s : storage) : storage is
 block {
+    (* TODO: assert that betFor + betAgainst is equal to Tezos.amount *)
+    (* TODO: assert that betFor / betAgainst is less than MAX_RATIO controlled by Manager *)
+    (* TODO: assert that betAgainst / betFor is less than MAX_RATIO controlled by Manager *)
+    (* TODO: assert that Tezos.amount is more than MIN_LIQUIDITY controlled be Manager *)
     (* TODO: decide, should newEvent creator provide liquidity or not? maybe it is not important? *)
     (* TODO: Checking that betsCloseTime of this event is in the future: *)
     (* TODO: Checking that measurePeriod is more than some minimal amount and maybe less than amount *)
@@ -126,25 +135,30 @@ block {
         currencyPair = eventParams.currencyPair;
         createdTime = Tezos.now;
         targetDynamics = eventParams.targetDynamics;
+        targetDynamicsPrecision = 1_000_000n;
         betsCloseTime = eventParams.betsCloseTime;
-        measureStartTime = ("2018-06-30T07:07:32Z" : timestamp);
         measureOracleStartTime = ("2018-06-30T07:07:32Z" : timestamp);
         isMeasurementStarted = False;
         startRate = 0n;
+        (* TODO: control measurePeriod, time to betsCloseTime min|max from Manager *)
         measurePeriod = eventParams.measurePeriod;
         isClosed = False;
-        closedTime = ("2018-06-30T07:07:32Z" : timestamp);
         closedOracleTime = ("2018-06-30T07:07:32Z" : timestamp);
         closedRate = 0n;
         closedDynamics = 0n;
         isBetsForWin = False;
         oracleAddress = eventParams.oracleAddress;
-        betsForSum = 0tez;
-        betsAgainstSum = 0tez;
-        liquiditySum = 0tez;
+        betsForSum = eventParams.betFor;
+        betsAgainstSum = eventParams.betAgainst;
+        (* TODO: control liquidityPrecision, liquidityPercent min|max from Manager *)
         liquidityPercent = eventParams.liquidityPercent;
+        liquidityPrecision = 1_000_000n;
         measureStartFee = eventParams.measureStartFee;
         expirationFee = eventParams.expirationFee;
+        (* TODO: control rewardCallFee from Manager *)
+        rewardCallFee = 100_000mutez;
+        participants = 0n;
+        withdrawnSum = 0tez;
     ];
 
     s.events[s.lastEventId] := newEvent;
@@ -168,7 +182,7 @@ block {
     end;
 } with ledgerAmount
 
-
+(* Returns minimal value from two nat variables a & b *)
 function minNat(var a : nat; var b : nat) : nat is
 block {
     var minValue : nat := a;
@@ -186,11 +200,11 @@ case Big_map.find_opt(eventId, s.events) of
 end;
 
 
-// TODO: need to figure out how to create method with params:
 function bet(var p : betParams; var s : storage) : storage is
 block {
-    const betFor : tez = p.betFor;
-    const betAgainst : tez = p.betAgainst;
+    
+    // const betFor : tez = p.betFor;
+    // const betAgainst : tez = p.betAgainst;
     const eventId : eventIdType = p.eventId;
     const event : eventType = getEvent(s, eventId);
 
@@ -198,49 +212,46 @@ block {
         failwith("Bets after betCloseTime is not allowed")
     else skip;
 
-    if (betFor + betAgainst) =/= Tezos.amount then
+    (*if (betFor + betAgainst) =/= Tezos.amount then
         failwith("Sum of bets is not equal to send amount")
-    else skip;
+    else skip;*)
 
     if event.isClosed then failwith("Event already closed") else skip;
 
+    (*
     const elapsedTime : int = Tezos.now - event.createdTime;
     if (elapsedTime < 0) then
         failwith("Bet adding before contract createdTime (possible wrong createdTime?)")
     else skip;
+    *)
 
+    (* TODO: assert that Tezos.amount is more than zero? (instead it can lead to junk records
+        in ledgers, that would not be removed) *)
     const key : ledgerKey = (Tezos.sender, eventId);
 
-    if (betFor > 0tez) then {
-        const newAmount : tez = getLedgerAmount(key, s.betsForLedger) + betFor;
-        s.betsForLedger[key] := newAmount;
-        event.betsForSum := event.betsForSum + betFor;
-    } else skip;
+    const alreadyBetValue : tez =
+        getLedgerAmount(key, s.betsForLedger) + getLedgerAmount(key, s.betsAgainstLedger);
 
-    if (betAgainst > 0tez) then {
-        const newAmount : tez = getLedgerAmount(key, s.betsAgainstLedger) + betAgainst;
-        s.betsAgainstLedger[key] := newAmount;
-        event.betsAgainstSum := event.betsAgainstSum + betAgainst;
-    } else skip;
+    if (alreadyBetValue = 0tez) then
+        event.participants := event.participants + 1n;
+    else skip;
 
-    (* Adding liquidity bonus:
-        Liquidity represent added value, that goes both to betFor and betAgainst pools.
-        Liquidity is important at the begining of the event and useless at the end. To evaluate
-        liquidity bonus, contract calculates remained time (seconds till betsCloseTime) and used
-        it as a linear multiplicator for minimal amount between betAgainst and betFor
-     *)
-    if (betAgainst > 0tez) and (betFor > 0tez) then {
-        // TODO: s.betsCloseTime SHOULD be more than s.createdTime, need to have check in contract creation
-        const totalBettingTime : nat = abs(event.betsCloseTime - event.createdTime);
-        const remainedTime : int = totalBettingTime - elapsedTime;
-
-        const addedLiquidity : nat = minNat(tezToNat(betAgainst), tezToNat(betFor));
-        const liquidityBonus : tez = abs(remainedTime) * addedLiquidity * 1mutez / totalBettingTime;
-
-        const newAmount : tez = getLedgerAmount(key, s.liquidityLedger) + liquidityBonus;
-        s.liquidityLedger[key] := newAmount;
-        event.liquiditySum := event.liquiditySum + liquidityBonus;
-    } else skip;
+    case p.bet of
+    | For -> block {
+        event.betsForSum := event.betsForSum + Tezos.amount;
+        const possibleWinAmount : tez = (
+            Tezos.amount + Tezos.amount / 1mutez * event.betsAgainstSum / event.betsForSum * 1mutez);
+        (* TODO: check that amount is more than p.minimalWinAmount *)
+        s.betsForLedger[key] := getLedgerAmount(key, s.betsForLedger) + possibleWinAmount;
+    }
+    | Against -> {
+        event.betsAgainstSum := event.betsAgainstSum + Tezos.amount;
+        const possibleWinAmount : tez = (
+            Tezos.amount + Tezos.amount / 1mutez * event.betsForSum / event.betsAgainstSum * 1mutez);
+        (* TODO: check that amount is more than p.minimalWinAmount *)
+        s.betsAgainstLedger[key] := getLedgerAmount(key, s.betsAgainstLedger) + possibleWinAmount;
+    }
+    end;
 
     s.events[eventId] := event;
 } with s
@@ -312,6 +323,8 @@ block {
 
     const eventId : eventIdType = s.measurementStartCallEventId;
 
+    (* TODO: Check that current time is not far away from betsCloseTime, if it is,
+        run Force Majeure. Give Manager ability to control this timedelta *)
     case eventId of
     | Some(measurementStartCallEventId) -> skip
     | None -> failwith("measurementStartCallEventId is empty")
@@ -330,7 +343,6 @@ block {
     // Starting measurement:
     event.measureOracleStartTime := param.lastUpdate;
     event.startRate := param.rate;
-    event.measureStartTime := Tezos.now;
     event.isMeasurementStarted := True;
 
     // Paying measureStartFee for this method initiator:
@@ -353,6 +365,9 @@ function closeCallback(
 block {
 
     const eventId : eventIdType = s.closeCallEventId;
+
+    (* TODO: Check that current time is not far away from measurementStartTime + timedelta,
+        if it is, run Force Majeure. Give Manager ability to control this timedelta *)
 
     case eventId of
     | Some(closeCallEventId) -> skip
@@ -381,7 +396,6 @@ block {
     event.closedOracleTime := param.lastUpdate;
     event.closedRate := param.rate;
     event.closedDynamics := param.rate * 1000000n / event.startRate;
-    event.closedTime := Tezos.now;
     event.isClosed := True;
     event.isBetsForWin := event.closedDynamics > event.targetDynamics;
 
@@ -404,7 +418,8 @@ block {
 
 function withdraw(var eventId : eventIdType; var s: storage) : (list(operation) * storage) is
 block {
-
+    (* TODO: add list of reciever addresses to make bulk transactions
+        and make it possible to call it by anyone *)
     const event : eventType = getEvent(s, eventId);
     const key : ledgerKey = (Tezos.sender, eventId);
 
@@ -412,25 +427,9 @@ block {
     if event.isClosed then skip
     else failwith("Withdraw is not allowed until contract is closed");
 
-    // Calculating payoutAmount:
-    const winBetsSum : tez =
-        if event.isBetsForWin then event.betsForSum else event.betsAgainstSum;
-    const winLedger : ledgerType =
-        if event.isBetsForWin then s.betsForLedger else s.betsAgainstLedger;
-
-    const participantSum : tez = getLedgerAmount(key, winLedger);
-    const participantLiquidity : tez = getLedgerAmount(key, s.liquidityLedger);
-
-    const totalBets : tez = event.betsForSum + event.betsAgainstSum;
-    const totalWinPayoutAmount : tez = totalBets * abs (1_000_000n - event.liquidityPercent) / 1_000_000n;
-    const totalLiquidityBonus : tez = totalBets * event.liquidityPercent / 1_000_000n;
-
-    const winPayoutAmount : tez = (
-        participantSum / 1mutez * totalWinPayoutAmount / winBetsSum * 1mutez);
-    const liquidityBonusAmount : tez = (
-        participantLiquidity / 1mutez * totalLiquidityBonus / event.liquiditySum * 1mutez);
-
-    const payoutAmount : tez = winPayoutAmount + liquidityBonusAmount;
+    const payoutAmount : tez = (
+        getLedgerAmount(key, s.betsForLedger)
+        + getLedgerAmount(key, s.betsAgainstLedger));
 
     // Getting reciever:
     const receiver : contract(unit) = getReceiver(Tezos.sender);
@@ -438,14 +437,22 @@ block {
     // Removing sender from all ledgers:
     s.betsForLedger := Big_map.remove(key, s.betsForLedger);
     s.betsAgainstLedger := Big_map.remove(key, s.betsAgainstLedger);
-    s.liquidityLedger := Big_map.remove(key, s.liquidityLedger);
+    event.withdrawnSum := event.withdrawnSum + payoutAmount;
+
+    event.participants := abs(event.participants - 1n);
 
     if (payoutAmount = 0tez) then failwith("Nothing to withdraw") else skip;
 
     const payoutOperation : operation = Tezos.transaction(unit, payoutAmount, receiver);
 
+    s.events[eventId] := event;
+
 } with (list[payoutOperation], s)
 
+
+(* TODO: method to withdraw for liquidity provider:
+    event.betsForSum + event.betsAgainstSum - event.withdrawnSum
+ *)
 
 function main (var params : action; var s : storage) : (list(operation) * storage) is
 case params of
