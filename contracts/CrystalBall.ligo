@@ -539,11 +539,6 @@ block {
     (* Getting reciever: *)
     const receiver : contract(unit) = getReceiver(Tezos.sender);
 
-    (* Removing sender from all ledgers: *)
-    s.betsForLedger := Big_map.remove(key, s.betsForLedger);
-    s.betsAgainstLedger := Big_map.remove(key, s.betsAgainstLedger);
-    // event.withdrawnSum := event.withdrawnSum + winPayout;
-
     (* TODO: winPayout calculated only for winners, need to remove loosed particiants too *)
     const totalBets : tez = (
         getLedgerAmount(key, s.betsForLedger)
@@ -552,6 +547,10 @@ block {
     if totalBets > 0tez then
         event.participants := abs(event.participants - 1n);
     else skip;
+
+    (* Removing sender from all ledgers: *)
+    s.betsForLedger := Big_map.remove(key, s.betsForLedger);
+    s.betsAgainstLedger := Big_map.remove(key, s.betsAgainstLedger);
 
     (* Payment for liquidity provider *)
     var liquidityPayout : tez := 0tez;
