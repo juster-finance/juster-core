@@ -65,9 +65,19 @@ type eventType is record [
     betsForSum : tez;
     betsAgainstSum : tez;
 
+    totalLiquidityProvided : tez;
+
+    (* totalLiquidityBonusSum is like provided liquidity, but reduced in time
+        it is used to calculate liquidity share bonuses *)
+    totalLiquidityBonusSum : tez;
+
     (* withdrawnSum is sum that was withdrawn by participant, needed to calculate
         sum thatcan withdraw liquidity provider *)
-    withdrawnSum : tez;
+    // withdrawnSum : tez;  // ?
+
+    (* withdrawnLiquidity is sum that was withdrawn by providers, needed to calculate
+        sum that can withdraw another liquidity provider *)
+    withdrawnLiquidity : tez;
 
     (* Liquidity provider bonus: numerator & denominator *)
     liquidityPercent : nat;
@@ -82,6 +92,9 @@ type eventType is record [
 
     (* Participants count, provider can withdraw liquidity only when participants is 0 *)
     participants : nat;
+
+    (* Precision used in ratio calculations *)
+    ratioPrecision : nat;
 ]
 
 
@@ -94,13 +107,22 @@ type newEventParams is record [
     liquidityPercent : nat;
     measureStartFee : tez;
     expirationFee : tez;
-    betFor : tez;
-    betAgainst : tez;
+]
+
+
+type provideLiquidityParams is record [
+    eventId : eventIdType;
+
+    (* Expected distribution / ratio of the event *)
+    expectedRatioFor : nat;
+    expectedRatioAgainst : nat;
+    maxSlippage : nat;
 ]
 
 
 type action is
 | NewEvent of newEventParams
+| ProvideLiquidity of provideLiquidityParams
 | Bet of betParams
 | StartMeasurement of eventIdType
 | StartMeasurementCallback of callbackReturnedValueMichelson
@@ -113,6 +135,13 @@ type storage is record [
     events : big_map(eventIdType, eventType);
     betsForLedger : ledgerType;
     betsAgainstLedger : ledgerType;
+
+    (* Need two ledgers for liquidity: one with total provided value needed
+        to return in withdrawal, second with liquidity bonus, that used to
+        calculate share of profits / losses *)
+    providedLiquidityLedger : ledgerType;
+    liquidityBonusLedger : ledgerType;
+
     lastEventId : eventIdType;
     closeCallEventId : eventIdType;
     measurementStartCallEventId : eventIdType;
@@ -131,6 +160,7 @@ block {
     (* TODO: Check that liquidityPercent is less than 1_000_000 *)
     (* TODO: Check that measureStartFee and expirationFee is equal to Tezos.amount *)
 
+    (* TODO: separate method to add liquidity *)
     const newEvent : eventType = record[
         currencyPair = eventParams.currencyPair;
         createdTime = Tezos.now;
@@ -148,8 +178,12 @@ block {
         closedDynamics = 0n;
         isBetsForWin = False;
         oracleAddress = eventParams.oracleAddress;
-        betsForSum = eventParams.betFor;
-        betsAgainstSum = eventParams.betAgainst;
+        betsForSum = 0tez;
+        betsAgainstSum = 0tez;
+        totalLiquidityBonusSum = 0tez;
+        totalLiquidityProvided = 0tez;
+        withdrawnLiquidity = 0tez;
+
         (* TODO: control liquidityPrecision, liquidityPercent min|max from Manager *)
         liquidityPercent = eventParams.liquidityPercent;
         liquidityPrecision = 1_000_000n;
@@ -158,7 +192,8 @@ block {
         (* TODO: control rewardCallFee from Manager *)
         rewardCallFee = 100_000mutez;
         participants = 0n;
-        withdrawnSum = 0tez;
+        // withdrawnSum = 0tez;
+        ratioPrecision = 1_000_000n;
     ];
 
     s.events[s.lastEventId] := newEvent;
@@ -182,6 +217,7 @@ block {
     end;
 } with ledgerAmount
 
+
 (* Returns minimal value from two nat variables a & b *)
 function minNat(var a : nat; var b : nat) : nat is
 block {
@@ -202,7 +238,10 @@ end;
 
 function bet(var p : betParams; var s : storage) : storage is
 block {
-    
+    (* TODO: check that there are liquidity in both pools (>0) *)
+    (* TODO: reduce bet value by liquidity percent *)
+        // maybe reduce/raise liquidity percent during bet period?
+
     // const betFor : tez = p.betFor;
     // const betAgainst : tez = p.betAgainst;
     const eventId : eventIdType = p.eventId;
@@ -242,6 +281,8 @@ block {
         const possibleWinAmount : tez = (
             Tezos.amount + Tezos.amount / 1mutez * event.betsAgainstSum / event.betsForSum * 1mutez);
         (* TODO: check that amount is more than p.minimalWinAmount *)
+        (* TODO: remove liquidity from bet *)
+
         s.betsForLedger[key] := getLedgerAmount(key, s.betsForLedger) + possibleWinAmount;
     }
     | Against -> {
@@ -249,11 +290,63 @@ block {
         const possibleWinAmount : tez = (
             Tezos.amount + Tezos.amount / 1mutez * event.betsForSum / event.betsAgainstSum * 1mutez);
         (* TODO: check that amount is more than p.minimalWinAmount *)
+        (* TODO: remove liquidity from bet *)
         s.betsAgainstLedger[key] := getLedgerAmount(key, s.betsAgainstLedger) + possibleWinAmount;
     }
     end;
 
     s.events[eventId] := event;
+} with s
+
+
+function provideLiquidity(var p : provideLiquidityParams; var s : storage) : storage is
+block {
+    (* TODO: assert that Sender.amount > 0 *)
+    const eventId : eventIdType = p.eventId;
+    const event : eventType = getEvent(s, eventId);
+    const totalBets : tez = event.betsForSum + event.betsAgainstSum;
+    const key : ledgerKey = (Tezos.sender, eventId);
+
+    (* TODO: calculate expected ratio using provided ratios *)
+    const expectedRatio : nat = p.expectedRatioFor * event.ratioPrecision / p.expectedRatioAgainst;
+
+    var ratio : nat := expectedRatio;
+    if totalBets = 0tez then
+        (* Adding first liquidity scenario *)
+        skip;
+    else
+        (* Adding more liquidity scenario *)
+        ratio := event.betsForSum * event.ratioPrecision / event.betsAgainstSum;
+
+    (* TODO: compare ratio and check p.maxSlippage is less than expected *)
+
+    (* Distributing liquidity: *)
+    const betFor : tez = Tezos.amount * ratio / event.ratioPrecision;
+    const betAgainst : tez = Tezos.amount - betFor;
+    event.betsForSum := event.betsForSum + betFor;
+    event.betsAgainstSum := event.betsAgainstSum + betAgainst;
+
+    (* Calculating liquidity bonus: *)
+    const totalBettingTime : nat = abs(event.betsCloseTime - event.createdTime);
+    const elapsedTime : int = Tezos.now - event.createdTime;
+    if (elapsedTime < 0) then
+        failwith("Bet adding before contract createdTime (possible wrong createdTime?)")
+    else skip;
+
+    const remainedTime : int = totalBettingTime - elapsedTime;
+    const addedLiquidity : tez = betAgainst + betFor;
+    const liquidityBonus : tez = abs(remainedTime) * addedLiquidity / totalBettingTime;
+
+    const newAmount : tez = getLedgerAmount(key, s.providedLiquidityLedger) + addedLiquidity;
+    s.providedLiquidityLedger[key] := newAmount;
+    event.totalLiquidityProvided := event.totalLiquidityProvided + addedLiquidity;
+
+    const newAmount : tez = getLedgerAmount(key, s.liquidityBonusLedger) + liquidityBonus;
+    s.liquidityBonusLedger[key] := newAmount;
+    event.totalLiquidityBonusSum := event.totalLiquidityBonusSum + liquidityBonus;
+
+    s.events[eventId] := event;
+
 } with s
 
 
@@ -416,34 +509,64 @@ block {
 } with (list[expirationFeeOperation], s)
 
 
+(* TODO: rename to reward? *)
 function withdraw(var eventId : eventIdType; var s: storage) : (list(operation) * storage) is
 block {
     (* TODO: add list of reciever addresses to make bulk transactions
         and make it possible to call it by anyone *)
+    (* TODO: allow to call this method by liquidity providers after K hours after close
+        and reduce withdraw amount a bit in this case *)
+
     const event : eventType = getEvent(s, eventId);
     const key : ledgerKey = (Tezos.sender, eventId);
 
-    // Checks that this method can be runned:
     if event.isClosed then skip
     else failwith("Withdraw is not allowed until contract is closed");
 
-    const payoutAmount : tez = (
+    const winPayout : tez = (
         getLedgerAmount(key, s.betsForLedger)
         + getLedgerAmount(key, s.betsAgainstLedger));
 
-    // Getting reciever:
+    (* Getting reciever: *)
     const receiver : contract(unit) = getReceiver(Tezos.sender);
 
-    // Removing sender from all ledgers:
+    (* Removing sender from all ledgers: *)
     s.betsForLedger := Big_map.remove(key, s.betsForLedger);
     s.betsAgainstLedger := Big_map.remove(key, s.betsAgainstLedger);
-    event.withdrawnSum := event.withdrawnSum + payoutAmount;
+    // event.withdrawnSum := event.withdrawnSum + winPayout;
 
-    event.participants := abs(event.participants - 1n);
+    if winPayout > 0tez then
+        event.participants := abs(event.participants - 1n);
+    else skip;
 
-    if (payoutAmount = 0tez) then failwith("Nothing to withdraw") else skip;
+    (* Payment for liquidity provider *)
+    var liquidityPayout : tez := 0tez;
+    if event.participants = 0n then
+    block {
+        (* Calculating liquidity bonus for provider and distributing profit/loss *)
+        const providedLiquidity : tez = getLedgerAmount(key, s.providedLiquidityLedger);
+        const providedLiquidityBonus : tez = getLedgerAmount(key, s.liquidityBonusLedger);
 
-    const payoutOperation : operation = Tezos.transaction(unit, payoutAmount, receiver);
+        (* TODO: POSSIBLE ERROR, can tez have values bellow zero? *)
+        const totalProfits : tez = Tezos.balance + event.withdrawnLiquidity - event.totalLiquidityProvided;
+        const liquidityPayout : tez = (providedLiquidity
+            + providedLiquidityBonus / 1mutez * totalProfits / event.totalLiquidityBonusSum * 1mutez);
+
+        event.withdrawnLiquidity := event.withdrawnLiquidity + liquidityPayout;
+
+        (* Removing keys from liquidity ledgers *)
+        s.providedLiquidityLedger := Big_map.remove(key, s.providedLiquidityLedger);
+        s.liquidityBonusLedger := Big_map.remove(key, s.liquidityBonusLedger);
+    }
+    else skip;
+
+    const totalPayoutAmount : tez = winPayout + liquidityPayout;
+
+    (* TODO: do we need this check? is it possible that there are participants in the
+        ledger with 0 amount, that can not be deleted because of this assert? *)
+    if (totalPayoutAmount = 0tez) then failwith("Nothing to withdraw") else skip;
+
+    const payoutOperation : operation = Tezos.transaction(unit, totalPayoutAmount, receiver);
 
     s.events[eventId] := event;
 
@@ -452,12 +575,14 @@ block {
 
 (* TODO: method to withdraw for liquidity provider:
     event.betsForSum + event.betsAgainstSum - event.withdrawnSum
+    ??? Decided to do it inside withdraw. TODO: remove this TODO?
  *)
 
 function main (var params : action; var s : storage) : (list(operation) * storage) is
 case params of
 | NewEvent(p) -> ((nil: list(operation)), newEvent(p, s))
 | Bet(p) -> ((nil: list(operation)), bet(p, s))
+| ProvideLiquidity(p) -> ((nil: list(operation)), provideLiquidity(p, s))
 | StartMeasurement(p) -> (startMeasurement(p, s))
 | StartMeasurementCallback(p) -> (startMeasurementCallback(p, s))
 | Close(p) -> (close(p, s))
