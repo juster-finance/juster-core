@@ -60,12 +60,24 @@ type eventType is record [
     closedDynamics : nat;
     isBetsForWin : bool;
 
+    (* TODO: use entrypoint instead of address, example:
+        https://github.com/atomex-me/atomex-fa12-ligo/blob/6e093b484d5cf1ddf66245a6eb9d8d11dfbb45da/src/atomex.ligo#L7 *)
     oracleAddress : address;
 
     betsForSum : tez;
     betsAgainstSum : tez;
 
+    (* Expected payments if one of the pool wins (required to limit bets when
+        it is not possible to cover them): *)
+    betsForWinningPoolSum : tez;
+    betsAgainstWinningPoolSum : tez;
+
+    (* This is total liquidity provided through provideLiquidity method, it is
+        used to calculate profits *)
     totalLiquidityProvided : tez;
+    (* TODO: do we need both betsForWinningPoolSum + betsAgainstWinningPoolSum and
+        totalLiquidityProvided + all withdrawal sums? Because total liquidity can be
+        calculated using Tezos.balance, looks like it is easy to create redundant variables *)
 
     (* totalLiquidityBonusSum is like provided liquidity, but reduced in time
         it is used to calculate liquidity share bonuses *)
@@ -198,6 +210,8 @@ block {
         // withdrawnSum = 0tez;
         (* TODO: control new event ratioPrecision from Manager *)
         ratioPrecision = 1_000_000n;
+        betsForWinningPoolSum = 0tez;
+        betsAgainstWinningPoolSum = 0tez;
     ];
 
     s.events[s.lastEventId] := newEvent;
@@ -231,6 +245,13 @@ block {
 
 
 function tezToNat(var t : tez) : nat is t / 1mutez;
+
+
+function natToTez(var t : nat) : tez is t * 1mutez;
+
+
+function minTez(var a : tez; var b : tez) : tez is
+natToTez(minNat(tezToNat(a), tezToNat(b)))
 
 
 function getEvent(var s : storage; var eventId : eventIdType) : eventType is
@@ -279,22 +300,47 @@ block {
         event.participants := event.participants + 1n;
     else skip;
 
+    var possibleWinAmount : tez := 0tez;
+    const totalBets : tez = event.betsForSum + event.betsAgainstSum;
+
+    (* TODO: refactor this two similar blocks somehow? or keep straight and simple? *)
     case p.bet of
     | For -> block {
         event.betsForSum := event.betsForSum + Tezos.amount;
-        const possibleWinAmount : tez = (
+        possibleWinAmount := (
             Tezos.amount + Tezos.amount / 1mutez * event.betsAgainstSum / event.betsForSum * 1mutez);
-        (* TODO: check that amount is more than p.minimalWinAmount *)
-        (* TODO: remove liquidity from bet *)
 
+        (* Excluding liquidity fee: *)
+        (* TODO: maybe make raising fee from 0 to liquidityPercent during bet period? *)
+        possibleWinAmount :=
+            possibleWinAmount * abs(event.liquidityPrecision - event.liquidityPercent)
+            / event.liquidityPrecision;
+        const unallocatedBets : tez = totalBets - event.betsForWinningPoolSum;
+        possibleWinAmount := minTez(possibleWinAmount, unallocatedBets);
+
+        if possibleWinAmount < p.minimalWinAmount then failwith("Wrong minimalWinAmount")
+        else skip;
+
+        event.betsForWinningPoolSum := event.betsForWinningPoolSum + possibleWinAmount;
         s.betsForLedger[key] := getLedgerAmount(key, s.betsForLedger) + possibleWinAmount;
     }
     | Against -> {
         event.betsAgainstSum := event.betsAgainstSum + Tezos.amount;
-        const possibleWinAmount : tez = (
+        possibleWinAmount := (
             Tezos.amount + Tezos.amount / 1mutez * event.betsForSum / event.betsAgainstSum * 1mutez);
-        (* TODO: check that amount is more than p.minimalWinAmount *)
-        (* TODO: remove liquidity from bet *)
+
+        (* Excluding liquidity fee: *)
+        (* TODO: maybe make raising fee from 0 to liquidityPercent during bet period? *)
+        possibleWinAmount :=
+            possibleWinAmount * abs(event.liquidityPrecision - event.liquidityPercent)
+            / event.liquidityPrecision;
+        const unallocatedBets : tez = totalBets - event.betsAgainstWinningPoolSum;
+        possibleWinAmount := minTez(possibleWinAmount, unallocatedBets);
+
+        if possibleWinAmount < p.minimalWinAmount then failwith("Wrong minimalWinAmount")
+        else skip;
+
+        event.betsAgainstWinningPoolSum := event.betsAgainstWinningPoolSum + possibleWinAmount;
         s.betsAgainstLedger[key] := getLedgerAmount(key, s.betsAgainstLedger) + possibleWinAmount;
     }
     end;
