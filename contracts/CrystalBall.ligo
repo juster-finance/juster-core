@@ -116,6 +116,9 @@ type provideLiquidityParams is record [
     (* Expected distribution / ratio of the event *)
     expectedRatioFor : nat;
     expectedRatioAgainst : nat;
+
+    (* Max Slippage value in ratioPrecision. if 0n - ratio should be equal to expected,
+        if equals K*ratioPrecision, ratio can diff not more than in (K-1) times *)
     maxSlippage : nat;
 ]
 
@@ -193,6 +196,7 @@ block {
         rewardCallFee = 100_000mutez;
         participants = 0n;
         // withdrawnSum = 0tez;
+        (* TODO: control new event ratioPrecision from Manager *)
         ratioPrecision = 1_000_000n;
     ];
 
@@ -301,6 +305,7 @@ block {
 
 function provideLiquidity(var p : provideLiquidityParams; var s : storage) : storage is
 block {
+    (* TODO: check that both expected ratio is > 0 *)
     (* TODO: assert that Sender.amount > 0 *)
     const eventId : eventIdType = p.eventId;
     const event : eventType = getEvent(s, eventId);
@@ -308,16 +313,19 @@ block {
     const key : ledgerKey = (Tezos.sender, eventId);
 
     (* TODO: calculate expected ratio using provided ratios *)
-    const expectedRatio : nat = p.expectedRatioFor * event.ratioPrecision / p.expectedRatioAgainst;
+    const expectedRatioSum : nat = p.expectedRatioFor + p.expectedRatioAgainst;
+    const expectedRatio : nat = p.expectedRatioFor * event.ratioPrecision / expectedRatioSum;
 
     var ratio : nat := expectedRatio;
     if totalBets = 0tez then
         (* Adding first liquidity scenario *)
         skip;
     else
+    block {
         (* Adding more liquidity scenario *)
-        ratio := event.betsForSum * event.ratioPrecision / event.betsAgainstSum;
-
+        const ratioSum : tez = event.betsForSum + event.betsAgainstSum;
+        ratio := event.betsForSum * event.ratioPrecision / ratioSum;
+    };
     (* TODO: compare ratio and check p.maxSlippage is less than expected *)
 
     (* Distributing liquidity: *)
@@ -523,9 +531,10 @@ block {
     if event.isClosed then skip
     else failwith("Withdraw is not allowed until contract is closed");
 
-    const winPayout : tez = (
-        getLedgerAmount(key, s.betsForLedger)
-        + getLedgerAmount(key, s.betsAgainstLedger));
+    (* TODO: calculate payout only for winning ledger *)
+    var winPayout : tez := getLedgerAmount(key, s.betsForLedger);
+    if event.isBetsForWin then skip
+    else winPayout := getLedgerAmount(key, s.betsAgainstLedger);
 
     (* Getting reciever: *)
     const receiver : contract(unit) = getReceiver(Tezos.sender);
@@ -535,7 +544,12 @@ block {
     s.betsAgainstLedger := Big_map.remove(key, s.betsAgainstLedger);
     // event.withdrawnSum := event.withdrawnSum + winPayout;
 
-    if winPayout > 0tez then
+    (* TODO: winPayout calculated only for winners, need to remove loosed particiants too *)
+    const totalBets : tez = (
+        getLedgerAmount(key, s.betsForLedger)
+        + getLedgerAmount(key, s.betsAgainstLedger));
+
+    if totalBets > 0tez then
         event.participants := abs(event.participants - 1n);
     else skip;
 
@@ -561,11 +575,6 @@ block {
     else skip;
 
     const totalPayoutAmount : tez = winPayout + liquidityPayout;
-
-    (* TODO: do we need this check? is it possible that there are participants in the
-        ledger with 0 amount, that can not be deleted because of this assert? *)
-    if (totalPayoutAmount = 0tez) then failwith("Nothing to withdraw") else skip;
-
     const payoutOperation : operation = Tezos.transaction(unit, totalPayoutAmount, receiver);
 
     s.events[eventId] := event;
