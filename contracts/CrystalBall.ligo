@@ -79,9 +79,10 @@ type eventType is record [
         totalLiquidityProvided + all withdrawal sums? Because total liquidity can be
         calculated using Tezos.balance, looks like it is easy to create redundant variables *)
 
-    (* totalLiquidityBonusSum is like provided liquidity, but reduced in time
-        it is used to calculate liquidity share bonuses *)
-    totalLiquidityBonusSum : tez;
+    (* totalLiquidityForBonusSum & totalLiquidityAgainstBonusSum is like provided liquidity,
+        but reduced in time. It is used to calculate liquidity share bonuses for providers *)
+    totalLiquidityForBonusSum : tez;
+    totalLiquidityAgainstBonusSum : tez;
 
     (* withdrawnSum is sum that was withdrawn by participant, needed to calculate
         sum thatcan withdraw liquidity provider *)
@@ -151,11 +152,12 @@ type storage is record [
     betsForLedger : ledgerType;
     betsAgainstLedger : ledgerType;
 
-    (* Need two ledgers for liquidity: one with total provided value needed
-        to return in withdrawal, second with liquidity bonus, that used to
-        calculate share of profits / losses *)
+    (* There are three ledgers used to manage liquidity:
+        - one with total provided value needed to return in withdrawal,
+        - and two with liquidity bonus, that used to calculate share of profits / losses *)
     providedLiquidityLedger : ledgerType;
-    liquidityBonusLedger : ledgerType;
+    liquidityForBonusLedger : ledgerType;
+    liquidityAgainstBonusLedger : ledgerType;
 
     lastEventId : eventIdType;
     closeCallEventId : eventIdType;
@@ -195,7 +197,8 @@ block {
         oracleAddress = eventParams.oracleAddress;
         betsForSum = 0tez;
         betsAgainstSum = 0tez;
-        totalLiquidityBonusSum = 0tez;
+        totalLiquidityForBonusSum = 0tez;
+        totalLiquidityAgainstBonusSum = 0tez;
         totalLiquidityProvided = 0tez;
         withdrawnLiquidity = 0tez;
 
@@ -388,16 +391,24 @@ block {
     else skip;
 
     const remainedTime : int = totalBettingTime - elapsedTime;
-    const addedLiquidity : tez = betAgainst + betFor;
-    const liquidityBonus : tez = abs(remainedTime) * addedLiquidity / totalBettingTime;
+    // const addedLiquidity : tez = betAgainst + betFor;
 
-    const newAmount : tez = getLedgerAmount(key, s.providedLiquidityLedger) + addedLiquidity;
+    (* Total liquidity: *)
+    event.totalLiquidityProvided := event.totalLiquidityProvided + betAgainst + betFor;
+    const newAmount : tez = getLedgerAmount(key, s.providedLiquidityLedger) + betAgainst + betFor;
     s.providedLiquidityLedger[key] := newAmount;
-    event.totalLiquidityProvided := event.totalLiquidityProvided + addedLiquidity;
 
-    const newAmount : tez = getLedgerAmount(key, s.liquidityBonusLedger) + liquidityBonus;
-    s.liquidityBonusLedger[key] := newAmount;
-    event.totalLiquidityBonusSum := event.totalLiquidityBonusSum + liquidityBonus;
+    (* liquidity For bonus: *)
+    const liquidityForBonus : tez = abs(remainedTime) * betFor / totalBettingTime;
+    const newAmount : tez = getLedgerAmount(key, s.liquidityForBonusLedger) + liquidityForBonus;
+    s.liquidityForBonusLedger[key] := newAmount;
+    event.totalLiquidityForBonusSum := event.totalLiquidityForBonusSum + liquidityForBonus;
+
+    (* liquidity Against bonus: *)
+    const liquidityAgainstBonus : tez = abs(remainedTime) * betAgainst / totalBettingTime;
+    const newAmount : tez = getLedgerAmount(key, s.liquidityAgainstBonusLedger) + liquidityAgainstBonus;
+    s.liquidityAgainstBonusLedger[key] := newAmount;
+    event.totalLiquidityAgainstBonusSum := event.totalLiquidityAgainstBonusSum + liquidityAgainstBonus;
 
     s.events[eventId] := event;
 
@@ -604,10 +615,6 @@ block {
     block {
         (* Calculating liquidity bonus for provider and distributing profit/loss *)
         const providedLiquidity : tez = getLedgerAmount(key, s.providedLiquidityLedger);
-        const providedLiquidityBonus : tez = getLedgerAmount(key, s.liquidityBonusLedger);
-
-        (* TODO: distribute liquidity in accordance with WinLiquidityLedger if there are profits
-            and LoseLiquidityLedger if there are losses *)
 
         (* Profits can be positive or negative (losses) *)
         const totalProfits : int = (
@@ -615,18 +622,47 @@ block {
             + tezToNat(event.withdrawnLiquidity)
             - tezToNat(event.totalLiquidityProvided));
 
-        liquidityPayout := providedLiquidity;
-        const profitOrLoss : tez =
-            providedLiquidityBonus * abs(totalProfits) / event.totalLiquidityBonusSum * 1mutez;
+        (* There are two possible outcomes:
+            1. When providers have profits - they are distributed using win ledger
+            2. When providers have losses - they are distributed using loss ledger
+        *)
 
-        if totalProfits > 0 then liquidityPayout := liquidityPayout + profitOrLoss
-        else liquidityPayout := liquidityPayout - profitOrLoss;
+        (* TODO: this staircases look very complex, maybe there are a way to refactor them?
+            -- but only after there are would some tests
+            -- maybe use ledger with 4 keys, two of them options: (address*eventId*[For|Against]*[Liquidity|Bonus|Bet])?
+            -- or maybe wrap profitOrLoss calculation into separate function and keep only one staircase? (<<this worth to try!)
+        *)
+
+        var providedLiquidityBonus : tez := 0tez;
+        if event.isBetsForWin then
+            if totalProfits > 0 then providedLiquidityBonus := getLedgerAmount(key, s.liquidityForBonusLedger)
+            else providedLiquidityBonus := getLedgerAmount(key, s.liquidityAgainstBonusLedger)
+        else
+            if totalProfits > 0 then providedLiquidityBonus := getLedgerAmount(key, s.liquidityAgainstBonusLedger)
+            else providedLiquidityBonus := getLedgerAmount(key, s.liquidityForBonusLedger);
+
+        (* The same staicase for totalLiquidityBonusSum: *)
+        var totalLiquidityBonusSum : tez := 0tez;
+        if event.isBetsForWin then
+            if totalProfits > 0 then totalLiquidityBonusSum := event.totalLiquidityForBonusSum
+            else totalLiquidityBonusSum := event.totalLiquidityAgainstBonusSum
+        else
+            if totalProfits > 0 then totalLiquidityBonusSum := event.totalLiquidityAgainstBonusSum
+            else totalLiquidityBonusSum := event.totalLiquidityForBonusSum;
+
+
+        const profitOrLoss : tez =
+            providedLiquidityBonus * abs(totalProfits) / totalLiquidityBonusSum * 1mutez;
+
+        if totalProfits > 0 then liquidityPayout := providedLiquidity + profitOrLoss
+        else liquidityPayout := providedLiquidity - profitOrLoss;
 
         event.withdrawnLiquidity := event.withdrawnLiquidity + liquidityPayout;
 
         (* Removing keys from liquidity ledgers *)
         s.providedLiquidityLedger := Big_map.remove(key, s.providedLiquidityLedger);
-        s.liquidityBonusLedger := Big_map.remove(key, s.liquidityBonusLedger);
+        s.liquidityForBonusLedger := Big_map.remove(key, s.liquidityForBonusLedger);
+        s.liquidityAgainstBonusLedger := Big_map.remove(key, s.liquidityAgainstBonusLedger);
     }
     else skip;
 
@@ -637,11 +673,6 @@ block {
 
 } with (list[payoutOperation], s)
 
-
-(* TODO: method to withdraw for liquidity provider:
-    event.betsForSum + event.betsAgainstSum - event.withdrawnSum
-    ??? Decided to do it inside withdraw. TODO: remove this TODO?
- *)
 
 function main (var params : action; var s : storage) : (list(operation) * storage) is
 case params of
