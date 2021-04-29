@@ -149,7 +149,11 @@ type action is
 
 type storage is record [
     events : big_map(eventIdType, eventType);
+
+    (* Ledger with winning amounts for participants if "For" wins: *)
     betsForLedger : ledgerType;
+
+    (* Ledger with winning amounts for participants if "Against" wins: *)
     betsAgainstLedger : ledgerType;
 
     (* There are three ledgers used to manage liquidity:
@@ -212,7 +216,7 @@ block {
         participants = 0n;
         // withdrawnSum = 0tez;
         (* TODO: control new event ratioPrecision from Manager *)
-        ratioPrecision = 1_000_000n;
+        ratioPrecision = 100_000_000n;
         betsForWinningPoolSum = 0tez;
         betsAgainstWinningPoolSum = 0tez;
     ];
@@ -352,6 +356,15 @@ block {
 } with s
 
 
+function roundDiv(var numerator: nat; var denominator: nat) : nat is
+block {
+    var result : nat := numerator / denominator;
+    const remainder : nat = numerator mod denominator;
+    const threshold : nat = denominator / 2n;
+    if (remainder > threshold) then result := result + 1n else skip;
+} with result
+
+
 function provideLiquidity(var p : provideLiquidityParams; var s : storage) : storage is
 block {
     (* TODO: check that both expected ratio is > 0 *)
@@ -378,7 +391,8 @@ block {
     (* TODO: compare ratio and check p.maxSlippage is less than expected *)
 
     (* Distributing liquidity: *)
-    const betFor : tez = Tezos.amount * ratio / event.ratioPrecision;
+    (* TODO: this division leads to round 99.9 to 99, maybe need to do something with this? *)
+    const betFor : tez = natToTez(roundDiv(tezToNat(Tezos.amount * ratio), event.ratioPrecision));
     const betAgainst : tez = Tezos.amount - betFor;
     event.betsForSum := event.betsForSum + betFor;
     event.betsAgainstSum := event.betsAgainstSum + betAgainst;
