@@ -13,25 +13,25 @@ block {
     else failwith("Withdraw is not allowed until contract is closed");
 
     (* TODO: calculate payout only for winning ledger *)
-    var winPayout : tez := getLedgerAmount(key, s.betsForLedger);
+    var winPayout : tez := getLedgerAmount(key, s.betsForWinningLedger);
     if event.isBetsForWin then skip
-    else winPayout := getLedgerAmount(key, s.betsAgainstLedger);
+    else winPayout := getLedgerAmount(key, s.betsAgainstWinningLedger);
 
     (* Getting reciever: *)
     const receiver : contract(unit) = getReceiver(Tezos.sender);
 
     (* TODO: winPayout calculated only for winners, need to remove loosed particiants too *)
     const totalBets : tez = (
-        getLedgerAmount(key, s.betsForLedger)
-        + getLedgerAmount(key, s.betsAgainstLedger));
+        getLedgerAmount(key, s.betsForWinningLedger)
+        + getLedgerAmount(key, s.betsAgainstWinningLedger));
 
     if totalBets > 0tez then
         event.participants := abs(event.participants - 1n);
     else skip;
 
     (* Removing sender from all ledgers: *)
-    s.betsForLedger := Big_map.remove(key, s.betsForLedger);
-    s.betsAgainstLedger := Big_map.remove(key, s.betsAgainstLedger);
+    s.betsForWinningLedger := Big_map.remove(key, s.betsForWinningLedger);
+    s.betsAgainstWinningLedger := Big_map.remove(key, s.betsAgainstWinningLedger);
 
     (* Payment for liquidity provider *)
     var liquidityPayout : tez := 0tez;

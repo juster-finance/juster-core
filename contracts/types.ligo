@@ -64,6 +64,7 @@ type eventType is record [
         https://github.com/atomex-me/atomex-fa12-ligo/blob/6e093b484d5cf1ddf66245a6eb9d8d11dfbb45da/src/atomex.ligo#L7 *)
     oracleAddress : address;
 
+    (* Total bets that were added to pools on this event, including provided liquidity: *)
     betsForSum : tez;
     betsAgainstSum : tez;
 
@@ -147,10 +148,10 @@ type storage is record [
     events : big_map(eventIdType, eventType);
 
     (* Ledger with winning amounts for participants if "For" wins: *)
-    betsForLedger : ledgerType;
+    betsForWinningLedger : ledgerType;
 
     (* Ledger with winning amounts for participants if "Against" wins: *)
-    betsAgainstLedger : ledgerType;
+    betsAgainstWinningLedger : ledgerType;
 
     (* There are three ledgers used to manage liquidity:
         - one with total provided value needed to return in withdrawal,

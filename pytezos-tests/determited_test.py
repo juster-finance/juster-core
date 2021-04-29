@@ -92,8 +92,8 @@ class DeterminedTest(TestCase):
 
         self.init_storage = {
             'events': {},
-            'betsForLedger': {},
-            'betsAgainstLedger': {},
+            'betsForWinningLedger': {},
+            'betsAgainstWinningLedger': {},
             'providedLiquidityLedger': {},
             'liquidityForBonusLedger': {},
             'liquidityAgainstBonusLedger': {},
@@ -210,8 +210,8 @@ class DeterminedTest(TestCase):
         event = res.storage['events'][self.id]
         self.assertEqual(event['betsForSum'], 50_000)
         self.assertEqual(event['betsAgainstSum'], 50_000)
-        self.assertEqual(len(res.storage['betsForLedger']), 0)
-        self.assertEqual(len(res.storage['betsAgainstLedger']), 0)
+        self.assertEqual(len(res.storage['betsForWinningLedger']), 0)
+        self.assertEqual(len(res.storage['betsAgainstWinningLedger']), 0)
         self.assertEqual(res.storage['liquidityForBonusLedger'][(self.a, self.id)], 50_000)
         self.assertEqual(res.storage['liquidityAgainstBonusLedger'][(self.a, self.id)], 50_000)
         self.assertEqual(res.storage['providedLiquidityLedger'][(self.a, self.id)], 100_000)
@@ -247,8 +247,8 @@ class DeterminedTest(TestCase):
         event = res.storage['events'][self.id]
         self.assertEqual(event['betsForSum'], 100_000)
         self.assertEqual(event['betsAgainstSum'], 50_000)
-        self.assertEqual(len(res.storage['betsForLedger']), 1)
-        self.assertEqual(len(res.storage['betsAgainstLedger']), 0)
+        self.assertEqual(len(res.storage['betsForWinningLedger']), 1)
+        self.assertEqual(len(res.storage['betsAgainstWinningLedger']), 0)
 
         self._check_result_integrity(res, self.id)
         self.storage = res.storage
@@ -273,8 +273,8 @@ class DeterminedTest(TestCase):
         # TODO: currently there are round division in contract:
         self.assertEqual(event['betsForSum'], 200_000)
         self.assertEqual(event['betsAgainstSum'], 100_000)
-        self.assertEqual(len(res.storage['betsForLedger']), 1)
-        self.assertEqual(len(res.storage['betsAgainstLedger']), 0)
+        self.assertEqual(len(res.storage['betsForWinningLedger']), 1)
+        self.assertEqual(len(res.storage['betsAgainstWinningLedger']), 0)
         self.assertEqual(len(res.storage['providedLiquidityLedger']), 1)
         self.assertEqual(len(res.storage['liquidityForBonusLedger']), 1)
         self.assertEqual(len(res.storage['liquidityAgainstBonusLedger']), 1)
@@ -304,8 +304,8 @@ class DeterminedTest(TestCase):
         event = res.storage['events'][self.id]
         self.assertEqual(event['betsForSum'], 800_000)
         self.assertEqual(event['betsAgainstSum'], 400_000)
-        self.assertEqual(len(res.storage['betsForLedger']), 1)
-        self.assertEqual(len(res.storage['betsAgainstLedger']), 0)
+        self.assertEqual(len(res.storage['betsForWinningLedger']), 1)
+        self.assertEqual(len(res.storage['betsAgainstWinningLedger']), 0)
         self.assertEqual(len(res.storage['providedLiquidityLedger']), 2)
         self.assertEqual(len(res.storage['liquidityForBonusLedger']), 2)
         self.assertEqual(len(res.storage['liquidityAgainstBonusLedger']), 2)

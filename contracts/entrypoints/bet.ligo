@@ -22,7 +22,7 @@ block {
     const key : ledgerKey = (Tezos.sender, eventId);
 
     const alreadyBetValue : tez =
-        getLedgerAmount(key, s.betsForLedger) + getLedgerAmount(key, s.betsAgainstLedger);
+        getLedgerAmount(key, s.betsForWinningLedger) + getLedgerAmount(key, s.betsAgainstWinningLedger);
 
     if (alreadyBetValue = 0tez) then
         event.participants := event.participants + 1n;
@@ -50,7 +50,7 @@ block {
         else skip;
 
         event.betsForWinningPoolSum := event.betsForWinningPoolSum + possibleWinAmount;
-        s.betsForLedger[key] := getLedgerAmount(key, s.betsForLedger) + possibleWinAmount;
+        s.betsForWinningLedger[key] := getLedgerAmount(key, s.betsForWinningLedger) + possibleWinAmount;
     }
     | Against -> {
         event.betsAgainstSum := event.betsAgainstSum + Tezos.amount;
@@ -69,7 +69,7 @@ block {
         else skip;
 
         event.betsAgainstWinningPoolSum := event.betsAgainstWinningPoolSum + possibleWinAmount;
-        s.betsAgainstLedger[key] := getLedgerAmount(key, s.betsAgainstLedger) + possibleWinAmount;
+        s.betsAgainstWinningLedger[key] := getLedgerAmount(key, s.betsAgainstWinningLedger) + possibleWinAmount;
     }
     end;
 
