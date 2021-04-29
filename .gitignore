@@ -6,8 +6,7 @@ faucet.json
 pytezos-jupyter-present/test-keys/*
 */.ipynb_checkpoints/*
 **/__pycache__/*
-2021-04-02-concept.txt
 *.tz
 pytezos-jupyter-present/
-2021-04-22-*.txt
+2021-*.txt
 
