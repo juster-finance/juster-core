@@ -1,6 +1,7 @@
 const { mnemonic, secret, password, email } = require("./faucet.json");
 
 module.exports = {
+  contracts_directory: "./contracts/main",
   networks: {
     development: {
       host: "https://florencenet.smartpy.io",

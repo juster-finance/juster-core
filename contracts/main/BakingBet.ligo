@@ -1,13 +1,13 @@
-#include "types.ligo"
-#include "tools.ligo"
-#include "entrypoints/newEvent.ligo"
-#include "entrypoints/bet.ligo"
-#include "entrypoints/provideLiquidity.ligo"
-#include "entrypoints/close.ligo"
-#include "entrypoints/closeCallback.ligo"
-#include "entrypoints/startMeasurement.ligo"
-#include "entrypoints/startMeasurementCallback.ligo"
-#include "entrypoints/withdraw.ligo"
+#include "../partials/types.ligo"
+#include "../partials/tools.ligo"
+#include "../entrypoints/newEvent.ligo"
+#include "../entrypoints/bet.ligo"
+#include "../entrypoints/provideLiquidity.ligo"
+#include "../entrypoints/close.ligo"
+#include "../entrypoints/closeCallback.ligo"
+#include "../entrypoints/startMeasurement.ligo"
+#include "../entrypoints/startMeasurementCallback.ligo"
+#include "../entrypoints/withdraw.ligo"
 
 
 function main (var params : action; var s : storage) : (list(operation) * storage) is
