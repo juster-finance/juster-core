@@ -165,13 +165,6 @@ class DeterminedTest(TestCase):
         self.assertEqual(int(operation['amount']), amount)
 
 
-    '''
-    def assertIntAlmostEqual(self, a, b, max_diff=1):
-        """ Checks that difference between ints a & b not more than diff """
-
-        self.assertLessEqual(abs(a - b), max_diff)
-    '''
-
     def _check_result_integrity(self, res, event_id):
         """ Checks that sums and ledger values of the resulting storage
             is consistent """
@@ -552,21 +545,6 @@ class DeterminedTest(TestCase):
         self.storage = res.storage
 
 
-    def _assert_losing_participant_withdraw(self):
-        """ Checking that loosed / not participated address cannot withdraw """
-
-        # TODO: this is now possible and it is required to clean up bigmaps,
-        # so this test is not actual anymore.
-        '''
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            res = self.contract.withdraw(self.id).interpret(
-                storage=self.storage, sender=self.d, now=RUN_TIME + 64*ONE_HOUR)
-
-        self.assertTrue('Nothing to withdraw' in str(cm.exception))
-        '''
-        pass
-
-
     def _withdrawals_check(self):
         """ Checking that all withdrawals calculated properly:
             A: 225_750
@@ -599,20 +577,6 @@ class DeterminedTest(TestCase):
         self.storage = self.remove_none_values(res.storage)
 
 
-    def _assert_double_withdrawal(self):
-        """ Participant A tries to withdraw second time, should get error that
-            nothing to withdraw """
-
-        # Double withdrawal is allowed now, this test is not actual
-        '''
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            res = self.contract.withdraw(self.id).interpret(
-                storage=self.storage, sender=self.a, now=RUN_TIME + 64*ONE_HOUR)
-
-        self.assertTrue('Nothing to withdraw' in str(cm.exception))
-        '''
-        pass
-
     def _run_all_tests(self):
         self._create_event()
         self._create_evet_with_conflict_fees()
@@ -633,17 +597,27 @@ class DeterminedTest(TestCase):
         self._assert_withdraw_before_close()
         self._close_call()
         self._close_callback()
-        # self._assert_losing_participant_withdraw()
         self._withdrawals_check()
-        # self._assert_double_withdrawal()
-        # TODO: test withdrawals and liquidity bonuses
 
         # test trying to close twice?
         # test that it is not possible to bet after close?
         # test that it is not possible to call measurement after close
         #    (btw it is tested in double_measurement)
+        # TODO: check that after event no records are left and all cleaned up
 
         # TODO: make this tests for two - three ids in cycle?
+        # TODO: provide liquidity tests:
+        # -- (1) adding liquidity with expected rate
+        # -- (2) adding liquidity with rate that different from internal rate
+        # TODO: test Bet with winRate less than expected (assert MichelsonError raises)
+        # TODO: test that adding liquidity after bets time is not allowed
+        # TODO: test where one of the participants is LP at the same time
+        # TODO: test that LP can withdraw instead of participant after some time
+        #    -- test that LP can't withdraw instead of participant before this time
+        # TODO: test scenario when LP have profits (current scenario: LP have losses)
+        # TODO: test that LP can't withdraw while there are some participants
+
+        # TODO: make this test inside sandbox
 
 
     def test_interactions(self):
