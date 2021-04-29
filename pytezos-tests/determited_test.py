@@ -7,44 +7,43 @@
     Liquidity pool 1%
 
     Three participants: a, b and c making next interactions:
-        - participant A adds initial liquidity at the beginning (0 hours from start): betAgainst=50_000, betFor=50_000
+        - participant A adds initial liquidity at the beginning (0 hours from start): 100_000 with ratio 1:1
         - participant B betFor with 50_000 (1 hour from start)
-        - participant A adds more liquidity (12 hours from start): betAgainst=100_000, betFor=50_000
-        - participant C adds more liquidity at the very end (24 hours from start): betAgainst=500_000, betFor=500_000
+        - participant A adds more liquidity (12 hours from start): 150_000 with ratio 2:1 (f:a)
+        - participant C adds more liquidity at the very end (24 hours from start): 900_000 with ratio 2:1 (f:a)
         - particiapnt A calls running_measurement 26 hours from the start
         - oracle returns that price at the measurement start is 6.0$ per xtz. Oracle measurement time is behind one hour
         - participant B cals close_call at 38 hours from the start
         - oracle returns that price at the close is 7.5$ per xtz. Oracle measurement time is behind one hour
 
     Closed dynamics is +25%, betsFor pool is wins
-    Total bets: 50_000 + 50_000 + 50_000 + 100_000 + 50_000 + 500_000 + 500_000 = 1_300_000
-    Total betsFor: 50_000 + 50_000 + 50_000 + 500_000 = 650_000
-    Total liquidity bonuses: 50_000 * 1 + 50_000 * 0.5 + 500_000 * 0 = 75_000
+    Total bets: 100_000 + 50_000 + 150_000 + 900_000 = 1_200_000
+    Total betsFor: 50_000 + 50_000 + 100_000 + 600_000 = 800_000
+    Total betsAgainst: 50_000 + 50_000 + 300_000 = 400_000
+    Total provided liquidity: 100_000 + 150_000 + 900_000 = 1_150_000
+    Total liquidity For bonuses: 50_000 * 1 + 100_000 * 0.5 + 600_000 * 0 = 100_000
+    Total liquidity Against bonuses: 50_000 * 1 + 50_000 * 0.5 + 300_000 * 0 = 75_000
 
-    betsFor shares:
-        A: 100_000 / 650_000 = 15.3846%
-        B: 50_000 / 650_000 = 7.6923%
-        C: 500_000 / 650_000 = 76.9231%
+    participant B wins and get 50_000 * 3/2 * 99% = 74_250 (3/2 ratio and LP bonus 1%)
 
-    Liquidity shares:
+    liquidity Against shares:
         A: 75_000 / 75_000 = 100%
-        B: 0 / 75_000 = 0%
-        C: 500_000 * 0 / 75_000 = 0%
+        C: 0 / 75_000 = 0%
 
-    Winning pool: 1_300_000 * 99% = 1_287_000
-    Liquidity pool: 1_300_000 * 1% = 13_000
+    Pool after winer withdrawals: 1_200_000 - 74_250 = 1_125_750
+    Losses: 1_150_000 - 1_125_750 = 24_250
 
     withdraw amounts:
-        A: 15.3846% * 1_287_000 + 100% * 13_000 = 211_000
-        B: 7.6923% * 1_287_000 + 0% * 13_000 = 99_000
-        C: 76.9231% * 1_287_000 + 0% * 13_000 = 990_000
+        A: 250_000 - 24_250 = 225_750
+        B: 74_250
+        C: 900_000
 
     Changes:
-        A: 211_000 / 250_000 = 0.844
-        B: 99_000 / 50_000 = 1.980
-        C: 990_000 / 1_000_000 = 0.990
+        A: 225_750 / 250_000 = 0.903
+        B: 74_250 / 50_000 = 1.485
+        C: 900_000 / 900_000 = 1.000
 
-    A - made a lot betAgainst and loose it to B
+    A - made a lot betAgainst and loose it to B. Also he provided 100% LP bonuses
     B - wins all that A looses
     C - just paid for liquidity because his addition at the end does not matter
 """
@@ -95,7 +94,9 @@ class DeterminedTest(TestCase):
             'events': {},
             'betsForLedger': {},
             'betsAgainstLedger': {},
-            'liquidityLedger': {},
+            'providedLiquidityLedger': {},
+            'liquidityForBonusLedger': {},
+            'liquidityAgainstBonusLedger': {},
             'lastEventId': 0,
             'closeCallEventId': None,
             'measurementStartCallEventId': None
@@ -164,6 +165,13 @@ class DeterminedTest(TestCase):
         self.assertEqual(int(operation['amount']), amount)
 
 
+    '''
+    def assertIntAlmostEqual(self, a, b, max_diff=1):
+        """ Checks that difference between ints a & b not more than diff """
+
+        self.assertLessEqual(abs(a - b), max_diff)
+    '''
+
     def _check_result_integrity(self, res, event_id):
         """ Checks that sums and ledger values of the resulting storage
             is consistent """
@@ -171,24 +179,37 @@ class DeterminedTest(TestCase):
         def sum_by_id(ledger, _id):
             return sum(value for key, value in ledger.items() if key[1] == _id)
 
+        '''
         bets_for_sum_ledger = sum_by_id(res.storage['betsForLedger'], event_id)
-        bets_for_sum_event = res.storage['events'][event_id]['betsForSum']
-        self.assertEqual(bets_for_sum_event, bets_for_sum_ledger)
-
         bets_against_sum_ledger = sum_by_id(res.storage['betsAgainstLedger'], event_id)
-        bets_against_sum_event = res.storage['events'][event_id]['betsAgainstSum']
-        self.assertEqual(bets_against_sum_event, bets_against_sum_ledger)
+        provided_liquidity_sum_ledger = sum_by_id(res.storage['providedLiquidityLedger'], event_id)
+        total_ledger_sums = (
+            bets_for_sum_ledger + bets_against_sum_ledger + provided_liquidity_sum_ledger)
 
-        liquidity_sum_ledger = sum_by_id(res.storage['liquidityLedger'], event_id)
-        liquidity_sum_event = res.storage['events'][event_id]['liquiditySum']
-        self.assertEqual(liquidity_sum_event, liquidity_sum_ledger)
+        bets_for_sum_event = res.storage['events'][event_id]['betsForSum']
+        bets_against_sum_event = res.storage['events'][event_id]['betsAgainstSum']
+        # this is a bit confusing now, but provided liquidity is accounted inside bets for / against sums
+        # provided_liquidity_sum_event = res.storage['events'][event_id]['totalLiquidityProvided']
+        total_event_sums = (
+            bets_for_sum_event + bets_against_sum_event)
+
+        self.assertEqual(total_ledger_sums, total_event_sums)
+        '''
+        # betsForLedger and betsAgainstLedger now contained winnig amounts
+        # TODO: need to refactor names to make it clear.
+        # and looks like this check is not possible anymore
+        pass
 
 
     def _participant_A_adds_initial_liquidity(self):
         """ Participant A: adding liquidity 50/50 just at start """
 
-        transaction = self.contract.bet(
-            eventId=self.id, betAgainst=50_000, betFor=50_000).with_amount(100_000)
+        transaction = self.contract.provideLiquidity(
+            eventId=self.id,
+            expectedRatioAgainst=1,
+            expectedRatioFor=1,
+            maxSlippage=100_000
+        ).with_amount(100_000)
 
         res = transaction.interpret(
             storage=self.storage, sender=self.a, now=RUN_TIME)
@@ -196,34 +217,36 @@ class DeterminedTest(TestCase):
         event = res.storage['events'][self.id]
         self.assertEqual(event['betsForSum'], 50_000)
         self.assertEqual(event['betsAgainstSum'], 50_000)
-        self.assertEqual(len(res.storage['betsForLedger']), 1)
-        self.assertEqual(len(res.storage['betsAgainstLedger']), 1)
-        self.assertEqual(len(res.storage['liquidityLedger']), 1)
-        self.assertEqual(res.storage['liquidityLedger'][(self.a, self.id)], 50_000)
+        self.assertEqual(len(res.storage['betsForLedger']), 0)
+        self.assertEqual(len(res.storage['betsAgainstLedger']), 0)
+        self.assertEqual(res.storage['liquidityForBonusLedger'][(self.a, self.id)], 50_000)
+        self.assertEqual(res.storage['liquidityAgainstBonusLedger'][(self.a, self.id)], 50_000)
+        self.assertEqual(res.storage['providedLiquidityLedger'][(self.a, self.id)], 100_000)
 
         self._check_result_integrity(res, self.id)
         self.storage = res.storage
 
-        
-    def _assert_wrong_amount_bet(self):
+
+    def _assert_wrong_ratio_bet(self):
         """ Checking that transaction is fails if amount is not equal to sum
             of the bets / provided liquidity
         """
 
+        # ratio at the call moment 1:1, trying to make a bet with 10:1 ratio:
         with self.assertRaises(MichelsonRuntimeError) as cm:
             transaction = self.contract.bet(
-                eventId=self.id, betAgainst=0, betFor=50_000).with_amount(100_000)
+                eventId=self.id, bet='for', minimalWinAmount=1_000_000).with_amount(100_000)
             res = transaction.interpret(
                 storage=self.storage, sender=self.a, now=RUN_TIME)
 
-        self.assertTrue('Sum of bets is not equal to send amount' in str(cm.exception))
+        self.assertTrue('Wrong minimalWinAmount' in str(cm.exception))
 
 
     def _participant_B_bets_for(self):
-        """ Participant B: bets for 10_000 after 1 hour """
+        """ Participant B: bets for 50_000 after 1 hour """
 
         transaction = self.contract.bet(
-            eventId=self.id, betAgainst=0, betFor=50_000).with_amount(50_000)
+            eventId=self.id, bet='for', minimalWinAmount=50_000).with_amount(50_000)
 
         res = transaction.interpret(
             storage=self.storage, sender=self.b, now=RUN_TIME + ONE_HOUR)
@@ -231,9 +254,8 @@ class DeterminedTest(TestCase):
         event = res.storage['events'][self.id]
         self.assertEqual(event['betsForSum'], 100_000)
         self.assertEqual(event['betsAgainstSum'], 50_000)
-        self.assertEqual(len(res.storage['betsForLedger']), 2)
-        self.assertEqual(len(res.storage['betsAgainstLedger']), 1)
-        self.assertEqual(len(res.storage['liquidityLedger']), 1)
+        self.assertEqual(len(res.storage['betsForLedger']), 1)
+        self.assertEqual(len(res.storage['betsAgainstLedger']), 0)
 
         self._check_result_integrity(res, self.id)
         self.storage = res.storage
@@ -244,19 +266,30 @@ class DeterminedTest(TestCase):
             (exactly half of the betting period)
         """
 
-        transaction = self.contract.bet(
-            eventId=self.id, betAgainst=100_000, betFor=50_000).with_amount(150_000)
+        transaction = self.contract.provideLiquidity(
+            eventId=self.id,
+            expectedRatioAgainst=1,
+            expectedRatioFor=2,
+            maxSlippage=100_000
+        ).with_amount(150_000)
 
         res = transaction.interpret(
             storage=self.storage, sender=self.a, now=RUN_TIME + 12*ONE_HOUR)
 
         event = res.storage['events'][self.id]
-        self.assertEqual(event['betsForSum'], 150_000)
-        self.assertEqual(event['betsAgainstSum'], 150_000)
-        self.assertEqual(len(res.storage['betsForLedger']), 2)
-        self.assertEqual(len(res.storage['betsAgainstLedger']), 1)
-        self.assertEqual(len(res.storage['liquidityLedger']), 1)
-        self.assertEqual(event['liquiditySum'], 50_000 + 25_000)
+        # TODO: currently there are round division in contract:
+        self.assertEqual(event['betsForSum'], 200_000)
+        self.assertEqual(event['betsAgainstSum'], 100_000)
+        self.assertEqual(len(res.storage['betsForLedger']), 1)
+        self.assertEqual(len(res.storage['betsAgainstLedger']), 0)
+        self.assertEqual(len(res.storage['providedLiquidityLedger']), 1)
+        self.assertEqual(len(res.storage['liquidityForBonusLedger']), 1)
+        self.assertEqual(len(res.storage['liquidityAgainstBonusLedger']), 1)
+
+        # the next sums are possible to be changed if not linear coef will be
+        # used to decrease liquidity bonus:
+        self.assertEqual(event['totalLiquidityForBonusSum'], 50_000 + 50_000)
+        self.assertEqual(event['totalLiquidityAgainstBonusSum'], 50_000 + 25_000)
 
         self._check_result_integrity(res, self.id)
         self.storage = res.storage
@@ -265,19 +298,26 @@ class DeterminedTest(TestCase):
     def _participant_C_adds_more_liquidity(self):
         """ Participant C: adding more liquidity at the very end """
 
-        transaction = self.contract.bet(
-            eventId=self.id, betAgainst=500_000, betFor=500_000).with_amount(1_000_000)
+        transaction = self.contract.provideLiquidity(
+            eventId=self.id,
+            expectedRatioAgainst=1,
+            expectedRatioFor=2,
+            maxSlippage=100_000
+        ).with_amount(900_000)
 
         res = transaction.interpret(
             storage=self.storage, sender=self.c, now=RUN_TIME + 24*ONE_HOUR)
 
         event = res.storage['events'][self.id]
-        self.assertEqual(event['betsForSum'], 650_000)
-        self.assertEqual(event['betsAgainstSum'], 650_000)
-        self.assertEqual(len(res.storage['betsForLedger']), 3)
-        self.assertEqual(len(res.storage['betsAgainstLedger']), 2)
-        self.assertEqual(len(res.storage['liquidityLedger']), 2)
-        self.assertEqual(event['liquiditySum'], 50_000 + 25_000 + 0)
+        self.assertEqual(event['betsForSum'], 800_000)
+        self.assertEqual(event['betsAgainstSum'], 400_000)
+        self.assertEqual(len(res.storage['betsForLedger']), 1)
+        self.assertEqual(len(res.storage['betsAgainstLedger']), 0)
+        self.assertEqual(len(res.storage['providedLiquidityLedger']), 2)
+        self.assertEqual(len(res.storage['liquidityForBonusLedger']), 2)
+        self.assertEqual(len(res.storage['liquidityAgainstBonusLedger']), 2)
+        self.assertEqual(event['totalLiquidityForBonusSum'], 50_000 + 50_000 + 0)
+        self.assertEqual(event['totalLiquidityAgainstBonusSum'], 50_000 + 25_000 + 0)
 
         self._check_result_integrity(res, self.id)
         self.storage = res.storage
@@ -405,7 +445,6 @@ class DeterminedTest(TestCase):
 
         self.assertEqual(event['startRate'], callback_values['rate'])
         self.assertTrue(event['isMeasurementStarted'])
-        self.assertEqual(event['measureStartTime'], start_running_time)
         self.assertEqual(event['measureOracleStartTime'], start_oracle_time)
 
         operation = res.operations[0]
@@ -421,7 +460,7 @@ class DeterminedTest(TestCase):
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
             transaction = self.contract.bet(
-                eventId=self.id, betAgainst=50_000, betFor=50_000).with_amount(100_000)
+                eventId=self.id, bet='against', minimalWinAmount=100_000).with_amount(100_000)
 
             res = transaction.interpret(
                 storage=self.storage, sender=self.a, now=RUN_TIME + 28*ONE_HOUR)
@@ -500,7 +539,6 @@ class DeterminedTest(TestCase):
         self.assertEqual(event['closedRate'], callback_values['rate'])
         self.assertTrue(event['isClosed'])
         self.assertTrue(event['isBetsForWin'])
-        self.assertEqual(event['closedTime'],  close_running_time)
         self.assertEqual(event['closedOracleTime'], close_oracle_time)
 
         # dynamic 7.5 / 6.0 is +25%
@@ -517,36 +555,47 @@ class DeterminedTest(TestCase):
     def _assert_losing_participant_withdraw(self):
         """ Checking that loosed / not participated address cannot withdraw """
 
+        # TODO: this is now possible and it is required to clean up bigmaps,
+        # so this test is not actual anymore.
+        '''
         with self.assertRaises(MichelsonRuntimeError) as cm:
             res = self.contract.withdraw(self.id).interpret(
                 storage=self.storage, sender=self.d, now=RUN_TIME + 64*ONE_HOUR)
 
         self.assertTrue('Nothing to withdraw' in str(cm.exception))
+        '''
+        pass
 
 
     def _withdrawals_check(self):
         """ Checking that all withdrawals calculated properly:
-            A: 15.3846% * 1_287_000 + 100% * 13_000 = 211_000
-            B: 7.6923% * 1_287_000 + 0% * 13_000 = 99_000
-            C: 76.9231% * 1_287_000 + 0% * 13_000 = 990_000
+            A: 225_750
+            B: 74_250
+            C: 900_000
         """
+
+        balance = 1_200_000
+        withdraw_time = RUN_TIME + 64*ONE_HOUR
+
+        # Order matters, B should withdraw first, because he is participant, not LP
+        # B withdraws:
+        res = self.contract.withdraw(self.id).interpret(
+            storage=self.storage, sender=self.b, now=withdraw_time, balance=balance)
+        self.assertAmountEqual(res.operations[0], 74_250)
+        self.storage = self.remove_none_values(res.storage)
+        balance -= 74_250
 
         # A withdraws:
         res = self.contract.withdraw(self.id).interpret(
-            storage=self.storage, sender=self.a, now=RUN_TIME + 64*ONE_HOUR)
-        self.assertAmountEqual(res.operations[0], 211_000)
+            storage=self.storage, sender=self.a, now=withdraw_time, balance=balance)
+        self.assertAmountEqual(res.operations[0], 225_750)
         self.storage = self.remove_none_values(res.storage)
-
-        # B withdraws:
-        res = self.contract.withdraw(self.id).interpret(
-            storage=self.storage, sender=self.b, now=RUN_TIME + 64*ONE_HOUR)
-        self.assertAmountEqual(res.operations[0], 99_000)
-        self.storage = self.remove_none_values(res.storage)
+        balance -= 225_750
 
         # C withdraws:
         res = self.contract.withdraw(self.id).interpret(
-            storage=self.storage, sender=self.c, now=RUN_TIME + 64*ONE_HOUR)
-        self.assertAmountEqual(res.operations[0], 990_000)
+            storage=self.storage, sender=self.c, now=withdraw_time, balance=balance)
+        self.assertAmountEqual(res.operations[0], 900_000)
         self.storage = self.remove_none_values(res.storage)
 
 
@@ -554,19 +603,22 @@ class DeterminedTest(TestCase):
         """ Participant A tries to withdraw second time, should get error that
             nothing to withdraw """
 
+        # Double withdrawal is allowed now, this test is not actual
+        '''
         with self.assertRaises(MichelsonRuntimeError) as cm:
             res = self.contract.withdraw(self.id).interpret(
                 storage=self.storage, sender=self.a, now=RUN_TIME + 64*ONE_HOUR)
 
         self.assertTrue('Nothing to withdraw' in str(cm.exception))
-
+        '''
+        pass
 
     def _run_all_tests(self):
         self._create_event()
         self._create_evet_with_conflict_fees()
         self._create_more_events()
         self._participant_A_adds_initial_liquidity()
-        self._assert_wrong_amount_bet()
+        self._assert_wrong_ratio_bet()
         self._participant_B_bets_for()
         self._participant_A_adds_more_liquidity()
         self._participant_C_adds_more_liquidity()
@@ -581,10 +633,9 @@ class DeterminedTest(TestCase):
         self._assert_withdraw_before_close()
         self._close_call()
         self._close_callback()
-        self._assert_losing_participant_withdraw()
+        # self._assert_losing_participant_withdraw()
         self._withdrawals_check()
-        self._assert_double_withdrawal()
-
+        # self._assert_double_withdrawal()
         # TODO: test withdrawals and liquidity bonuses
 
         # test trying to close twice?
@@ -599,3 +650,4 @@ class DeterminedTest(TestCase):
         for some_id in range(3):
             self.id = some_id
             self._run_all_tests()
+
