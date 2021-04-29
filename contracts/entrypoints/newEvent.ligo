@@ -1,6 +1,7 @@
 function newEvent(var eventParams : newEventParams; var s : storage) : (list(operation) * storage) is
 block {
-    (* TODO: Checking that betsCloseTime of this event is in the future: *)
+    (* TODO: Checking that betsCloseTime of this event is in the future
+        (maybe check that there are some minimal time to make bets, that can be controlled by manager) *)
     (* TODO: Checking that measurePeriod is more than some minimal amount and maybe less than amount *)
     (* TODO: Check that liquidityPercent is less than 1_000_000 *)
     (* TODO: Check that measureStartFee and expirationFee is equal to Tezos.amount *)
