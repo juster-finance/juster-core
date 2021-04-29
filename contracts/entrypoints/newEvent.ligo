@@ -1,4 +1,4 @@
-function newEvent(var eventParams : newEventParams; var s : storage) : storage is
+function newEvent(var eventParams : newEventParams; var s : storage) : (list(operation) * storage) is
 block {
     (* TODO: Checking that betsCloseTime of this event is in the future: *)
     (* TODO: Checking that measurePeriod is more than some minimal amount and maybe less than amount *)
@@ -54,4 +54,4 @@ block {
     | Some(eventId) -> s.lastEventId := Some(eventId + 1n)
     | None -> failwith("s.lastEventId is None, should not be here")
     end;
-} with s
+} with ((nil: list(operation)), s)

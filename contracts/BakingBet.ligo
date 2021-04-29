@@ -12,12 +12,12 @@
 
 function main (var params : action; var s : storage) : (list(operation) * storage) is
 case params of
-| NewEvent(p) -> ((nil: list(operation)), newEvent(p, s))
-| Bet(p) -> ((nil: list(operation)), bet(p, s))
-| ProvideLiquidity(p) -> ((nil: list(operation)), provideLiquidity(p, s))
-| StartMeasurement(p) -> (startMeasurement(p, s))
-| StartMeasurementCallback(p) -> (startMeasurementCallback(p, s))
-| Close(p) -> (close(p, s))
-| CloseCallback(p) -> (closeCallback(p, s))
-| Withdraw(p) -> withdraw(p, s)
+| NewEvent(p)                 -> newEvent(p, s)
+| Bet(p)                      -> bet(p, s)
+| ProvideLiquidity(p)         -> provideLiquidity(p, s)
+| StartMeasurement(p)         -> startMeasurement(p, s)
+| StartMeasurementCallback(p) -> startMeasurementCallback(p, s)
+| Close(p)                    -> close(p, s)
+| CloseCallback(p)            -> closeCallback(p, s)
+| Withdraw(p)                 -> withdraw(p, s)
 end

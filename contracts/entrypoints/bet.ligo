@@ -1,4 +1,4 @@
-function bet(var p : betParams; var s : storage) : storage is
+function bet(var p : betParams; var s : storage) : (list(operation) * storage) is
 block {
     (* TODO: check that there are liquidity in both pools (>0) *)
     (* TODO: reduce bet value by liquidity percent (done? check it) *)
@@ -74,4 +74,4 @@ block {
     end;
 
     s.events[eventId] := event;
-} with s
+} with ((nil: list(operation)), s)

@@ -1,4 +1,4 @@
-function provideLiquidity(var p : provideLiquidityParams; var s : storage) : storage is
+function provideLiquidity(var p : provideLiquidityParams; var s : storage) : (list(operation) * storage) is
 block {
     (* TODO: check that both expected ratio is > 0 *)
     (* TODO: assert that Sender.amount > 0 *)
@@ -58,4 +58,4 @@ block {
 
     s.events[eventId] := event;
 
-} with s
+} with ((nil: list(operation)), s)
