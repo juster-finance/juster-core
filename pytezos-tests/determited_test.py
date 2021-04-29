@@ -56,7 +56,7 @@ import time
 
 RUN_TIME = int(time.time())
 ONE_HOUR = 60*60
-CONTRACT_FN = 'crystal_ball.tz'
+CONTRACT_FN = 'baking_bet.tz'
 
 
 class DeterminedTest(TestCase):
