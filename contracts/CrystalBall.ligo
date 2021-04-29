@@ -84,10 +84,6 @@ type eventType is record [
     totalLiquidityForBonusSum : tez;
     totalLiquidityAgainstBonusSum : tez;
 
-    (* withdrawnSum is sum that was withdrawn by participant, needed to calculate
-        sum thatcan withdraw liquidity provider *)
-    // withdrawnSum : tez;  // ?
-
     (* withdrawnLiquidity is sum that was withdrawn by providers, needed to calculate
         sum that can withdraw another liquidity provider *)
     withdrawnLiquidity : tez;
@@ -171,11 +167,6 @@ type storage is record [
 
 function newEvent(var eventParams : newEventParams; var s : storage) : storage is
 block {
-    (* TODO: assert that betFor + betAgainst is equal to Tezos.amount *)
-    (* TODO: assert that betFor / betAgainst is less than MAX_RATIO controlled by Manager *)
-    (* TODO: assert that betAgainst / betFor is less than MAX_RATIO controlled by Manager *)
-    (* TODO: assert that Tezos.amount is more than MIN_LIQUIDITY controlled be Manager *)
-    (* TODO: decide, should newEvent creator provide liquidity or not? maybe it is not important? *)
     (* TODO: Checking that betsCloseTime of this event is in the future: *)
     (* TODO: Checking that measurePeriod is more than some minimal amount and maybe less than amount *)
     (* TODO: Check that liquidityPercent is less than 1_000_000 *)
@@ -191,6 +182,7 @@ block {
         measureOracleStartTime = ("2018-06-30T07:07:32Z" : timestamp);
         isMeasurementStarted = False;
         startRate = 0n;
+
         (* TODO: control measurePeriod, time to betsCloseTime min|max from Manager *)
         measurePeriod = eventParams.measurePeriod;
         isClosed = False;
@@ -214,7 +206,7 @@ block {
         (* TODO: control rewardCallFee from Manager *)
         rewardCallFee = 100_000mutez;
         participants = 0n;
-        // withdrawnSum = 0tez;
+
         (* TODO: control new event ratioPrecision from Manager *)
         ratioPrecision = 100_000_000n;
         betsForWinningPoolSum = 0tez;
@@ -271,11 +263,12 @@ end;
 function bet(var p : betParams; var s : storage) : storage is
 block {
     (* TODO: check that there are liquidity in both pools (>0) *)
-    (* TODO: reduce bet value by liquidity percent *)
-        // maybe reduce/raise liquidity percent during bet period?
+    (* TODO: reduce bet value by liquidity percent (done? check it) *)
+    (* TODO: maybe reduce/raise liquidity percent during bet period? *)
 
-    // const betFor : tez = p.betFor;
-    // const betAgainst : tez = p.betAgainst;
+    (* TODO: assert that betFor / betAgainst is less than MAX_RATIO controlled by Manager *)
+    (* TODO: assert that betAgainst / betFor is less than MAX_RATIO controlled by Manager *)
+
     const eventId : eventIdType = p.eventId;
     const event : eventType = getEvent(s, eventId);
 
@@ -283,21 +276,11 @@ block {
         failwith("Bets after betCloseTime is not allowed")
     else skip;
 
-    (*if (betFor + betAgainst) =/= Tezos.amount then
-        failwith("Sum of bets is not equal to send amount")
-    else skip;*)
-
     if event.isClosed then failwith("Event already closed") else skip;
-
-    (*
-    const elapsedTime : int = Tezos.now - event.createdTime;
-    if (elapsedTime < 0) then
-        failwith("Bet adding before contract createdTime (possible wrong createdTime?)")
-    else skip;
-    *)
 
     (* TODO: assert that Tezos.amount is more than zero? (instead it can lead to junk records
         in ledgers, that would not be removed) *)
+
     const key : ledgerKey = (Tezos.sender, eventId);
 
     const alreadyBetValue : tez =
@@ -405,7 +388,6 @@ block {
     else skip;
 
     const remainedTime : int = totalBettingTime - elapsedTime;
-    // const addedLiquidity : tez = betAgainst + betFor;
 
     (* Total liquidity: *)
     event.totalLiquidityProvided := event.totalLiquidityProvided + betAgainst + betFor;
@@ -504,7 +486,7 @@ block {
 
     const event : eventType = getEvent(s, eventId);
 
-    // Check that callback runs from right address and with right currency pair:
+    (* Check that callback runs from right address and with right currency pair: *)
     if Tezos.sender =/= event.oracleAddress then failwith("Unknown sender") else skip;
     if param.currencyPair =/= event.currencyPair then failwith("Unexpected currency pair") else skip;
     if event.isMeasurementStarted then failwith("Measurement period already started") else skip;
@@ -512,20 +494,18 @@ block {
         failwith("Can't start measurement untill betsCloseTime (maybe oracle have outdated info?)") else skip;
     (* TODO: what should be done if time is very late? (i.e. cancel event and allow withdrawals?) *)
 
-    // Starting measurement:
+    (* Starting measurement: *)
     event.measureOracleStartTime := param.lastUpdate;
     event.startRate := param.rate;
     event.isMeasurementStarted := True;
 
-    // Paying measureStartFee for this method initiator:
+    (* Paying measureStartFee for this method initiator: *)
     const receiver : contract(unit) = getReceiver(Tezos.source);
-    // TODO: somehow check that s.measureStartFee is provided (maybe I need init method that requires
-    // to be supported with measureStartFee + liquidationFee?)
     const payoutOperation : operation = Tezos.transaction(unit, event.measureStartFee, receiver);
 
     s.events[eventId] := event;
 
-    // Cleaning up event ID:
+    (* Cleaning up event ID: *)
     s.measurementStartCallEventId := (None : eventIdType);
 
 } with (list[payoutOperation], s)
@@ -550,7 +530,7 @@ block {
 
     const event : eventType = getEvent(s, eventId);
 
-    // Check that callback runs from right address and with right currency pair:
+    (* Check that callback runs from right address and with right currency pair: *)
     if Tezos.sender =/= event.oracleAddress then failwith("Unknown sender") else skip;
     if param.currencyPair =/= event.currencyPair then failwith("Unexpected currency pair") else skip;
 
@@ -564,7 +544,7 @@ block {
     (* TODO: what should be done if time is very late? (i.e. cancel event and allow withdrawals?) *)
     if event.isClosed then failwith("Contract already closed. Can't close contract twice") else skip;
 
-    // Closing contract:
+    (* Closing contract: *)
     event.closedOracleTime := param.lastUpdate;
     event.closedRate := param.rate;
     event.closedDynamics := param.rate * 1000000n / event.startRate;
@@ -574,16 +554,18 @@ block {
     (* TODO: what should be done if all bets were For and all of them are loose?
         All raised funds will be freezed. Should they all be winners anyway? *)
 
-    // Paying expirationFee for this method initiator:
+    (* Paying expirationFee for this method initiator: *)
     const receiver : contract(unit) = getReceiver(Tezos.source);
-    // TODO: AGAIN: somehow check that s.expirationFee is provided (maybe I need init method
-    // that requires to be supported with measureStartFee + liquidationFee?)
     const expirationFeeOperation : operation = Tezos.transaction(unit, event.expirationFee, receiver);
 
     s.events[eventId] := event;
 
-    // Cleaning up event ID:
+    (* Cleaning up event ID: *)
     s.closeCallEventId := (None : eventIdType);
+
+    (* TODO: this close/measurement callbacks have a lot similarities, maybe there are some
+        code that can be moved in separate function *)
+
 
 } with (list[expirationFeeOperation], s)
 
