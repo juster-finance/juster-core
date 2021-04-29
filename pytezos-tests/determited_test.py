@@ -616,6 +616,8 @@ class DeterminedTest(TestCase):
         #    -- test that LP can't withdraw instead of participant before this time
         # TODO: test scenario when LP have profits (current scenario: LP have losses)
         # TODO: test that LP can't withdraw while there are some participants
+        # TODO: test that it is not possible to make a bet, that would overflow
+        #    some of the pools (For or Against) (so they exceed total liquidity provided)
 
         # TODO: make this test inside sandbox
 
