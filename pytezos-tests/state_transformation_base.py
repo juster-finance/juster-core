@@ -122,6 +122,7 @@ class StateTransformationBaseTest(TestCase):
         pass
 
 
+    """ Test blocks for provideLiquidity entrypoint: """
     def check_participant_successfully_adds_more_liquidity(
             self, participant, amount, expected_for, expected_against,
             max_slippage=100_000):
@@ -210,8 +211,9 @@ class StateTransformationBaseTest(TestCase):
         return result_storage
 
 
+    """ Test blocks for bet entrypoint: """
     def check_participant_successfully_bets(
-        self, participant, amount, bet, minimal_win):
+            self, participant, amount, bet, minimal_win):
 
         # Running transaction:
         transaction = self.contract.bet(
@@ -252,6 +254,47 @@ class StateTransformationBaseTest(TestCase):
         return result_storage
 
 
+    def check_wrong_ratio_bet_is_failed(
+            self, participant, amount, bet, minimal_win):
+        """ Checking that transaction is fails if the bet ratio is too different
+            from ratio in current pool
+        """
+
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            transaction = self.contract.bet(
+                eventId=self.id,
+                bet='for',
+                minimalWinAmount=minimal_win
+            ).with_amount(amount)
+
+            res = transaction.interpret(
+                storage=self.storage,
+                sender=participant,
+                now=self.current_time)
+
+        self.assertTrue('Wrong minimalWinAmount' in str(cm.exception))
+
+
+    def check_betting_in_measurement_period_is_failed(
+            self, participant, amount, bet, minimal_win):
+        """ Test that betting during measurement period is fails """
+
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            transaction = self.contract.bet(
+                eventId=self.id,
+                bet=bet,
+                minimalWinAmount=minimal_win
+            ).with_amount(amount)
+
+            res = transaction.interpret(
+                storage=self.storage,
+                sender=participant,
+                now=self.current_time)
+
+        self.assertTrue('Bets after betCloseTime is not allowed' in str(cm.exception))
+
+
+    """ Test blocks for withdraw entrypoint: """
     def check_participant_succesfully_withdraws(self, participant, withdraw_amount):
 
         # Running transaction:
@@ -267,6 +310,7 @@ class StateTransformationBaseTest(TestCase):
         return self.remove_none_values(result.storage)
 
 
+    """ Test blocks for newEvent entrypoint: """
     def check_event_successfully_created(self, event_params, amount):
         """ Testing creating event with settings that should succeed """
 
@@ -298,6 +342,7 @@ class StateTransformationBaseTest(TestCase):
         return result_storage
 
 
+    """ Test blocks for startMeasurement/startMeasurementCallback entrypoints: """
     def check_measurement_start_succesfully_runned(self, sender):
         """ Checking that state is correct after start measurement call """
 
@@ -323,7 +368,7 @@ class StateTransformationBaseTest(TestCase):
 
 
     def check_measurement_start_callback_succesfully_executed(
-            self, callback_values, source):
+            self, callback_values, source, sender):
         """ Check that emulated callback from oracle is successfull """
 
         # Pre-transaction storage check:
@@ -331,7 +376,7 @@ class StateTransformationBaseTest(TestCase):
 
         # Running transaction:
         result = self.contract.startMeasurementCallback(callback_values).interpret(
-            storage=self.storage, sender=self.oracle_address,
+            storage=self.storage, sender=sender,
             now=self.current_time, source=source)
 
         self.assertEqual(len(result.operations), 1)
@@ -351,6 +396,51 @@ class StateTransformationBaseTest(TestCase):
         return result.storage
 
 
+    def check_start_measurement_callback_from_unknown_address_fails(
+            self, callback_values, source, sender):
+        """ Assert that callback from unknown address
+            (not from oracle) is failed """
+
+        result = self.contract.startMeasurement(self.id).interpret(
+            storage=self.storage, sender=source, now=self.current_time)
+
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            res = self.contract.startMeasurementCallback(callback_values).interpret(
+                storage=result.storage, sender=sender, now=RUN_TIME + 12*ONE_HOUR)
+
+        self.assertTrue('Unknown sender' in str(cm.exception))
+
+
+    def check_wrong_currency_pair_return_from_oracle_fails(
+            self, callback_values, source, sender):
+        """ Testing that wrong currency_pair returned from oracle
+            during measurement is fails """
+
+        result = self.contract.startMeasurement(self.id).interpret(
+            storage=self.storage, sender=source, now=self.current_time)
+
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            res = self.contract.startMeasurementCallback(callback_values).interpret(
+                storage=result.storage, sender=sender, now=self.current_time)
+
+        self.assertTrue("Unexpected currency pair" in str(cm.exception))
+
+
+    def check_measurement_during_bets_time_failed(
+            self, callback_values, source, sender):
+        """ Test that startMeasurement call during bets period is falls """
+
+        result = self.contract.startMeasurement(self.id).interpret(
+            storage=self.storage, sender=source, now=self.current_time)
+
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            res = self.contract.startMeasurementCallback(callback_values).interpret(
+                storage=result.storage, sender=sender, now=self.current_time)
+
+        self.assertTrue("Can't start measurement untill betsCloseTime" in str(cm.exception))
+
+
+    """ Test blocks for close/closeCallback entrypoints: """
     def check_close_succesfully_runned(self, sender):
         """ Check that calling close, succesfully created opearaton
             with call to oracle get """
@@ -371,7 +461,7 @@ class StateTransformationBaseTest(TestCase):
 
 
     def check_close_callback_succesfully_executed(
-            self, callback_values, source):
+            self, callback_values, source, sender):
         """ Check that emulated close callback from oracle is successfull """
 
         result = self.contract.closeCallback(callback_values).interpret(
@@ -400,9 +490,18 @@ class StateTransformationBaseTest(TestCase):
         return result.storage
 
 
-    def check_measurement_start_fails_with(self):
-        # TODO:
-        pass
+    def check_closing_before_measurement_fails(
+            self, callback_values, source, sender):
+        """ Testing that closing before measurement fails """
+
+        result = self.contract.close(self.id).interpret(
+            storage=self.storage, sender=source, now=self.current_time)
+
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            res = self.contract.closeCallback(callback_values).interpret(
+                storage=result.storage, sender=sender, now=self.current_time)
+
+        self.assertTrue("Can't close contract before measurement period started" in str(cm.exception))
 
 
     def setUp(self):

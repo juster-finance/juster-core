@@ -4,110 +4,6 @@ from pytezos import MichelsonRuntimeError
 
 class DeterminedTest(StateTransformationBaseTest):
 
-    def _assert_wrong_ratio_bet(self):
-        """ Checking that transaction is fails if amount is not equal to sum
-            of the bets / provided liquidity
-        """
-
-        # ratio at the call moment 1:1, trying to make a bet with 10:1 ratio:
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            transaction = self.contract.bet(
-                eventId=self.id, bet='for', minimalWinAmount=1_000_000).with_amount(100_000)
-            res = transaction.interpret(
-                storage=self.storage, sender=self.a, now=RUN_TIME)
-
-        self.assertTrue('Wrong minimalWinAmount' in str(cm.exception))
-
-
-    def _assert_closing_before_measurement(self):
-        """ Testing that closing before measurement fails """
-
-        callback_values = {
-            'currencyPair': self.currency_pair,
-            'lastUpdate': RUN_TIME + 24*ONE_HOUR,
-            'rate': 6_000_000
-        }
-
-        result = self.contract.close(self.id).interpret(
-            storage=self.storage, sender=self.a, now=RUN_TIME + 24*ONE_HOUR)
-
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            res = self.contract.closeCallback(callback_values).interpret(
-                storage=result.storage, sender=self.oracle_address, now=RUN_TIME + 24*ONE_HOUR)
-
-        self.assertTrue("Can't close contract before measurement period started" in str(cm.exception))
-
-
-    def _assert_wrong_currency_pair_return_from_oracle(self):
-        """ Testing that wrong currency_pair returned from oracle during measurement is fails """
-
-        callback_values = {
-            'currencyPair': 'WRONG_PAIR',
-            'lastUpdate': RUN_TIME + 26*ONE_HOUR,
-            'rate': 6_000_000
-        }
-
-        result = self.contract.startMeasurement(self.id).interpret(
-            storage=self.storage, sender=self.a, now=RUN_TIME + 24*ONE_HOUR)
-
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            res = self.contract.startMeasurementCallback(callback_values).interpret(
-                storage=result.storage, sender=self.oracle_address, now=RUN_TIME + 26*ONE_HOUR)
-
-        self.assertTrue("Unexpected currency pair" in str(cm.exception))
-
-
-    def _assert_measurement_during_bets_time(self):
-        """ Test that startMeasurement call during bets period is falls """
-
-        callback_values = {
-            'currencyPair': self.currency_pair,
-            'lastUpdate': RUN_TIME + 12*ONE_HOUR,
-            'rate': 6_000_000
-        }
-
-        result = self.contract.startMeasurement(self.id).interpret(
-            storage=self.storage, sender=self.a, now=RUN_TIME + 24*ONE_HOUR)
-
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            res = self.contract.startMeasurementCallback(callback_values).interpret(
-                storage=result.storage, sender=self.oracle_address, now=RUN_TIME + 12*ONE_HOUR)
-
-        self.assertTrue("Can't start measurement untill betsCloseTime" in str(cm.exception))
-
-
-    def _assert_callback_from_unknown_address(self):
-        """ Assert that callback from unknown address is failed """
-
-        callback_values = {
-            'currencyPair': self.currency_pair,
-            'lastUpdate': RUN_TIME + 26*ONE_HOUR,
-            'rate': 6_000_000
-        }
-
-        result = self.contract.startMeasurement(self.id).interpret(
-            storage=self.storage, sender=self.a, now=RUN_TIME + 24*ONE_HOUR)
-
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            res = self.contract.startMeasurementCallback(callback_values).interpret(
-                storage=result.storage, sender=self.c, now=RUN_TIME + 12*ONE_HOUR)
-
-        self.assertTrue('Unknown sender' in str(cm.exception))
-
-
-    def _assert_betting_in_measurement_period(self):
-        """ Test that betting during measurement period is fails """
-
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            transaction = self.contract.bet(
-                eventId=self.id, bet='against', minimalWinAmount=100_000).with_amount(100_000)
-
-            res = transaction.interpret(
-                storage=self.storage, sender=self.a, now=RUN_TIME + 28*ONE_HOUR)
-
-        self.assertTrue('Bets after betCloseTime is not allowed' in str(cm.exception))
-
-
     def _assert_double_measurement(self):
         """ Test that calling measurement after it was called is fails """
 
@@ -194,51 +90,105 @@ class DeterminedTest(StateTransformationBaseTest):
         # Creating event:
         amount = self.measure_start_fee + self.expiration_fee
         self.storage = self.check_event_successfully_created(
-            event_params=self.default_event_params, amount=amount)
+            event_params=self.default_event_params,
+            amount=amount)
 
         # TODO: create_evet_with_conflict_fees
         # TODO: create_more_events()
 
         # Participant A: adding liquidity 50/50 just at start:
         self.storage = self.check_participant_successfully_adds_more_liquidity(
-            participant=self.a, amount=100_000, expected_for=1, expected_against=1)
+            participant=self.a,
+            amount=100_000,
+            expected_for=1,
+            expected_against=1)
 
-        self._assert_wrong_ratio_bet()
+        # Testing that with current ratio 1:1, bet with 10:1 ratio fails:
+        self.check_wrong_ratio_bet_is_failed(
+            participant=self.a,
+            amount=100_000,
+            bet='for',
+            minimal_win=1_000_000)
 
         # Participant B: bets for 50_000 after 1 hour:
         self.current_time = RUN_TIME + ONE_HOUR
         self.storage = self.check_participant_successfully_bets(
-            participant=self.b, amount=50_000, bet='for', minimal_win=50_000)
+            participant=self.b,
+            amount=50_000,
+            bet='for',
+            minimal_win=50_000)
 
         # Participant A: adding more liquidity after 12 hours (1/2 of the bets period):
         self.current_time = RUN_TIME + 12*ONE_HOUR
         self.storage = self.check_participant_successfully_adds_more_liquidity(
-            participant=self.a, amount=50_000, expected_for=2, expected_against=1)
+            participant=self.a,
+            amount=50_000,
+            expected_for=2,
+            expected_against=1)
 
         # Participant C: adding more liquidity at the very end:
         self.current_time = RUN_TIME + 24*ONE_HOUR
         self.storage = self.check_participant_successfully_adds_more_liquidity(
-            participant=self.c, amount=100_000, expected_for=1, expected_against=1)
+            participant=self.c,
+            amount=100_000,
+            expected_for=1,
+            expected_against=1)
 
-        self._assert_closing_before_measurement()
-        self._assert_wrong_currency_pair_return_from_oracle()
-        self._assert_measurement_during_bets_time()
-        self._assert_callback_from_unknown_address()
-
-        # Running measurement:
+        # Running measurement and make failwith checks:
         self.current_time = RUN_TIME + 26*ONE_HOUR
-        self.storage = self.check_measurement_start_succesfully_runned(sender=self.a)
-
-        # Emulating callback:
-        callback_values = {
+        start_callback_values = {
             'currencyPair': self.currency_pair,
             'lastUpdate': self.current_time - 1*ONE_HOUR,
             'rate': 6_000_000
         }
-        self.storage = self.check_measurement_start_callback_succesfully_executed(
-            callback_values=callback_values, source=self.a)
 
-        self._assert_betting_in_measurement_period()
+        # Checking that it is not possible to run close before measurement started:
+        self.check_closing_before_measurement_fails(
+            callback_values=start_callback_values,
+            source=self.a,
+            sender=self.oracle_address)
+
+        # Checking that measurement with wrong currency pair is failed:
+        wrong_callback_currency = start_callback_values.copy()
+        wrong_callback_currency.update({'currencyPair': 'WRONG_PAIR'})
+
+        self.check_wrong_currency_pair_return_from_oracle_fails(
+            callback_values=wrong_callback_currency,
+            source=self.a,
+            sender=self.oracle_address
+        )
+    
+        # Check that measurement during bets time is failed:
+        callback_in_betstime = start_callback_values.copy()
+        callback_in_betstime.update({'lastUpdate': RUN_TIME + 12*ONE_HOUR})
+        self.check_measurement_during_bets_time_failed(
+            callback_values=callback_in_betstime,
+            source=self.a,
+            sender=self.oracle_address
+        )
+
+        # Checking that measurement from wrong address is failed:
+        self.check_start_measurement_callback_from_unknown_address_fails(
+            callback_values=start_callback_values,
+            source=self.a,
+            sender=self.a)
+
+        self.storage = self.check_measurement_start_succesfully_runned(sender=self.a)
+
+        # Emulating callback:
+        self.storage = self.check_measurement_start_callback_succesfully_executed(
+            callback_values=start_callback_values,
+            source=self.a,
+            sender=self.oracle_address)
+
+        # Checl that betting in measurement period is failed:
+        self.check_betting_in_measurement_period_is_failed(
+            participant=self.a,
+            amount=100_000,
+            bet='against',
+            minimal_win=100_000
+        )
+
         self._assert_double_measurement()
         self._assert_withdraw_before_close()
 
@@ -247,13 +197,15 @@ class DeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_close_succesfully_runned(sender=self.b)
 
         # Emulating calback with price is increased 25%:
-        callback_values = {
+        close_callback_values = {
             'currencyPair': self.currency_pair,
             'lastUpdate': self.current_time - 1*ONE_HOUR,
             'rate': 7_500_000
         }
         self.storage = self.check_close_callback_succesfully_executed(
-            callback_values=callback_values, source=self.b)
+            callback_values=close_callback_values,
+            source=self.b,
+            sender=self.oracle_address)
 
         # Withdrawals:
         self.current_time = RUN_TIME + 64*ONE_HOUR
@@ -335,34 +287,53 @@ class DeterminedTest(StateTransformationBaseTest):
         # Creating event:
         amount = self.measure_start_fee + self.expiration_fee
         self.storage = self.check_event_successfully_created(
-            event_params=self.default_event_params, amount=amount)
+            event_params=self.default_event_params,
+            amount=amount)
 
         # Participant A: adding liquidity 50/50 just at start:
         self.storage = self.check_participant_successfully_adds_more_liquidity(
-            participant=self.a, amount=100_000, expected_for=1, expected_against=1)
+            participant=self.a,
+            amount=100_000,
+            expected_for=1,
+            expected_against=1)
 
         # Participant B: bets for 50_000 after 1 hour:
         self.current_time = RUN_TIME + ONE_HOUR
         self.storage = self.check_participant_successfully_bets(
-            participant=self.b, amount=50_000, bet='for', minimal_win=50_000)
+            participant=self.b,
+            amount=50_000,
+            bet='for',
+            minimal_win=50_000)
 
         # Participant A: adding more liquidity after 12 hours (1/2 of the bets period):
         self.current_time = RUN_TIME + 12*ONE_HOUR
         self.storage = self.check_participant_successfully_adds_more_liquidity(
-            participant=self.a, amount=50_000, expected_for=2, expected_against=1)
+            participant=self.a,
+            amount=50_000,
+            expected_for=2,
+            expected_against=1)
 
         # Participant D: adding more liquidity after 12 hours:
         self.storage = self.check_participant_successfully_adds_more_liquidity(
-            participant=self.d, amount=450_000, expected_for=4, expected_against=1)
+            participant=self.d,
+            amount=450_000,
+            expected_for=4,
+            expected_against=1)
 
         # Participant D: bets against 125_000 after 12 hours:
         self.storage = self.check_participant_successfully_bets(
-            participant=self.d, amount=125_000, bet='against', minimal_win=125_000)
+            participant=self.d,
+            amount=125_000,
+            bet='against',
+            minimal_win=125_000)
 
         # Participant C: adding more liquidity at the very end:
         self.current_time = RUN_TIME + 24*ONE_HOUR
         self.storage = self.check_participant_successfully_adds_more_liquidity(
-            participant=self.c, amount=100_000, expected_for=1, expected_against=1)
+            participant=self.c,
+            amount=100_000,
+            expected_for=1,
+            expected_against=1)
 
         # Running measurement:
         self.current_time = RUN_TIME + 26*ONE_HOUR
@@ -375,7 +346,9 @@ class DeterminedTest(StateTransformationBaseTest):
             'rate': 6_000_000
         }
         self.storage = self.check_measurement_start_callback_succesfully_executed(
-            callback_values=callback_values, source=self.a)
+            callback_values=callback_values,
+            source=self.a,
+            sender=self.oracle_address)
             
         # Closing event:
         self.current_time = RUN_TIME + 38*ONE_HOUR
@@ -388,7 +361,9 @@ class DeterminedTest(StateTransformationBaseTest):
             'rate': 7_500_000
         }
         self.storage = self.check_close_callback_succesfully_executed(
-            callback_values=callback_values, source=self.b)
+            callback_values=callback_values,
+            source=self.b,
+            sender=self.oracle_address)
 
         # Withdrawals:
         self.current_time = RUN_TIME + 64*ONE_HOUR
