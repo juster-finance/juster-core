@@ -140,19 +140,19 @@ class StateTransformationBaseTest(TestCase):
                            + init_event['betsAgainstLiquidityPoolSum'])
 
         if total_liquidity > 0:
-            added_for_ratio = (
+            added_for_share = (
                 init_event['betsForLiquidityPoolSum'] / total_liquidity)
-            added_against_ratio = (
+            added_against_share = (
                 init_event['betsAgainstLiquidityPoolSum'] / total_liquidity)
 
         else:
-            added_for_ratio = (
+            added_for_share = (
                 expected_for / (expected_for + expected_against))
-            added_against_ratio = (
+            added_against_share = (
                 expected_against / (expected_for + expected_against))
 
-        added_for = int(amount * added_for_ratio)
-        added_against = int(amount * added_against_ratio)
+        added_for = int(amount * added_for_share)
+        added_against = int(amount * added_against_share)
 
         difference_for = (result_event['betsForLiquidityPoolSum']
                           - init_event['betsForLiquidityPoolSum'])
@@ -160,7 +160,7 @@ class StateTransformationBaseTest(TestCase):
                               - init_event['betsAgainstLiquidityPoolSum'])
 
         self.assertEqual(difference_for, added_for)
-        self.assertEqual(difference_against, difference_against)
+        self.assertEqual(difference_against, added_against)
 
         self.assertEqual(
             len(result_storage['betsForWinningLedger']),
@@ -197,6 +197,7 @@ class StateTransformationBaseTest(TestCase):
             result_event['totalLiquidityAgainstBonusSum'],
             init_event['totalLiquidityAgainstBonusSum'] + int(m*added_against))
 
+        self._check_result_integrity(result, self.id)
         return result_storage
 
 
@@ -237,6 +238,8 @@ class StateTransformationBaseTest(TestCase):
             len(init_storage['betsAgainstWinningLedger']) + bet_result['against_count'])
 
         # TODO: check sum in participant ledgers (include liquidity fee)
+
+        self._check_result_integrity(result, self.id)
         return result_storage
 
 
@@ -251,10 +254,12 @@ class StateTransformationBaseTest(TestCase):
         # TODO: check scenario with 0 withdrawal (maybe separate method?)
         # TODO: check participant removed from ledgers? (maybe separate method)
 
+        self._check_result_integrity(result, self.id)
         return self.remove_none_values(result.storage)
 
 
     def check_event_successfully_created(self, event_params, amount):
+        """ Testing creating event with settings that should succeed """
 
         # Running transaction:
         result = self.contract.newEvent(event_params).with_amount(amount).interpret(
@@ -280,16 +285,116 @@ class StateTransformationBaseTest(TestCase):
             k: v for k, v in result_event.items() if k in proper_event}
         self.assertDictEqual(proper_event, selected_event_keys)
 
+        self._check_result_integrity(result, self.id)
         return result_storage
 
 
-    def check_measurement_start_succesfully_runned(self):
-        # TODO:
-        pass
+    def check_measurement_start_succesfully_runned(self, sender):
+        """ Checking that state is correct after start measurement call """
+
+        # Running transaction:
+        result = self.contract.startMeasurement(self.id).interpret(
+            storage=self.storage, sender=sender, now=self.current_time)
+
+        # Checking that state changed as expected:
+        self.assertEqual(len(result.operations), 1)
+
+        operation = result.operations[0]
+        self.assertEqual(operation['destination'], self.oracle_address)
+        self.assertEqual(operation['parameters']['entrypoint'], 'get')
+
+        currency_pair = operation['parameters']['value']['args'][0]['string']
+        self.assertEqual(currency_pair, self.currency_pair)
+
+        event = result.storage['events'][self.id]
+        self.assertFalse(event['isMeasurementStarted'])
+
+        self._check_result_integrity(result, self.id)
+        return result.storage
+
+
+    def check_measurement_start_callback_succesfully_executed(
+            self, callback_values, source):
+        """ Check that emulated callback from oracle is successfull """
+
+        # Pre-transaction storage check:
+        self.assertEqual(self.storage['measurementStartCallEventId'], self.id)
+
+        # Running transaction:
+        result = self.contract.startMeasurementCallback(callback_values).interpret(
+            storage=self.storage, sender=self.oracle_address,
+            now=self.current_time, source=source)
+
+        self.assertEqual(len(result.operations), 1)
+        event = result.storage['events'][self.id]
+
+        self.assertEqual(event['startRate'], callback_values['rate'])
+        self.assertTrue(event['isMeasurementStarted'])
+        self.assertEqual(
+            event['measureOracleStartTime'],
+            callback_values['lastUpdate'])
+
+        operation = result.operations[0]
+        self.assertEqual(operation['destination'], source)
+        self.assertAmountEqual(operation, self.measure_start_fee)
+
+        self._check_result_integrity(result, self.id)
+        return result.storage
+
+
+    def check_close_succesfully_runned(self, sender):
+        """ Check that calling close, succesfully created opearaton
+            with call to oracle get """
+
+        result = self.contract.close(self.id).interpret(
+            storage=self.storage, sender=sender, now=self.current_time)
+        self.assertEqual(len(result.operations), 1)
+
+        operation = result.operations[0]
+        self.assertEqual(operation['destination'], self.oracle_address)
+        self.assertEqual(operation['parameters']['entrypoint'], 'get')
+
+        currency_pair = operation['parameters']['value']['args'][0]['string']
+        self.assertEqual(currency_pair, self.currency_pair)
+
+        self._check_result_integrity(result, self.id)
+        return result.storage
+
+
+    def check_close_callback_succesfully_executed(
+            self, callback_values, source):
+        """ Check that emulated close callback from oracle is successfull """
+
+        result = self.contract.closeCallback(callback_values).interpret(
+            storage=self.storage, sender=self.oracle_address,
+            now=self.current_time, source=source)
+        self.assertEqual(len(result.operations), 1)
+
+        event = result.storage['events'][self.id]
+        self.assertEqual(event['closedRate'], callback_values['rate'])
+        self.assertTrue(event['isClosed'])
+        self.assertEqual(event['closedOracleTime'], callback_values['lastUpdate'])
+
+        # checking that dynamics is correct:
+        dynamics = int(event['closedRate'] / event['startRate']
+                       * event['targetDynamicsPrecision'])
+        self.assertEqual(event['closedDynamics'], dynamics)
+
+        is_bets_for_win = dynamics > event['targetDynamics']
+        self.assertEqual(event['isBetsForWin'], is_bets_for_win)
+
+        operation = result.operations[0]
+        self.assertEqual(operation['destination'], source)
+        self.assertAmountEqual(operation, self.expiration_fee)
+
+        self._check_result_integrity(result, self.id)
+        return result.storage
+
 
     def check_measurement_start_fails_with(self):
         # TODO:
         pass
+
 
     def setUp(self):
         # TODO: decide, should it be here or in tests? If there are always the same

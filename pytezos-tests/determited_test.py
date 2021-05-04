@@ -70,39 +70,10 @@
 """
 
 from state_transformation_base import StateTransformationBaseTest, RUN_TIME, ONE_HOUR
+from pytezos import MichelsonRuntimeError
 
 
 class DeterminedTest(StateTransformationBaseTest):
-
-    def _create_event(self):
-        """ Testing creating event with settings that should succeed """
-
-        amount = self.measure_start_fee + self.expiration_fee
-        self.storage = self.check_event_successfully_created(
-            event_params=self.default_event_params, amount=amount)
-
-
-    def _create_evet_with_conflict_fees(self):
-        """ Testing that event creation with provided amount less than
-            measureStartFee + expirationFee leads to error
-        """
-        # TODO:
-        pass
-
-
-    def _create_more_events(self):
-        """ Testing multiple events creation """
-        # TODO:
-        pass
-
-
-    def _participant_A_adds_initial_liquidity(self):
-        """ Participant A: adding liquidity 50/50 just at start """
-
-        self.current_time = RUN_TIME
-        self.storage = self.check_participant_successfully_adds_more_liquidity(
-            participant=self.a, amount=100_000, expected_for=1, expected_against=1)
-
 
     def _assert_wrong_ratio_bet(self):
         """ Checking that transaction is fails if amount is not equal to sum
@@ -117,84 +88,6 @@ class DeterminedTest(StateTransformationBaseTest):
                 storage=self.storage, sender=self.a, now=RUN_TIME)
 
         self.assertTrue('Wrong minimalWinAmount' in str(cm.exception))
-
-
-    def _participant_B_bets_for(self):
-        """ Participant B: bets for 30_000 after 1 hour """
-
-        transaction = self.contract.bet(
-            eventId=self.id, bet='for', minimalWinAmount=50_000).with_amount(50_000)
-
-        res = transaction.interpret(
-            storage=self.storage, sender=self.b, now=RUN_TIME + ONE_HOUR)
-
-        event = res.storage['events'][self.id]
-        self.assertEqual(event['betsForLiquidityPoolSum'], 100_000)
-        self.assertEqual(event['betsAgainstLiquidityPoolSum'], 25_000)
-        self.assertEqual(len(res.storage['betsForWinningLedger']), 1)
-        self.assertEqual(len(res.storage['betsAgainstWinningLedger']), 0)
-
-        self._check_result_integrity(res, self.id)
-        self.storage = res.storage
-
-
-    def _participant_A_adds_more_liquidity(self):
-        """ Participant A: adding more liquidity after 12 hours
-            (exactly half of the betting period)
-        """
-
-        transaction = self.contract.provideLiquidity(
-            eventId=self.id,
-            expectedRatioAgainst=1,
-            expectedRatioFor=2,
-            maxSlippage=100_000
-        ).with_amount(50_000)
-
-        res = transaction.interpret(
-            storage=self.storage, sender=self.a, now=RUN_TIME + 12*ONE_HOUR)
-
-        event = res.storage['events'][self.id]
-        # TODO: currently there are round division in contract:
-        self.assertEqual(event['betsForLiquidityPoolSum'], 140_000)
-        self.assertEqual(event['betsAgainstLiquidityPoolSum'], 35_000)
-        self.assertEqual(len(res.storage['betsForWinningLedger']), 1)
-        self.assertEqual(len(res.storage['betsAgainstWinningLedger']), 0)
-        self.assertEqual(len(res.storage['providedLiquidityLedger']), 1)
-        self.assertEqual(len(res.storage['liquidityForBonusLedger']), 1)
-        self.assertEqual(len(res.storage['liquidityAgainstBonusLedger']), 1)
-
-        # the next sums are possible to be changed if not linear coef will be
-        # used to decrease liquidity bonus:
-        self.assertEqual(event['totalLiquidityForBonusSum'], 50_000 + 20_000)
-        self.assertEqual(event['totalLiquidityAgainstBonusSum'], 50_000 + 5_000)
-
-        self._check_result_integrity(res, self.id)
-        self.storage = res.storage
-
-
-    def _participant_D_adds_more_liquidity(self):
-        """ Participant D: adding more liquidity after 12 hours
-            (exactly half of the betting period) """
-
-        self.current_time = RUN_TIME + 12*ONE_HOUR
-        self.storage = self.check_participant_successfully_adds_more_liquidity(
-            participant=self.d, amount=450_000, expected_for=4, expected_against=1)
-
-
-    def _participant_D_bets_against(self):
-        """ Participant D: bets against 125_000 after 1 hour """
-
-        self.current_time = RUN_TIME + 12*ONE_HOUR
-        self.storage = self.check_participant_successfully_bets(
-            participant=self.d, amount=125_000, bet='against', minimal_win=125_000)
-
-
-    def _participant_C_adds_more_liquidity(self):
-        """ Participant C: adding more liquidity at the very end """
-
-        self.current_time = RUN_TIME + 24*ONE_HOUR
-        self.storage = self.check_participant_successfully_adds_more_liquidity(
-            participant=self.c, amount=100_000, expected_for=1, expected_against=1)
 
 
     def _assert_closing_before_measurement(self):
@@ -254,28 +147,6 @@ class DeterminedTest(StateTransformationBaseTest):
         self.assertTrue("Can't start measurement untill betsCloseTime" in str(cm.exception))
 
 
-    def _running_measurement(self):
-        """ Running start measurement after 26 hours """
-
-        res = self.contract.startMeasurement(self.id).interpret(
-            storage=self.storage, sender=self.a, now=RUN_TIME + 26*ONE_HOUR)
-
-        self.assertEqual(len(res.operations), 1)
-
-        operation = res.operations[0]
-        self.assertEqual(operation['destination'], self.oracle_address)
-        self.assertEqual(operation['parameters']['entrypoint'], 'get')
-
-        currency_pair = operation['parameters']['value']['args'][0]['string']
-        self.assertEqual(currency_pair, self.currency_pair)
-
-        event = res.storage['events'][self.id]
-        self.assertFalse(event['isMeasurementStarted'])
-
-        self._check_result_integrity(res, self.id)
-        self.storage = res.storage
-
-
     def _assert_callback_from_unknown_address(self):
         """ Assert that callback from unknown address is failed """
 
@@ -293,40 +164,6 @@ class DeterminedTest(StateTransformationBaseTest):
                 storage=result.storage, sender=self.c, now=RUN_TIME + 12*ONE_HOUR)
 
         self.assertTrue('Unknown sender' in str(cm.exception))
-
-
-    def _measurement_callback(self):
-        """ Emulating callback from oracle 26 hours late (but call last value
-            in oracle is still from prev hour)
-        """
-
-        start_running_time = RUN_TIME + 26*ONE_HOUR
-        start_oracle_time = start_running_time - 1*ONE_HOUR
-
-        callback_values = {
-            'currencyPair': self.currency_pair,
-            'lastUpdate': start_oracle_time,
-            'rate': 6_000_000
-        }
-
-        self.assertEqual(self.storage['measurementStartCallEventId'], self.id)
-        res = self.contract.startMeasurementCallback(callback_values).interpret(
-            storage=self.storage, sender=self.oracle_address,
-            now=start_running_time, source=self.a)
-
-        self.assertEqual(len(res.operations), 1)
-        event = res.storage['events'][self.id]
-
-        self.assertEqual(event['startRate'], callback_values['rate'])
-        self.assertTrue(event['isMeasurementStarted'])
-        self.assertEqual(event['measureOracleStartTime'], start_oracle_time)
-
-        operation = res.operations[0]
-        self.assertEqual(operation['destination'], self.a)
-        self.assertAmountEqual(operation, self.measure_start_fee)
-
-        self._check_result_integrity(res, self.id)
-        self.storage = res.storage
 
 
     def _assert_betting_in_measurement_period(self):
@@ -371,84 +208,148 @@ class DeterminedTest(StateTransformationBaseTest):
         self.assertTrue('Withdraw is not allowed until contract is closed' in str(cm.exception))
 
 
-    def _close_call(self):
-        """ Calling close, should create opearaton with call to oracle get """
+    def test_with_three_participants(self):
+        """ Test for 3 participants """
 
-        res = self.contract.close(self.id).interpret(
-            storage=self.storage, sender=self.b, now=RUN_TIME + 38*ONE_HOUR)
-        self.assertEqual(len(res.operations), 1)
+        self.current_time = RUN_TIME
+        self.id = len(self.storage['events'])
 
-        operation = res.operations[0]
-        self.assertEqual(operation['destination'], self.oracle_address)
-        self.assertEqual(operation['parameters']['entrypoint'], 'get')
+        # Creating event:
+        amount = self.measure_start_fee + self.expiration_fee
+        self.storage = self.check_event_successfully_created(
+            event_params=self.default_event_params, amount=amount)
 
-        currency_pair = operation['parameters']['value']['args'][0]['string']
-        self.assertEqual(currency_pair, self.currency_pair)
+        # TODO: create_evet_with_conflict_fees
+        # TODO: create_more_events()
 
-        self._check_result_integrity(res, self.id)
-        self.storage = res.storage
+        # Participant A: adding liquidity 50/50 just at start:
+        self.storage = self.check_participant_successfully_adds_more_liquidity(
+            participant=self.a, amount=100_000, expected_for=1, expected_against=1)
 
+        self._assert_wrong_ratio_bet()
 
-    def _close_callback(self):
-        """ Emulating callback from oracle 38 (24+12+2) hours late (but call last value
-            in oracle is still from prev hour)
-        """
+        # Participant B: bets for 50_000 after 1 hour:
+        self.current_time = RUN_TIME + ONE_HOUR
+        self.storage = self.check_participant_successfully_bets(
+            participant=self.b, amount=50_000, bet='for', minimal_win=50_000)
 
-        close_running_time = RUN_TIME + 38*ONE_HOUR
-        close_oracle_time = close_running_time - 1*ONE_HOUR
+        # Participant A: adding more liquidity after 12 hours (1/2 of the bets period):
+        self.current_time = RUN_TIME + 12*ONE_HOUR
+        self.storage = self.check_participant_successfully_adds_more_liquidity(
+            participant=self.a, amount=50_000, expected_for=2, expected_against=1)
 
-        # price is increased 25%:
+        # Participant C: adding more liquidity at the very end:
+        self.current_time = RUN_TIME + 24*ONE_HOUR
+        self.storage = self.check_participant_successfully_adds_more_liquidity(
+            participant=self.c, amount=100_000, expected_for=1, expected_against=1)
+
+        self._assert_closing_before_measurement()
+        self._assert_wrong_currency_pair_return_from_oracle()
+        self._assert_measurement_during_bets_time()
+        self._assert_callback_from_unknown_address()
+
+        # Running measurement:
+        self.current_time = RUN_TIME + 26*ONE_HOUR
+        self.storage = self.check_measurement_start_succesfully_runned(sender=self.a)
+
+        # Emulating callback:
         callback_values = {
             'currencyPair': self.currency_pair,
-            'lastUpdate': close_oracle_time,
+            'lastUpdate': self.current_time - 1*ONE_HOUR,
+            'rate': 6_000_000
+        }
+        self.storage = self.check_measurement_start_callback_succesfully_executed(
+            callback_values=callback_values, source=self.a)
+
+        self._assert_betting_in_measurement_period()
+        self._assert_double_measurement()
+        self._assert_withdraw_before_close()
+
+        # Closing event:
+        self.current_time = RUN_TIME + 38*ONE_HOUR
+        self.storage = self.check_close_succesfully_runned(sender=self.b)
+
+        # Emulating calback with price is increased 25%:
+        callback_values = {
+            'currencyPair': self.currency_pair,
+            'lastUpdate': self.current_time - 1*ONE_HOUR,
             'rate': 7_500_000
         }
+        self.storage = self.check_close_callback_succesfully_executed(
+            callback_values=callback_values, source=self.b)
 
-        res = self.contract.closeCallback(callback_values).interpret(
-            storage=self.storage, sender=self.oracle_address,
-            now=close_running_time, source=self.b)
-        self.assertEqual(len(res.operations), 1)
-
-        event = res.storage['events'][self.id]
-        self.assertEqual(event['closedRate'], callback_values['rate'])
-        self.assertTrue(event['isClosed'])
-        self.assertTrue(event['isBetsForWin'])
-        self.assertEqual(event['closedOracleTime'], close_oracle_time)
-
-        # dynamic 7.5 / 6.0 is +25%
-        self.assertEqual(event['closedDynamics'], 1_250_000)
-
-        operation = res.operations[0]
-        self.assertEqual(operation['destination'], self.b)
-        self.assertAmountEqual(operation, self.expiration_fee)
-
-        self._check_result_integrity(res, self.id)
-        self.storage = res.storage
-
-
-    def _withdrawals_check_scenario_without_D(self):
-        """ Checking that all withdrawals calculated properly
-                (scenaro with 3 participants):
-            A: 126_000
-            B: 74_000
-            C: 100_000
-        """
-
+        # Withdrawals:
         self.current_time = RUN_TIME + 64*ONE_HOUR
         self.storage = self.check_participant_succesfully_withdraws(self.a, 126_000)
         self.storage = self.check_participant_succesfully_withdraws(self.b, 74_000)
         self.storage = self.check_participant_succesfully_withdraws(self.c, 100_000)
 
 
-    def _withdrawals_check_scenario_with_D(self):
-        """ Checking that all withdrawals calculated properly
-                (scenaro with 4 participants):
-            A: 205_550 / 150_000 = 1.370
-            B:  74_000 /  50_000 = 1.480
-            C: 100_000 / 100_000 = 1.000
-            D: 495_450 / 575_000 = 0.862
-        """
+    def test_with_four_participants(self):
+        """ Test for 4 participants """
 
+        self.current_time = RUN_TIME
+        self.id = len(self.storage['events'])
+
+        # Creating event:
+        amount = self.measure_start_fee + self.expiration_fee
+        self.storage = self.check_event_successfully_created(
+            event_params=self.default_event_params, amount=amount)
+
+        # Participant A: adding liquidity 50/50 just at start:
+        self.storage = self.check_participant_successfully_adds_more_liquidity(
+            participant=self.a, amount=100_000, expected_for=1, expected_against=1)
+
+        # Participant B: bets for 50_000 after 1 hour:
+        self.current_time = RUN_TIME + ONE_HOUR
+        self.storage = self.check_participant_successfully_bets(
+            participant=self.b, amount=50_000, bet='for', minimal_win=50_000)
+
+        # Participant A: adding more liquidity after 12 hours (1/2 of the bets period):
+        self.current_time = RUN_TIME + 12*ONE_HOUR
+        self.storage = self.check_participant_successfully_adds_more_liquidity(
+            participant=self.a, amount=50_000, expected_for=2, expected_against=1)
+
+        # Participant D: adding more liquidity after 12 hours:
+        self.storage = self.check_participant_successfully_adds_more_liquidity(
+            participant=self.d, amount=450_000, expected_for=4, expected_against=1)
+
+        # Participant D: bets against 125_000 after 12 hours:
+        self.storage = self.check_participant_successfully_bets(
+            participant=self.d, amount=125_000, bet='against', minimal_win=125_000)
+
+        # Participant C: adding more liquidity at the very end:
+        self.current_time = RUN_TIME + 24*ONE_HOUR
+        self.storage = self.check_participant_successfully_adds_more_liquidity(
+            participant=self.c, amount=100_000, expected_for=1, expected_against=1)
+
+        # Running measurement:
+        self.current_time = RUN_TIME + 26*ONE_HOUR
+        self.storage = self.check_measurement_start_succesfully_runned(sender=self.a)
+
+        # Emulating callback:
+        callback_values = {
+            'currencyPair': self.currency_pair,
+            'lastUpdate': self.current_time - 1*ONE_HOUR,
+            'rate': 6_000_000
+        }
+        self.storage = self.check_measurement_start_callback_succesfully_executed(
+            callback_values=callback_values, source=self.a)
+            
+        # Closing event:
+        self.current_time = RUN_TIME + 38*ONE_HOUR
+        self.storage = self.check_close_succesfully_runned(sender=self.b)
+
+        # Emulating calback with price is increased 25%:
+        callback_values = {
+            'currencyPair': self.currency_pair,
+            'lastUpdate': self.current_time - 1*ONE_HOUR,
+            'rate': 7_500_000
+        }
+        self.storage = self.check_close_callback_succesfully_executed(
+            callback_values=callback_values, source=self.b)
+
+        # Withdrawals:
         self.current_time = RUN_TIME + 64*ONE_HOUR
         self.storage = self.check_participant_succesfully_withdraws(self.a, 205_550)
         self.storage = self.check_participant_succesfully_withdraws(self.b, 74_000)
@@ -456,54 +357,8 @@ class DeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_participant_succesfully_withdraws(self.d, 495_450)
 
 
-    def _scenario_without_D(self):
-        """ Test for 3 participants without D """
-
-        self._create_event()
-        self._create_evet_with_conflict_fees()
-        self._create_more_events()
-        self._participant_A_adds_initial_liquidity()
-        self._assert_wrong_ratio_bet()
-        self._participant_B_bets_for()
-        self._participant_A_adds_more_liquidity()
-        self._participant_C_adds_more_liquidity()
-        self._assert_closing_before_measurement()
-        self._assert_wrong_currency_pair_return_from_oracle()
-        self._assert_measurement_during_bets_time()
-        self._assert_callback_from_unknown_address()
-        self._running_measurement()
-        self._measurement_callback()
-        self._assert_betting_in_measurement_period()
-        self._assert_double_measurement()
-        self._assert_withdraw_before_close()
-        self._close_call()
-        self._close_callback()
-        self._withdrawals_check_scenario_without_D()
-
-
-    def _scenario_with_D(self):
-        """ Test for 3 participants without D """
-
-        self._create_event()
-        self._participant_A_adds_initial_liquidity()
-        self._participant_B_bets_for()
-        self._participant_A_adds_more_liquidity()
-        self._participant_D_adds_more_liquidity()
-        self._participant_D_bets_against()
-        self._participant_C_adds_more_liquidity()
-        self._running_measurement()
-        self._measurement_callback()
-        self._close_call()
-        self._close_callback()
-        self._withdrawals_check_scenario_with_D()
-
-
-    def test_interactions(self):
-        self.id = 0
-        # self._scenario_without_D()
-
-        # self.id = 1
-        self._scenario_with_D()
+    def _TODO(self):
+        pass
 
         # TODO: make more simple / edge scenarios from this pieces:
         #     - no LP no bets (but try to make bets, should fail)
@@ -538,3 +393,4 @@ class DeterminedTest(StateTransformationBaseTest):
         # TODO: make this test inside sandbox
 
         # TODO: test that first LP succesfully adds liquidity in not equal rate
+        # TODO: scenario where target dynamics is negative
