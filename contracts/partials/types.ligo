@@ -64,18 +64,19 @@ type eventType is record [
         https://github.com/atomex-me/atomex-fa12-ligo/blob/6e093b484d5cf1ddf66245a6eb9d8d11dfbb45da/src/atomex.ligo#L7 *)
     oracleAddress : address;
 
-    (* Total bets that were added to pools on this event, including provided liquidity: *)
-    betsForSum : tez;
-    betsAgainstSum : tez;
+    (* Current liquidity in for and against pools, this is used to calculate current ratio: *)
+    betsForLiquidityPoolSum : tez;
+    betsAgainstLiquidityPoolSum : tez;
 
-    (* Expected payments if one of the pool wins (required to limit bets when
-        it is not possible to cover them): *)
-    betsForWinningPoolSum : tez;
-    betsAgainstWinningPoolSum : tez;
+    (* Expected payments for LP if one of the pool wins,
+        can be positive (LP in +) or negative (LP in -): *)
+    winForProfitLoss : int;
+    winAgainstProfitLoss : int;
 
     (* This is total liquidity provided through provideLiquidity method, it is
         used to calculate profits *)
     totalLiquidityProvided : tez;
+
     (* TODO: do we need both betsForWinningPoolSum + betsAgainstWinningPoolSum and
         totalLiquidityProvided + all withdrawal sums? Because total liquidity can be
         calculated using Tezos.balance, looks like it is easy to create redundant variables *)
@@ -88,6 +89,7 @@ type eventType is record [
     (* withdrawnLiquidity is sum that was withdrawn by providers, needed to calculate
         sum that can withdraw another liquidity provider *)
     withdrawnLiquidity : tez;
+    // TODO: remove withdrawnLiquidity, it is not needed anymore
 
     (* Liquidity provider bonus: numerator & denominator *)
     liquidityPercent : nat;
@@ -102,6 +104,7 @@ type eventType is record [
 
     (* Participants count, provider can withdraw liquidity only when participants is 0 *)
     participants : nat;
+    // TODO: remove participants, it is not needed anymore
 
     (* Precision used in ratio calculations *)
     ratioPrecision : nat;

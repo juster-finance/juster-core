@@ -25,8 +25,8 @@ block {
         closedDynamics = 0n;
         isBetsForWin = False;
         oracleAddress = eventParams.oracleAddress;
-        betsForSum = 0tez;
-        betsAgainstSum = 0tez;
+        betsForLiquidityPoolSum = 0tez;
+        betsAgainstLiquidityPoolSum = 0tez;
         totalLiquidityForBonusSum = 0tez;
         totalLiquidityAgainstBonusSum = 0tez;
         totalLiquidityProvided = 0tez;
@@ -43,8 +43,8 @@ block {
 
         (* TODO: control new event ratioPrecision from Manager *)
         ratioPrecision = 100_000_000n;
-        betsForWinningPoolSum = 0tez;
-        betsAgainstWinningPoolSum = 0tez;
+        winForProfitLoss = 0;
+        winAgainstProfitLoss = 0;
     ];
 
     s.events[s.lastEventId] := newEvent;

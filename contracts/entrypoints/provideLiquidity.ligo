@@ -4,7 +4,7 @@ block {
     (* TODO: assert that Sender.amount > 0 *)
     const eventId : eventIdType = p.eventId;
     const event : eventType = getEvent(s, eventId);
-    const totalBets : tez = event.betsForSum + event.betsAgainstSum;
+    const totalBets : tez = event.betsForLiquidityPoolSum + event.betsAgainstLiquidityPoolSum;
     const key : ledgerKey = (Tezos.sender, eventId);
 
     (* TODO: calculate expected ratio using provided ratios *)
@@ -18,8 +18,8 @@ block {
     else
     block {
         (* Adding more liquidity scenario *)
-        const ratioSum : tez = event.betsForSum + event.betsAgainstSum;
-        ratio := event.betsForSum * event.ratioPrecision / ratioSum;
+        const ratioSum : tez = event.betsForLiquidityPoolSum + event.betsAgainstLiquidityPoolSum;
+        ratio := event.betsForLiquidityPoolSum * event.ratioPrecision / ratioSum;
     };
     (* TODO: compare ratio and check p.maxSlippage is less than expected *)
 
@@ -27,8 +27,8 @@ block {
     (* TODO: this division leads to round 99.9 to 99, maybe need to do something with this? *)
     const betFor : tez = natToTez(roundDiv(tezToNat(Tezos.amount * ratio), event.ratioPrecision));
     const betAgainst : tez = Tezos.amount - betFor;
-    event.betsForSum := event.betsForSum + betFor;
-    event.betsAgainstSum := event.betsAgainstSum + betAgainst;
+    event.betsForLiquidityPoolSum := event.betsForLiquidityPoolSum + betFor;
+    event.betsAgainstLiquidityPoolSum := event.betsAgainstLiquidityPoolSum + betAgainst;
 
     (* Calculating liquidity bonus: *)
     const totalBettingTime : nat = abs(event.betsCloseTime - event.createdTime);
