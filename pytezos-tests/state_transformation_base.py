@@ -1,3 +1,12 @@
+""" This is base class that used in different tests. 
+    It uses pytezos intepret method.
+    Each entrypoint call implemented in separate methods:
+        one for success and possible some with failwith.
+    After each contract call, new state returned and then saved into self.storage
+    so it can be used in another blocks.
+    TODO: try to move all this interactions inside sandbox
+"""
+
 from unittest import TestCase
 import time
 from os.path import dirname, join

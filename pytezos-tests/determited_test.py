@@ -1,74 +1,3 @@
-""" This is simple determined test that interacts with the contract in different
-    ways using pytezos intepret method. All interactions splitted into separate blocks.
-    After each contract call, new state saved into self.storage and then used in another
-    blocks, so block execution order is important. Actually this is one big test.
-
-    Event: XTZ-USD dynamics would be > 1 in 12 hours after betting period of 24 hours.
-    Liquidity pool 1%
-
-    Three participants: a, b and c making next interactions:
-        (1) participant A adds initial liquidity at the beginning (0 hours from start): 100k with ratio 1:1
-        (2) participant B bets For with 50k (1 hour from start)
-            rate before bet 50:50
-            rate at bet     50:100, if S: win amount +25k*L, if ~S: loose amount -50k
-            rate after bet  25:100 == 1:4 (a:f)
-        (3) participant A adds more liquidity (12 hours from start): 50k with ratio 4:1 (f:a)
-            NOTE: A whould probably have Ev =/= 0 after this operation
-        (4) participant D adds more liquidity (12 hours from start): 450k with ratio 4:1 (f:a)
-            NOTE: A whould probably have Ev =/= 0 after this operation
-        (5) participant D bets Against with 125k (14 hours from start)
-            rate before bet 500:125
-            rate at bet     500:250 (f:a), if ~S: win amount +250k*L, if S: loose amount 125k
-            rate after bet  250:250
-        (6) participant C adds more liquidity at the very end (24 hours from start): 100k with ratio 1:1 (f:a)
-            NOTE: C whould probably have Ev =/= 0 after this operation
-        (7) particiapnt A calls running_measurement 26 hours from the start
-        (8) oracle returns that price at the measurement start is 6.0$ per xtz. Oracle measurement time is behind one hour
-        (9) participant B cals close_call at 38 hours from the start
-        (10) oracle returns that price at the close is 7.5$ per xtz. Oracle measurement time is behind one hour
-
-    Closed dynamics is +25%, betsFor pool is wins
-                                      (1)      (2)      (3)      (4)      (5)       (6)
-    Total event pool:               100_000 + 25_000 + 50_000 + 450_000 + 125_000 + 100_000 = 850_000
-    betForLiquidityPool:             50_000 + 50_000 + 40_000 + 360_000 - 250_000 +  50_000 = 300_000
-    betAgainstLiquidityPool:         50_000 - 25_000 + 10_000 +  90_000 + 125_000 +  50_000 = 300_000
-            (liquidity rate is not included in the pools)
-
-    if S:
-        participant B wins and get 50_000 + 25_000 * 96% = 74_000 (this value should be saved in winning amounts ledger)
-        participant D loose his bet 35_000 + provided liquidity 75_000
-    if ~S:
-        participant B loose his bet 50_000
-        participant D wins and get 35_000 + 70_000 * 96% + provided liquidity 75_000 = 177_200
-
-    Total win S  LP profit / loss:        0 - 24_000 +      0 +       0 + 125_000 +       0 = 101_000
-    Total win ~S LP profit / loss:        0 + 50_000 +      0 +       0 - 120_000 +       0 = -70_000
-            (liquidity rate is included in profit/loss pools)
-
-    Total liquidity For bonuses:     50_000 +      0 + 20_000 + 180_000 +       0 +       0 = 250_000
-    Total liquidity Against bonuses: 50_000 +      0 +  5_000 +  45_000 +       0 +       0 = 100_000
-    Total provided Liquidity:       100_000 +      0 + 50_000 + 450_000 +       0 + 100_000 = 325_000
-
-    Selected liquidity pool to distribute profits: liquidity Against (because For wins)
-
-    liquidity For shares:
-        A: 55_000 / 100_000 = 55%
-        D: 45_000 / 100_000 = 45% 
-        C:      0 / 100_000 = 0%
-
-    LP withdraw = Profit/Loss * LP_share + ProvidedL
-    A withdraws: 101_000 * 0.55 + 100_000 + 50_000 = 205_550
-    B withdraws: 50_000 + 24_000 = 74_000
-    C withdraws: 100_000
-    D withdraws: 101_000 * 0.45 + 450_000 = 495_450
-
-    Changes:
-        A: 205_550 / 150_000 = 1.370
-        B:  74_000 /  50_000 = 1.480
-        C: 100_000 / 100_000 = 1.000
-        D: 495_450 / 575_000 = 0.862
-"""
-
 from state_transformation_base import StateTransformationBaseTest, RUN_TIME, ONE_HOUR
 from pytezos import MichelsonRuntimeError
 
@@ -209,7 +138,55 @@ class DeterminedTest(StateTransformationBaseTest):
 
 
     def test_with_three_participants(self):
-        """ Test for 3 participants """
+        """ Event: XTZ-USD dynamics would be > 1 in 12 hours after betting period of 24 hours.
+            Liquidity pool 4%
+
+            Three participants: a, b and c making next interactions:
+                (1) participant A adds initial liquidity at the beginning (0 hours from start): 100k with ratio 1:1
+                (2) participant B betFor with 50k (1 hour from start)
+                    rate at bet 50:100, if S: win amount +25k*L, if ~S: loose amount -50k
+                    rate after bet 100:25 == 4:1
+                (3) participant A adds more liquidity (12 hours from start): 50k with ratio 4:1 (f:a)
+                    NOTE: A whould probably have Ev =/= 0 after this operation
+                (4) participant C adds more liquidity at the very end (24 hours from start): 100k with ratio 4:1 (f:a)
+                    NOTE: C whould probably have Ev =/= 0 after this operation
+                (5) particiapnt A calls running_measurement 26 hours from the start
+                (6) oracle returns that price at the measurement start is 6.0$ per xtz. Oracle measurement time is behind one hour
+                (7) participant B cals close_call at 38 hours from the start
+                (8) oracle returns that price at the close is 7.5$ per xtz. Oracle measurement time is behind one hour
+
+            Closed dynamics is +25%, betsFor pool is wins
+                                            (1)      (2)      (3)       (4)
+            Total event pool:               100_000 + 25_000 + 50_000 + 100_000 = 265_000
+            betForLiquidityPool:             50_000 + 50_000 + 40_000 +  80_000 = 220_000
+            betAgainstLiquidityPool:         50_000 - 25_000 + 10_000 +  20_000 =  55_000
+                    (liquidity rate is not included in the pools)
+
+            if participant B wins he get 50_000 + 25_000 * 96% = 74_000 (this value should be saved in winning amounts ledger)
+
+            Total win S  LP profit / loss:        0 - 24_000 +      0 +       0 = -24_000  (including L bonus for winnig returns)
+            Total win ~S LP profit / loss:        0 + 25_000 +      0 +       0 =  25_000  (and not including L bonus for bets)
+                    (liquidity rate is included in profit/loss pools)
+
+            Total liquidity For bonuses:     50_000 +      0 + 20_000 +       0 =  70_000
+            Total liquidity Against bonuses: 50_000 +      0 +  5_000 +       0 =  55_000
+            Total provided Liquidity:       100_000 +      0 + 50_000 + 100_000 = 250_000
+
+            selected liquidity pool to distribute profits: liquidity Against
+
+            liquidity Against shares:
+                A: 55_000 / 55_000 = 100%
+                C: 0      / 55_000 = 0%
+
+            LP withdraw = Profit/Loss * LP_share + ProvidedL
+            A withdraws: -24_000 * 100% + 100_000 + 50_000 = 126_000
+            C withdraws: 100_000
+
+            Changes:
+                A: 126_000 / 150_000 = 0.840
+                B: 74_000 / 50_000 = 1.480
+                C: 100_000 / 100_000 = 1.000
+        """
 
         self.current_time = RUN_TIME
         self.id = len(self.storage['events'])
@@ -286,7 +263,71 @@ class DeterminedTest(StateTransformationBaseTest):
 
 
     def test_with_four_participants(self):
-        """ Test for 4 participants """
+        """ Event: XTZ-USD dynamics would be > 1 in 12 hours after betting period of 24 hours.
+            Liquidity pool 4%
+
+            Three participants: a, b and c making next interactions:
+                (1) participant A adds initial liquidity at the beginning (0 hours from start): 100k with ratio 1:1
+                (2) participant B bets For with 50k (1 hour from start)
+                    rate before bet 50:50
+                    rate at bet     50:100, if S: win amount +25k*L, if ~S: loose amount -50k
+                    rate after bet  25:100 == 1:4 (a:f)
+                (3) participant A adds more liquidity (12 hours from start): 50k with ratio 4:1 (f:a)
+                    NOTE: A whould probably have Ev =/= 0 after this operation
+                (4) participant D adds more liquidity (12 hours from start): 450k with ratio 4:1 (f:a)
+                    NOTE: A whould probably have Ev =/= 0 after this operation
+                (5) participant D bets Against with 125k (14 hours from start)
+                    rate before bet 500:125
+                    rate at bet     500:250 (f:a), if ~S: win amount +250k*L, if S: loose amount 125k
+                    rate after bet  250:250
+                (6) participant C adds more liquidity at the very end (24 hours from start): 100k with ratio 1:1 (f:a)
+                    NOTE: C whould probably have Ev =/= 0 after this operation
+                (7) particiapnt A calls running_measurement 26 hours from the start
+                (8) oracle returns that price at the measurement start is 6.0$ per xtz. Oracle measurement time is behind one hour
+                (9) participant B cals close_call at 38 hours from the start
+                (10) oracle returns that price at the close is 7.5$ per xtz. Oracle measurement time is behind one hour
+
+            Closed dynamics is +25%, betsFor pool is wins
+                                            (1)      (2)      (3)      (4)      (5)       (6)
+            Total event pool:               100_000 + 25_000 + 50_000 + 450_000 + 125_000 + 100_000 = 850_000
+            betForLiquidityPool:             50_000 + 50_000 + 40_000 + 360_000 - 250_000 +  50_000 = 300_000
+            betAgainstLiquidityPool:         50_000 - 25_000 + 10_000 +  90_000 + 125_000 +  50_000 = 300_000
+                    (liquidity rate is not included in the pools)
+
+            if S:
+                participant B wins and get 50_000 + 25_000 * 96% = 74_000 (this value should be saved in winning amounts ledger)
+                participant D loose his bet 35_000 + provided liquidity 75_000
+            if ~S:
+                participant B loose his bet 50_000
+                participant D wins and get 35_000 + 70_000 * 96% + provided liquidity 75_000 = 177_200
+
+            Total win S  LP profit / loss:        0 - 24_000 +      0 +       0 + 125_000 +       0 = 101_000
+            Total win ~S LP profit / loss:        0 + 50_000 +      0 +       0 - 120_000 +       0 = -70_000
+                    (liquidity rate is included in profit/loss pools)
+
+            Total liquidity For bonuses:     50_000 +      0 + 20_000 + 180_000 +       0 +       0 = 250_000
+            Total liquidity Against bonuses: 50_000 +      0 +  5_000 +  45_000 +       0 +       0 = 100_000
+            Total provided Liquidity:       100_000 +      0 + 50_000 + 450_000 +       0 + 100_000 = 325_000
+
+            Selected liquidity pool to distribute profits: liquidity Against (because For wins)
+
+            liquidity For shares:
+                A: 55_000 / 100_000 = 55%
+                D: 45_000 / 100_000 = 45% 
+                C:      0 / 100_000 = 0%
+
+            LP withdraw = Profit/Loss * LP_share + ProvidedL
+            A withdraws: 101_000 * 0.55 + 100_000 + 50_000 = 205_550
+            B withdraws: 50_000 + 24_000 = 74_000
+            C withdraws: 100_000
+            D withdraws: 101_000 * 0.45 + 450_000 = 495_450
+
+            Changes:
+                A: 205_550 / 150_000 = 1.370
+                B:  74_000 /  50_000 = 1.480
+                C: 100_000 / 100_000 = 1.000
+                D: 495_450 / 575_000 = 0.862
+        """
 
         self.current_time = RUN_TIME
         self.id = len(self.storage['events'])
