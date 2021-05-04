@@ -30,7 +30,6 @@ block {
         totalLiquidityForBonusSum = 0tez;
         totalLiquidityAgainstBonusSum = 0tez;
         totalLiquidityProvided = 0tez;
-        withdrawnLiquidity = 0tez;
 
         (* TODO: control liquidityPrecision, liquidityPercent min|max from Manager *)
         liquidityPercent = eventParams.liquidityPercent;
@@ -39,7 +38,6 @@ block {
         expirationFee = eventParams.expirationFee;
         (* TODO: control rewardCallFee from Manager *)
         rewardCallFee = 100_000mutez;
-        participants = 0n;
 
         (* TODO: control new event ratioPrecision from Manager *)
         ratioPrecision = 100_000_000n;

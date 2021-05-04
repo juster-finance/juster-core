@@ -20,15 +20,6 @@ block {
         in ledgers, that would not be removed) *)
 
     const key : ledgerKey = (Tezos.sender, eventId);
-
-    const alreadyBetValue : tez =
-        getLedgerAmount(key, store.betsForWinningLedger)
-        + getLedgerAmount(key, store.betsAgainstWinningLedger);
-
-    if (alreadyBetValue = 0tez) then
-        event.participants := event.participants + 1n;
-    else skip;
-
     var possibleWinAmount : tez := 0tez;
 
     function excludeLiquidity(var value : tez; var event : eventType) : tez is

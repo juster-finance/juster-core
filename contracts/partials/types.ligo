@@ -77,19 +77,10 @@ type eventType is record [
         used to calculate profits *)
     totalLiquidityProvided : tez;
 
-    (* TODO: do we need both betsForWinningPoolSum + betsAgainstWinningPoolSum and
-        totalLiquidityProvided + all withdrawal sums? Because total liquidity can be
-        calculated using Tezos.balance, looks like it is easy to create redundant variables *)
-
     (* totalLiquidityForBonusSum & totalLiquidityAgainstBonusSum is like provided liquidity,
         but reduced in time. It is used to calculate liquidity share bonuses for providers *)
     totalLiquidityForBonusSum : tez;
     totalLiquidityAgainstBonusSum : tez;
-
-    (* withdrawnLiquidity is sum that was withdrawn by providers, needed to calculate
-        sum that can withdraw another liquidity provider *)
-    withdrawnLiquidity : tez;
-    // TODO: remove withdrawnLiquidity, it is not needed anymore
 
     (* Liquidity provider bonus: numerator & denominator *)
     liquidityPercent : nat;
@@ -101,10 +92,6 @@ type eventType is record [
 
     (* Fees, that taken from participants *)
     rewardCallFee : tez;
-
-    (* Participants count, provider can withdraw liquidity only when participants is 0 *)
-    participants : nat;
-    // TODO: remove participants, it is not needed anymore
 
     (* Precision used in ratio calculations *)
     ratioPrecision : nat;
