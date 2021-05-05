@@ -60,7 +60,7 @@ class DeterminedTest(StateTransformationBaseTest):
 
         # Creating event:
         amount = self.measure_start_fee + self.expiration_fee
-        self.storage = self.check_event_successfully_created(
+        self.storage = self.check_new_event_succeed(
             event_params=self.default_event_params,
             amount=amount)
 
@@ -68,7 +68,7 @@ class DeterminedTest(StateTransformationBaseTest):
         # TODO: create_more_events()
 
         # Participant A: adding liquidity 50/50 just at start:
-        self.storage = self.check_participant_successfully_adds_more_liquidity(
+        self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
             amount=100_000,
             expected_for=1,
@@ -84,7 +84,7 @@ class DeterminedTest(StateTransformationBaseTest):
 
         # Participant B: bets for 50_000 after 1 hour:
         self.current_time = RUN_TIME + ONE_HOUR
-        self.storage = self.check_participant_successfully_bets(
+        self.storage = self.check_bet_succeed(
             participant=self.b,
             amount=50_000,
             bet='for',
@@ -92,7 +92,7 @@ class DeterminedTest(StateTransformationBaseTest):
 
         # Participant A: adding more liquidity after 12 hours (1/2 of the bets period):
         self.current_time = RUN_TIME + 12*ONE_HOUR
-        self.storage = self.check_participant_successfully_adds_more_liquidity(
+        self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
             amount=50_000,
             expected_for=2,
@@ -100,7 +100,7 @@ class DeterminedTest(StateTransformationBaseTest):
 
         # Participant C: adding more liquidity at the very end:
         self.current_time = RUN_TIME + 24*ONE_HOUR
-        self.storage = self.check_participant_successfully_adds_more_liquidity(
+        self.storage = self.check_provide_liquidity_succeed(
             participant=self.c,
             amount=100_000,
             expected_for=1,
@@ -115,7 +115,7 @@ class DeterminedTest(StateTransformationBaseTest):
         }
 
         # Checking that it is not possible to run close before measurement started:
-        self.check_closing_fails_with(
+        self.check_close_callback_fails_with(
             callback_values=start_callback_values,
             source=self.a,
             sender=self.oracle_address,
@@ -149,10 +149,10 @@ class DeterminedTest(StateTransformationBaseTest):
             sender=self.a,
             msg_contains='Unknown sender')
 
-        self.storage = self.check_measurement_start_succesfully_runned(sender=self.a)
+        self.storage = self.check_start_measurement_succeed(sender=self.a)
 
         # Emulating callback:
-        self.storage = self.check_measurement_start_callback_succesfully_executed(
+        self.storage = self.check_start_measurement_callback_succeed(
             callback_values=start_callback_values,
             source=self.a,
             sender=self.oracle_address)
@@ -182,7 +182,7 @@ class DeterminedTest(StateTransformationBaseTest):
 
         # Closing event:
         self.current_time = RUN_TIME + 38*ONE_HOUR
-        self.storage = self.check_close_succesfully_runned(sender=self.b)
+        self.storage = self.check_close_succeed(sender=self.b)
 
         # Emulating calback with price is increased 25%:
         close_callback_values = {
@@ -190,16 +190,16 @@ class DeterminedTest(StateTransformationBaseTest):
             'lastUpdate': self.current_time - 1*ONE_HOUR,
             'rate': 7_500_000
         }
-        self.storage = self.check_close_callback_succesfully_executed(
+        self.storage = self.check_close_callback_succeed(
             callback_values=close_callback_values,
             source=self.b,
             sender=self.oracle_address)
 
         # Withdrawals:
         self.current_time = RUN_TIME + 64*ONE_HOUR
-        self.storage = self.check_participant_succesfully_withdraws(self.a, 126_000)
-        self.storage = self.check_participant_succesfully_withdraws(self.b, 74_000)
-        self.storage = self.check_participant_succesfully_withdraws(self.c, 100_000)
+        self.storage = self.check_withdraw_succeed(self.a, 126_000)
+        self.storage = self.check_withdraw_succeed(self.b, 74_000)
+        self.storage = self.check_withdraw_succeed(self.c, 100_000)
 
 
     def test_with_four_participants(self):
@@ -274,12 +274,12 @@ class DeterminedTest(StateTransformationBaseTest):
 
         # Creating event:
         amount = self.measure_start_fee + self.expiration_fee
-        self.storage = self.check_event_successfully_created(
+        self.storage = self.check_new_event_succeed(
             event_params=self.default_event_params,
             amount=amount)
 
         # Participant A: adding liquidity 50/50 just at start:
-        self.storage = self.check_participant_successfully_adds_more_liquidity(
+        self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
             amount=100_000,
             expected_for=1,
@@ -287,7 +287,7 @@ class DeterminedTest(StateTransformationBaseTest):
 
         # Participant B: bets for 50_000 after 1 hour:
         self.current_time = RUN_TIME + ONE_HOUR
-        self.storage = self.check_participant_successfully_bets(
+        self.storage = self.check_bet_succeed(
             participant=self.b,
             amount=50_000,
             bet='for',
@@ -295,21 +295,21 @@ class DeterminedTest(StateTransformationBaseTest):
 
         # Participant A: adding more liquidity after 12 hours (1/2 of the bets period):
         self.current_time = RUN_TIME + 12*ONE_HOUR
-        self.storage = self.check_participant_successfully_adds_more_liquidity(
+        self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
             amount=50_000,
             expected_for=2,
             expected_against=1)
 
         # Participant D: adding more liquidity after 12 hours:
-        self.storage = self.check_participant_successfully_adds_more_liquidity(
+        self.storage = self.check_provide_liquidity_succeed(
             participant=self.d,
             amount=450_000,
             expected_for=4,
             expected_against=1)
 
         # Participant D: bets against 125_000 after 12 hours:
-        self.storage = self.check_participant_successfully_bets(
+        self.storage = self.check_bet_succeed(
             participant=self.d,
             amount=125_000,
             bet='against',
@@ -317,7 +317,7 @@ class DeterminedTest(StateTransformationBaseTest):
 
         # Participant C: adding more liquidity at the very end:
         self.current_time = RUN_TIME + 24*ONE_HOUR
-        self.storage = self.check_participant_successfully_adds_more_liquidity(
+        self.storage = self.check_provide_liquidity_succeed(
             participant=self.c,
             amount=100_000,
             expected_for=1,
@@ -325,7 +325,7 @@ class DeterminedTest(StateTransformationBaseTest):
 
         # Running measurement:
         self.current_time = RUN_TIME + 26*ONE_HOUR
-        self.storage = self.check_measurement_start_succesfully_runned(sender=self.a)
+        self.storage = self.check_start_measurement_succeed(sender=self.a)
 
         # Emulating callback:
         callback_values = {
@@ -333,14 +333,14 @@ class DeterminedTest(StateTransformationBaseTest):
             'lastUpdate': self.current_time - 1*ONE_HOUR,
             'rate': 6_000_000
         }
-        self.storage = self.check_measurement_start_callback_succesfully_executed(
+        self.storage = self.check_start_measurement_callback_succeed(
             callback_values=callback_values,
             source=self.a,
             sender=self.oracle_address)
             
         # Closing event:
         self.current_time = RUN_TIME + 38*ONE_HOUR
-        self.storage = self.check_close_succesfully_runned(sender=self.b)
+        self.storage = self.check_close_succeed(sender=self.b)
 
         # Emulating calback with price is increased 25%:
         callback_values = {
@@ -348,17 +348,17 @@ class DeterminedTest(StateTransformationBaseTest):
             'lastUpdate': self.current_time - 1*ONE_HOUR,
             'rate': 7_500_000
         }
-        self.storage = self.check_close_callback_succesfully_executed(
+        self.storage = self.check_close_callback_succeed(
             callback_values=callback_values,
             source=self.b,
             sender=self.oracle_address)
 
         # Withdrawals:
         self.current_time = RUN_TIME + 64*ONE_HOUR
-        self.storage = self.check_participant_succesfully_withdraws(self.a, 205_550)
-        self.storage = self.check_participant_succesfully_withdraws(self.b, 74_000)
-        self.storage = self.check_participant_succesfully_withdraws(self.c, 100_000)
-        self.storage = self.check_participant_succesfully_withdraws(self.d, 495_450)
+        self.storage = self.check_withdraw_succeed(self.a, 205_550)
+        self.storage = self.check_withdraw_succeed(self.b, 74_000)
+        self.storage = self.check_withdraw_succeed(self.c, 100_000)
+        self.storage = self.check_withdraw_succeed(self.d, 495_450)
 
 
     def _TODO(self):

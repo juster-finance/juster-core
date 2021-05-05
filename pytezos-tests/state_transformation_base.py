@@ -3,7 +3,10 @@
 
     For each entrypoint call there are two methods:
         - one for successful call that checks is state changed correctly
+            name: f'check_{entrypoint_call}_succeed'
         - one for failwith call that checks that MichelsonRuntimeError is raised with some message
+            name: f'check_{entrypoint_call}_fails_with'
+
     The one who checks for error have the same interface but with msg_contains param provided.
 
     After each contract call, new state returned.
@@ -135,8 +138,7 @@ class StateTransformationBaseTest(TestCase):
         pass
 
 
-    """ Test blocks for provideLiquidity entrypoint: """
-    def check_participant_successfully_adds_more_liquidity(
+    def check_provide_liquidity_succeed(
             self, participant, amount, expected_for, expected_against,
             max_slippage=100_000):
 
@@ -224,15 +226,14 @@ class StateTransformationBaseTest(TestCase):
         return result_storage
 
 
-    def check_provide_liquidity_fail_with(
+    def check_provide_liquidity_fails_with(
         self, participant, amount, expected_for, expected_against,
         max_slippage=100_000, msg_contains=''):
 
         raise Exception('Not implemented yet')
 
 
-    """ Test blocks for bet entrypoint: """
-    def check_participant_successfully_bets(
+    def check_bet_succeed(
             self, participant, amount, bet, minimal_win):
 
         # Running transaction:
@@ -296,8 +297,7 @@ class StateTransformationBaseTest(TestCase):
         self.assertTrue(msg_contains in str(cm.exception))
 
 
-    """ Test blocks for withdraw entrypoint: """
-    def check_participant_succesfully_withdraws(self, participant, withdraw_amount):
+    def check_withdraw_succeed(self, participant, withdraw_amount):
 
         # Running transaction:
         result = self.contract.withdraw(self.id).interpret(
@@ -321,8 +321,7 @@ class StateTransformationBaseTest(TestCase):
         self.assertTrue(msg_contains in str(cm.exception))
 
 
-    """ Test blocks for newEvent entrypoint: """
-    def check_event_successfully_created(self, event_params, amount):
+    def check_new_event_succeed(self, event_params, amount):
         """ Testing creating event with settings that should succeed """
 
         # Running transaction:
@@ -353,14 +352,13 @@ class StateTransformationBaseTest(TestCase):
         return result_storage
 
 
-    def check_new_event_fail_with(
+    def check_new_event_fails_with(
         self, event_params, amount, msg_contains=''):
 
         raise Exception('Not implemented yet')
 
 
-    """ Test blocks for startMeasurement/startMeasurementCallback entrypoints: """
-    def check_measurement_start_succesfully_runned(self, sender):
+    def check_start_measurement_succeed(self, sender):
         """ Checking that state is correct after start measurement call """
 
         # Running transaction:
@@ -384,7 +382,7 @@ class StateTransformationBaseTest(TestCase):
         return result.storage
 
 
-    def check_measurement_start_callback_succesfully_executed(
+    def check_start_measurement_callback_succeed(
             self, callback_values, source, sender):
         """ Check that emulated callback from oracle is successfull """
 
@@ -432,8 +430,7 @@ class StateTransformationBaseTest(TestCase):
         self.assertTrue(msg_contains in str(cm.exception))
 
 
-    """ Test blocks for close/closeCallback entrypoints: """
-    def check_close_succesfully_runned(self, sender):
+    def check_close_succeed(self, sender):
         """ Check that calling close, succesfully created opearaton
             with call to oracle get """
 
@@ -452,7 +449,7 @@ class StateTransformationBaseTest(TestCase):
         return result.storage
 
 
-    def check_close_callback_succesfully_executed(
+    def check_close_callback_succeed(
             self, callback_values, source, sender):
         """ Check that emulated close callback from oracle is successfull """
 
@@ -482,7 +479,7 @@ class StateTransformationBaseTest(TestCase):
         return result.storage
 
 
-    def check_closing_fails_with(
+    def check_close_callback_fails_with(
             self, callback_values, source, sender, msg_contains=''):
         """ Testing that closing before measurement fails """
 
