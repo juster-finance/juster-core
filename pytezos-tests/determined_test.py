@@ -4,25 +4,6 @@ from pytezos import MichelsonRuntimeError
 
 class DeterminedTest(StateTransformationBaseTest):
 
-    def _assert_double_measurement(self):
-        """ Test that calling measurement after it was called is fails """
-
-        callback_values = {
-            'currencyPair': self.currency_pair,
-            'lastUpdate': RUN_TIME + 30*ONE_HOUR,
-            'rate': 7_000_000
-        }
-
-        result = self.contract.startMeasurement(self.id).interpret(
-            storage=self.storage, sender=self.a, now=RUN_TIME + 24*ONE_HOUR)
-
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            res = self.contract.startMeasurementCallback(callback_values).interpret(
-                storage=result.storage, sender=self.oracle_address, now=RUN_TIME + 30*ONE_HOUR)
-
-        self.assertTrue('Measurement period already started' in str(cm.exception))
-
-
     def _assert_withdraw_before_close(self):
         """ Test that withdraw before close raises error """
 
@@ -151,27 +132,30 @@ class DeterminedTest(StateTransformationBaseTest):
         # Checking that measurement with wrong currency pair is failed:
         wrong_callback_currency = start_callback_values.copy()
         wrong_callback_currency.update({'currencyPair': 'WRONG_PAIR'})
-
-        self.check_wrong_currency_pair_return_from_oracle_fails(
+        self.check_start_measurement_callback_fails_with(
             callback_values=wrong_callback_currency,
             source=self.a,
-            sender=self.oracle_address
+            sender=self.oracle_address,
+            msg_contains='Unexpected currency pair'
         )
     
         # Check that measurement during bets time is failed:
         callback_in_betstime = start_callback_values.copy()
         callback_in_betstime.update({'lastUpdate': RUN_TIME + 12*ONE_HOUR})
-        self.check_measurement_during_bets_time_failed(
+        self.check_start_measurement_callback_fails_with(
             callback_values=callback_in_betstime,
             source=self.a,
-            sender=self.oracle_address
+            sender=self.oracle_address,
+            msg_contains="Can't start measurement untill betsCloseTime"
         )
 
-        # Checking that measurement from wrong address is failed:
-        self.check_start_measurement_callback_from_unknown_address_fails(
+        # Checking that measurement from wrong address is failed,
+        # sender is participant instead of oracle:
+        self.check_start_measurement_callback_fails_with(
             callback_values=start_callback_values,
             source=self.a,
-            sender=self.a)
+            sender=self.a,
+            msg_contains='Unknown sender')
 
         self.storage = self.check_measurement_start_succesfully_runned(sender=self.a)
 
@@ -189,7 +173,15 @@ class DeterminedTest(StateTransformationBaseTest):
             minimal_win=100_000
         )
 
-        self._assert_double_measurement()
+        # Check that that calling measurement after it was already succesfully
+        # called before is fails:
+        self.check_start_measurement_callback_fails_with(
+            callback_values=start_callback_values,
+            source=self.a,
+            sender=self.oracle_address,
+            msg_contains='Measurement period already started'
+        )
+
         self._assert_withdraw_before_close()
 
         # Closing event:
@@ -410,3 +402,5 @@ class DeterminedTest(StateTransformationBaseTest):
 
         # TODO: test that first LP succesfully adds liquidity in not equal rate
         # TODO: scenario where target dynamics is negative
+
+        # TODO: test two event in parallel

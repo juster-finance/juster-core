@@ -396,25 +396,14 @@ class StateTransformationBaseTest(TestCase):
         return result.storage
 
 
-    def check_start_measurement_callback_from_unknown_address_fails(
-            self, callback_values, source, sender):
-        """ Assert that callback from unknown address
-            (not from oracle) is failed """
-
-        result = self.contract.startMeasurement(self.id).interpret(
-            storage=self.storage, sender=source, now=self.current_time)
-
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            res = self.contract.startMeasurementCallback(callback_values).interpret(
-                storage=result.storage, sender=sender, now=RUN_TIME + 12*ONE_HOUR)
-
-        self.assertTrue('Unknown sender' in str(cm.exception))
-
-
-    def check_wrong_currency_pair_return_from_oracle_fails(
-            self, callback_values, source, sender):
-        """ Testing that wrong currency_pair returned from oracle
-            during measurement is fails """
+    def check_start_measurement_callback_fails_with(
+            self, callback_values, source, sender, msg_contains=''):
+        """ Making a call to startMeasurement and returned callback
+            to startMeasurementCallback with provided params.
+            Checks that there was MichelsonRuntimeError
+            If msg_contains is provided: checking that this msg_contains
+            is inside string form of cathced exception
+        """
 
         result = self.contract.startMeasurement(self.id).interpret(
             storage=self.storage, sender=source, now=self.current_time)
@@ -423,21 +412,7 @@ class StateTransformationBaseTest(TestCase):
             res = self.contract.startMeasurementCallback(callback_values).interpret(
                 storage=result.storage, sender=sender, now=self.current_time)
 
-        self.assertTrue("Unexpected currency pair" in str(cm.exception))
-
-
-    def check_measurement_during_bets_time_failed(
-            self, callback_values, source, sender):
-        """ Test that startMeasurement call during bets period is falls """
-
-        result = self.contract.startMeasurement(self.id).interpret(
-            storage=self.storage, sender=source, now=self.current_time)
-
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            res = self.contract.startMeasurementCallback(callback_values).interpret(
-                storage=result.storage, sender=sender, now=self.current_time)
-
-        self.assertTrue("Can't start measurement untill betsCloseTime" in str(cm.exception))
+        self.assertTrue(msg_contains in str(cm.exception))
 
 
     """ Test blocks for close/closeCallback entrypoints: """
