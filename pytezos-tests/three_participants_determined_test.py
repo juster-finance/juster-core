@@ -25,7 +25,7 @@
     if participant B wins he get 50_000 + 25_000 * 96% = 74_000 (this value should be saved in winning amounts ledger)
 
     Total win S  LP profit / loss:        0 - 24_000 +      0 +       0 = -24_000  (including L bonus for winnig returns)
-    Total win ~S LP profit / loss:        0 + 25_000 +      0 +       0 =  25_000  (and not including L bonus for bets)
+    Total win ~S LP profit / loss:        0 + 50_000 +      0 +       0 =  50_000  (and not including L bonus for bets)
             (liquidity rate is included in profit/loss pools)
 
     Total liquidity For bonuses:     50_000 +      0 + 20_000 +       0 =  70_000

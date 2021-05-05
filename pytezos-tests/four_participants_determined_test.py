@@ -23,7 +23,7 @@
         (10) oracle returns that price at the close is 7.5$ per xtz. Oracle measurement time is behind one hour
 
     Closed dynamics is +25%, betsFor pool is wins
-                                    (1)      (2)      (3)      (4)      (5)       (6)
+                                      (1)      (2)      (3)       (4)       (5)       (6)
     Total event pool:               100_000 + 25_000 + 50_000 + 450_000 + 125_000 + 100_000 = 850_000
     betForLiquidityPool:             50_000 + 50_000 + 40_000 + 360_000 - 250_000 +  50_000 = 300_000
     betAgainstLiquidityPool:         50_000 - 25_000 + 10_000 +  90_000 + 125_000 +  50_000 = 300_000
@@ -48,7 +48,7 @@
 
     liquidity For shares:
         A: 55_000 / 100_000 = 55%
-        D: 45_000 / 100_000 = 45% 
+        D: 45_000 / 100_000 = 45%
         C:      0 / 100_000 = 0%
 
     LP withdraw = Profit/Loss * LP_share + ProvidedL
