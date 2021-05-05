@@ -1,10 +1,14 @@
-""" This is base class that used in different tests. 
-    It uses pytezos intepret method.
-    Each entrypoint call implemented in separate methods:
-        one for success and possible some with failwith.
-    After each contract call, new state returned and then saved into self.storage
-    so it can be used in another blocks.
-    TODO: try to move all this interactions inside sandbox
+""" This is base class that used in different tests.
+    It uses pytezos intepret method and provides calls to all entrypoints that tested.
+
+    For each entrypoint call there are two methods:
+        - one for successful call that checks is state changed correctly
+        - one for failwith call that checks that MichelsonRuntimeError is raised with some message
+    The one who checks for error have the same interface but with msg_contains param provided.
+
+    After each contract call, new state returned.
+
+    TODO: try to move all this interactions inside sandbox?
 """
 
 from unittest import TestCase
@@ -18,7 +22,12 @@ RUN_TIME = int(time.time())
 ONE_HOUR = 60*60
 
 
+""" Some smart contract logic reimplemented here: """
+
 def calculate_liquidity_bonus_multiplier(event, current_time):
+    """ Returns multiplier that reduces provided LP bonus lineary
+        over betting time """
+
     close_time = event['betsCloseTime']
     start_time = event['createdTime']
     return (close_time - current_time) / (close_time - start_time)
@@ -34,6 +43,10 @@ def calculate_bet_return(top, bottom, amount):
 
 
 def calculate_bet_params_change(event, bet, amount):
+    """ Returns dict with differences that caused
+        by adding new bet to event
+    """
+
     if bet == 'for':
         top = event['betsAgainstLiquidityPoolSum']
         bottom = event['betsForLiquidityPoolSum']
@@ -211,6 +224,13 @@ class StateTransformationBaseTest(TestCase):
         return result_storage
 
 
+    def check_provide_liquidity_fail_with(
+        self, participant, amount, expected_for, expected_against,
+        max_slippage=100_000, msg_contains=''):
+
+        raise Exception('Not implemented yet')
+
+
     """ Test blocks for bet entrypoint: """
     def check_participant_successfully_bets(
             self, participant, amount, bet, minimal_win):
@@ -254,30 +274,12 @@ class StateTransformationBaseTest(TestCase):
         return result_storage
 
 
-    def check_wrong_ratio_bet_is_failed(
-            self, participant, amount, bet, minimal_win):
-        """ Checking that transaction is fails if the bet ratio is too different
-            from ratio in current pool
+    def check_bet_fails_with(
+            self, participant, amount, bet, minimal_win, msg_contains=''):
+        """ Makes a call to bet entrypoint and checks that there was MichelsonRuntimeError
+            If msg_contains is provided: checking that this msg_contains
+            is inside string form of cathced exception
         """
-
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            transaction = self.contract.bet(
-                eventId=self.id,
-                bet='for',
-                minimalWinAmount=minimal_win
-            ).with_amount(amount)
-
-            res = transaction.interpret(
-                storage=self.storage,
-                sender=participant,
-                now=self.current_time)
-
-        self.assertTrue('Wrong minimalWinAmount' in str(cm.exception))
-
-
-    def check_betting_in_measurement_period_is_failed(
-            self, participant, amount, bet, minimal_win):
-        """ Test that betting during measurement period is fails """
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
             transaction = self.contract.bet(
@@ -291,7 +293,7 @@ class StateTransformationBaseTest(TestCase):
                 sender=participant,
                 now=self.current_time)
 
-        self.assertTrue('Bets after betCloseTime is not allowed' in str(cm.exception))
+        self.assertTrue(msg_contains in str(cm.exception))
 
 
     """ Test blocks for withdraw entrypoint: """
@@ -308,6 +310,15 @@ class StateTransformationBaseTest(TestCase):
 
         self._check_result_integrity(result, self.id)
         return self.remove_none_values(result.storage)
+
+
+    def check_withdraw_fails_with(self, participant, withdraw_amount, msg_contains=''):
+
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            res = self.contract.withdraw(self.id).interpret(
+                storage=self.storage, sender=participant, now=self.current_time)
+
+        self.assertTrue(msg_contains in str(cm.exception))
 
 
     """ Test blocks for newEvent entrypoint: """
@@ -340,6 +351,12 @@ class StateTransformationBaseTest(TestCase):
 
         self._check_result_integrity(result, self.id)
         return result_storage
+
+
+    def check_new_event_fail_with(
+        self, event_params, amount, msg_contains=''):
+
+        raise Exception('Not implemented yet')
 
 
     """ Test blocks for startMeasurement/startMeasurementCallback entrypoints: """
@@ -465,8 +482,8 @@ class StateTransformationBaseTest(TestCase):
         return result.storage
 
 
-    def check_closing_before_measurement_fails(
-            self, callback_values, source, sender):
+    def check_closing_fails_with(
+            self, callback_values, source, sender, msg_contains=''):
         """ Testing that closing before measurement fails """
 
         result = self.contract.close(self.id).interpret(
@@ -476,7 +493,7 @@ class StateTransformationBaseTest(TestCase):
             res = self.contract.closeCallback(callback_values).interpret(
                 storage=result.storage, sender=sender, now=self.current_time)
 
-        self.assertTrue("Can't close contract before measurement period started" in str(cm.exception))
+        self.assertTrue(msg_contains in str(cm.exception))
 
 
     def setUp(self):

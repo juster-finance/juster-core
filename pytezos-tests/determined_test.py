@@ -4,16 +4,6 @@ from pytezos import MichelsonRuntimeError
 
 class DeterminedTest(StateTransformationBaseTest):
 
-    def _assert_withdraw_before_close(self):
-        """ Test that withdraw before close raises error """
-
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            res = self.contract.withdraw(self.id).interpret(
-                storage=self.storage, sender=self.a, now=RUN_TIME + 30*ONE_HOUR)
-
-        self.assertTrue('Withdraw is not allowed until contract is closed' in str(cm.exception))
-
-
     def test_with_three_participants(self):
         """ Event: XTZ-USD dynamics would be > 1 in 12 hours after betting period of 24 hours.
             Liquidity pool 4%
@@ -85,11 +75,12 @@ class DeterminedTest(StateTransformationBaseTest):
             expected_against=1)
 
         # Testing that with current ratio 1:1, bet with 10:1 ratio fails:
-        self.check_wrong_ratio_bet_is_failed(
+        self.check_bet_fails_with(
             participant=self.a,
             amount=100_000,
             bet='for',
-            minimal_win=1_000_000)
+            minimal_win=1_000_000,
+            msg_contains='Wrong minimalWinAmount')
 
         # Participant B: bets for 50_000 after 1 hour:
         self.current_time = RUN_TIME + ONE_HOUR
@@ -124,10 +115,11 @@ class DeterminedTest(StateTransformationBaseTest):
         }
 
         # Checking that it is not possible to run close before measurement started:
-        self.check_closing_before_measurement_fails(
+        self.check_closing_fails_with(
             callback_values=start_callback_values,
             source=self.a,
-            sender=self.oracle_address)
+            sender=self.oracle_address,
+            msg_contains="Can't close contract before measurement period started")
 
         # Checking that measurement with wrong currency pair is failed:
         wrong_callback_currency = start_callback_values.copy()
@@ -165,13 +157,13 @@ class DeterminedTest(StateTransformationBaseTest):
             source=self.a,
             sender=self.oracle_address)
 
-        # Checl that betting in measurement period is failed:
-        self.check_betting_in_measurement_period_is_failed(
+        # Check that betting in measurement period is failed:
+        self.check_bet_fails_with(
             participant=self.a,
             amount=100_000,
             bet='against',
-            minimal_win=100_000
-        )
+            minimal_win=100_000,
+            msg_contains='Bets after betCloseTime is not allowed')
 
         # Check that that calling measurement after it was already succesfully
         # called before is fails:
@@ -182,7 +174,11 @@ class DeterminedTest(StateTransformationBaseTest):
             msg_contains='Measurement period already started'
         )
 
-        self._assert_withdraw_before_close()
+        # Checking that withdrawal before contract is closed is not allowed:
+        self.check_withdraw_fails_with(
+            participant=self.a,
+            withdraw_amount=100_000,
+            msg_contains='Withdraw is not allowed until contract is closed')
 
         # Closing event:
         self.current_time = RUN_TIME + 38*ONE_HOUR
