@@ -79,5 +79,10 @@ block {
     }
     end;
 
+    (* Adding this bet into deposited bets ledger that tracks all bets
+        regardless for / against: *)
+    store.depositedBets[key] :=
+        getLedgerAmount(key, store.depositedBets) + Tezos.amount;
+
     store.events[eventId] := event;
 } with ((nil: list(operation)), store)

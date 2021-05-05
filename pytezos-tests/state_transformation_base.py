@@ -533,6 +533,7 @@ class StateTransformationBaseTest(TestCase):
             'providedLiquidityLedger': {},
             'liquidityForBonusLedger': {},
             'liquidityAgainstBonusLedger': {},
+            'depositedBets': {},
             'lastEventId': 0,
             'closeCallEventId': None,
             'measurementStartCallEventId': None

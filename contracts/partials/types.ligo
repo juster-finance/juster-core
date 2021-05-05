@@ -150,6 +150,10 @@ type storage is record [
     liquidityForBonusLedger : ledgerType;
     liquidityAgainstBonusLedger : ledgerType;
 
+    (* Keeping all provided bets for the Force Majeure, in case if
+        they needed to be returned *)
+    depositedBets : ledgerType;
+
     lastEventId : eventIdType;
     closeCallEventId : eventIdType;
     measurementStartCallEventId : eventIdType;

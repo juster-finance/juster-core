@@ -8,6 +8,7 @@ const initialStorage = {
   providedLiquidityLedger: new MichelsonMap(),
   liquidityForBonusLedger: new MichelsonMap(),
   liquidityAgainstBonusLedger: new MichelsonMap(),
+  depositedBets: new MichelsonMap(),
   lastEventId: 0,
   closeCallEventId: null,
   measurementStartCallEventId: null,
