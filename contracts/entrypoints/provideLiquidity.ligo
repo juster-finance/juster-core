@@ -99,10 +99,15 @@ block {
         const newForShares : int = int(liquidityForShares / 1mutez);
         const totalForShares : int = int(tezToNat(getLedgerAmount(key, s.liquidityForSharesLedger)));
 
-        s.winForProfitLossPerShareAtEntry[key] := (event.winForProfitLossPerShare
-            * newAgainstShares / totalAgainstShares);
-        s.winAgainstProfitLossPerShareAtEntry[key] := (event.winAgainstProfitLossPerShare
-            * newForShares / totalForShares);
+        const forProfitLoss : int = (
+            getProfitLossLedgerAmount(key, s.winForProfitLossPerShareAtEntry)
+            + event.winForProfitLossPerShare * newAgainstShares / totalAgainstShares);
+        s.winForProfitLossPerShareAtEntry[key] := forProfitLoss;
+
+        const againstProfitLoss : int = (
+            getProfitLossLedgerAmount(key, s.winAgainstProfitLossPerShareAtEntry)
+            + event.winAgainstProfitLossPerShare * newForShares / totalForShares);
+        s.winAgainstProfitLossPerShareAtEntry[key] := againstProfitLoss;
     };
 
     s.events[eventId] := event;
