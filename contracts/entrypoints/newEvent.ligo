@@ -27,8 +27,10 @@ block {
         oracleAddress = eventParams.oracleAddress;
         betsForLiquidityPoolSum = 0tez;
         betsAgainstLiquidityPoolSum = 0tez;
-        totalLiquidityForBonusSum = 0tez;
-        totalLiquidityAgainstBonusSum = 0tez;
+        firstProviderForSharesSum = 0tez;
+        firstProviderAgainstSharesSum = 0tez;
+        totalLiquidityForSharesSum = 0tez;
+        totalLiquidityAgainstSharesSum = 0tez;
         totalLiquidityProvided = 0tez;
 
         (* TODO: control liquidityPrecision, liquidityPercent min|max from Manager *)
@@ -41,8 +43,9 @@ block {
 
         (* TODO: control new event ratioPrecision from Manager *)
         ratioPrecision = 100_000_000n;
-        winForProfitLoss = 0;
-        winAgainstProfitLoss = 0;
+        winForProfitLossPerShare = 0;
+        winAgainstProfitLossPerShare = 0;
+        sharePrecision = 100_000_000n;
     ];
 
     s.events[s.lastEventId] := newEvent;

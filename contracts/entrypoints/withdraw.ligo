@@ -14,44 +14,48 @@ block {
 
     (* defining variables that dependend on winning pool: *)        
     var winPayout : tez := 0tez;
-    var totalProfits : int := 0;
-    var providedLiquidityBonus : tez := 0tez;
-    var totalLiquidityBonusSum : tez := 0tez;
-    
+    var providerProfits : int := 0;
+
     if event.isBetsForWin then block {
         winPayout := getLedgerAmount(key, s.betsForWinningLedger);
-        totalProfits := event.winForProfitLoss;
 
-        (* liquidity bonus distributed by loosed ledger: *)
-        providedLiquidityBonus := getLedgerAmount(key, s.liquidityAgainstBonusLedger);
-        totalLiquidityBonusSum := event.totalLiquidityAgainstBonusSum;
+        (* calculating liquidity return. It is distributed by loosed ledger: *)
+        const profitLossPerShareAtEntry : int = getProfitLossLedgerAmount(key, s.winForProfitLossPerShareAtEntry);
+        const totalProfitsPerShare : int = event.winForProfitLossPerShare - profitLossPerShareAtEntry;
+        providerProfits := (totalProfitsPerShare * int(tezToNat(getLedgerAmount(key, s.liquidityAgainstSharesLedger)))
+            / int(event.sharePrecision));
+        (* TODO: maybe store liquidityAgainstSharesLedger and sharePrecision as ints? *)
     }
     else block {
         winPayout := getLedgerAmount(key, s.betsAgainstWinningLedger);
-        totalProfits := event.winAgainstProfitLoss;
 
-        (* liquidity bonus distributed by loosed ledger: *)
-        providedLiquidityBonus := getLedgerAmount(key, s.liquidityForBonusLedger);
-        totalLiquidityBonusSum := event.totalLiquidityForBonusSum;
+        (* calculating liquidity return. It is distributed by loosed ledger: *)
+        const profitLossPerShareAtEntry : int = getProfitLossLedgerAmount(key, s.winAgainstProfitLossPerShareAtEntry);
+        const totalProfitsPerShare : int = event.winAgainstProfitLossPerShare - profitLossPerShareAtEntry;
+        providerProfits := (totalProfitsPerShare * int(tezToNat(getLedgerAmount(key, s.liquidityForSharesLedger)))
+            / int(event.sharePrecision));
+        (* TODO: another one: maybe store liquidityForSharesLedger and sharePrecision as ints? *)
     };
 
     (* Calculating liquidity bonus for provider and distributing profit/loss *)
     const providedLiquidity : tez = getLedgerAmount(key, s.providedLiquidityLedger);
 
-    const profitOrLoss : tez =
-        providedLiquidityBonus * abs(totalProfits) / totalLiquidityBonusSum * 1mutez;
+    const profitOrLoss : tez = abs(providerProfits) * 1mutez;
 
     (* Payment for liquidity provider *)
     var liquidityPayout : tez := 0tez;
-    if totalProfits > 0 then liquidityPayout := providedLiquidity + profitOrLoss
+    if providerProfits > 0 then liquidityPayout := providedLiquidity + profitOrLoss
     else liquidityPayout := providedLiquidity - profitOrLoss;
 
     (* Removing key from all ledgers: *)
     s.betsForWinningLedger := Big_map.remove(key, s.betsForWinningLedger);
     s.betsAgainstWinningLedger := Big_map.remove(key, s.betsAgainstWinningLedger);
     s.providedLiquidityLedger := Big_map.remove(key, s.providedLiquidityLedger);
-    s.liquidityForBonusLedger := Big_map.remove(key, s.liquidityForBonusLedger);
-    s.liquidityAgainstBonusLedger := Big_map.remove(key, s.liquidityAgainstBonusLedger);
+    s.liquidityForSharesLedger := Big_map.remove(key, s.liquidityForSharesLedger);
+    s.liquidityAgainstSharesLedger := Big_map.remove(key, s.liquidityAgainstSharesLedger);
+    s.winForProfitLossPerShareAtEntry := Big_map.remove(key, s.winForProfitLossPerShareAtEntry);
+    s.winAgainstProfitLossPerShareAtEntry := Big_map.remove(key, s.winAgainstProfitLossPerShareAtEntry);
+    s.depositedBets := Big_map.remove(key, s.depositedBets);
 
     const totalPayoutAmount : tez = winPayout + liquidityPayout;
     (* TODO: If totalPayoutAmount is zero: do finish this call without operations, this is needed to
@@ -60,6 +64,7 @@ block {
     const receiver : contract(unit) = getReceiver(Tezos.sender);
     const payoutOperation : operation = Tezos.transaction(unit, totalPayoutAmount, receiver);
 
+    (* TODO: calculate participants/LPs count and remove event if there are 0 *)
     s.events[eventId] := event;
 
 } with (list[payoutOperation], s)

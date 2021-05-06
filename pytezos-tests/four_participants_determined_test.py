@@ -46,22 +46,22 @@
 
     Selected liquidity pool to distribute profits: liquidity Against (because For wins)
 
-    liquidity For shares:
-        A: 55_000 / 100_000 = 55%
-        D: 45_000 / 100_000 = 45%
-        C:      0 / 100_000 = 0%
+    liquidity For profit / loss distribution:
+        A: -24_000 * 1.00 + 125_000 * 0.55 = 44_750
+        D: 0.45 * 125_000 = 56_250
+        C: 0
 
     LP withdraw = Profit/Loss * LP_share + ProvidedL
-    A withdraws: 101_000 * 0.55 + 100_000 + 50_000 = 205_550
+    A withdraws: 44_750 + 100_000 + 50_000 = 194_750
     B withdraws: 50_000 + 24_000 = 74_000
     C withdraws: 100_000
-    D withdraws: 101_000 * 0.45 + 450_000 = 495_450
+    D withdraws: 56_250 + 450_000 = 506_250
 
     Changes:
-        A: 205_550 / 150_000 = 1.370
+        A: 194_750 / 150_000 = 1.298
         B:  74_000 /  50_000 = 1.480
         C: 100_000 / 100_000 = 1.000
-        D: 495_450 / 575_000 = 0.862
+        D: 506_250 / 575_000 = 0.880
 """
 
 from state_transformation_base import StateTransformationBaseTest, RUN_TIME, ONE_HOUR
@@ -158,8 +158,8 @@ class FourParticipantsDeterminedTest(StateTransformationBaseTest):
 
         # Withdrawals:
         self.current_time = RUN_TIME + 64*ONE_HOUR
-        self.storage = self.check_withdraw_succeed(self.a, 205_550)
+        self.storage = self.check_withdraw_succeed(self.a, 194_750)
         self.storage = self.check_withdraw_succeed(self.b, 74_000)
         self.storage = self.check_withdraw_succeed(self.c, 100_000)
-        self.storage = self.check_withdraw_succeed(self.d, 495_450)
+        self.storage = self.check_withdraw_succeed(self.d, 506_250)
 

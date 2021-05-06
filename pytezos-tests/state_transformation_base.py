@@ -171,6 +171,7 @@ class StateTransformationBaseTest(TestCase):
                 init_event['betsAgainstLiquidityPoolSum'] / total_liquidity)
 
         else:
+            # scenario with first LP:
             added_for_share = (
                 expected_for / (expected_for + expected_against))
             added_against_share = (
@@ -206,21 +207,21 @@ class StateTransformationBaseTest(TestCase):
             len(init_storage['providedLiquidityLedger']) + added_count)
 
         self.assertEqual(len(
-            result_storage['liquidityForBonusLedger']),
-            len(init_storage['liquidityForBonusLedger']) + added_count)
+            result_storage['liquidityForSharesLedger']),
+            len(init_storage['liquidityForSharesLedger']) + added_count)
 
         self.assertEqual(
-            len(result_storage['liquidityAgainstBonusLedger']),
-            len(init_storage['liquidityAgainstBonusLedger']) + added_count)
+            len(result_storage['liquidityAgainstSharesLedger']),
+            len(init_storage['liquidityAgainstSharesLedger']) + added_count)
 
         m = calculate_liquidity_bonus_multiplier(init_event, self.current_time)
         self.assertEqual(
-            result_event['totalLiquidityForBonusSum'],
-            init_event['totalLiquidityForBonusSum'] + int(m*added_for))
+            result_event['totalLiquidityForSharesSum'],
+            init_event['totalLiquidityForSharesSum'] + int(m*added_for))
 
         self.assertEqual(
-            result_event['totalLiquidityAgainstBonusSum'],
-            init_event['totalLiquidityAgainstBonusSum'] + int(m*added_against))
+            result_event['totalLiquidityAgainstSharesSum'],
+            init_event['totalLiquidityAgainstSharesSum'] + int(m*added_against))
 
         self._check_result_integrity(result, self.id)
         return result_storage
@@ -270,6 +271,7 @@ class StateTransformationBaseTest(TestCase):
             len(init_storage['betsAgainstWinningLedger']) + bet_result['against_count'])
 
         # TODO: check sum in participant ledgers (include liquidity fee)
+        # TODO: check winForProfitLossPerShare / winAgainstProfitLossPerShare
 
         self._check_result_integrity(result, self.id)
         return result_storage
@@ -342,6 +344,13 @@ class StateTransformationBaseTest(TestCase):
             'betsForLiquidityPoolSum': 0,
             'isClosed': False,
             'isMeasurementStarted': False,
+            'winForProfitLossPerShare': 0,
+            'winAgainstProfitLossPerShare': 0,
+            'totalLiquidityProvided': 0,
+            'firstProviderForSharesSum': 0,
+            'firstProviderAgainstSharesSum': 0,
+            'totalLiquidityForSharesSum': 0,
+            'totalLiquidityAgainstSharesSum': 0
         })
 
         selected_event_keys = {
@@ -531,8 +540,10 @@ class StateTransformationBaseTest(TestCase):
             'betsForWinningLedger': {},
             'betsAgainstWinningLedger': {},
             'providedLiquidityLedger': {},
-            'liquidityForBonusLedger': {},
-            'liquidityAgainstBonusLedger': {},
+            'liquidityForSharesLedger': {},
+            'liquidityAgainstSharesLedger': {},
+            'winForProfitLossPerShareAtEntry': {},
+            'winAgainstProfitLossPerShareAtEntry': {},
             'depositedBets': {},
             'lastEventId': 0,
             'closeCallEventId': None,

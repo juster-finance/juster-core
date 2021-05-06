@@ -54,6 +54,17 @@ block {
 } with ledgerAmount
 
 
+(* Returns current amount of int in ledger, if key is not in ledger return 0 *)
+function getProfitLossLedgerAmount(var k : ledgerKey; var l : profitLossLedgerType) : int is
+block {
+    var ledgerAmount : int := 0;
+    case Big_map.find_opt(k, l) of
+    | Some(value) -> ledgerAmount := value
+    | None -> ledgerAmount := 0
+    end;
+} with ledgerAmount
+
+
 function makeCallToOracle(
     var eventId : eventIdType;
     var s : storage;
