@@ -67,48 +67,27 @@ block {
         event.firstProviderAgainstSharesSum := liquidityAgainstShares;
     } else skip;
 
-    (* in case this participant does not added new liquidity: *)
-    if alreadyProvided = 0tez then
-    block {
-        (* recording current profit/losses that would be excluded in withdraw: *)
-        const forProfitLoss : int = (
-            getProfitLossLedgerAmount(key, s.winForProfitLossPerShareAtEntry) + event.winForProfitLossPerShare);
-        s.winForProfitLossPerShareAtEntry[key] := forProfitLoss;
+    (* Recording winForProfitLossAtEntry and winAgainstProfitLossAtEntry that would allow to
+        exclude any profits / losses that was made before this new liquidity and fairly
+        distribute new profits / losses: *)
+    const newAgainstShares : int = int(liquidityAgainstShares / 1mutez);
+    // REMOVE: const firstProviderAgainstShares : int = int(tezToNat(event.firstProviderAgainstSharesSum));
 
-        const againstProfitLoss : int = (
-            getProfitLossLedgerAmount(key, s.winAgainstProfitLossPerShareAtEntry) + event.winAgainstProfitLossPerShare);
-        s.winAgainstProfitLossPerShareAtEntry[key] := againstProfitLoss;
-    } else
-    block {    
-        (* The same provider adds liquidity second time: THIS SCENARIO IS VERY COMPLICATED
-        
-            TODO: is that logic valid? participant would raise his share and then it would need to pay more
-            for already expected sum
+    const newForShares : int = int(liquidityForShares / 1mutez);
+    // REMOVE: const firstProviderForShares : int = int(tezToNat(event.firstProviderForSharesSum));
 
-        !! Maybe if LP provides liquidity second time, I should divide his current PLAtEntry
-            by his share change multiplier? So if he had 1000 shares and adds 1000 more, his PLAtEntry
-            should be divided by 2? If he had 500 shares and adds 100, it should be multiplied by 5/6.
+    (* TODO: rename to winForProfitLossAtEntry and divide shares by sharePrecision when add *)
+    (* TODO: maybe for event.winForProfitLossPerShare calculate full sum, not per share too *)
 
-            All this matter if LP adds liquidity after he already added with some profit/loss in pool. At the moment
-            there are no tests that cover this scenario, I should do it.
-        *)
+    const forProfitLoss : int = (
+        getProfitLossLedgerAmount(key, s.winForProfitLossPerShareAtEntry)
+        + event.winForProfitLossPerShare * newAgainstShares / int(event.sharePrecision));
+    s.winForProfitLossPerShareAtEntry[key] := forProfitLoss;
 
-        const newAgainstShares : int = int(liquidityAgainstShares / 1mutez);
-        const totalAgainstShares : int = int(tezToNat(getLedgerAmount(key, s.liquidityAgainstSharesLedger))); 
-
-        const newForShares : int = int(liquidityForShares / 1mutez);
-        const totalForShares : int = int(tezToNat(getLedgerAmount(key, s.liquidityForSharesLedger)));
-
-        const forProfitLoss : int = (
-            getProfitLossLedgerAmount(key, s.winForProfitLossPerShareAtEntry)
-            + event.winForProfitLossPerShare * newAgainstShares / totalAgainstShares);
-        s.winForProfitLossPerShareAtEntry[key] := forProfitLoss;
-
-        const againstProfitLoss : int = (
-            getProfitLossLedgerAmount(key, s.winAgainstProfitLossPerShareAtEntry)
-            + event.winAgainstProfitLossPerShare * newForShares / totalForShares);
-        s.winAgainstProfitLossPerShareAtEntry[key] := againstProfitLoss;
-    };
+    const againstProfitLoss : int = (
+        getProfitLossLedgerAmount(key, s.winAgainstProfitLossPerShareAtEntry)
+        + event.winAgainstProfitLossPerShare * newForShares / int(event.sharePrecision));
+    s.winAgainstProfitLossPerShareAtEntry[key] := againstProfitLoss;
 
     s.events[eventId] := event;
 

@@ -21,20 +21,20 @@ block {
 
         (* calculating liquidity return. It is distributed by loosed ledger: *)
         const profitLossPerShareAtEntry : int = getProfitLossLedgerAmount(key, s.winForProfitLossPerShareAtEntry);
-        const totalProfitsPerShare : int = event.winForProfitLossPerShare - profitLossPerShareAtEntry;
-        providerProfits := (totalProfitsPerShare * int(tezToNat(getLedgerAmount(key, s.liquidityAgainstSharesLedger)))
-            / int(event.sharePrecision));
-        (* TODO: maybe store liquidityAgainstSharesLedger and sharePrecision as ints? *)
+        const totalShares : int = int(tezToNat(getLedgerAmount(key, s.liquidityAgainstSharesLedger)));
+        // REMOVE: const initShares : int = int(tezToNat(event.firstProviderAgainstSharesSum));
+        providerProfits := (event.winForProfitLossPerShare*totalShares) / int(event.sharePrecision) - profitLossPerShareAtEntry;
+        (* TODO: refactor this lines to make it more clear? *)
     }
     else block {
         winPayout := getLedgerAmount(key, s.betsAgainstWinningLedger);
 
         (* calculating liquidity return. It is distributed by loosed ledger: *)
         const profitLossPerShareAtEntry : int = getProfitLossLedgerAmount(key, s.winAgainstProfitLossPerShareAtEntry);
-        const totalProfitsPerShare : int = event.winAgainstProfitLossPerShare - profitLossPerShareAtEntry;
-        providerProfits := (totalProfitsPerShare * int(tezToNat(getLedgerAmount(key, s.liquidityForSharesLedger)))
-            / int(event.sharePrecision));
-        (* TODO: another one: maybe store liquidityForSharesLedger and sharePrecision as ints? *)
+        const totalShares : int = int(tezToNat(getLedgerAmount(key, s.liquidityForSharesLedger)));
+        // REMOVE: const initShares : int = int(tezToNat(event.firstProviderForSharesSum));    
+        providerProfits := (event.winAgainstProfitLossPerShare*totalShares / int(event.sharePrecision)) - profitLossPerShareAtEntry;
+        (* TODO: refactor this lines to make it more clear? *)
     };
 
     (* Calculating liquidity bonus for provider and distributing profit/loss *)
