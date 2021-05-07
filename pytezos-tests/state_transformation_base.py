@@ -54,9 +54,9 @@ def calculate_bet_params_change(storage, event_id, participant, bet, amount):
     key = (participant, event_id)
 
     if bet == 'for':
-        top = event['betsAgainstLiquidityPoolSum']
-        bottom = event['betsForLiquidityPoolSum']
-        for_count = 0 if key in storage['betsForWinningLedger'] else 1
+        top = event['poolAgainst']
+        bottom = event['poolFor']
+        for_count = 0 if key in storage['betsFor'] else 1
 
         return dict(
             diff_for=amount,
@@ -66,9 +66,9 @@ def calculate_bet_params_change(storage, event_id, participant, bet, amount):
         )
 
     elif bet == 'against':
-        top = event['betsForLiquidityPoolSum']
-        bottom = event['betsAgainstLiquidityPoolSum']
-        against_count = 0 if key in storage['betsAgainstWinningLedger'] else 1
+        top = event['poolFor']
+        bottom = event['poolAgainst']
+        against_count = 0 if key in storage['betsAgainst'] else 1
 
         return dict(
             diff_for=-calculate_bet_return(top, bottom, amount),
@@ -119,12 +119,12 @@ class StateTransformationBaseTest(TestCase):
         '''
         bets_for_sum_ledger = sum_by_id(res.storage['betsForLedger'], event_id)
         bets_against_sum_ledger = sum_by_id(res.storage['betsAgainstLedger'], event_id)
-        provided_liquidity_sum_ledger = sum_by_id(res.storage['providedLiquidityLedger'], event_id)
+        provided_liquidity_sum_ledger = sum_by_id(res.storage['providedLiquidity'], event_id)
         total_ledger_sums = (
             bets_for_sum_ledger + bets_against_sum_ledger + provided_liquidity_sum_ledger)
 
-        bets_for_sum_event = res.storage['events'][event_id]['betsForLiquidityPoolSum']
-        bets_against_sum_event = res.storage['events'][event_id]['betsAgainstLiquidityPoolSum']
+        bets_for_sum_event = res.storage['events'][event_id]['poolFor']
+        bets_against_sum_event = res.storage['events'][event_id]['poolAgainst']
         # this is a bit confusing now, but provided liquidity is accounted inside bets for / against sums
         # provided_liquidity_sum_event = res.storage['events'][event_id]['totalLiquidityProvided']
         total_event_sums = (
@@ -166,14 +166,14 @@ class StateTransformationBaseTest(TestCase):
         result_event = result_storage['events'][self.id]
 
         # Checking that state changed as expected:
-        total_liquidity = (init_event['betsForLiquidityPoolSum']
-                           + init_event['betsAgainstLiquidityPoolSum'])
+        total_liquidity = (init_event['poolFor']
+                           + init_event['poolAgainst'])
 
         if total_liquidity > 0:
             added_for_share = (
-                init_event['betsForLiquidityPoolSum'] / total_liquidity)
+                init_event['poolFor'] / total_liquidity)
             added_against_share = (
-                init_event['betsAgainstLiquidityPoolSum'] / total_liquidity)
+                init_event['poolAgainst'] / total_liquidity)
 
         else:
             # scenario with first LP:
@@ -185,48 +185,48 @@ class StateTransformationBaseTest(TestCase):
         added_for = int(amount * added_for_share)
         added_against = int(amount * added_against_share)
 
-        difference_for = (result_event['betsForLiquidityPoolSum']
-                          - init_event['betsForLiquidityPoolSum'])
-        difference_against = (result_event['betsAgainstLiquidityPoolSum']
-                              - init_event['betsAgainstLiquidityPoolSum'])
+        difference_for = (result_event['poolFor']
+                          - init_event['poolFor'])
+        difference_against = (result_event['poolAgainst']
+                              - init_event['poolAgainst'])
 
         self.assertEqual(difference_for, added_for)
         self.assertEqual(difference_against, added_against)
 
         self.assertEqual(
-            len(result_storage['betsForWinningLedger']),
-            len(init_storage['betsForWinningLedger']))
+            len(result_storage['betsFor']),
+            len(init_storage['betsFor']))
 
         self.assertEqual(
-            len(result_storage['betsAgainstWinningLedger']),
-            len(init_storage['betsAgainstWinningLedger']))
+            len(result_storage['betsAgainst']),
+            len(init_storage['betsAgainst']))
 
         # If participant added liquidity before, it should not change
         # ledger records count. If it is not - records should be incresed by 1
 
-        is_already_lp = (participant, self.id) in init_storage['providedLiquidityLedger']
+        is_already_lp = (participant, self.id) in init_storage['providedLiquidity']
         added_count = 0 if is_already_lp else 1
 
         self.assertEqual(
-            len(result_storage['providedLiquidityLedger']),
-            len(init_storage['providedLiquidityLedger']) + added_count)
+            len(result_storage['providedLiquidity']),
+            len(init_storage['providedLiquidity']) + added_count)
 
         self.assertEqual(len(
-            result_storage['liquidityForSharesLedger']),
-            len(init_storage['liquidityForSharesLedger']) + added_count)
+            result_storage['liquidityForShares']),
+            len(init_storage['liquidityForShares']) + added_count)
 
         self.assertEqual(
-            len(result_storage['liquidityAgainstSharesLedger']),
-            len(init_storage['liquidityAgainstSharesLedger']) + added_count)
+            len(result_storage['liquidityAgainstShares']),
+            len(init_storage['liquidityAgainstShares']) + added_count)
 
         m = calculate_liquidity_bonus_multiplier(init_event, self.current_time)
         self.assertEqual(
-            result_event['totalLiquidityForSharesSum'],
-            init_event['totalLiquidityForSharesSum'] + int(m*added_for))
+            result_event['totalLiquidityForShares'],
+            init_event['totalLiquidityForShares'] + int(m*added_for))
 
         self.assertEqual(
-            result_event['totalLiquidityAgainstSharesSum'],
-            init_event['totalLiquidityAgainstSharesSum'] + int(m*added_against))
+            result_event['totalLiquidityAgainstShares'],
+            init_event['totalLiquidityAgainstShares'] + int(m*added_against))
 
         self._check_result_integrity(result, self.id)
         return result_storage
@@ -261,23 +261,23 @@ class StateTransformationBaseTest(TestCase):
             init_storage, self.id, participant, bet, amount)
 
         self.assertEqual(
-            result_event['betsForLiquidityPoolSum'],
-            init_event['betsForLiquidityPoolSum'] + bet_result['diff_for'])
+            result_event['poolFor'],
+            init_event['poolFor'] + bet_result['diff_for'])
 
         self.assertEqual(
-            result_event['betsAgainstLiquidityPoolSum'],
-            init_event['betsAgainstLiquidityPoolSum'] + bet_result['diff_against'])
+            result_event['poolAgainst'],
+            init_event['poolAgainst'] + bet_result['diff_against'])
 
         self.assertEqual(
-            len(result_storage['betsForWinningLedger']),
-            len(init_storage['betsForWinningLedger']) + bet_result['for_count'])
+            len(result_storage['betsFor']),
+            len(init_storage['betsFor']) + bet_result['for_count'])
 
         self.assertEqual(
-            len(result_storage['betsAgainstWinningLedger']),
-            len(init_storage['betsAgainstWinningLedger']) + bet_result['against_count'])
+            len(result_storage['betsAgainst']),
+            len(init_storage['betsAgainst']) + bet_result['against_count'])
 
         # TODO: check sum in participant ledgers (include liquidity fee)
-        # TODO: check winForProfitLossPerShare / winAgainstProfitLossPerShare
+        # TODO: check forProfit / againstProfit
 
         self._check_result_integrity(result, self.id)
         return result_storage
@@ -346,14 +346,14 @@ class StateTransformationBaseTest(TestCase):
         # value at the moment of creation:
         proper_event = event_params.copy()
         proper_event.update({
-            'betsAgainstLiquidityPoolSum': 0,
-            'betsForLiquidityPoolSum': 0,
+            'poolAgainst': 0,
+            'poolFor': 0,
             'isClosed': False,
             'isMeasurementStarted': False,
-            'winForProfitLossPerShare': 0,
-            'winAgainstProfitLossPerShare': 0,
-            'totalLiquidityForSharesSum': 0,
-            'totalLiquidityAgainstSharesSum': 0
+            'forProfit': 0,
+            'againstProfit': 0,
+            'totalLiquidityForShares': 0,
+            'totalLiquidityAgainstShares': 0
         })
 
         selected_event_keys = {
@@ -398,8 +398,8 @@ class StateTransformationBaseTest(TestCase):
             self, callback_values, source, sender):
         """ Check that emulated callback from oracle is successfull """
 
-        # Pre-transaction storage check:
-        self.assertEqual(self.storage['measurementStartCallEventId'], self.id)
+        # Pre-transaction storage check:    
+        self.assertEqual(self.storage['measurementStartCallId'], self.id)
 
         # Running transaction:
         result = self.contract.startMeasurementCallback(callback_values).interpret(
@@ -543,17 +543,17 @@ class StateTransformationBaseTest(TestCase):
 
         self.init_storage = {
             'events': {},
-            'betsForWinningLedger': {},
-            'betsAgainstWinningLedger': {},
-            'providedLiquidityLedger': {},
-            'liquidityForSharesLedger': {},
-            'liquidityAgainstSharesLedger': {},
+            'betsFor': {},
+            'betsAgainst': {},
+            'providedLiquidity': {},
+            'liquidityForShares': {},
+            'liquidityAgainstShares': {},
             'forProfitDiff': {},
             'againstProfitDiff': {},
             'depositedBets': {},
             'lastEventId': 0,
-            'closeCallEventId': None,
-            'measurementStartCallEventId': None
+            'closeCallId': None,
+            'measurementStartCallId': None
         }
 
         # this self.storage will be used in all blocks:

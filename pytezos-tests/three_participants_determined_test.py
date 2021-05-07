@@ -139,7 +139,7 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
             callback_values=callback_in_betstime,
             source=self.a,
             sender=self.oracle_address,
-            msg_contains="Can't start measurement untill betsCloseTime"
+            msg_contains="Can't start measurement untill oracle time"
         )
 
         # Checking that measurement from wrong address is failed,

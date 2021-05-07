@@ -67,19 +67,14 @@ type eventType is record [
     oracleAddress : address;
 
     (* Current liquidity in for and against pools, this is used to calculate current ratio: *)
-    betsForLiquidityPoolSum : tez;
-    betsAgainstLiquidityPoolSum : tez;
-    (* TODO: rename: betsForLiquidityPoolSum -> poolFor
-                     betsAgainstLiquidityPoolSum -> poolAgainst ?*)
+    poolFor : tez;
+    poolAgainst : tez;
 
     (* Expected payments for LP if one of the pool wins calculated per one share,
         can be positive (LPs in +) or negative (LPs in -) *)
-    winForProfitLossPerShare : int;
-    winAgainstProfitLossPerShare : int;
-    (* TODO: rename winForProfitLossPerShare -> forProfit,
-                    winAgainstProfitLossPerShare -> againstProfit
-                    or if there would be only one liquidity pool: profitPerShare
-    *)
+    forProfit : int;
+    againstProfit : int;
+    (* TODO: if there would be only one liquidity pool name it: profitPerShare *)
 
     sharePrecision : nat;
 
@@ -91,8 +86,8 @@ type eventType is record [
         implemented.
         ALSO: maybe I should change the type to nat because it is frequently converted
         to int in calculations *)
-    totalLiquidityForSharesSum : tez;
-    totalLiquidityAgainstSharesSum : tez;
+    totalLiquidityForShares : tez;
+    totalLiquidityAgainstShares : tez;
 
     (* Liquidity provider bonus: numerator & denominator *)
     liquidityPercent : nat;
@@ -149,21 +144,16 @@ type action is
 type storage is record [
     events : big_map(eventIdType, eventType);
 
-    (* Ledger with winning amounts for participants if "For" wins: *)
-    betsForWinningLedger : ledgerType;
-
-    (* Ledger with winning amounts for participants if "Against" wins: *)
-    betsAgainstWinningLedger : ledgerType;
-    (* TODO: rename:
-        betsForWinningLedger -> betsFor,
-        betsAgainstWinningLedger -> betsAgainst *)
+    (* Ledgers with winning amounts for participants if For/Against wins: *)
+    betsFor : ledgerType;
+    betsAgainst : ledgerType;
 
     (* There are three ledgers used to manage liquidity:
         - one with total provided value needed to return in withdrawal,
         - and two with liquidity bonus, that used to calculate share of profits / losses *)
-    providedLiquidityLedger : ledgerType;
-    liquidityForSharesLedger : ledgerType;
-    liquidityAgainstSharesLedger : ledgerType;
+    providedLiquidity : ledgerType;
+    liquidityForShares : ledgerType;
+    liquidityAgainstShares : ledgerType;
 
     (* Liquidity providers profits/losses that excluded from calculation
         (used to exclude all expected profit/loss formed before providing new liquidity) *)
@@ -175,6 +165,6 @@ type storage is record [
     depositedBets : ledgerType;
 
     lastEventId : eventIdType;
-    closeCallEventId : eventIdType;
-    measurementStartCallEventId : eventIdType;
+    closeCallId : eventIdType;
+    measurementStartCallId : eventIdType;
 ]

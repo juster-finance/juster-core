@@ -3,11 +3,11 @@ const { MichelsonMap } = require("@taquito/taquito");
 
 const initialStorage = {
   events: new MichelsonMap(),
-  betsForWinningLedger: new MichelsonMap(),
-  betsAgainstWinningLedger: new MichelsonMap(),
-  providedLiquidityLedger: new MichelsonMap(),
-  liquidityForSharesLedger: new MichelsonMap(),
-  liquidityAgainstSharesLedger: new MichelsonMap(),
+  betsFor: new MichelsonMap(),
+  betsAgainst: new MichelsonMap(),
+  providedLiquidity: new MichelsonMap(),
+  liquidityForShares: new MichelsonMap(),
+  liquidityAgainstShares: new MichelsonMap(),
   forProfitDiff: new MichelsonMap(),
   againstProfitDiff: new MichelsonMap(),
   depositedBets: new MichelsonMap(),

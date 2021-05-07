@@ -1,10 +1,15 @@
-function newEvent(var eventParams : newEventParams; var s : storage) : (list(operation) * storage) is
+function newEvent(
+    var eventParams : newEventParams;
+    var s : storage) : (list(operation) * storage) is
 block {
     (* TODO: Checking that betsCloseTime of this event is in the future
-        (maybe check that there are some minimal time to make bets, that can be controlled by manager) *)
-    (* TODO: Checking that measurePeriod is more than some minimal amount and maybe less than amount *)
+        (maybe check that there are some minimal time to make bets,
+            that can be controlled by manager) *)
+    (* TODO: Checking that measurePeriod is more than some minimal amount
+        and maybe less than amount *)
     (* TODO: Check that liquidityPercent is less than 1_000_000 *)
-    (* TODO: Check that measureStartFee and expirationFee is equal to Tezos.amount *)
+    (* TODO: Check that measureStartFee and expirationFee is
+        equal to Tezos.amount *)
 
     (* TODO: separate method to add liquidity *)
     const newEvent : eventType = record[
@@ -17,7 +22,8 @@ block {
         isMeasurementStarted = False;
         startRate = 0n;
 
-        (* TODO: control measurePeriod, time to betsCloseTime min|max from Manager *)
+        (* TODO: control measurePeriod, time to betsCloseTime
+            min|max from Manager *)
         measurePeriod = eventParams.measurePeriod;
         isClosed = False;
         closedOracleTime = ("2018-06-30T07:07:32Z" : timestamp);
@@ -25,12 +31,13 @@ block {
         closedDynamics = 0n;
         isBetsForWin = False;
         oracleAddress = eventParams.oracleAddress;
-        betsForLiquidityPoolSum = 0tez;
-        betsAgainstLiquidityPoolSum = 0tez;
-        totalLiquidityForSharesSum = 0tez;
-        totalLiquidityAgainstSharesSum = 0tez;
+        poolFor = 0tez;
+        poolAgainst = 0tez;
+        totalLiquidityForShares = 0tez;
+        totalLiquidityAgainstShares = 0tez;
 
-        (* TODO: control liquidityPrecision, liquidityPercent min|max from Manager *)
+        (* TODO: control liquidityPrecision, liquidityPercent
+            min|max from Manager *)
         liquidityPercent = eventParams.liquidityPercent;
         liquidityPrecision = 1_000_000n;
         measureStartFee = eventParams.measureStartFee;
@@ -40,8 +47,8 @@ block {
 
         (* TODO: control new event ratioPrecision from Manager *)
         ratioPrecision = 100_000_000n;
-        winForProfitLossPerShare = 0;
-        winAgainstProfitLossPerShare = 0;
+        forProfit = 0;
+        againstProfit = 0;
         sharePrecision = 100_000_000n;
     ];
 
