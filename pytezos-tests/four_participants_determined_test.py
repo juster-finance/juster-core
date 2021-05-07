@@ -1,7 +1,7 @@
 """ Event: XTZ-USD dynamics would be > 1 in 12 hours after betting period of 24 hours.
     Liquidity pool 4%
 
-    Three participants: a, b and c making next interactions:
+    Four participants: a, b, c and d making next interactions:
         (1) participant A adds initial liquidity at the beginning (0 hours from start): 100k with ratio 1:1
         (2) participant B bets For with 50k (1 hour from start)
             rate before bet 50:50
