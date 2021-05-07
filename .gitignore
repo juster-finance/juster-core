@@ -9,4 +9,5 @@ pytezos-jupyter-present/test-keys/*
 *.tz
 pytezos-jupyter-present/
 2021-*.txt
+pytezos-tests/*.ipynb
 
