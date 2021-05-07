@@ -60,9 +60,11 @@ block {
 
         (* Updating LP profit losses for For/Against win scenarios: *)
         event.againstProfit := (event.againstProfit
-            + tezToNat(Tezos.amount) * event.sharePrecision / tezToNat(event.totalLiquidityForShares));
+            + tezToNat(Tezos.amount) * event.sharePrecision
+                / tezToNat(event.totalLiquidityForShares));
         event.forProfit := (event.forProfit
-            - tezToNat(winDeltaPossible) * event.sharePrecision / tezToNat(event.totalLiquidityAgainstShares));
+            - tezToNat(winDeltaPossible) * event.sharePrecision
+                / tezToNat(event.totalLiquidityAgainstShares));
 
         store.betsFor[key] :=
             getLedgerAmount(key, store.betsFor) + possibleWinAmount;
@@ -87,9 +89,11 @@ block {
 
         (* Updating LP profit losses for For/Against win scenarios: *)
         event.forProfit := (event.forProfit
-            + tezToNat(Tezos.amount) * event.sharePrecision / tezToNat(event.totalLiquidityAgainstShares));
+            + tezToNat(Tezos.amount) * event.sharePrecision
+                / tezToNat(event.totalLiquidityAgainstShares));
         event.againstProfit := (event.againstProfit
-            - tezToNat(winDeltaPossible) * event.sharePrecision / tezToNat(event.totalLiquidityForShares));
+            - tezToNat(winDeltaPossible) * event.sharePrecision
+                / tezToNat(event.totalLiquidityForShares));
 
         store.betsAgainst[key] :=
             getLedgerAmount(key, store.betsAgainst) + possibleWinAmount;
