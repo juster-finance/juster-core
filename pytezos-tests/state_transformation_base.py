@@ -45,31 +45,36 @@ def calculate_bet_return(top, bottom, amount):
     return int(amount * ratio)
 
 
-def calculate_bet_params_change(event, bet, amount):
+def calculate_bet_params_change(storage, event_id, participant, bet, amount):
     """ Returns dict with differences that caused
         by adding new bet to event
     """
 
+    event = storage['events'][event_id]
+    key = (participant, event_id)
+
     if bet == 'for':
         top = event['betsAgainstLiquidityPoolSum']
         bottom = event['betsForLiquidityPoolSum']
+        for_count = 0 if key in storage['betsForWinningLedger'] else 1
 
         return dict(
             diff_for=amount,
             diff_against=-calculate_bet_return(top, bottom, amount),
-            for_count=1,
+            for_count=for_count,
             against_count=0
         )
 
     elif bet == 'against':
         top = event['betsForLiquidityPoolSum']
         bottom = event['betsAgainstLiquidityPoolSum']
+        against_count = 0 if key in storage['betsAgainstWinningLedger'] else 1
 
         return dict(
             diff_for=-calculate_bet_return(top, bottom, amount),
             diff_against=amount,
             for_count=0,
-            against_count=1
+            against_count=against_count
         )
 
     else:
@@ -252,7 +257,8 @@ class StateTransformationBaseTest(TestCase):
         result_event = result_storage['events'][self.id]
 
         # Checking that state changed as expected:
-        bet_result = calculate_bet_params_change(init_event, bet, amount)
+        bet_result = calculate_bet_params_change(
+            init_storage, self.id, participant, bet, amount)
 
         self.assertEqual(
             result_event['betsForLiquidityPoolSum'],
@@ -515,6 +521,9 @@ class StateTransformationBaseTest(TestCase):
         self.d = 'tz1TdKuFwYgbPHHb7y1VvLH4xiwtAzcjwDjM'
 
         self.oracle_address = 'KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn'
+        # florencenet: KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn
+        # edo2net:     KT1RCNpUEDjZAYhabjzgz1ZfxQijCDVMEaTZ
+
         self.currency_pair = 'XTZ-USD'
         self.measure_start_fee = 200_000
         self.expiration_fee = 100_000
