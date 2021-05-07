@@ -20,21 +20,17 @@ block {
         winPayout := getLedgerAmount(key, s.betsForWinningLedger);
 
         (* calculating liquidity return. It is distributed by loosed ledger: *)
-        const profitLossPerShareAtEntry : int = getProfitLossLedgerAmount(key, s.winForProfitLossPerShareAtEntry);
+        const profitDiff : int = getDiffLedgerAmount(key, s.forProfitDiff);
         const totalShares : int = int(tezToNat(getLedgerAmount(key, s.liquidityAgainstSharesLedger)));
-        // REMOVE: const initShares : int = int(tezToNat(event.firstProviderAgainstSharesSum));
-        providerProfits := (event.winForProfitLossPerShare*totalShares) / int(event.sharePrecision) - profitLossPerShareAtEntry;
-        (* TODO: refactor this lines to make it more clear? *)
+        providerProfits := (event.winForProfitLossPerShare*totalShares) / int(event.sharePrecision) - profitDiff;
     }
     else block {
         winPayout := getLedgerAmount(key, s.betsAgainstWinningLedger);
 
         (* calculating liquidity return. It is distributed by loosed ledger: *)
-        const profitLossPerShareAtEntry : int = getProfitLossLedgerAmount(key, s.winAgainstProfitLossPerShareAtEntry);
+        const profitDiff : int = getDiffLedgerAmount(key, s.againstProfitDiff);
         const totalShares : int = int(tezToNat(getLedgerAmount(key, s.liquidityForSharesLedger)));
-        // REMOVE: const initShares : int = int(tezToNat(event.firstProviderForSharesSum));    
-        providerProfits := (event.winAgainstProfitLossPerShare*totalShares / int(event.sharePrecision)) - profitLossPerShareAtEntry;
-        (* TODO: refactor this lines to make it more clear? *)
+        providerProfits := (event.winAgainstProfitLossPerShare*totalShares / int(event.sharePrecision)) - profitDiff;
     };
 
     (* Calculating liquidity bonus for provider and distributing profit/loss *)
@@ -53,8 +49,8 @@ block {
     s.providedLiquidityLedger := Big_map.remove(key, s.providedLiquidityLedger);
     s.liquidityForSharesLedger := Big_map.remove(key, s.liquidityForSharesLedger);
     s.liquidityAgainstSharesLedger := Big_map.remove(key, s.liquidityAgainstSharesLedger);
-    s.winForProfitLossPerShareAtEntry := Big_map.remove(key, s.winForProfitLossPerShareAtEntry);
-    s.winAgainstProfitLossPerShareAtEntry := Big_map.remove(key, s.winAgainstProfitLossPerShareAtEntry);
+    s.forProfitDiff := Big_map.remove(key, s.forProfitDiff);
+    s.againstProfitDiff := Big_map.remove(key, s.againstProfitDiff);
     s.depositedBets := Big_map.remove(key, s.depositedBets);
 
     const totalPayoutAmount : tez = winPayout + liquidityPayout;

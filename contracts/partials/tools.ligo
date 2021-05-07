@@ -55,7 +55,7 @@ block {
 
 
 (* Returns current amount of int in ledger, if key is not in ledger return 0 *)
-function getProfitLossLedgerAmount(var k : ledgerKey; var l : profitLossLedgerType) : int is
+function getDiffLedgerAmount(var k : ledgerKey; var l : diffLedgerType) : int is
 block {
     var ledgerAmount : int := 0;
     case Big_map.find_opt(k, l) of

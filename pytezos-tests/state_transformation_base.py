@@ -352,9 +352,6 @@ class StateTransformationBaseTest(TestCase):
             'isMeasurementStarted': False,
             'winForProfitLossPerShare': 0,
             'winAgainstProfitLossPerShare': 0,
-            'totalLiquidityProvided': 0,
-            'firstProviderForSharesSum': 0,
-            'firstProviderAgainstSharesSum': 0,
             'totalLiquidityForSharesSum': 0,
             'totalLiquidityAgainstSharesSum': 0
         })
@@ -551,8 +548,8 @@ class StateTransformationBaseTest(TestCase):
             'providedLiquidityLedger': {},
             'liquidityForSharesLedger': {},
             'liquidityAgainstSharesLedger': {},
-            'winForProfitLossPerShareAtEntry': {},
-            'winAgainstProfitLossPerShareAtEntry': {},
+            'forProfitDiff': {},
+            'againstProfitDiff': {},
             'depositedBets': {},
             'lastEventId': 0,
             'closeCallEventId': None,

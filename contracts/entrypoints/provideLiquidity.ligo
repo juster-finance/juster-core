@@ -39,8 +39,7 @@ block {
 
     const remainedTime : int = totalBettingTime - elapsedTime;
 
-    (* Total liquidity: *)
-    event.totalLiquidityProvided := event.totalLiquidityProvided + betAgainst + betFor;
+    (* Total liquidity by this LP: *)
     const alreadyProvided : tez = getLedgerAmount(key, s.providedLiquidityLedger);
     const newAmount : tez = alreadyProvided + betAgainst + betFor;
     s.providedLiquidityLedger[key] := newAmount;
@@ -57,37 +56,18 @@ block {
     s.liquidityAgainstSharesLedger[key] := newAmount;
     event.totalLiquidityAgainstSharesSum := event.totalLiquidityAgainstSharesSum + liquidityAgainstShares;
 
-    (* if this is the first provided liquidity: *)
-    (* TODO: would it be better to use special flag to this kind of first LP scenario?
-        Is it possible to combine this if-else tree with one that was before? *)
-    if totalBets = 0tez then
-    block {
-        (* setting up firstProviderForSharesSum and firstProviderAgainstSharesSum: *)
-        event.firstProviderForSharesSum := liquidityForShares;
-        event.firstProviderAgainstSharesSum := liquidityAgainstShares;
-    } else skip;
-
-    (* Recording winForProfitLossAtEntry and winAgainstProfitLossAtEntry that would allow to
+    (* Recording forProfitDiff and againstProfitDiff that would allow to
         exclude any profits / losses that was made before this new liquidity and fairly
         distribute new profits / losses: *)
     const newAgainstShares : int = int(liquidityAgainstShares / 1mutez);
-    // REMOVE: const firstProviderAgainstShares : int = int(tezToNat(event.firstProviderAgainstSharesSum));
-
     const newForShares : int = int(liquidityForShares / 1mutez);
-    // REMOVE: const firstProviderForShares : int = int(tezToNat(event.firstProviderForSharesSum));
+    const precision : int = int(event.sharePrecision);
 
-    (* TODO: rename to winForProfitLossAtEntry and divide shares by sharePrecision when add *)
-    (* TODO: maybe for event.winForProfitLossPerShare calculate full sum, not per share too *)
+    const forProfitDiff : int = event.winForProfitLossPerShare * newAgainstShares / precision;
+    s.forProfitDiff[key] := getDiffLedgerAmount(key, s.forProfitDiff) + forProfitDiff;
 
-    const forProfitLoss : int = (
-        getProfitLossLedgerAmount(key, s.winForProfitLossPerShareAtEntry)
-        + event.winForProfitLossPerShare * newAgainstShares / int(event.sharePrecision));
-    s.winForProfitLossPerShareAtEntry[key] := forProfitLoss;
-
-    const againstProfitLoss : int = (
-        getProfitLossLedgerAmount(key, s.winAgainstProfitLossPerShareAtEntry)
-        + event.winAgainstProfitLossPerShare * newForShares / int(event.sharePrecision));
-    s.winAgainstProfitLossPerShareAtEntry[key] := againstProfitLoss;
+    const againstProfitDiff : int = event.winAgainstProfitLossPerShare * newForShares / precision;
+    s.againstProfitDiff[key] := getDiffLedgerAmount(key, s.againstProfitDiff) + againstProfitDiff;
 
     s.events[eventId] := event;
 

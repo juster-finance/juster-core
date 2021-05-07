@@ -27,11 +27,8 @@ block {
         oracleAddress = eventParams.oracleAddress;
         betsForLiquidityPoolSum = 0tez;
         betsAgainstLiquidityPoolSum = 0tez;
-        firstProviderForSharesSum = 0tez;
-        firstProviderAgainstSharesSum = 0tez;
         totalLiquidityForSharesSum = 0tez;
         totalLiquidityAgainstSharesSum = 0tez;
-        totalLiquidityProvided = 0tez;
 
         (* TODO: control liquidityPrecision, liquidityPercent min|max from Manager *)
         liquidityPercent = eventParams.liquidityPercent;
