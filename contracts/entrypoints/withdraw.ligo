@@ -71,7 +71,12 @@ block {
     const payoutOperation : operation =
         Tezos.transaction(unit, totalPayoutAmount, receiver);
 
+    (* Operation should be returned only if there are some amount to return: *)
+    var operations : list(operation) := nil;
+    if totalPayoutAmount > 0tez then operations := payoutOperation # operations
+    else skip;
+
     (* TODO: calculate participants/LPs count and remove event if there are 0 *)
     s.events[eventId] := event;
 
-} with (list[payoutOperation], s)
+} with (operations, s)

@@ -311,9 +311,13 @@ class StateTransformationBaseTest(TestCase):
         result = self.contract.withdraw(self.id).interpret(
             storage=self.storage, sender=participant, now=self.current_time)
 
-        # Checking that state changed as expected:
-        self.assertAmountEqual(result.operations[0], withdraw_amount)
-        # TODO: check scenario with 0 withdrawal (maybe separate method?)
+        # If there are no withdrawal -> there are shouln't be any operations:
+        if withdraw_amount == 0:
+            self.assertTrue(len(result.operations) == 0)
+        else:
+            # Checking that withdrawals amount equal to expected:
+            self.assertAmountEqual(result.operations[0], withdraw_amount)
+
         # TODO: check participant removed from ledgers? (maybe separate method)
 
         self._check_result_integrity(result, self.id)
