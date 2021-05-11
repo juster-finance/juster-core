@@ -9,7 +9,7 @@
 
 
 """ EDGECASE 1 test, different zero-cases:
-    - event created
+    - event created, both fees equal to zero
     - A provides liquidity with 0 tez, assert failed
     - A tries to bet but there are no liquidity, so assert MichelsonError
     - B provides liquidity
@@ -19,9 +19,12 @@
     - A tries to Bet with winRate a lot more than expected (assert MichelsonError raises)
 
     - in the end: no one bets, measure
+        - assert that len operations in callback is 0 (because fee is zero)
+
     - TODO: test that adding liquidity after bets time is not allowed
 
     - close, B withdraws all
+        - assert that len operations in closeCallback is 0 (because fee is zero)
         TODO: check contract balance is 0
         TODO: check B withdraws all the sum invested
 
