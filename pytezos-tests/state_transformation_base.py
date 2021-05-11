@@ -367,7 +367,11 @@ class StateTransformationBaseTest(TestCase):
     def check_new_event_fails_with(
         self, event_params, amount, msg_contains=''):
 
-        raise Exception('Not implemented yet')
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            res = self.contract.newEvent(event_params).interpret(
+                storage=self.storage, now=self.current_time)
+
+        self.assertTrue(msg_contains in str(cm.exception))
 
 
     def check_start_measurement_succeed(self, sender):

@@ -8,8 +8,11 @@ block {
     (* TODO: Checking that measurePeriod is more than some minimal amount
         and maybe less than amount *)
     (* TODO: Check that liquidityPercent is less than 1_000_000 *)
-    (* TODO: Check that measureStartFee and expirationFee is
-        equal to Tezos.amount *)
+
+    const fees : tez = eventParams.measureStartFee + eventParams.expirationFee;
+    if fees =/= Tezos.amount then
+        failwith("measureStartFee and expirationFee should be provided")
+    else skip;
 
     (* TODO: separate method to add liquidity *)
     const newEvent : eventType = record[

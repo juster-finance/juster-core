@@ -48,7 +48,8 @@
         C: 100_000 / 100_000 = 1.000
 """
 
-from state_transformation_base import StateTransformationBaseTest, RUN_TIME, ONE_HOUR
+from state_transformation_base import (
+    StateTransformationBaseTest, RUN_TIME, ONE_HOUR)
 from pytezos import MichelsonRuntimeError
 
 
@@ -59,14 +60,18 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
         self.current_time = RUN_TIME
         self.id = len(self.storage['events'])
 
+        # Trying to create event without providing correct fees:
+        amount = self.measure_start_fee + self.expiration_fee
+        self.check_new_event_fails_with(
+            event_params=self.default_event_params,
+            amount=int(amount // 2),
+            msg_contains='measureStartFee and expirationFee should be provided')
+
         # Creating event:
         amount = self.measure_start_fee + self.expiration_fee
         self.storage = self.check_new_event_succeed(
             event_params=self.default_event_params,
             amount=amount)
-
-        # TODO: create_evet_with_conflict_fees
-        # TODO: create_more_events()
 
         # Participant A: adding liquidity 50/50 just at start:
         self.storage = self.check_provide_liquidity_succeed(
@@ -91,7 +96,8 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
             bet='for',
             minimal_win=50_000)
 
-        # Participant A: adding more liquidity after 12 hours (1/2 of the bets period):
+        # Participant A: adding more liquidity after 12 hours
+        # (1/2 of the bets period):
         self.current_time = RUN_TIME + 12*ONE_HOUR
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
