@@ -1,0 +1,13 @@
+node_modules
+build
+package-lock.json
+yarn.lock
+faucet.json
+pytezos-jupyter-present/test-keys/*
+*/.ipynb_checkpoints/*
+**/__pycache__/*
+*.tz
+pytezos-jupyter-present/
+2021-*.txt
+pytezos-tests/*.ipynb
+
