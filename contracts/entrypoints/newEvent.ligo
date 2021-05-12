@@ -36,8 +36,8 @@ block {
         oracleAddress = eventParams.oracleAddress;
         poolFor = 0tez;
         poolAgainst = 0tez;
-        totalLiquidityForShares = 0tez;
-        totalLiquidityAgainstShares = 0tez;
+        totalLiquidityShares = 0n;
+        sharePrecision = 100_000_000n;
 
         (* TODO: control liquidityPrecision, liquidityPercent
             min|max from Manager *)
@@ -50,9 +50,6 @@ block {
 
         (* TODO: control new event ratioPrecision from Manager *)
         ratioPrecision = 100_000_000n;
-        forProfit = 0;
-        againstProfit = 0;
-        sharePrecision = 100_000_000n;
     ];
 
     s.events[s.lastEventId] := newEvent;

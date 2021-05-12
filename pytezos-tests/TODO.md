@@ -1,4 +1,6 @@
 ### List of collected TODO's that not distributed for future tests:
+- TODO: test with liquidity percent (I turning off all liquidity percent in current tests because it is very hard to track them)
+
 - TODO: test that LP can withdraw instead of participant after some time
         * test that LP can't withdraw instead of participant before this time
 - TODO: make some tests inside sandbox

@@ -27,8 +27,8 @@ type ledgerKey is (address*eventIdType)
 (* ledger key is address and event ID *)
 type ledgerType is big_map(ledgerKey, tez)
 
-(* another ledgers, used to calculate profit/losses at entry. Can be negative: *)
-type diffLedgerType is big_map(ledgerKey, int)
+(* another ledger, used to calculate shares: *)
+type ledgerNatType is big_map(ledgerKey, nat)
 
 type eventType is record [
     currencyPair : string;
@@ -70,24 +70,8 @@ type eventType is record [
     poolFor : tez;
     poolAgainst : tez;
 
-    (* Expected payments for LP if one of the pool wins calculated per one share,
-        can be positive (LPs in +) or negative (LPs in -) *)
-    forProfit : int;
-    againstProfit : int;
-    (* TODO: if there would be only one liquidity pool name it: profitPerShare *)
-
+    totalLiquidityShares : nat;
     sharePrecision : nat;
-
-    (* Liquidity shares calculated separately for two pools and then distributed
-        using pool with participants that did not win *)
-    (* TODO: maybe it is complicated and use one ledger for liquidity shares?
-        this idea with two ledgers was implemented to equilize balance between different
-        liquidity providers, before new model with fixing LP profit/loss at entry was
-        implemented.
-        ALSO: maybe I should change the type to nat because it is frequently converted
-        to int in calculations *)
-    totalLiquidityForShares : tez;
-    totalLiquidityAgainstShares : tez;
 
     (* Liquidity provider bonus: numerator & denominator *)
     liquidityPercent : nat;
@@ -148,17 +132,13 @@ type storage is record [
     betsFor : ledgerType;
     betsAgainst : ledgerType;
 
-    (* There are three ledgers used to manage liquidity:
-        - one with total provided value needed to return in withdrawal,
-        - and two with liquidity bonus, that used to calculate share of profits / losses *)
-    providedLiquidity : ledgerType;
-    liquidityForShares : ledgerType;
-    liquidityAgainstShares : ledgerType;
-
-    (* Liquidity providers profits/losses that excluded from calculation
-        (used to exclude all expected profit/loss formed before providing new liquidity) *)
-    forProfitDiff : diffLedgerType;
-    againstProfitDiff : diffLedgerType;
+    (* There are two ledgers used to manage liquidity:
+        - two with total provided liquidity in for/against pools,
+        - and one with LP share used to calculate how winning pool
+            would be distributed *)
+    providedLiquidityFor : ledgerType;
+    providedLiquidityAgainst : ledgerType;
+    liquidityShares : ledgerNatType;
 
     (* Keeping all provided bets for the Force Majeure, in case if
         they needed to be returned *)

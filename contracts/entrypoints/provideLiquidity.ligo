@@ -15,22 +15,29 @@ block {
     const expectedRatio : nat =
         p.expectedRatioFor * event.ratioPrecision / expectedRatioSum;
 
+    (* Calculating ratio. It is equal expected ratio if this is first LP: *)
     var ratio : nat := expectedRatio;
-    if totalBets = 0tez then
-        (* Adding first liquidity scenario *)
-        skip;
-    else
-    block {
-        (* Adding more liquidity scenario *)
-        const ratioSum : tez = event.poolFor + event.poolAgainst;
-        ratio := event.poolFor * event.ratioPrecision / ratioSum;
-    };
+    (* And it is calculated if this is adding more liquidity scenario *)
+    if totalBets =/= 0tez then
+        ratio := event.poolFor * event.ratioPrecision / totalBets
+    else skip;
+
     (* TODO: compare ratio and check p.maxSlippage is less than expected *)
 
     (* Distributing liquidity: *)
     const betFor : tez = natToTez(roundDiv(
         tezToNat(Tezos.amount * ratio), event.ratioPrecision));
     const betAgainst : tez = Tezos.amount - betFor;
+
+    (* liquidity shares: *)
+    (* if this is first LP, newShares should be equal to sharePrecision *)
+    var newShares : nat := event.sharePrecision;
+    (* otherwise if this is not first LP, calculating share using betFor poolit
+        it should not differ from added share to betAgainst pool: *)
+    if totalBets =/= 0tez then
+        newShares := betFor * event.totalLiquidityShares / event.poolFor
+    else skip;
+
     event.poolFor := event.poolFor + betFor;
     event.poolAgainst := event.poolAgainst + betAgainst;
 
@@ -44,41 +51,20 @@ block {
     const remainedTime : int = totalBettingTime - elapsedTime;
 
     (* Total liquidity by this LP: *)
-    const alreadyProvided : tez = getLedgerAmount(key, s.providedLiquidity);
-    s.providedLiquidity[key] := alreadyProvided + betAgainst + betFor;
+    const providedFor : tez = getLedgerAmount(key, s.providedLiquidityFor);
+    s.providedLiquidityFor[key] := providedFor + betFor;
 
-    (* liquidity For shares: *)
-    const liquidityForShares : tez =
-        abs(remainedTime) * betFor / totalBettingTime;
-    s.liquidityForShares[key] :=
-        getLedgerAmount(key, s.liquidityForShares) + liquidityForShares;
-    event.totalLiquidityForShares :=
-        event.totalLiquidityForShares + liquidityForShares;
+    const providedAgainst : tez = getLedgerAmount(key, s.providedLiquidityAgainst);
+    s.providedLiquidityAgainst[key] := providedAgainst + betAgainst;
 
-    (* liquidity Against shares: *)
-    const liquidityAgainstShares : tez =
-        abs(remainedTime) * betAgainst / totalBettingTime;
-    s.liquidityAgainstShares[key] :=
-        getLedgerAmount(key, s.liquidityAgainstShares) + liquidityAgainstShares;
-    event.totalLiquidityAgainstShares :=
-        event.totalLiquidityAgainstShares + liquidityAgainstShares;
+    (* Reducing share with time have passed: *)
+    (* This time reduce scheme is not working with the current algorhytm
+    newShares := newShares * abs(remainedTime) / totalBettingTime;
+    *)
 
-    (* Recording forProfitDiff and againstProfitDiff that would allow to
-        exclude any profits / losses that was made before this new liquidity
-        and fairly distribute new profits / losses: *)
-    const newAgainstShares : int = int(liquidityAgainstShares / 1mutez);
-    const newForShares : int = int(liquidityForShares / 1mutez);
-    const precision : int = int(event.sharePrecision);
-
-    const forProfitDiff : int =
-        event.forProfit * newAgainstShares / precision;
-    s.forProfitDiff[key] :=
-        getDiffLedgerAmount(key, s.forProfitDiff) + forProfitDiff;
-
-    const againstProfitDiff : int =
-        event.againstProfit * newForShares / precision;
-    s.againstProfitDiff[key] :=
-        getDiffLedgerAmount(key, s.againstProfitDiff) + againstProfitDiff;
+    s.liquidityShares[key] :=
+        getNatLedgerAmount(key, s.liquidityShares) + newShares;
+    event.totalLiquidityShares := event.totalLiquidityShares + newShares;
 
     s.events[eventId] := event;
 
