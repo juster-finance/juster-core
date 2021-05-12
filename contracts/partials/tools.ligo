@@ -54,13 +54,13 @@ block {
 } with ledgerAmount
 
 
-(* Returns current amount of int in ledger, if key is not in ledger return 0 *)
-function getDiffLedgerAmount(var k : ledgerKey; var l : diffLedgerType) : int is
+(* Returns current amount of nat in ledger, if key is not in ledger return 0 *)
+function getNatLedgerAmount(var k : ledgerKey; var l : ledgerNatType) : nat is
 block {
-    var ledgerAmount : int := 0;
+    var ledgerAmount : nat := 0n;
     case Big_map.find_opt(k, l) of
     | Some(value) -> ledgerAmount := value
-    | None -> ledgerAmount := 0
+    | None -> ledgerAmount := 0n
     end;
 } with ledgerAmount
 

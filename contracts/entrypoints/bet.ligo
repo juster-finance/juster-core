@@ -51,20 +51,8 @@ block {
         else skip;
 
         (* removing liquidity from another pool to keep ratio balanced: *)
-        (* NOTE: removing winDelta before liquidity excluded (it is lowering
-            liquidity amount. Maybe it would be better first remove liquidity
-            and then exclude it from pool). This requires to change tests,
-            to do it simply: need to remove liquidity from current tests and
-            add additional liquidity tests *)
-        event.poolAgainst := event.poolAgainst - winDelta;
-
-        (* Updating LP profit losses for For/Against win scenarios: *)
-        event.againstProfit := (event.againstProfit
-            + tezToNat(Tezos.amount) * event.sharePrecision
-                / tezToNat(event.totalLiquidityForShares));
-        event.forProfit := (event.forProfit
-            - tezToNat(winDeltaPossible) * event.sharePrecision
-                / tezToNat(event.totalLiquidityAgainstShares));
+        (* NOTE: liquidity fee is included in the delta *)
+        event.poolAgainst := event.poolAgainst - winDeltaPossible;
 
         store.betsFor[key] :=
             getLedgerAmount(key, store.betsFor) + possibleWinAmount;
@@ -85,15 +73,8 @@ block {
         else skip;
 
         (* removing liquidity from another pool to keep ratio balanced: *)
-        event.poolFor := event.poolFor - winDelta;
-
-        (* Updating LP profit losses for For/Against win scenarios: *)
-        event.forProfit := (event.forProfit
-            + tezToNat(Tezos.amount) * event.sharePrecision
-                / tezToNat(event.totalLiquidityAgainstShares));
-        event.againstProfit := (event.againstProfit
-            - tezToNat(winDeltaPossible) * event.sharePrecision
-                / tezToNat(event.totalLiquidityForShares));
+        (* NOTE: liquidity fee is included in the delta *)
+        event.poolFor := event.poolFor - winDeltaPossible;
 
         store.betsAgainst[key] :=
             getLedgerAmount(key, store.betsAgainst) + possibleWinAmount;

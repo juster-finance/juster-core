@@ -36,13 +36,13 @@ def calculate_liquidity_bonus_multiplier(event, current_time):
     return (close_time - current_time) / (close_time - start_time)
 
 
-def calculate_bet_return(top, bottom, amount):
+def calculate_bet_return(top, bottom, amount, fee=0):
     """ Calculates the amount that would be returned if participant wins
         Not included the bet amount itself, only added value
     """
 
     ratio = top / (bottom + amount)
-    return int(amount * ratio)
+    return int(amount * ratio * (1-fee))
 
 
 def calculate_bet_params_change(storage, event_id, participant, bet, amount):
@@ -51,6 +51,7 @@ def calculate_bet_params_change(storage, event_id, participant, bet, amount):
     """
 
     event = storage['events'][event_id]
+    fee = event['liquidityPercent'] / event['liquidityPrecision']
     key = (participant, event_id)
 
     if bet == 'for':
@@ -60,7 +61,7 @@ def calculate_bet_params_change(storage, event_id, participant, bet, amount):
 
         return dict(
             diff_for=amount,
-            diff_against=-calculate_bet_return(top, bottom, amount),
+            diff_against=-calculate_bet_return(top, bottom, amount, fee),
             for_count=for_count,
             against_count=0
         )
@@ -71,7 +72,7 @@ def calculate_bet_params_change(storage, event_id, participant, bet, amount):
         against_count = 0 if key in storage['betsAgainst'] else 1
 
         return dict(
-            diff_for=-calculate_bet_return(top, bottom, amount),
+            diff_for=-calculate_bet_return(top, bottom, amount, fee),
             diff_against=amount,
             for_count=0,
             against_count=against_count
@@ -204,29 +205,31 @@ class StateTransformationBaseTest(TestCase):
         # If participant added liquidity before, it should not change
         # ledger records count. If it is not - records should be incresed by 1
 
-        is_already_lp = (participant, self.id) in init_storage['providedLiquidity']
+        is_already_lp = (participant, self.id) in init_storage['providedLiquidityFor']
         added_count = 0 if is_already_lp else 1
 
         self.assertEqual(
-            len(result_storage['providedLiquidity']),
-            len(init_storage['providedLiquidity']) + added_count)
-
-        self.assertEqual(len(
-            result_storage['liquidityForShares']),
-            len(init_storage['liquidityForShares']) + added_count)
+            len(result_storage['providedLiquidityFor']),
+            len(init_storage['providedLiquidityFor']) + added_count)
 
         self.assertEqual(
-            len(result_storage['liquidityAgainstShares']),
-            len(init_storage['liquidityAgainstShares']) + added_count)
-
-        m = calculate_liquidity_bonus_multiplier(init_event, self.current_time)
-        self.assertEqual(
-            result_event['totalLiquidityForShares'],
-            init_event['totalLiquidityForShares'] + int(m*added_for))
+            len(result_storage['providedLiquidityAgainst']),
+            len(init_storage['providedLiquidityAgainst']) + added_count)
 
         self.assertEqual(
-            result_event['totalLiquidityAgainstShares'],
-            init_event['totalLiquidityAgainstShares'] + int(m*added_against))
+            len(result_storage['liquidityShares']),
+            len(init_storage['liquidityShares']) + added_count)
+
+        if init_event['poolFor'] == 0:
+            # scenario with first provided liquidity:
+            added_shares = init_event['sharePrecision']
+        else:
+            # scenario with adding more liquidity:
+            added_shares = added_for / init_event['poolFor'] * init_event['totalLiquidityShares']
+
+        self.assertEqual(
+            result_event['totalLiquidityShares'],
+            init_event['totalLiquidityShares'] + int(added_shares))
 
         self._check_result_integrity(result, self.id)
         return result_storage
@@ -354,10 +357,7 @@ class StateTransformationBaseTest(TestCase):
             'poolFor': 0,
             'isClosed': False,
             'isMeasurementStarted': False,
-            'forProfit': 0,
-            'againstProfit': 0,
-            'totalLiquidityForShares': 0,
-            'totalLiquidityAgainstShares': 0
+            'totalLiquidityShares': 0,
         })
 
         selected_event_keys = {
@@ -544,7 +544,7 @@ class StateTransformationBaseTest(TestCase):
             'measurePeriod': 12*ONE_HOUR,
             'oracleAddress': self.oracle_address,
 
-            'liquidityPercent': 40_000,  # 4% of 1_000_000
+            'liquidityPercent': 0,  # 0% of 1_000_000
             'measureStartFee': self.measure_start_fee,  # who provides it and when?
             'expirationFee': self.expiration_fee
         }
@@ -553,11 +553,9 @@ class StateTransformationBaseTest(TestCase):
             'events': {},
             'betsFor': {},
             'betsAgainst': {},
-            'providedLiquidity': {},
-            'liquidityForShares': {},
-            'liquidityAgainstShares': {},
-            'forProfitDiff': {},
-            'againstProfitDiff': {},
+            'providedLiquidityFor': {},
+            'providedLiquidityAgainst': {},
+            'liquidityShares': {},
             'depositedBets': {},
             'lastEventId': 0,
             'closeCallId': None,

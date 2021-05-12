@@ -1,5 +1,5 @@
 """ Event: XTZ-USD dynamics would be > 1 in 12 hours after betting period of 24 hours.
-    Liquidity pool 4%
+    Liquidity pool 0%
 
     Four participants: a, b, c and d making next interactions:
         (1) participant A adds initial liquidity at the beginning (0 hours from start): 100k with ratio 1:1
@@ -7,16 +7,24 @@
             rate before bet 50:50
             rate at bet     50:100, if S: win amount +25k*L, if ~S: loose amount -50k
             rate after bet  25:100 == 1:4 (a:f)
+
         (3) participant A adds more liquidity (12 hours from start): 50k with ratio 4:1 (f:a)
-            NOTE: A whould probably have Ev =/= 0 after this operation
+            totalLiquidityShares: 100
+            newShares for A: 40
+
         (4) participant D adds more liquidity (12 hours from start): 450k with ratio 4:1 (f:a)
-            NOTE: A whould probably have Ev =/= 0 after this operation
+            totalLiquidityShares: 140
+            newShares for D: 360
+
         (5) participant D bets Against with 125k (14 hours from start)
             rate before bet 500:125
             rate at bet     500:250 (f:a), if ~S: win amount +250k*L, if S: loose amount 125k
             rate after bet  250:250
+
         (6) participant C adds more liquidity at the very end (24 hours from start): 100k with ratio 1:1 (f:a)
-            NOTE: C whould probably have Ev =/= 0 after this operation
+            totalLiquidityShares: 500
+            newShares for C: 50/250 * 500 = 100
+
         (7) particiapnt A calls running_measurement 26 hours from the start
         (8) oracle returns that price at the measurement start is 6.0$ per xtz. Oracle measurement time is behind one hour
         (9) participant B cals close_call at 38 hours from the start
@@ -30,38 +38,33 @@
             (liquidity rate is not included in the pools)
 
     if S:
-        participant B wins and get 50_000 + 25_000 * 96% = 74_000 (this value should be saved in winning amounts ledger)
+        participant B wins and get 50_000 + 25_000 = 75_000
         participant D loose his bet 35_000 + provided liquidity 75_000
     if ~S:
         participant B loose his bet 50_000
-        participant D wins and get 35_000 + 70_000 * 96% + provided liquidity 75_000 = 177_200
+        participant D wins and get 35_000 + 70_000 + provided liquidity 75_000 = 177_200
 
-    Total win S  LP profit / loss:        0 - 24_000 +      0 +       0 + 125_000 +       0 = 101_000
-    Total win ~S LP profit / loss:        0 + 50_000 +      0 +       0 - 120_000 +       0 = -70_000
-            (liquidity rate is included in profit/loss pools)
-
-    Total liquidity For bonuses:     50_000 +      0 + 20_000 + 180_000 +       0 +       0 = 250_000
-    Total liquidity Against bonuses: 50_000 +      0 +  5_000 +  45_000 +       0 +       0 = 100_000
-    Total provided Liquidity:       100_000 +      0 + 50_000 + 450_000 +       0 + 100_000 = 325_000
+    Total win S  LP profit / loss:        0 - 25_000 +      0 +       0 + 125_000 +       0 = 100_000
+    Total win ~S LP profit / loss:        0 + 50_000 +      0 +       0 - 125_000 +       0 = -75_000
 
     Selected liquidity pool to distribute profits: liquidity Against (because For wins)
 
     liquidity For profit / loss distribution:
-        A: -24_000 * 1.00 + 125_000 * 0.55 = 44_750
-        D: 0.45 * 125_000 = 56_250
+        A: -25_000 * 1.00 + 125_000 * 140/500 = 10_000
+        D: 360/500 * 125_000 = 90_000
         C: 0
 
     LP withdraw = Profit/Loss * LP_share + ProvidedL
-    A withdraws: 44_750 + 100_000 + 50_000 = 194_750
-    B withdraws: 50_000 + 24_000 = 74_000
+    A withdraws: 10_000 + 100_000 + 50_000 = 160_000
+    B withdraws: 50_000 + 25_000 = 75_000
     C withdraws: 100_000
-    D withdraws: 56_250 + 450_000 = 506_250
+    D withdraws: 90_000 + 450_000 = 540_000
 
     Changes:
-        A: 194_750 / 150_000 = 1.298
-        B:  74_000 /  50_000 = 1.480
+        A: 160_000 / 150_000 = 1.067
+        B:  75_000 /  50_000 = 1.500
         C: 100_000 / 100_000 = 1.000
-        D: 506_250 / 575_000 = 0.880
+        D: 540_000 / 575_000 = 0.939
 """
 
 from state_transformation_base import StateTransformationBaseTest, RUN_TIME, ONE_HOUR
@@ -158,8 +161,7 @@ class FourParticipantsDeterminedTest(StateTransformationBaseTest):
 
         # Withdrawals:
         self.current_time = RUN_TIME + 64*ONE_HOUR
-        self.storage = self.check_withdraw_succeed(self.a, 194_750)
-        self.storage = self.check_withdraw_succeed(self.b, 74_000)
+        self.storage = self.check_withdraw_succeed(self.a, 160_000)
+        self.storage = self.check_withdraw_succeed(self.b, 75_000)
         self.storage = self.check_withdraw_succeed(self.c, 100_000)
-        self.storage = self.check_withdraw_succeed(self.d, 506_250)
-
+        self.storage = self.check_withdraw_succeed(self.d, 540_000)

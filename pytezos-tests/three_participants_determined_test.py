@@ -1,5 +1,5 @@
 """ Event: XTZ-USD dynamics would be > 1 in 12 hours after betting period of 24 hours.
-    Liquidity pool 4%
+    Liquidity pool 0%
 
     Three participants: a, b and c making next interactions:
         (1) participant A adds initial liquidity at the beginning (0 hours from start): 100k with ratio 1:1
@@ -7,9 +7,7 @@
             rate at bet 50:100, if S: win amount +25k*L, if ~S: loose amount -50k
             rate after bet 100:25 == 4:1
         (3) participant A adds more liquidity (12 hours from start): 50k with ratio 4:1 (f:a)
-            NOTE: A whould probably have Ev =/= 0 after this operation
         (4) participant C adds more liquidity at the very end (24 hours from start): 100k with ratio 4:1 (f:a)
-            NOTE: C whould probably have Ev =/= 0 after this operation
         (5) particiapnt A calls running_measurement 26 hours from the start
         (6) oracle returns that price at the measurement start is 6.0$ per xtz. Oracle measurement time is behind one hour
         (7) participant B cals close_call at 38 hours from the start
@@ -22,9 +20,9 @@
     betAgainstLiquidityPool:         50_000 - 25_000 + 10_000 +  20_000 =  55_000
             (liquidity rate is not included in the pools)
 
-    if participant B wins he get 50_000 + 25_000 * 96% = 74_000 (this value should be saved in winning amounts ledger)
+    if participant B wins he get 50_000 + 25_000 * 100% = 75_000 (this value should be saved in winning amounts ledger)
 
-    Total win S  LP profit / loss:        0 - 24_000 +      0 +       0 = -24_000  (including L bonus for winnig returns)
+    Total win S  LP profit / loss:        0 - 25_000 +      0 +       0 = -25_000  (including L bonus for winnig returns)
     Total win ~S LP profit / loss:        0 + 50_000 +      0 +       0 =  50_000  (and not including L bonus for bets)
             (liquidity rate is included in profit/loss pools)
 
@@ -43,8 +41,8 @@
     C withdraws: 100_000
 
     Changes:
-        A: 126_000 / 150_000 = 0.840
-        B: 74_000 / 50_000 = 1.480
+        A: 125_000 / 150_000 = 0.840
+        B: 75_000 / 50_000 = 1.480
         C: 100_000 / 100_000 = 1.000
 """
 
@@ -204,7 +202,7 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
 
         # Withdrawals:
         self.current_time = RUN_TIME + 64*ONE_HOUR
-        self.storage = self.check_withdraw_succeed(self.a, 126_000)
-        self.storage = self.check_withdraw_succeed(self.b, 74_000)
+        self.storage = self.check_withdraw_succeed(self.a, 125_000)
+        self.storage = self.check_withdraw_succeed(self.b, 75_000)
         self.storage = self.check_withdraw_succeed(self.c, 100_000)
 

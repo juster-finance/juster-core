@@ -15,65 +15,40 @@ block {
     else failwith("Withdraw is not allowed until contract is closed");
 
     (* defining variables that dependend on winning pool: *)        
-    var winPayout : tez := 0tez;
-    var providerProfits : int := 0;
+    var payout : tez := 0tez;
+    const share : nat = getNatLedgerAmount(key, s.liquidityShares);
 
     if event.isBetsForWin then block {
-        winPayout := getLedgerAmount(key, s.betsFor);
+        payout := getLedgerAmount(key, s.betsFor);
 
-        (* calculating liquidity return. It is distributed by loosed ledger: *)
-        const profitDiff : int = getDiffLedgerAmount(key, s.forProfitDiff);
-        const totalShares : int =
-            int(tezToNat(getLedgerAmount(key, s.liquidityAgainstShares)));
-        providerProfits :=
-            (event.forProfit*totalShares) / int(event.sharePrecision)
-            - profitDiff;
+        (* calculating liquidity return: *)
+        const providedFor : tez =  getLedgerAmount(key, s.providedLiquidityFor);
+        const againstReturn : tez = share * event.poolAgainst / event.totalLiquidityShares;
+        payout := payout + providedFor + againstReturn;
     }
     else block {
-        winPayout := getLedgerAmount(key, s.betsAgainst);
+        payout := getLedgerAmount(key, s.betsAgainst);
 
         (* calculating liquidity return. It is distributed by loosed ledger: *)
-        const profitDiff : int = getDiffLedgerAmount(key, s.againstProfitDiff);
-        const totalShares : int =
-            int(tezToNat(getLedgerAmount(key, s.liquidityForShares)));
-        providerProfits :=
-            (event.againstProfit*totalShares / int(event.sharePrecision))
-            - profitDiff;
+        const providedAgainst : tez = getLedgerAmount(key, s.providedLiquidityAgainst);
+        const forReturn : tez = share * event.poolFor / event.totalLiquidityShares;
+        payout := payout + providedAgainst + forReturn;
     };
-
-    (* Calculating liquidity bonus for provider and distributing profit/loss *)
-    const providedLiquidity : tez = getLedgerAmount(key, s.providedLiquidity);
-
-    const profitOrLoss : tez = abs(providerProfits) * 1mutez;
-
-    (* Payment for liquidity provider *)
-    var liquidityPayout : tez := 0tez;
-    if providerProfits > 0
-    then liquidityPayout := providedLiquidity + profitOrLoss
-    else liquidityPayout := providedLiquidity - profitOrLoss;
 
     (* Removing key from all ledgers: *)
     s.betsFor := Big_map.remove(key, s.betsFor);
     s.betsAgainst := Big_map.remove(key, s.betsAgainst);
-    s.providedLiquidity := Big_map.remove(key, s.providedLiquidity);
-    s.liquidityForShares := Big_map.remove(key, s.liquidityForShares);
-    s.liquidityAgainstShares := Big_map.remove(key, s.liquidityAgainstShares);
-    s.forProfitDiff := Big_map.remove(key, s.forProfitDiff);
-    s.againstProfitDiff := Big_map.remove(key, s.againstProfitDiff);
+    s.providedLiquidityFor := Big_map.remove(key, s.providedLiquidityFor);
+    s.providedLiquidityAgainst := Big_map.remove(key, s.providedLiquidityAgainst);
+    s.liquidityShares := Big_map.remove(key, s.liquidityShares);
     s.depositedBets := Big_map.remove(key, s.depositedBets);
 
-    const totalPayoutAmount : tez = winPayout + liquidityPayout;
-    (* TODO: If totalPayoutAmount is zero: do finish this call without
-        operations, this is needed to properly removing participants
-        that loosed *)
-
     const receiver : contract(unit) = getReceiver(Tezos.sender);
-    const payoutOperation : operation =
-        Tezos.transaction(unit, totalPayoutAmount, receiver);
+    const operation : operation = Tezos.transaction(unit, payout, receiver);
 
     (* Operation should be returned only if there are some amount to return: *)
     var operations : list(operation) := nil;
-    if totalPayoutAmount > 0tez then operations := payoutOperation # operations
+    if payout > 0tez then operations := operation # operations
     else skip;
 
     (* TODO: calculate participants/LPs count and remove event if there are 0 *)
