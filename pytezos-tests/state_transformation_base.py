@@ -103,7 +103,7 @@ class StateTransformationBaseTest(TestCase):
         """
 
         def clean_dict(dct):
-            return {key: value for key, value in dct.items() if value}
+            return {key: value for key, value in dct.items() if value is not None}
 
         def is_should_be_cleaned(key, value):
             is_dict = type(value) is dict
