@@ -17,12 +17,12 @@ type betType is
 | Against of unit
 
 type betParams is record [
-    eventId : eventIdType;
+    eventId : nat;
     bet : betType;
     minimalWinAmount : tez;
 ]
 
-type ledgerKey is (address*eventIdType)
+type ledgerKey is (address*nat)
 
 (* ledger key is address and event ID *)
 type ledgerType is big_map(ledgerKey, tez)
@@ -102,7 +102,7 @@ type newEventParams is record [
 
 
 type provideLiquidityParams is record [
-    eventId : eventIdType;
+    eventId : nat;
 
     (* Expected distribution / ratio of the event *)
     expectedRatioFor : nat;
@@ -118,15 +118,15 @@ type action is
 | NewEvent of newEventParams
 | ProvideLiquidity of provideLiquidityParams
 | Bet of betParams
-| StartMeasurement of eventIdType
+| StartMeasurement of nat
 | StartMeasurementCallback of callbackReturnedValueMichelson
-| Close of eventIdType
+| Close of nat
 | CloseCallback of callbackReturnedValueMichelson
-| Withdraw of eventIdType
+| Withdraw of nat
 
 
 type storage is record [
-    events : big_map(eventIdType, eventType);
+    events : big_map(nat, eventType);
 
     (* Ledgers with winning amounts for participants if For/Against wins: *)
     betsFor : ledgerType;
@@ -144,7 +144,7 @@ type storage is record [
         they needed to be returned *)
     depositedBets : ledgerType;
 
-    lastEventId : eventIdType;
+    lastEventId : nat;
     closeCallId : eventIdType;
     measurementStartCallId : eventIdType;
 ]

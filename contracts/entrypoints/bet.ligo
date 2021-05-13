@@ -11,7 +11,7 @@ block {
     (* TODO: assert that betAgainst / betFor is less than MAX_RATIO
         controlled by Manager *)
 
-    const eventId : eventIdType = params.eventId;
+    const eventId : nat = params.eventId;
     const event : eventType = getEvent(store, eventId);
 
     if (Tezos.now > event.betsCloseTime) then

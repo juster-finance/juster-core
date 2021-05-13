@@ -53,11 +53,6 @@ block {
     ];
 
     s.events[s.lastEventId] := newEvent;
+    s.lastEventId := s.lastEventId + 1n;
 
-    (* NOTE: This is strange construction, but I do not understand how to
-        assign value to option(nat) variable, maybe it should be changed *)
-    case s.lastEventId of
-    | Some(eventId) -> s.lastEventId := Some(eventId + 1n)
-    | None -> failwith("s.lastEventId is None, should not be here")
-    end;
 } with ((nil: list(operation)), s)

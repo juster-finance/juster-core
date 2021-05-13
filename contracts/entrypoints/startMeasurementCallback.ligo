@@ -4,15 +4,14 @@ function startMeasurementCallback(
 block {
     const param : callbackReturnedValue = Layout.convert_from_right_comb(p);
 
-    const eventId : eventIdType = s.measurementStartCallId;
+    const eventId : nat = case s.measurementStartCallId of
+    | Some(measurementStartCallId) -> measurementStartCallId
+    | None -> (failwith("measurementStartCallId is empty") : nat)
+    end;
 
     (* TODO: Check that current time is not far away from betsCloseTime,
         if it is, run Force Majeure. Give Manager ability to control
         this timedelta *)
-    case eventId of
-    | Some(measurementStartCallId) -> skip
-    | None -> failwith("measurementStartCallId is empty")
-    end;
 
     const event : eventType = getEvent(s, eventId);
 

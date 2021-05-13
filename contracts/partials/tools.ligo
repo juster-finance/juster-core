@@ -29,7 +29,7 @@ block {
 } with result
 
 
-function getEvent(var s : storage; var eventId : eventIdType) : eventType is
+function getEvent(var s : storage; var eventId : nat) : eventType is
 case Big_map.find_opt(eventId, s.events) of
 | Some(event) -> event
 | None -> (failwith("Event is not found") : eventType)
@@ -66,7 +66,7 @@ block {
 
 
 function makeCallToOracle(
-    var eventId : eventIdType;
+    var eventId : nat;
     var s : storage;
     var entrypoint : callbackEntrypoint) : list(operation) is
 block {

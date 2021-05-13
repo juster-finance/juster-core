@@ -1,6 +1,6 @@
 (* TODO: rename to reward? *)
 function withdraw(
-    var eventId : eventIdType;
+    var eventId : nat;
     var s: storage) : (list(operation) * storage) is
 block {
     (* TODO: add list of reciever addresses to make bulk transactions
