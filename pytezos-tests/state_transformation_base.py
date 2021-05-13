@@ -321,10 +321,18 @@ class StateTransformationBaseTest(TestCase):
             # Checking that withdrawals amount equal to expected:
             self.assertAmountEqual(result.operations[0], withdraw_amount)
 
-        # TODO: check participant removed from ledgers? (maybe separate method)
+        storage = self.remove_none_values(result.storage)
+        # Checking that participant removed from all ledgers:
+        key = (participant, self.id)
+        self.assertFalse(key in storage['betsFor'])
+        self.assertFalse(key in storage['betsAgainst'])
+        self.assertFalse(key in storage['providedLiquidityFor'])
+        self.assertFalse(key in storage['providedLiquidityAgainst'])
+        self.assertFalse(key in storage['liquidityShares'])
+        self.assertFalse(key in storage['depositedBets'])
 
         self._check_result_integrity(result, self.id)
-        return self.remove_none_values(result.storage)
+        return storage
 
 
     def check_withdraw_fails_with(self, participant, withdraw_amount, msg_contains=''):
