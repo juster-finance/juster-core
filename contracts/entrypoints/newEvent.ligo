@@ -33,7 +33,6 @@ block {
         closedRate = 0n;
         closedDynamics = 0n;
         isBetsForWin = False;
-        oracleAddress = eventParams.oracleAddress;
         poolFor = 0tez;
         poolAgainst = 0tez;
         totalLiquidityShares = 0n;

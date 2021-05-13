@@ -158,8 +158,6 @@ class StateTransformationBaseTest(TestCase):
                 period = event['measurePeriod']
                 self.assertTrue(event['closedOracleTime'] >= start + period)
 
-        # self.assertTrue(result.storage['closeCallId'] is None)
-        # self.assertTrue(result.storage['measurementStartCallId'] is None)
         self.assertTrue(result.storage['lastEventId'] > 0)
 
 
@@ -569,7 +567,6 @@ class StateTransformationBaseTest(TestCase):
             'targetDynamics': 1_000_000,
             'betsCloseTime': RUN_TIME + 24*ONE_HOUR,
             'measurePeriod': 12*ONE_HOUR,
-            'oracleAddress': self.oracle_address,
 
             'liquidityPercent': 0,  # 0% of 1_000_000
             'measureStartFee': self.measure_start_fee,  # who provides it and when?
@@ -586,7 +583,8 @@ class StateTransformationBaseTest(TestCase):
             'depositedBets': {},
             'lastEventId': 0,
             'closeCallId': None,
-            'measurementStartCallId': None
+            'measurementStartCallId': None,
+            'oracleAddress': self.oracle_address,
         }
 
         # this self.storage will be used in all blocks:

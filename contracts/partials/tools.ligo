@@ -73,7 +73,7 @@ block {
 
     const event = getEvent(s, eventId);
     const callToOracle : contract(oracleParam) =
-        case (Tezos.get_entrypoint_opt("%get", event.oracleAddress) : option(contract(oracleParam))) of
+        case (Tezos.get_entrypoint_opt("%get", s.oracleAddress) : option(contract(oracleParam))) of
         | None -> (failwith("No oracle found") : contract(oracleParam))
         | Some(con) -> con
         end;

@@ -62,10 +62,6 @@ type eventType is record [
     closedDynamics : nat;
     isBetsForWin : bool;
 
-    (* TODO: use entrypoint instead of address, example:
-        https://github.com/atomex-me/atomex-fa12-ligo/blob/6e093b484d5cf1ddf66245a6eb9d8d11dfbb45da/src/atomex.ligo#L7 *)
-    oracleAddress : address;
-
     (* Current liquidity in for and against pools, this is used to calculate current ratio: *)
     poolFor : tez;
     poolAgainst : tez;
@@ -94,7 +90,6 @@ type newEventParams is record [
     targetDynamics : nat;
     betsCloseTime : timestamp;
     measurePeriod : nat;
-    oracleAddress :  address;
     liquidityPercent : nat;
     measureStartFee : tez;
     expirationFee : tez;
@@ -147,4 +142,8 @@ type storage is record [
     lastEventId : nat;
     closeCallId : eventIdType;
     measurementStartCallId : eventIdType;
+
+    (* oracle in florencenet: KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn *)
+    (* oracle in edo2net:     KT1RCNpUEDjZAYhabjzgz1ZfxQijCDVMEaTZ *)
+    oracleAddress : address;
 ]
