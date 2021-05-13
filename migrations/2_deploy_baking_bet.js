@@ -17,7 +17,7 @@ const config = {
   liquidityPercent: 0,
   minPoolSize: 0,
   maxAllowedMeasureLag: 60*60*4,
-  defaultTime: 0,
+  defaultTime: '2018-06-30T07:07:32Z',
 };
 
 const initialStorage = {
@@ -31,8 +31,8 @@ const initialStorage = {
   lastEventId: 0,
   closeCallEventId: null,
   measurementStartCallEventId: null,
-  oracleAddress: 'KT1RCNpUEDjZAYhabjzgz1ZfxQijCDVMEaTZ'
- // newEventConfig: config,
+  oracleAddress: 'KT1RCNpUEDjZAYhabjzgz1ZfxQijCDVMEaTZ',
+  newEventConfig: config,
 };
 
 module.exports = deployer => {

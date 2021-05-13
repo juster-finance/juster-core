@@ -9,46 +9,63 @@ block {
         and maybe less than amount *)
     (* TODO: Check that liquidityPercent is less than 1_000_000 *)
 
-    const fees : tez = eventParams.measureStartFee + eventParams.expirationFee;
+    const config : newEventConfigType = s.newEventConfig;
+    const fees : tez = config.measureStartFee + config.expirationFee;
+
     if fees =/= Tezos.amount then
         failwith("measureStartFee and expirationFee should be provided")
     else skip;
 
-    (* TODO: separate method to add liquidity *)
+    if eventParams.measurePeriod > config.maxMeasurePeriod then
+        failwith("measurePeriod is exceed maximum value")
+    else skip;
+
+    if eventParams.measurePeriod < config.minMeasurePeriod then
+        failwith("measurePeriod is less than minimal value")
+    else skip;
+
+    const periodToBetsClose : int = eventParams.betsCloseTime - Tezos.now;
+    if periodToBetsClose <= 0 then
+        failwith("betsCloseTime should be in the future")
+    else skip;
+
+    if abs(periodToBetsClose) > config.maxPeriodToBetsClose then
+        failwith("betsCloseTime is exceed maximum allowed period")
+    else skip;
+
+    if abs(periodToBetsClose) < config.minPeriodToBetsClose then
+        failwith("betsCloseTime is less than minimal allowed period")
+    else skip;
+
     const newEvent : eventType = record[
         currencyPair = eventParams.currencyPair;
         createdTime = Tezos.now;
         targetDynamics = eventParams.targetDynamics;
-        targetDynamicsPrecision = 1_000_000n;
+        targetDynamicsPrecision = config.targetDynamicsPrecision;
         betsCloseTime = eventParams.betsCloseTime;
-        measureOracleStartTime = ("2018-06-30T07:07:32Z" : timestamp);
+        measureOracleStartTime = config.defaultTime;
         isMeasurementStarted = False;
         startRate = 0n;
-
-        (* TODO: control measurePeriod, time to betsCloseTime
-            min|max from Manager *)
         measurePeriod = eventParams.measurePeriod;
         isClosed = False;
-        closedOracleTime = ("2018-06-30T07:07:32Z" : timestamp);
+        closedOracleTime = config.defaultTime;
         closedRate = 0n;
         closedDynamics = 0n;
         isBetsForWin = False;
         poolFor = 0tez;
         poolAgainst = 0tez;
         totalLiquidityShares = 0n;
-        sharePrecision = 100_000_000n;
+        sharePrecision = config.sharePrecision;
+        liquidityPercent = config.liquidityPercent;
+        liquidityPrecision = config.liquidityPrecision;
+        measureStartFee = config.measureStartFee;
+        expirationFee = config.expirationFee;
+        rewardCallFee = config.rewardCallFee;
+        ratioPrecision = config.ratioPrecision;
 
-        (* TODO: control liquidityPrecision, liquidityPercent
-            min|max from Manager *)
-        liquidityPercent = eventParams.liquidityPercent;
-        liquidityPrecision = 1_000_000n;
-        measureStartFee = eventParams.measureStartFee;
-        expirationFee = eventParams.expirationFee;
-        (* TODO: control rewardCallFee from Manager *)
-        rewardCallFee = 100_000mutez;
-
-        (* TODO: control new event ratioPrecision from Manager *)
-        ratioPrecision = 100_000_000n;
+        oracleAddress = config.oracleAddress;
+        maxAllowedMeasureLag = config.maxAllowedMeasureLag;
+        minPoolSize = config.minPoolSize;
     ];
 
     s.events[s.lastEventId] := newEvent;

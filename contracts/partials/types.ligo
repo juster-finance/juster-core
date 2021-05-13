@@ -30,6 +30,57 @@ type ledgerType is big_map(ledgerKey, tez)
 (* another ledger, used to calculate shares: *)
 type ledgerNatType is big_map(ledgerKey, nat)
 
+
+(* params that used in new event creation that can be configured by
+    contract manager (changing this params would not affect existing events
+    and would only applied to future events): *)
+type newEventConfigType is record [
+
+    (* Fees, that should be provided during contract origination *)
+    measureStartFee : tez;
+    expirationFee : tez;
+
+    (* Fees, that taken from participants if they doesn't withdraw in time *)
+    rewardCallFee : tez;
+
+    (* oracle in florencenet: KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn *)
+    (* oracle in edo2net:     KT1RCNpUEDjZAYhabjzgz1ZfxQijCDVMEaTZ *)
+    oracleAddress : address;
+
+    targetDynamicsPrecision : nat;
+    sharePrecision : nat;
+    liquidityPrecision : nat;
+    (* Precision used in ratio calculations *)
+    ratioPrecision : nat;
+
+    minMeasurePeriod : nat;
+    maxMeasurePeriod : nat;
+
+    (* min/max allowed window that limits betsCloseTime *)
+    minPeriodToBetsClose : nat;
+    maxPeriodToBetsClose : nat;
+
+    (* TODO: maybe control min/max liquidity percent and allow events
+        with different percents? (the way measurePeriod is setted) *)
+    liquidityPercent : nat;
+
+    (* Maximal amplitude that affects ratio in one bet: *)
+    (* TODO:? maxRatioChange : nat; -need to be added to eventType *)
+
+    (* Minimal value in tez that should be keept in pool *)
+    minPoolSize : tez;
+
+    (* Time window when startMeasurement / close should be called
+        (or it would considered as Force Majeure) *)
+    maxAllowedMeasureLag : nat;
+
+    (* Time, used for filling timestamp values while they have no
+        meaning value:
+        TODO: maybe it is better to use option(timestamp) ? *)
+    defaultTime : timestamp;
+]
+
+
 type eventType is record [
     currencyPair : string;
     createdTime : timestamp;
@@ -73,15 +124,15 @@ type eventType is record [
     liquidityPercent : nat;
     liquidityPrecision : nat;
 
-    (* Fees, that should be provided during contract origination *)
     measureStartFee : tez;
     expirationFee : tez;
-
-    (* Fees, that taken from participants *)
     rewardCallFee : tez;
 
-    (* Precision used in ratio calculations *)
     ratioPrecision : nat;
+    oracleAddress : address;
+
+    minPoolSize : tez;
+    maxAllowedMeasureLag : nat;
 ]
 
 
@@ -90,9 +141,6 @@ type newEventParams is record [
     targetDynamics : nat;
     betsCloseTime : timestamp;
     measurePeriod : nat;
-    liquidityPercent : nat;
-    measureStartFee : tez;
-    expirationFee : tez;
 ]
 
 
@@ -143,7 +191,5 @@ type storage is record [
     closeCallId : eventIdType;
     measurementStartCallId : eventIdType;
 
-    (* oracle in florencenet: KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn *)
-    (* oracle in edo2net:     KT1RCNpUEDjZAYhabjzgz1ZfxQijCDVMEaTZ *)
-    oracleAddress : address;
+    newEventConfig : newEventConfigType;
 ]

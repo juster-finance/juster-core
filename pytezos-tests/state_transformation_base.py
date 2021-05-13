@@ -23,6 +23,7 @@ from pytezos import ContractInterface, pytezos, MichelsonRuntimeError
 CONTRACT_FN = 'baking_bet.tz'
 RUN_TIME = int(time.time())
 ONE_HOUR = 60*60
+ONE_DAY = ONE_HOUR*24
 
 
 """ Some smart contract logic reimplemented here: """
@@ -104,8 +105,13 @@ class StateTransformationBaseTest(TestCase):
         def clean_dict(dct):
             return {key: value for key, value in dct.items() if value}
 
+        def is_should_be_cleaned(key, value):
+            is_dict = type(value) is dict
+            is_not_config = key != 'newEventConfig'
+            return is_dict and is_not_config
+
         return {
-            key: clean_dict(value) if type(value) is dict else value
+            key: clean_dict(value) if is_should_be_cleaned(key, value) else value
             for key, value in storage.items()
         }
 
@@ -567,10 +573,25 @@ class StateTransformationBaseTest(TestCase):
             'targetDynamics': 1_000_000,
             'betsCloseTime': RUN_TIME + 24*ONE_HOUR,
             'measurePeriod': 12*ONE_HOUR,
+        }
 
-            'liquidityPercent': 0,  # 0% of 1_000_000
-            'measureStartFee': self.measure_start_fee,  # who provides it and when?
-            'expirationFee': self.expiration_fee
+        self.default_config = {
+            'defaultTime': 0,
+            'expirationFee': self.expiration_fee,
+            'liquidityPercent': 0,
+            'liquidityPrecision': 1_000_000,
+            'maxAllowedMeasureLag': ONE_HOUR*4,  # 4 hours
+            'maxMeasurePeriod': ONE_DAY*31,  # 31 day
+            'maxPeriodToBetsClose': ONE_DAY*31,  # 31 day
+            'measureStartFee': self.measure_start_fee,
+            'minMeasurePeriod': 60*5,  # 5 min
+            'minPeriodToBetsClose': 60*5,  # 5 min
+            'minPoolSize': 0,
+            'oracleAddress': self.oracle_address,
+            'ratioPrecision': 100_000_000,
+            'rewardCallFee': 100_000,
+            'sharePrecision': 100_000_000,
+            'targetDynamicsPrecision': 1_000_000,
         }
 
         self.init_storage = {
@@ -584,7 +605,7 @@ class StateTransformationBaseTest(TestCase):
             'lastEventId': 0,
             'closeCallId': None,
             'measurementStartCallId': None,
-            'oracleAddress': self.oracle_address,
+            'newEventConfig': self.default_config
         }
 
         # this self.storage will be used in all blocks:
