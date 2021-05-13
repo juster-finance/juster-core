@@ -110,38 +110,57 @@ class StateTransformationBaseTest(TestCase):
         }
 
 
-    def _check_result_integrity(self, res, event_id):
-        """ Checks that sums and ledger values of the resulting storage
-            is consistent """
-
-        def sum_by_id(ledger, _id):
-            return sum(value for key, value in ledger.items() if key[1] == _id)
-
-        '''
-        bets_for_sum_ledger = sum_by_id(res.storage['betsForLedger'], event_id)
-        bets_against_sum_ledger = sum_by_id(res.storage['betsAgainstLedger'], event_id)
-        provided_liquidity_sum_ledger = sum_by_id(res.storage['providedLiquidity'], event_id)
-        total_ledger_sums = (
-            bets_for_sum_ledger + bets_against_sum_ledger + provided_liquidity_sum_ledger)
-
-        bets_for_sum_event = res.storage['events'][event_id]['poolFor']
-        bets_against_sum_event = res.storage['events'][event_id]['poolAgainst']
-        # this is a bit confusing now, but provided liquidity is accounted inside bets for / against sums
-        # provided_liquidity_sum_event = res.storage['events'][event_id]['totalLiquidityProvided']
-        total_event_sums = (
-            bets_for_sum_event + bets_against_sum_event)
-
-        self.assertEqual(total_ledger_sums, total_event_sums)
-        '''
-        # betsForLedger and betsAgainstLedger now contained winnig amounts
-        # TODO: need to refactor names to make it clear.
-        # and looks like this check is not possible anymore
-        pass
-
-
     def check_result_integrity(self, result):
-        # TODO: Replace this method with actual checks
-        pass
+
+        def sum_ledger_by_event(ledger, event_id):
+            """ Sums all values in ledger for given event_id """
+
+            return sum(
+                value if (key[1] == event_id) & (value is not None) else 0
+                for key, value in ledger.items())
+
+        bets_for = result.storage['betsFor']
+        bets_against = result.storage['betsAgainst']
+        pl_for = result.storage['providedLiquidityFor']
+        pl_against = result.storage['providedLiquidityAgainst']
+        deposited_bets = result.storage['depositedBets']
+
+        for event_id, event in result.storage['events'].items():
+            # Checking that sum of the bets and L is equal to sum in pools.
+            # This check should be performed before any withdrawals:
+            if event['isClosed']:
+                continue
+
+            wins_for_event = sum_ledger_by_event(bets_for, event_id)
+            wins_against_event = sum_ledger_by_event(bets_against, event_id)
+            liquidity_for_event = sum_ledger_by_event(pl_for, event_id)
+            liquidity_against_event = sum_ledger_by_event(pl_against, event_id)
+            sum_of_bets = sum_ledger_by_event(deposited_bets, event_id)
+
+            pool_difference = event['poolFor'] - event['poolAgainst']
+            pool_difference_check = (
+                liquidity_for_event - liquidity_against_event
+                - wins_against_event + wins_for_event
+                # + deposited_bets_against - deposited_bets_for
+                # + deposited_bets_for - deposited_bets_against
+            )
+            self.assertEqual(pool_difference, pool_difference_check)
+
+            self.assertTrue(event['betsCloseTime'] > event['createdTime'])
+            self.assertTrue(event['targetDynamics'] > 0)
+
+            if event['isMeasurementStarted']:
+                self.assertTrue(
+                    event['measureOracleStartTime'] >= event['betsCloseTime'])
+
+            if event['isClosed']:
+                start = event['measureOracleStartTime']
+                period = event['measurePeriod']
+                self.assertTrue(event['closedOracleTime'] >= start + period)
+
+        # self.assertTrue(result.storage['closeCallId'] is None)
+        # self.assertTrue(result.storage['measurementStartCallId'] is None)
+        self.assertTrue(result.storage['lastEventId'] > 0)
 
 
     def check_provide_liquidity_succeed(
@@ -231,7 +250,7 @@ class StateTransformationBaseTest(TestCase):
             result_event['totalLiquidityShares'],
             init_event['totalLiquidityShares'] + int(added_shares))
 
-        self._check_result_integrity(result, self.id)
+        self.check_result_integrity(result)
         return result_storage
 
 
@@ -282,7 +301,7 @@ class StateTransformationBaseTest(TestCase):
         # TODO: check sum in participant ledgers (include liquidity fee)
         # TODO: check forProfit / againstProfit
 
-        self._check_result_integrity(result, self.id)
+        self.check_result_integrity(result)
         return result_storage
 
 
@@ -331,7 +350,7 @@ class StateTransformationBaseTest(TestCase):
         self.assertFalse(key in storage['liquidityShares'])
         self.assertFalse(key in storage['depositedBets'])
 
-        self._check_result_integrity(result, self.id)
+        self.check_result_integrity(result)
         return storage
 
 
@@ -372,7 +391,7 @@ class StateTransformationBaseTest(TestCase):
             k: v for k, v in result_event.items() if k in proper_event}
         self.assertDictEqual(proper_event, selected_event_keys)
 
-        self._check_result_integrity(result, self.id)
+        self.check_result_integrity(result)
         return result_storage
 
 
@@ -406,7 +425,7 @@ class StateTransformationBaseTest(TestCase):
         event = result.storage['events'][self.id]
         self.assertFalse(event['isMeasurementStarted'])
 
-        self._check_result_integrity(result, self.id)
+        self.check_result_integrity(result)
         return result.storage
 
 
@@ -435,7 +454,7 @@ class StateTransformationBaseTest(TestCase):
         self.assertEqual(operation['destination'], source)
         self.assertAmountEqual(operation, self.measure_start_fee)
 
-        self._check_result_integrity(result, self.id)
+        self.check_result_integrity(result)
         return result.storage
 
 
@@ -473,7 +492,7 @@ class StateTransformationBaseTest(TestCase):
         currency_pair = operation['parameters']['value']['args'][0]['string']
         self.assertEqual(currency_pair, self.currency_pair)
 
-        self._check_result_integrity(result, self.id)
+        self.check_result_integrity(result)
         return result.storage
 
 
@@ -503,7 +522,7 @@ class StateTransformationBaseTest(TestCase):
         self.assertEqual(operation['destination'], source)
         self.assertAmountEqual(operation, self.expiration_fee)
 
-        self._check_result_integrity(result, self.id)
+        self.check_result_integrity(result)
         return result.storage
 
 
