@@ -605,7 +605,8 @@ class StateTransformationBaseTest(TestCase):
             'lastEventId': 0,
             'closeCallId': None,
             'measurementStartCallId': None,
-            'newEventConfig': self.default_config
+            'newEventConfig': self.default_config,
+            'manager': self.a
         }
 
         # this self.storage will be used in all blocks:

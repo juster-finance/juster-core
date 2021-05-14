@@ -80,6 +80,7 @@ type newEventConfigType is record [
     defaultTime : timestamp;
 ]
 
+type updateConfigParam is newEventConfigType -> newEventConfigType
 
 type eventType is record [
     currencyPair : string;
@@ -166,6 +167,7 @@ type action is
 | Close of nat
 | CloseCallback of callbackReturnedValueMichelson
 | Withdraw of nat
+| UpdateConfig of updateConfigParam
 
 
 type storage is record [
@@ -192,4 +194,7 @@ type storage is record [
     measurementStartCallId : eventIdType;
 
     newEventConfig : newEventConfigType;
+
+    (* Manager is the one who can change config *)
+    manager : address;
 ]
