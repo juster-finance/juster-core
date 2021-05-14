@@ -1,4 +1,3 @@
-(* TODO: rename to reward? *)
 function update_config(
     var updateConfigLambda : updateConfigParam;
     var store: storage) : (list(operation) * storage) is
