@@ -17,18 +17,70 @@ type betType is
 | Against of unit
 
 type betParams is record [
-    eventId : eventIdType;
+    eventId : nat;
     bet : betType;
     minimalWinAmount : tez;
 ]
 
-type ledgerKey is (address*eventIdType)
+type ledgerKey is (address*nat)
 
 (* ledger key is address and event ID *)
 type ledgerType is big_map(ledgerKey, tez)
 
 (* another ledger, used to calculate shares: *)
 type ledgerNatType is big_map(ledgerKey, nat)
+
+
+(* params that used in new event creation that can be configured by
+    contract manager (changing this params would not affect existing events
+    and would only applied to future events): *)
+type newEventConfigType is record [
+
+    (* Fees, that should be provided during contract origination *)
+    measureStartFee : tez;
+    expirationFee : tez;
+
+    (* Fees, that taken from participants if they doesn't withdraw in time *)
+    rewardCallFee : tez;
+
+    (* oracle in florencenet: KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn *)
+    (* oracle in edo2net:     KT1RCNpUEDjZAYhabjzgz1ZfxQijCDVMEaTZ *)
+    oracleAddress : address;
+
+    targetDynamicsPrecision : nat;
+    sharePrecision : nat;
+    liquidityPrecision : nat;
+    (* Precision used in ratio calculations *)
+    ratioPrecision : nat;
+
+    minMeasurePeriod : nat;
+    maxMeasurePeriod : nat;
+
+    (* min/max allowed window that limits betsCloseTime *)
+    minPeriodToBetsClose : nat;
+    maxPeriodToBetsClose : nat;
+
+    (* TODO: maybe control min/max liquidity percent and allow events
+        with different percents? (the way measurePeriod is setted) *)
+    liquidityPercent : nat;
+
+    (* Maximal amplitude that affects ratio in one bet: *)
+    (* TODO:? maxRatioChange : nat; -need to be added to eventType *)
+
+    (* Minimal value in tez that should be keept in pool *)
+    minPoolSize : tez;
+
+    (* Time window when startMeasurement / close should be called
+        (or it would considered as Force Majeure) *)
+    maxAllowedMeasureLag : nat;
+
+    (* Time, used for filling timestamp values while they have no
+        meaning value:
+        TODO: maybe it is better to use option(timestamp) ? *)
+    defaultTime : timestamp;
+]
+
+type updateConfigParam is newEventConfigType -> newEventConfigType
 
 type eventType is record [
     currencyPair : string;
@@ -62,10 +114,6 @@ type eventType is record [
     closedDynamics : nat;
     isBetsForWin : bool;
 
-    (* TODO: use entrypoint instead of address, example:
-        https://github.com/atomex-me/atomex-fa12-ligo/blob/6e093b484d5cf1ddf66245a6eb9d8d11dfbb45da/src/atomex.ligo#L7 *)
-    oracleAddress : address;
-
     (* Current liquidity in for and against pools, this is used to calculate current ratio: *)
     poolFor : tez;
     poolAgainst : tez;
@@ -77,15 +125,15 @@ type eventType is record [
     liquidityPercent : nat;
     liquidityPrecision : nat;
 
-    (* Fees, that should be provided during contract origination *)
     measureStartFee : tez;
     expirationFee : tez;
-
-    (* Fees, that taken from participants *)
     rewardCallFee : tez;
 
-    (* Precision used in ratio calculations *)
     ratioPrecision : nat;
+    oracleAddress : address;
+
+    minPoolSize : tez;
+    maxAllowedMeasureLag : nat;
 ]
 
 
@@ -94,15 +142,11 @@ type newEventParams is record [
     targetDynamics : nat;
     betsCloseTime : timestamp;
     measurePeriod : nat;
-    oracleAddress :  address;
-    liquidityPercent : nat;
-    measureStartFee : tez;
-    expirationFee : tez;
 ]
 
 
 type provideLiquidityParams is record [
-    eventId : eventIdType;
+    eventId : nat;
 
     (* Expected distribution / ratio of the event *)
     expectedRatioFor : nat;
@@ -118,15 +162,16 @@ type action is
 | NewEvent of newEventParams
 | ProvideLiquidity of provideLiquidityParams
 | Bet of betParams
-| StartMeasurement of eventIdType
+| StartMeasurement of nat
 | StartMeasurementCallback of callbackReturnedValueMichelson
-| Close of eventIdType
+| Close of nat
 | CloseCallback of callbackReturnedValueMichelson
-| Withdraw of eventIdType
+| Withdraw of nat
+| UpdateConfig of updateConfigParam
 
 
 type storage is record [
-    events : big_map(eventIdType, eventType);
+    events : big_map(nat, eventType);
 
     (* Ledgers with winning amounts for participants if For/Against wins: *)
     betsFor : ledgerType;
@@ -144,7 +189,12 @@ type storage is record [
         they needed to be returned *)
     depositedBets : ledgerType;
 
-    lastEventId : eventIdType;
+    lastEventId : nat;
     closeCallId : eventIdType;
     measurementStartCallId : eventIdType;
+
+    newEventConfig : newEventConfigType;
+
+    (* Manager is the one who can change config *)
+    manager : address;
 ]

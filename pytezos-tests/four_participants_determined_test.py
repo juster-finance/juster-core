@@ -161,7 +161,7 @@ class FourParticipantsDeterminedTest(StateTransformationBaseTest):
 
         # Withdrawals:
         self.current_time = RUN_TIME + 64*ONE_HOUR
-        self.storage = self.check_withdraw_succeed(self.a, 160_000)
         self.storage = self.check_withdraw_succeed(self.b, 75_000)
+        self.storage = self.check_withdraw_succeed(self.a, 160_000)
         self.storage = self.check_withdraw_succeed(self.c, 100_000)
         self.storage = self.check_withdraw_succeed(self.d, 540_000)

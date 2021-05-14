@@ -1,5 +1,5 @@
 function close(
-    var eventId : eventIdType;
+    var eventId : nat;
     var s : storage) : (list(operation) * storage) is
 block {
     (* When calling close event, s.closeCallId should be equal to None,
@@ -13,6 +13,6 @@ block {
 
     const operations = makeCallToOracle(
         eventId, s, (Tezos.self("%closeCallback") : callbackEntrypoint));
-    s.closeCallId := eventId;
+    s.closeCallId := Some(eventId);
 
 } with (operations, s)

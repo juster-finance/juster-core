@@ -3,16 +3,14 @@ function closeCallback(
     var s : storage) : (list(operation) * storage) is
 block {
 
-    const eventId : eventIdType = s.closeCallId;
+    const eventId : nat = case s.closeCallId of
+    | Some(closeCallId) -> closeCallId
+    | None -> (failwith("closeCallId is empty") : nat)
+    end;
 
     (* TODO: Check that current time is not far away from measurementStartTime
         + timedelta, if it is, run Force Majeure. Give Manager ability to
         control this timedelta *)
-
-    case eventId of
-    | Some(closeCallId) -> skip
-    | None -> failwith("closeCallId is empty")
-    end;
 
     const param : callbackReturnedValue = Layout.convert_from_right_comb(p);
 

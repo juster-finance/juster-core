@@ -1,6 +1,6 @@
 (* TODO: rename to reward? *)
 function withdraw(
-    var eventId : eventIdType;
+    var eventId : nat;
     var s: storage) : (list(operation) * storage) is
 block {
     (* TODO: add list of reciever addresses to make bulk transactions
@@ -22,16 +22,20 @@ block {
         payout := getLedgerAmount(key, s.betsFor);
 
         (* calculating liquidity return: *)
-        const providedFor : tez =  getLedgerAmount(key, s.providedLiquidityFor);
-        const againstReturn : tez = share * event.poolAgainst / event.totalLiquidityShares;
+        const providedFor : tez =
+            getLedgerAmount(key, s.providedLiquidityFor);
+        const againstReturn : tez =
+            share * event.poolAgainst/ event.totalLiquidityShares;
         payout := payout + providedFor + againstReturn;
     }
     else block {
         payout := getLedgerAmount(key, s.betsAgainst);
 
         (* calculating liquidity return. It is distributed by loosed ledger: *)
-        const providedAgainst : tez = getLedgerAmount(key, s.providedLiquidityAgainst);
-        const forReturn : tez = share * event.poolFor / event.totalLiquidityShares;
+        const providedAgainst : tez =
+            getLedgerAmount(key, s.providedLiquidityAgainst);
+        const forReturn : tez =
+            share * event.poolFor / event.totalLiquidityShares;
         payout := payout + providedAgainst + forReturn;
     };
 

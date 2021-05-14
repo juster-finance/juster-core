@@ -1,5 +1,5 @@
 function startMeasurement(
-    var eventId : eventIdType;
+    var eventId : nat;
     var s : storage) : (list(operation) * storage) is
 block {
     case s.measurementStartCallId of
@@ -12,6 +12,6 @@ block {
         eventId,
         s,
         (Tezos.self("%startMeasurementCallback") : callbackEntrypoint));
-    s.measurementStartCallId := eventId;
+    s.measurementStartCallId := Some(eventId);
 
 } with (operations, s)
