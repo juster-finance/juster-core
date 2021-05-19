@@ -10,8 +10,8 @@ from state_transformation_base import StateTransformationBaseTest, RUN_TIME, ONE
 from pytezos import MichelsonRuntimeError
 from os.path import dirname, join
 
-RAISE_LIQ_FEE_LAMBDA_FN = 'lambda_raise_liq_fee.tz'
-RESET_CONFIG_LAMBDA_FN = 'lambda_reset_new_event_config.tz'
+RAISE_LIQ_FEE_LAMBDA_FN = '../build/tz/lambda_raise_liq_fee.tz'
+RESET_CONFIG_LAMBDA_FN = '../build/tz/lambda_reset_new_event_config.tz'
 
 
 class ManagerDeterminedTest(StateTransformationBaseTest):

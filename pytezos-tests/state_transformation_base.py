@@ -20,7 +20,7 @@ from os.path import dirname, join
 from pytezos import ContractInterface, pytezos, MichelsonRuntimeError
 
 
-CONTRACT_FN = 'baking_bet.tz'
+CONTRACT_FN = '../build/tz/baking_bet.tz'
 RUN_TIME = int(time.time())
 ONE_HOUR = 60*60
 ONE_DAY = ONE_HOUR*24
