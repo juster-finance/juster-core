@@ -31,10 +31,18 @@ class ZeroEdgecasesDeterminedTest(StateTransformationBaseTest):
             expected_against=1,
             msg_contains='Zero liquidity provided')
 
+        # TODO: A tries to bet but there are no liquidity, assert MichelsonError
+        # TODO: B provides liquidity with success
+
+        # A provides liquidity with 0 expected for/against, assert failed:
+        self.check_provide_liquidity_fails_with(
+            participant=self.a,
+            amount=1_000_000,
+            expected_for=0,
+            expected_against=1,
+            msg_contains='Expected ratio in pool should be more than zero')
+
         """ TODO:
-        - A tries to bet but there are no liquidity, so assert MichelsonError
-        - B provides liquidity
-        - A provides liquidity with 0 tez, assert failed again
         - A tries to adding liquidity with rate that very different from internal rate
         - A tries to adding liquidity one of the rates equal to 0 (betFor or betAgainst)
             [or maybe with ratio > maxRatio]
