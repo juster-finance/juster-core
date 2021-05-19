@@ -48,5 +48,9 @@ class ManagerDeterminedTest(StateTransformationBaseTest):
         # Testing that updateConfig from address =/= manager is failed:
         self.check_update_config_fails_with(raise_liq_code, self.c)
 
+        # Testing that second time lambda applied:
+        self.storage = self.check_update_config_succeed(raise_liq_code, self.manager)
+        assert self.storage['newEventConfig']['liquidityPercent'] == 10_000 * 2
+
         # TODO: Test reset config
 
