@@ -262,7 +262,22 @@ class StateTransformationBaseTest(TestCase):
         self, participant, amount, expected_for, expected_against,
         max_slippage=100_000, msg_contains=''):
 
-        raise Exception('Not implemented yet')
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            # Running transaction:
+            transaction = self.contract.provideLiquidity(
+                eventId=self.id,
+                expectedRatioAgainst=expected_against,
+                expectedRatioFor=expected_for,
+                maxSlippage=max_slippage
+            ).with_amount(amount)
+
+            # Making variables to compare two states:
+            res = transaction.interpret(
+                storage=self.storage,
+                sender=participant,
+                now=self.current_time)
+
+        self.assertTrue(msg_contains in str(cm.exception))
 
 
     def check_bet_succeed(

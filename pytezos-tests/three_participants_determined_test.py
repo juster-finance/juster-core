@@ -170,6 +170,14 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
             minimal_win=100_000,
             msg_contains='Bets after betCloseTime is not allowed')
 
+        # Check that providing liquidity in measurement period is failed:
+        self.check_provide_liquidity_fails_with(
+            participant=self.c,
+            amount=100_000,
+            expected_for=1,
+            expected_against=1,
+            msg_contains='Providing Liquidity after betCloseTime is not allowed')
+
         # Check that that calling measurement after it was already succesfully
         # called before is fails:
         self.check_start_measurement_callback_fails_with(
