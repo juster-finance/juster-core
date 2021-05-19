@@ -52,7 +52,7 @@ def calculate_bet_params_change(storage, event_id, participant, bet, amount):
     """
 
     event = storage['events'][event_id]
-    fee = event['liquidityPercent'] / event['liquidityPrecision']
+    fee = event['liquidityPercent'] / storage['liquidityPrecision']
     key = (participant, event_id)
 
     if bet == 'for':
@@ -245,7 +245,7 @@ class StateTransformationBaseTest(TestCase):
 
         if init_event['poolFor'] == 0:
             # scenario with first provided liquidity:
-            added_shares = init_event['sharePrecision']
+            added_shares = init_storage['sharePrecision']
         else:
             # scenario with adding more liquidity:
             added_shares = added_for / init_event['poolFor'] * init_event['totalLiquidityShares']
@@ -516,7 +516,7 @@ class StateTransformationBaseTest(TestCase):
 
         # checking that dynamics is correct:
         dynamics = int(event['closedRate'] / event['startRate']
-                       * event['targetDynamicsPrecision'])
+                       * self.storage['targetDynamicsPrecision'])
         self.assertEqual(event['closedDynamics'], dynamics)
 
         is_bets_for_win = dynamics > event['targetDynamics']
@@ -600,7 +600,6 @@ class StateTransformationBaseTest(TestCase):
             'defaultTime': 0,
             'expirationFee': self.expiration_fee,
             'liquidityPercent': 0,
-            'liquidityPrecision': 1_000_000,
             'maxAllowedMeasureLag': ONE_HOUR*4,  # 4 hours
             'maxMeasurePeriod': ONE_DAY*31,  # 31 day
             'maxPeriodToBetsClose': ONE_DAY*31,  # 31 day
@@ -609,10 +608,7 @@ class StateTransformationBaseTest(TestCase):
             'minPeriodToBetsClose': 60*5,  # 5 min
             'minPoolSize': 0,
             'oracleAddress': self.oracle_address,
-            'ratioPrecision': 100_000_000,
             'rewardCallFee': 100_000,
-            'sharePrecision': 100_000_000,
-            'targetDynamicsPrecision': 1_000_000,
         }
 
         self.init_storage = {
@@ -627,7 +623,12 @@ class StateTransformationBaseTest(TestCase):
             'closeCallId': None,
             'measurementStartCallId': None,
             'newEventConfig': self.default_config,
-            'manager': self.manager
+            'manager': self.manager,
+
+            'liquidityPrecision': 1_000_000,
+            'ratioPrecision': 100_000_000,
+            'sharePrecision': 100_000_000,
+            'targetDynamicsPrecision': 1_000_000,
         }
 
         # this self.storage will be used in all blocks:

@@ -40,8 +40,7 @@ block {
     (* Closing contract: *)
     event.closedOracleTime := param.lastUpdate;
     event.closedRate := param.rate;
-    (* TODO: need to replace this hadcoded value with event.ratioPrecision *)
-    event.closedDynamics := param.rate * 1000000n / event.startRate;
+    event.closedDynamics := param.rate * s.targetDynamicsPrecision / event.startRate;
     event.isClosed := True;
     event.isBetsForWin := event.closedDynamics > event.targetDynamics;
 
