@@ -1,6 +1,6 @@
 function newEvent(
     var eventParams : newEventParams;
-    var s : storage) : (list(operation) * storage) is
+    var store : storage) : (list(operation) * storage) is
 block {
     (* TODO: Checking that betsCloseTime of this event is in the future
         (maybe check that there are some minimal time to make bets,
@@ -9,7 +9,7 @@ block {
         and maybe less than amount *)
     (* TODO: Check that liquidityPercent is less than 1_000_000 *)
 
-    const config : newEventConfigType = s.newEventConfig;
+    const config : newEventConfigType = store.newEventConfig;
     const fees : tez = config.measureStartFee + config.expirationFee;
 
     if fees =/= Tezos.amount then
@@ -63,7 +63,7 @@ block {
         minPoolSize = config.minPoolSize;
     ];
 
-    s.events[s.lastEventId] := newEvent;
-    s.lastEventId := s.lastEventId + 1n;
+    store.events[store.lastEventId] := newEvent;
+    store.lastEventId := store.lastEventId + 1n;
 
-} with ((nil: list(operation)), s)
+} with ((nil: list(operation)), store)
