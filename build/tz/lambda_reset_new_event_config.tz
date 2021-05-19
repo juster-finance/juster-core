@@ -1,0 +1,38 @@
+{ PUSH (pair nat nat) (Pair 86400 3600) ;
+  PAIR ;
+  { CAR ;
+    UNPAIR ;
+    PUSH mutez 200000 ;
+    PUSH address "KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn" ;
+    PAIR ;
+    PUSH mutez 0 ;
+    PUSH nat 5 ;
+    PUSH nat 60 ;
+    MUL ;
+    PAIR ;
+    PAIR ;
+    PUSH nat 5 ;
+    PUSH nat 60 ;
+    MUL ;
+    PUSH mutez 200000 ;
+    PAIR ;
+    DUP 3 ;
+    PUSH nat 31 ;
+    MUL ;
+    DIG 3 ;
+    PUSH nat 31 ;
+    MUL ;
+    PAIR ;
+    PAIR ;
+    PUSH nat 4 ;
+    DIG 3 ;
+    MUL ;
+    PUSH nat 0 ;
+    PAIR ;
+    PUSH mutez 100000 ;
+    PUSH timestamp "2018-06-30T07:07:32Z" ;
+    PAIR ;
+    PAIR ;
+    PAIR ;
+    PAIR } }
+

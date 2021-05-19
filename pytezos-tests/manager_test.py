@@ -10,8 +10,8 @@ from state_transformation_base import StateTransformationBaseTest, RUN_TIME, ONE
 from pytezos import MichelsonRuntimeError
 from os.path import dirname, join
 
-RAISE_LIQ_FEE_LAMBDA_FN = 'lambda_raise_liq_fee.tz'
-RESET_CONFIG_LAMBDA_FN = 'NotCompiledYet.tz'
+RAISE_LIQ_FEE_LAMBDA_FN = '../build/tz/lambda_raise_liq_fee.tz'
+RESET_CONFIG_LAMBDA_FN = '../build/tz/lambda_reset_new_event_config.tz'
 
 
 class ManagerDeterminedTest(StateTransformationBaseTest):
@@ -22,6 +22,7 @@ class ManagerDeterminedTest(StateTransformationBaseTest):
         self.id = len(self.storage['events'])
 
         raise_liq_code = open(join(dirname(__file__), RAISE_LIQ_FEE_LAMBDA_FN)).read()
+        reset_config_code = open(join(dirname(__file__), RESET_CONFIG_LAMBDA_FN)).read()
 
         # Creating first event with default params:
         self.storage = self.check_new_event_succeed(
@@ -52,5 +53,7 @@ class ManagerDeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_update_config_succeed(raise_liq_code, self.manager)
         assert self.storage['newEventConfig']['liquidityPercent'] == 10_000 * 2
 
-        # TODO: Test reset config
+        # Testing reset config lambda applied:
+        self.storage = self.check_update_config_succeed(reset_config_code, self.manager)
+        assert self.storage['newEventConfig']['liquidityPercent'] == 0
 
