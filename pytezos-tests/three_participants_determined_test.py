@@ -208,6 +208,9 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
             source=self.b,
             sender=self.oracle_address)
 
+        # Trying to trigger Force Majeure is failed because event is closed:
+        self.check_trigger_force_majeure_fails_with(sender=self.a)
+
         # Withdrawals:
         self.current_time = RUN_TIME + 64*ONE_HOUR
         self.storage = self.check_withdraw_succeed(self.a, 125_000)

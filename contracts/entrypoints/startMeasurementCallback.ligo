@@ -9,10 +9,6 @@ block {
     | None -> (failwith("measurementStartCallId is empty") : nat)
     end;
 
-    (* TODO: Check that current time is not far away from betsCloseTime,
-        if it is, run Force Majeure. Give Manager ability to control
-        this timedelta *)
-
     const event : eventType = getEvent(store, eventId);
 
     (* Check that callback runs from right address and with right
@@ -26,8 +22,6 @@ block {
     if event.betsCloseTime > param.lastUpdate
     then failwith("Can't start measurement untill oracle time > betsCloseTime")
     else skip;
-    (* TODO: what should be done if time is very late?
-        (i.e. cancel event and allow withdrawals?) *)
 
     (* Starting measurement: *)
     event.measureOracleStartTime := param.lastUpdate;

@@ -161,6 +161,7 @@ type action is
 | CloseCallback of callbackReturnedValueMichelson
 | Withdraw of nat
 | UpdateConfig of updateConfigParam
+| TriggerForceMajeure of nat
 
 
 type storage is record [

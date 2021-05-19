@@ -578,6 +578,25 @@ class StateTransformationBaseTest(TestCase):
         self.assertTrue(msg_contains in str(cm.exception))
 
 
+    def check_trigger_force_majeure_succeed(self, sender):
+        # TODO: assert that there are no operation if event is closed and
+        # one opertion if event is not closed with fees (maybe also with start fee)
+
+        result = self.contract.triggerForceMajeure(self.id).interpret(
+            storage=self.storage, sender=sender, now=self.current_time)
+
+        return result.storage
+
+
+    def check_trigger_force_majeure_fails_with(self, sender, msg_contains=''):
+
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            result = self.contract.triggerForceMajeure(self.id).interpret(
+                storage=self.storage, sender=sender, now=self.current_time)
+
+        self.assertTrue(msg_contains in str(cm.exception))
+
+
     def setUp(self):
         # TODO: decide, should it be here or in tests? If there are always the same
         # setUp, looks like this is good place

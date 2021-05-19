@@ -9,6 +9,7 @@
 #include "../entrypoints/startMeasurementCallback.ligo"
 #include "../entrypoints/withdraw.ligo"
 #include "../entrypoints/updateConfig.ligo"
+#include "../entrypoints/triggerForceMajeure.ligo"
 
 
 function main (var params : action; var s : storage) : (list(operation) * storage) is
@@ -21,5 +22,6 @@ case params of
 | Close(p)                    -> close(p, s)
 | CloseCallback(p)            -> closeCallback(p, s)
 | Withdraw(p)                 -> withdraw(p, s)
-| UpdateConfig(p)             -> update_config(p, s)
+| UpdateConfig(p)             -> update_config(p, s)  (* TODO: style *)
+| TriggerForceMajeure(p)      -> triggerForceMajeure(p, s)
 end
