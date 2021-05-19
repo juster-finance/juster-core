@@ -3,7 +3,10 @@ function provideLiquidity(
     var store : storage) : (list(operation) * storage) is
 block {
 
-    (* TODO: check that both expected ratio is > 0 *)
+    if ((params.expectedRatioAgainst = 0n)
+        or (params.expectedRatioFor = 0n)) then
+            failwith("Expected ratio in pool should be more than zero")
+    else skip;
 
     if (Tezos.amount = 0tez) then
         failwith("Zero liquidity provided")
