@@ -532,7 +532,7 @@ class StateTransformationBaseTest(TestCase):
 
     def check_close_callback_fails_with(
             self, callback_values, source, sender, msg_contains=''):
-        """ Testing that closing before measurement fails """
+        """ Checking that closing fails with message msg_contains """
 
         result = self.contract.close(self.id).interpret(
             storage=self.storage, sender=source, now=self.current_time)
@@ -544,17 +544,38 @@ class StateTransformationBaseTest(TestCase):
         self.assertTrue(msg_contains in str(cm.exception))
 
 
+    def check_update_config_succeed(self, lambda_code, sender):
+        """ Checking that updateConfig call is succeed """
+
+        result = self.contract.updateConfig(lambda_code).interpret(
+            storage=self.storage, sender=sender, now=self.current_time)
+
+        return result.storage
+
+
+    def check_update_config_fails_with(self, lambda_code, sender, msg_contains=''):
+        """ Checking that updateConfig fails with error msg_contains """
+
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            result = self.contract.updateConfig(lambda_code).interpret(
+                storage=self.storage, sender=sender, now=self.current_time)
+
+        self.assertTrue(msg_contains in str(cm.exception))
+
+
     def setUp(self):
         # TODO: decide, should it be here or in tests? If there are always the same
         # setUp, looks like this is good place
 
         self.contract = ContractInterface.from_file(join(dirname(__file__), CONTRACT_FN))
 
-        # three participants and their pk hashes:
+        # four participants and their pk hashes:
         self.a = 'tz1iQE8ijR5xVPffBUPFubwB9XQJuyD9qsoJ'
         self.b = 'tz1MdaJfWzP5pPx3gwPxfdLZTHW6js9havos'
         self.c = 'tz1RS9GoEXakf9iyBmSaheLMcakFRtzBXpWE'
         self.d = 'tz1TdKuFwYgbPHHb7y1VvLH4xiwtAzcjwDjM'
+
+        self.manager = self.a
 
         self.oracle_address = 'KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn'
         # florencenet: KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn
@@ -606,7 +627,7 @@ class StateTransformationBaseTest(TestCase):
             'closeCallId': None,
             'measurementStartCallId': None,
             'newEventConfig': self.default_config,
-            'manager': self.a
+            'manager': self.manager
         }
 
         # this self.storage will be used in all blocks:
