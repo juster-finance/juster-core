@@ -13,25 +13,25 @@ block {
     (* TODO: calculate expected ratio using provided ratios *)
     const expectedRatioSum : nat = p.expectedRatioFor + p.expectedRatioAgainst;
     const expectedRatio : nat =
-        p.expectedRatioFor * event.ratioPrecision / expectedRatioSum;
+        p.expectedRatioFor * s.ratioPrecision / expectedRatioSum;
 
     (* Calculating ratio. It is equal expected ratio if this is first LP: *)
     var ratio : nat := expectedRatio;
     (* And it is calculated if this is adding more liquidity scenario *)
     if totalBets =/= 0tez then
-        ratio := event.poolFor * event.ratioPrecision / totalBets
+        ratio := event.poolFor * s.ratioPrecision / totalBets
     else skip;
 
     (* TODO: compare ratio and check p.maxSlippage is less than expected *)
 
     (* Distributing liquidity: *)
     const betFor : tez = natToTez(roundDiv(
-        tezToNat(Tezos.amount * ratio), event.ratioPrecision));
+        tezToNat(Tezos.amount * ratio), s.ratioPrecision));
     const betAgainst : tez = Tezos.amount - betFor;
 
     (* liquidity shares: *)
     (* if this is first LP, newShares should be equal to sharePrecision *)
-    var newShares : nat := event.sharePrecision;
+    var newShares : nat := s.sharePrecision;
     (* otherwise if this is not first LP, calculating share using betFor poolit
         it should not differ from added share to betAgainst pool: *)
     if totalBets =/= 0tez then

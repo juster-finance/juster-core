@@ -26,11 +26,14 @@ block {
     const key : ledgerKey = (Tezos.sender, eventId);
     var possibleWinAmount : tez := 0tez;
 
-    function excludeLiquidity(var value : tez; var event : eventType) : tez is
+    function excludeLiquidity(
+            var value : tez;
+            var event : eventType;
+            var store : storage) : tez is
         (* TODO: maybe make raising fee from 0 to
             liquidityPercent during bet period? *)
-        value * abs(event.liquidityPrecision - event.liquidityPercent)
-        / event.liquidityPrecision;
+        value * abs(store.liquidityPrecision - event.liquidityPercent)
+        / store.liquidityPrecision;
 
     (* TODO: refactor this two similar blocks somehow?
         or keep straight and simple? *)
@@ -43,7 +46,7 @@ block {
             / event.poolFor);
 
         const winDeltaPossible : tez =
-            minTez(excludeLiquidity(winDelta, event), event.poolAgainst);
+            minTez(excludeLiquidity(winDelta, event, store), event.poolAgainst);
 
         possibleWinAmount := Tezos.amount + winDeltaPossible;
         if possibleWinAmount < params.minimalWinAmount
@@ -65,7 +68,7 @@ block {
             / event.poolAgainst);
 
         const winDeltaPossible : tez =
-            minTez(excludeLiquidity(winDelta, event), event.poolFor);
+            minTez(excludeLiquidity(winDelta, event, store), event.poolFor);
 
         possibleWinAmount := Tezos.amount + winDeltaPossible;
         if possibleWinAmount < params.minimalWinAmount

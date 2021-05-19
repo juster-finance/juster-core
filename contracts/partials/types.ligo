@@ -47,12 +47,6 @@ type newEventConfigType is record [
     (* oracle in edo2net:     KT1RCNpUEDjZAYhabjzgz1ZfxQijCDVMEaTZ *)
     oracleAddress : address;
 
-    targetDynamicsPrecision : nat;
-    sharePrecision : nat;
-    liquidityPrecision : nat;
-    (* Precision used in ratio calculations *)
-    ratioPrecision : nat;
-
     minMeasurePeriod : nat;
     maxMeasurePeriod : nat;
 
@@ -90,7 +84,6 @@ type eventType is record [
         more than targetDynamicsPrecision means price is increased,
         less targetDynamicsPrecision mean price is decreased *)
     targetDynamics : nat;
-    targetDynamicsPrecision : nat;
 
     (* time since new bets would not be accepted *)
     betsCloseTime : timestamp;
@@ -119,17 +112,14 @@ type eventType is record [
     poolAgainst : tez;
 
     totalLiquidityShares : nat;
-    sharePrecision : nat;
 
     (* Liquidity provider bonus: numerator & denominator *)
     liquidityPercent : nat;
-    liquidityPrecision : nat;
 
     measureStartFee : tez;
     expirationFee : tez;
     rewardCallFee : tez;
 
-    ratioPrecision : nat;
     oracleAddress : address;
 
     minPoolSize : tez;
@@ -197,4 +187,9 @@ type storage is record [
 
     (* Manager is the one who can change config *)
     manager : address;
+
+    targetDynamicsPrecision : nat;
+    sharePrecision : nat;
+    liquidityPrecision : nat;
+    ratioPrecision : nat;
 ]

@@ -41,7 +41,6 @@ block {
         currencyPair = eventParams.currencyPair;
         createdTime = Tezos.now;
         targetDynamics = eventParams.targetDynamics;
-        targetDynamicsPrecision = config.targetDynamicsPrecision;
         betsCloseTime = eventParams.betsCloseTime;
         measureOracleStartTime = config.defaultTime;
         isMeasurementStarted = False;
@@ -55,14 +54,10 @@ block {
         poolFor = 0tez;
         poolAgainst = 0tez;
         totalLiquidityShares = 0n;
-        sharePrecision = config.sharePrecision;
         liquidityPercent = config.liquidityPercent;
-        liquidityPrecision = config.liquidityPrecision;
         measureStartFee = config.measureStartFee;
         expirationFee = config.expirationFee;
         rewardCallFee = config.rewardCallFee;
-        ratioPrecision = config.ratioPrecision;
-
         oracleAddress = config.oracleAddress;
         maxAllowedMeasureLag = config.maxAllowedMeasureLag;
         minPoolSize = config.minPoolSize;
