@@ -2,7 +2,6 @@ function bet(
     var params : betParams;
     var store : storage) : (list(operation) * storage) is
 block {
-    (* TODO: check that there are liquidity in both pools (>0) *)
     (* TODO: reduce bet value by liquidity percent (done? check it) *)
     (* TODO: maybe reduce/raise liquidity percent during bet period? *)
 
@@ -13,6 +12,11 @@ block {
 
     const eventId : nat = params.eventId;
     const event : eventType = getEvent(store, eventId);
+
+    (* Checking that there are liquidity in both pools (>0) *)
+    if (event.poolFor = 0tez) or (event.poolAgainst = 0tez) then
+        failwith("Can't process bet before liquidity added")
+    else skip;
 
     if (Tezos.now > event.betsCloseTime) then
         failwith("Bets after betCloseTime is not allowed")

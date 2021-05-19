@@ -31,7 +31,14 @@ class ZeroEdgecasesDeterminedTest(StateTransformationBaseTest):
             expected_against=1,
             msg_contains='Zero liquidity provided')
 
-        # TODO: A tries to bet but there are no liquidity, assert MichelsonError
+        # A tries to bet but there are no liquidity, assert failed:
+        self.storage = self.check_bet_fails_with(
+            participant=self.a,
+            amount=1_000_000,
+            bet='for',
+            minimal_win=1_000_000,
+            msg_contains="Can't process bet before liquidity added")
+
         # TODO: B provides liquidity with success
 
         # A provides liquidity with 0 expected for/against, assert failed:
