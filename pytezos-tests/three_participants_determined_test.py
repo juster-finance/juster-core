@@ -100,7 +100,7 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
             amount=50_000,
-            expected_for=2,
+            expected_for=4,
             expected_against=1)
 
         # Participant C: adding more liquidity at the very end:
@@ -108,7 +108,7 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.c,
             amount=100_000,
-            expected_for=1,
+            expected_for=4,
             expected_against=1)
 
         # Running measurement and make failwith checks:

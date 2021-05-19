@@ -34,7 +34,19 @@ block {
         ratio := event.poolFor * store.ratioPrecision / totalBets
     else skip;
 
-    (* TODO: compare ratio and check p.maxSlippage is less than expected *)
+    (* Slippage calculated in ratioPrecision values as multiplicative difference
+        between bigger and smaller ratios: *)
+    var slippage : nat := store.ratioPrecision * ratio / expectedRatio;
+    if expectedRatio > ratio then
+        slippage := store.ratioPrecision * expectedRatio / ratio;
+    else skip;
+
+    (* At this point slippage is always >= store.ratioPrecision *)
+    slippage := abs(slippage - store.ratioPrecision);
+
+    if (slippage > params.maxSlippage) then
+        failwith("Expected ratio very differs from current pool ratio")
+    else skip;
 
     (* Distributing liquidity: *)
     const betFor : tez = natToTez(roundDiv(
