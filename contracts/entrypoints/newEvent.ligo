@@ -61,6 +61,7 @@ block {
         oracleAddress = config.oracleAddress;
         maxAllowedMeasureLag = config.maxAllowedMeasureLag;
         minPoolSize = config.minPoolSize;
+        isForceMajeure = False;
     ];
 
     store.events[store.lastEventId] := newEvent;

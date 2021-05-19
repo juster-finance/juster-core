@@ -124,6 +124,9 @@ type eventType is record [
 
     minPoolSize : tez;
     maxAllowedMeasureLag : nat;
+
+    (* Flag that used to activate crash withdrawals *)
+    isForceMajeure : bool;
 ]
 
 
