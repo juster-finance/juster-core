@@ -4,7 +4,11 @@ function provideLiquidity(
 block {
 
     (* TODO: check that both expected ratio is > 0 *)
-    (* TODO: assert that Sender.amount > 0 *)
+
+    if (Tezos.amount = 0tez) then
+        failwith("Zero liquidity provided")
+    else skip;
+
     const eventId : nat = params.eventId;
     const event : eventType = getEvent(store, eventId);
     const totalBets : tez = event.poolFor + event.poolAgainst;
