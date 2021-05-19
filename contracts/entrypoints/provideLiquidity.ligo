@@ -2,13 +2,17 @@ function provideLiquidity(
     var params : provideLiquidityParams;
     var store : storage) : (list(operation) * storage) is
 block {
-    (* TODO: would it work properly if one LP adds liquidity twice? *)
+
     (* TODO: check that both expected ratio is > 0 *)
     (* TODO: assert that Sender.amount > 0 *)
     const eventId : nat = params.eventId;
     const event : eventType = getEvent(store, eventId);
     const totalBets : tez = event.poolFor + event.poolAgainst;
     const key : ledgerKey = (Tezos.sender, eventId);
+
+    if (Tezos.now > event.betsCloseTime) then
+        failwith("Providing Liquidity after betCloseTime is not allowed")
+    else skip;
 
     (* TODO: calculate expected ratio using provided ratios *)
     const expectedRatioSum : nat =
