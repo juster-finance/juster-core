@@ -1,9 +1,9 @@
 function closeCallback(
-    var p : callbackReturnedValueMichelson;
-    var s : storage) : (list(operation) * storage) is
+    var params : callbackReturnedValueMichelson;
+    var store : storage) : (list(operation) * storage) is
 block {
 
-    const eventId : nat = case s.closeCallId of
+    const eventId : nat = case store.closeCallId of
     | Some(closeCallId) -> closeCallId
     | None -> (failwith("closeCallId is empty") : nat)
     end;
@@ -12,9 +12,9 @@ block {
         + timedelta, if it is, run Force Majeure. Give Manager ability to
         control this timedelta *)
 
-    const param : callbackReturnedValue = Layout.convert_from_right_comb(p);
+    const param : callbackReturnedValue = Layout.convert_from_right_comb(params);
 
-    const event : eventType = getEvent(s, eventId);
+    const event : eventType = getEvent(store, eventId);
 
     (* Check that callback runs from right address
         and with right currency pair: *)
@@ -40,7 +40,8 @@ block {
     (* Closing contract: *)
     event.closedOracleTime := param.lastUpdate;
     event.closedRate := param.rate;
-    event.closedDynamics := param.rate * s.targetDynamicsPrecision / event.startRate;
+    event.closedDynamics :=
+        param.rate * store.targetDynamicsPrecision / event.startRate;
     event.isClosed := True;
     event.isBetsForWin := event.closedDynamics > event.targetDynamics;
 
@@ -52,13 +53,13 @@ block {
     const expirationFeeOperation : operation =
         Tezos.transaction(unit, event.expirationFee, receiver);
 
-    s.events[eventId] := event;
+    store.events[eventId] := event;
 
     (* Cleaning up event ID: *)
-    s.closeCallId := (None : eventIdType);
+    store.closeCallId := (None : eventIdType);
 
     (* TODO: this close/measurement callbacks have a lot similarities, maybe
         there are some code that can be moved in separate function *)
 
 
-} with (list[expirationFeeOperation], s)
+} with (list[expirationFeeOperation], store)

@@ -1,8 +1,8 @@
 function startMeasurement(
     var eventId : nat;
-    var s : storage) : (list(operation) * storage) is
+    var store : storage) : (list(operation) * storage) is
 block {
-    case s.measurementStartCallId of
+    case store.measurementStartCallId of
     | Some(measurementStartCallId) ->
         failwith("Another call to oracle in process (should not be here)")
     | None -> skip
@@ -10,8 +10,8 @@ block {
 
     const operations = makeCallToOracle(
         eventId,
-        s,
+        store,
         (Tezos.self("%startMeasurementCallback") : callbackEntrypoint));
-    s.measurementStartCallId := Some(eventId);
+    store.measurementStartCallId := Some(eventId);
 
-} with (operations, s)
+} with (operations, store)

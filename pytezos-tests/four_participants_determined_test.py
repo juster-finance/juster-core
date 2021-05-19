@@ -104,7 +104,7 @@ class FourParticipantsDeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
             amount=50_000,
-            expected_for=2,
+            expected_for=4,
             expected_against=1)
 
         # Participant D: adding more liquidity after 12 hours:

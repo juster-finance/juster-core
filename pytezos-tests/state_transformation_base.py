@@ -262,7 +262,22 @@ class StateTransformationBaseTest(TestCase):
         self, participant, amount, expected_for, expected_against,
         max_slippage=100_000, msg_contains=''):
 
-        raise Exception('Not implemented yet')
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            # Running transaction:
+            transaction = self.contract.provideLiquidity(
+                eventId=self.id,
+                expectedRatioAgainst=expected_against,
+                expectedRatioFor=expected_for,
+                maxSlippage=max_slippage
+            ).with_amount(amount)
+
+            # Making variables to compare two states:
+            res = transaction.interpret(
+                storage=self.storage,
+                sender=participant,
+                now=self.current_time)
+
+        self.assertTrue(msg_contains in str(cm.exception))
 
 
     def check_bet_succeed(
@@ -558,6 +573,25 @@ class StateTransformationBaseTest(TestCase):
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
             result = self.contract.updateConfig(lambda_code).interpret(
+                storage=self.storage, sender=sender, now=self.current_time)
+
+        self.assertTrue(msg_contains in str(cm.exception))
+
+
+    def check_trigger_force_majeure_succeed(self, sender):
+        # TODO: assert that there are no operation if event is closed and
+        # one opertion if event is not closed with fees (maybe also with start fee)
+
+        result = self.contract.triggerForceMajeure(self.id).interpret(
+            storage=self.storage, sender=sender, now=self.current_time)
+
+        return result.storage
+
+
+    def check_trigger_force_majeure_fails_with(self, sender, msg_contains=''):
+
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            result = self.contract.triggerForceMajeure(self.id).interpret(
                 storage=self.storage, sender=sender, now=self.current_time)
 
         self.assertTrue(msg_contains in str(cm.exception))

@@ -100,7 +100,7 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
             amount=50_000,
-            expected_for=2,
+            expected_for=4,
             expected_against=1)
 
         # Participant C: adding more liquidity at the very end:
@@ -108,7 +108,7 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.c,
             amount=100_000,
-            expected_for=1,
+            expected_for=4,
             expected_against=1)
 
         # Running measurement and make failwith checks:
@@ -170,6 +170,14 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
             minimal_win=100_000,
             msg_contains='Bets after betCloseTime is not allowed')
 
+        # Check that providing liquidity in measurement period is failed:
+        self.check_provide_liquidity_fails_with(
+            participant=self.c,
+            amount=100_000,
+            expected_for=1,
+            expected_against=1,
+            msg_contains='Providing Liquidity after betCloseTime is not allowed')
+
         # Check that that calling measurement after it was already succesfully
         # called before is fails:
         self.check_start_measurement_callback_fails_with(
@@ -199,6 +207,9 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
             callback_values=close_callback_values,
             source=self.b,
             sender=self.oracle_address)
+
+        # Trying to trigger Force Majeure is failed because event is closed:
+        self.check_trigger_force_majeure_fails_with(sender=self.a)
 
         # Withdrawals:
         self.current_time = RUN_TIME + 64*ONE_HOUR

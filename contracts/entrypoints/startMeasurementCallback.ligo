@@ -1,19 +1,15 @@
 function startMeasurementCallback(
-    var p : callbackReturnedValueMichelson;
-    var s : storage) : (list(operation) * storage) is
+    var params : callbackReturnedValueMichelson;
+    var store : storage) : (list(operation) * storage) is
 block {
-    const param : callbackReturnedValue = Layout.convert_from_right_comb(p);
+    const param : callbackReturnedValue = Layout.convert_from_right_comb(params);
 
-    const eventId : nat = case s.measurementStartCallId of
+    const eventId : nat = case store.measurementStartCallId of
     | Some(measurementStartCallId) -> measurementStartCallId
     | None -> (failwith("measurementStartCallId is empty") : nat)
     end;
 
-    (* TODO: Check that current time is not far away from betsCloseTime,
-        if it is, run Force Majeure. Give Manager ability to control
-        this timedelta *)
-
-    const event : eventType = getEvent(s, eventId);
+    const event : eventType = getEvent(store, eventId);
 
     (* Check that callback runs from right address and with right
         currency pair: *)
@@ -26,8 +22,6 @@ block {
     if event.betsCloseTime > param.lastUpdate
     then failwith("Can't start measurement untill oracle time > betsCloseTime")
     else skip;
-    (* TODO: what should be done if time is very late?
-        (i.e. cancel event and allow withdrawals?) *)
 
     (* Starting measurement: *)
     event.measureOracleStartTime := param.lastUpdate;
@@ -39,12 +33,12 @@ block {
     const payoutOperation : operation =
         Tezos.transaction(unit, event.measureStartFee, receiver);
 
-    s.events[eventId] := event;
+    store.events[eventId] := event;
 
     (* Cleaning up event ID: *)
-    s.measurementStartCallId := (None : eventIdType);
+    store.measurementStartCallId := (None : eventIdType);
 
     (* TODO: this close/measurement callbacks have a lot similarities, maybe
         there are some code that can be moved in separate function *)
 
-} with (list[payoutOperation], s)
+} with (list[payoutOperation], store)

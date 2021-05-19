@@ -124,6 +124,9 @@ type eventType is record [
 
     minPoolSize : tez;
     maxAllowedMeasureLag : nat;
+
+    (* Flag that used to activate crash withdrawals *)
+    isForceMajeure : bool;
 ]
 
 
@@ -158,6 +161,7 @@ type action is
 | CloseCallback of callbackReturnedValueMichelson
 | Withdraw of nat
 | UpdateConfig of updateConfigParam
+| TriggerForceMajeure of nat
 
 
 type storage is record [
