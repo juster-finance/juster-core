@@ -1,15 +1,12 @@
 const BakingBet = artifacts.require("BakingBet");
 const { MichelsonMap } = require("@taquito/taquito");
+const { pkh } = require("../faucet.json");
 
 const config = {
   measureStartFee: 100000,
   expirationFee: 100000,
   rewardCallFee: 100000,
   oracleAddress: 'KT1RCNpUEDjZAYhabjzgz1ZfxQijCDVMEaTZ',
-  targetDynamicsPrecision: 1000000,
-  sharePrecision: 100000000,
-  liquidityPrecision: 1000000,
-  ratioPrecision: 100000000,
   minMeasurePeriod: 60*5,  // 5 mins
   maxMeasurePeriod: 60*60*24*31,  // 31 days
   minPeriodToBetsClose: 60*5,
@@ -20,7 +17,7 @@ const config = {
   defaultTime: '2018-06-30T07:07:32Z',
 };
 
-const initialStorage = {
+const initialStorage = {  
   events: new MichelsonMap(),
   betsFor: new MichelsonMap(),
   betsAgainst: new MichelsonMap(),
@@ -31,8 +28,13 @@ const initialStorage = {
   lastEventId: 0,
   closeCallEventId: null,
   measurementStartCallEventId: null,
-  oracleAddress: 'KT1RCNpUEDjZAYhabjzgz1ZfxQijCDVMEaTZ',
   newEventConfig: config,
+  manager: pkh,
+
+  targetDynamicsPrecision: 1000000,
+  sharePrecision: 100000000,
+  liquidityPrecision: 1000000,
+  ratioPrecision: 100000000,
 };
 
 module.exports = deployer => {
