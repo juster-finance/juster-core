@@ -418,7 +418,7 @@ class StateTransformationBaseTest(TestCase):
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
             res = self.contract.newEvent(event_params).interpret(
-                storage=self.storage, now=self.current_time)
+                storage=self.storage, now=self.current_time, amount=amount)
 
         self.assertTrue(msg_contains in str(cm.exception))
 
