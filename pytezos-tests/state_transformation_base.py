@@ -29,12 +29,11 @@ ONE_DAY = ONE_HOUR*24
 """ Some smart contract logic reimplemented here: """
 
 def calculate_liquidity_bonus_multiplier(event, current_time):
-    """ Returns multiplier that reduces provided LP bonus lineary
-        over betting time """
+    """ Returns multiplier that applied to reduce bets """
 
     close_time = event['betsCloseTime']
     start_time = event['createdTime']
-    return (close_time - current_time) / (close_time - start_time)
+    return (current_time - start_time) / (close_time - start_time)
 
 
 def calculate_bet_return(top, bottom, amount, fee=0):
@@ -46,13 +45,16 @@ def calculate_bet_return(top, bottom, amount, fee=0):
     return int(amount * ratio * (1-fee))
 
 
-def calculate_bet_params_change(storage, event_id, participant, bet, amount):
+def calculate_bet_params_change(
+        storage, event_id, participant, bet, amount, current_time):
+
     """ Returns dict with differences that caused
         by adding new bet to event
     """
 
     event = storage['events'][event_id]
     fee = event['liquidityPercent'] / storage['liquidityPrecision']
+    fee *= calculate_liquidity_bonus_multiplier(event, current_time)
     key = (participant, event_id)
 
     if bet == 'for':
@@ -303,7 +305,7 @@ class StateTransformationBaseTest(TestCase):
 
         # Checking that state changed as expected:
         bet_result = calculate_bet_params_change(
-            init_storage, self.id, participant, bet, amount)
+            init_storage, self.id, participant, bet, amount, self.current_time)
 
         self.assertEqual(
             result_event['poolFor'],
