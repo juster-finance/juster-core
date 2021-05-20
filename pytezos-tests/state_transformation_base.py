@@ -29,12 +29,11 @@ ONE_DAY = ONE_HOUR*24
 """ Some smart contract logic reimplemented here: """
 
 def calculate_liquidity_bonus_multiplier(event, current_time):
-    """ Returns multiplier that reduces provided LP bonus lineary
-        over betting time """
+    """ Returns multiplier that applied to reduce bets """
 
     close_time = event['betsCloseTime']
     start_time = event['createdTime']
-    return (close_time - current_time) / (close_time - start_time)
+    return (current_time - start_time) / (close_time - start_time)
 
 
 def calculate_bet_return(top, bottom, amount, fee=0):
@@ -46,23 +45,28 @@ def calculate_bet_return(top, bottom, amount, fee=0):
     return int(amount * ratio * (1-fee))
 
 
-def calculate_bet_params_change(storage, event_id, participant, bet, amount):
+def calculate_bet_params_change(
+        storage, event_id, participant, bet, amount, current_time):
+
     """ Returns dict with differences that caused
         by adding new bet to event
     """
 
     event = storage['events'][event_id]
     fee = event['liquidityPercent'] / storage['liquidityPrecision']
+    fee *= calculate_liquidity_bonus_multiplier(event, current_time)
     key = (participant, event_id)
 
     if bet == 'for':
         top = event['poolAgainst']
         bottom = event['poolFor']
         for_count = 0 if key in storage['betsFor'] else 1
+        bet_profit = calculate_bet_return(top, bottom, amount, fee)
 
         return dict(
+            bet_profit=bet_profit,
             diff_for=amount,
-            diff_against=-calculate_bet_return(top, bottom, amount, fee),
+            diff_against=-bet_profit,
             for_count=for_count,
             against_count=0
         )
@@ -71,9 +75,11 @@ def calculate_bet_params_change(storage, event_id, participant, bet, amount):
         top = event['poolFor']
         bottom = event['poolAgainst']
         against_count = 0 if key in storage['betsAgainst'] else 1
+        bet_profit = calculate_bet_return(top, bottom, amount, fee)
 
         return dict(
-            diff_for=-calculate_bet_return(top, bottom, amount, fee),
+            bet_profit=bet_profit,
+            diff_for=-bet_profit,
             diff_against=amount,
             for_count=0,
             against_count=against_count
@@ -299,7 +305,7 @@ class StateTransformationBaseTest(TestCase):
 
         # Checking that state changed as expected:
         bet_result = calculate_bet_params_change(
-            init_storage, self.id, participant, bet, amount)
+            init_storage, self.id, participant, bet, amount, self.current_time)
 
         self.assertEqual(
             result_event['poolFor'],
@@ -317,7 +323,16 @@ class StateTransformationBaseTest(TestCase):
             len(result_storage['betsAgainst']),
             len(init_storage['betsAgainst']) + bet_result['against_count'])
 
-        # TODO: check sum in participant ledgers (include liquidity fee)
+        # Checking sum in participant ledgers:
+        key = (participant, self.id)
+        diff = (result_storage['depositedBets'].get(key, 0)
+            - init_storage['depositedBets'].get(key, 0))
+        self.assertEqual(diff, amount)
+
+        ledger_name = 'betsFor' if bet == 'for' else 'betsAgainst'
+        diff = (result_storage[ledger_name].get(key, 0)
+            - init_storage[ledger_name].get(key, 0))
+        self.assertEqual(diff, bet_result['bet_profit'] + amount)
 
         self.check_result_integrity(result)
         return result_storage

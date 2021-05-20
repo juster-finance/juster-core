@@ -1,9 +1,33 @@
+
+function excludeLiquidity(
+        var value : tez;
+        var event : eventType;
+        var store : storage) : tez is
+    block {
+
+        (* Calculating liquidity bonus: *)
+        const totalBettingTime : nat = abs(event.betsCloseTime - event.createdTime);
+        const elapsedTime : int = Tezos.now - event.createdTime;
+        if (elapsedTime < 0) then
+            (* It is impossible to get here, but if somehow it happens,
+                it can be exploited so I made this failwith: *)
+            failwith("Bet adding before contract createdTime")
+        else skip;
+
+        (* Liquidity percent is zero at the event start and goes to
+            event.liquidityPercent when event.betsCloseTime comes *)
+        const timeAdjustedPercent : nat =
+            event.liquidityPercent * abs(elapsedTime) / totalBettingTime;
+
+        value := value * abs(store.liquidityPrecision - timeAdjustedPercent)
+            / store.liquidityPrecision;
+    } with value
+
+
 function bet(
     var params : betParams;
     var store : storage) : (list(operation) * storage) is
 block {
-    (* TODO: reduce bet value by liquidity percent (done? check it) *)
-    (* TODO: maybe reduce/raise liquidity percent during bet period? *)
 
     (* TODO: assert that betFor / betAgainst is less than MAX_RATIO
         controlled by Manager *)
@@ -28,16 +52,7 @@ block {
         lead to junk records in ledgers, that would not be removed) *)
 
     const key : ledgerKey = (Tezos.sender, eventId);
-    var possibleWinAmount : tez := 0tez;
-
-    function excludeLiquidity(
-            var value : tez;
-            var event : eventType;
-            var store : storage) : tez is
-        (* TODO: maybe make raising fee from 0 to
-            liquidityPercent during bet period? *)
-        value * abs(store.liquidityPrecision - event.liquidityPercent)
-        / store.liquidityPrecision;
+    var possibleWinAmount : tez := 0tez;        
 
     (* TODO: refactor this two similar blocks somehow?
         or keep straight and simple? *)
