@@ -68,26 +68,12 @@ block {
     event.poolFor := event.poolFor + betFor;
     event.poolAgainst := event.poolAgainst + betAgainst;
 
-    (* Calculating liquidity bonus: *)
-    const totalBettingTime : nat = abs(event.betsCloseTime - event.createdTime);
-    const elapsedTime : int = Tezos.now - event.createdTime;
-    if (elapsedTime < 0) then
-        failwith("Bet adding before contract createdTime (wrong createdTime?)")
-    else skip;
-
-    const remainedTime : int = totalBettingTime - elapsedTime;
-
     (* Total liquidity by this LP: *)
     store.providedLiquidityFor[key] := 
         getLedgerAmount(key, store.providedLiquidityFor) + betFor;
 
     store.providedLiquidityAgainst[key] := 
         getLedgerAmount(key, store.providedLiquidityAgainst) + betAgainst;
-
-    (* Reducing share with time have passed: *)
-    (* This time reduce scheme is not working with the current algorhytm
-    newShares := newShares * abs(remainedTime) / totalBettingTime;
-    *)
 
     store.liquidityShares[key] :=
         getNatLedgerAmount(key, store.liquidityShares) + newShares;
