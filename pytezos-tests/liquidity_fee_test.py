@@ -42,33 +42,6 @@ class LiquidityFeeDynamicTest(StateTransformationBaseTest):
             multiplier = elapsed_time / bets_duration
             return int(bet + possible_win * (1 - 0.01*multiplier))
 
-        """
-        possible_wins_at_time = {
-            # at the event start time liquidity percent is 0%:
-            RUN_TIME:                          1_000_000 + 500_000,
-
-            # after 50% of time liquidity percent is 0.5%:
-            RUN_TIME + bets_duration // 2:     1_000_000 + 497_500,
-
-            # after 75% of time liquidity percent is 0.75%:
-            RUN_TIME + bets_duration * 3 // 4: 1_000_000 + 496_250,
-
-            # after 100% of time liquidity percent is 1%:
-            RUN_TIME + bets_duration: 1_000_000 + 495_000
-        }
-
-        for current_time, win_amount in possible_wins_at_time.items():
-            self.current_time = current_time
-            result_storage = self.check_bet_succeed(
-                participant=self.b,
-                amount=1_000_000,
-                bet='for',
-                minimal_win=1_000_000)
-
-            possible_win = result_storage['betsFor'][(self.b, self.id)]
-            self.assertEqual(possible_win, win_amount)
-        """
-
         for test in range(10):
             # Model in tests and in contract works a little different with
             # divisions and sometimes it diverges by 1mutez. To simplify
