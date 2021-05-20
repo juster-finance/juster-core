@@ -46,9 +46,8 @@ block {
     event.isBetsForWin := event.closedDynamics > event.targetDynamics;
 
     (* Paying expirationFee for this method initiator: *)
-    const receiver : contract(unit) = getReceiver(Tezos.source);
-    const expirationFeeOperation : operation =
-        Tezos.transaction(unit, event.expirationFee, receiver);
+    const operations : list(operation) =
+        makeOperationsIfNeeded(Tezos.source, event.expirationFee);
 
     store.events[eventId] := event;
 
@@ -59,5 +58,4 @@ block {
         there are some code that can be moved in separate function
         (for example check for the oracle, but maybe it is okay to have copycode here) *)
 
-
-} with (list[expirationFeeOperation], store)
+} with (operations, store)

@@ -83,3 +83,19 @@ block {
         0tez,
         callToOracle);
 } with list[callback]
+
+
+(* Creates operation list with one operation if payout > 0tez, else returns
+    empty list of operations: *)
+function makeOperationsIfNeeded(
+    var addressTo : address;
+    var payout : tez) : list(operation) is
+block {
+    const receiver : contract(unit) = getReceiver(addressTo);
+    const operation : operation = Tezos.transaction(unit, payout, receiver);
+
+    (* Operation should be returned only if there are some amount to return: *)
+    var operations : list(operation) := nil;
+    if payout > 0tez then operations := operation # operations
+    else skip;
+} with operations

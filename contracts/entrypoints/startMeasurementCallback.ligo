@@ -31,9 +31,8 @@ block {
     event.isMeasurementStarted := True;
 
     (* Paying measureStartFee for this method initiator: *)
-    const receiver : contract(unit) = getReceiver(Tezos.source);
-    const payoutOperation : operation =
-        Tezos.transaction(unit, event.measureStartFee, receiver);
+    const operations : list(operation) =
+        makeOperationsIfNeeded(Tezos.source, event.measureStartFee);
 
     store.events[eventId] := event;
 
@@ -43,4 +42,4 @@ block {
     (* TODO: this close/measurement callbacks have a lot similarities, maybe
         there are some code that can be moved in separate function *)
 
-} with (list[payoutOperation], store)
+} with (operations, store)
