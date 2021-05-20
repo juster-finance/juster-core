@@ -3,15 +3,7 @@
 
     Three participants: a, b and c making next interactions:
     (1) participant A adds initial liquidity at the beginning: 2tez with ratio 1:1
-        TODO: assert firstProviderForSharesSum is correct (is changed and value good)
-        TODO: assert firstProviderAgainstSharesSum is correct (is changed and value good)
-        TODO: assert totalLiquidityForSharesSum is correct
-        TODO: assert totalLiquidityAgainstSharesSum is correct
-        TODO: assert totalLiquidityForSharesSum/firstProviderForSharesSum == 1
-        TODO: assert totalLiquidityAgainstSharesSum/firstProviderAgainstSharesSum == 1
-        TODO: assert winForProfitLossPerShareAtEntry for (a, 0) is equal to 0
-        TODO: assert winAgainstProfitLossPerShareAtEntry for (a, 0) is equal to 0
-        TODO: check result integrity (!)
+
                                                +30m
                                      A.LP B.F  A.LP C.LP D.A  B.F  A.LP
                                      (1)  (2)  (3)  (4)  (5)  (6)  (7)
@@ -26,22 +18,8 @@
 
     (2) participant B bets FOR 1tez
         - new ratio: 0.5:2
-        TODO: assert that winForProfitLossPerShare is correct (equal to -1.5tez)
-        TODO: assert that winAgainstProfitLossPerShare is correct (equal to +1tez)
-        TODO: assert that ratio is correct 0.5:2
-        TODO: assert that bet recorded in depositedBets
-
     (3) participant A adds more liquidity: 2.5tez with ratio 1:4, after 30 mins
-        TODO: assert firstProviderForSharesSum is not changed
-        TODO: assert firstProviderAgainstSharesSum is not changed
-        TODO: assert totalLiquidityForSharesSum is correct 2tez + 0.5tez
-        TODO: assert totalLiquidityAgainstSharesSum is correct 2tez + 1.5tez
-        TODO: assert winForProfitLossPerShareAtEntry for -1.5tez
-        TODO: assert winAgainstProfitLossPerShareAtEntry for +1tez
-
     (4) participant C adds more liquidity: 5tez with ratio 1:4, after 30 mins
-        TODO: make that all prev asserts works
-
     (5) participant D bets AGAINST for 2tez
     (6) participant B bets FOR 4tez
     (7) participant A adds more liquidity 5tez
@@ -63,11 +41,6 @@
 
             10.5 + 0 + 5 + 6
         - total 21.5 tez
-
-        TODO: check withdrawals successfull
-        TODO: add balance to contract model (to self.balance) and keep tracking it
-    
-        TODO: this test should check that Ev of the participants at the add liquidity moment is zero
 """
 
 from state_transformation_base import StateTransformationBaseTest, RUN_TIME, ONE_HOUR

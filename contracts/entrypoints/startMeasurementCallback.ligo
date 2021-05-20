@@ -22,6 +22,8 @@ block {
     if event.betsCloseTime > param.lastUpdate
     then failwith("Can't start measurement untill oracle time > betsCloseTime")
     else skip;
+    (* TODO: need to decide, should it be possible to run method if time
+        exceed allowed window *)
 
     (* Starting measurement: *)
     event.measureOracleStartTime := param.lastUpdate;

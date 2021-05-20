@@ -318,7 +318,6 @@ class StateTransformationBaseTest(TestCase):
             len(init_storage['betsAgainst']) + bet_result['against_count'])
 
         # TODO: check sum in participant ledgers (include liquidity fee)
-        # TODO: check forProfit / againstProfit
 
         self.check_result_integrity(result)
         return result_storage
@@ -614,8 +613,6 @@ class StateTransformationBaseTest(TestCase):
 
 
     def setUp(self):
-        # TODO: decide, should it be here or in tests? If there are always the same
-        # setUp, looks like this is good place
 
         self.contract = ContractInterface.from_file(join(dirname(__file__), CONTRACT_FN))
 

@@ -21,7 +21,6 @@ class ZeroEdgecasesDeterminedTest(StateTransformationBaseTest):
 
         self.storage = self.check_new_event_succeed(
             event_params=self.default_event_params, amount=0)
-        # TODO: already error, fix either test either code
 
         # A provides liquidity with 0 tez, assert failed:
         self.check_provide_liquidity_fails_with(

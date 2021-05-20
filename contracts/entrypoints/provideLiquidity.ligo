@@ -21,7 +21,7 @@ block {
         failwith("Providing Liquidity after betCloseTime is not allowed")
     else skip;
 
-    (* TODO: calculate expected ratio using provided ratios *)
+    (* Calculating expected ratio using provided ratios: *)
     const expectedRatio : nat =
         params.expectedRatioFor * store.ratioPrecision
         / params.expectedRatioAgainst;
