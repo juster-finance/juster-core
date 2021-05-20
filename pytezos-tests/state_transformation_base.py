@@ -459,18 +459,22 @@ class StateTransformationBaseTest(TestCase):
             storage=self.storage, sender=sender,
             now=self.current_time, source=source)
 
-        self.assertEqual(len(result.operations), 1)
         event = result.storage['events'][self.id]
-
         self.assertEqual(event['startRate'], callback_values['rate'])
         self.assertTrue(event['isMeasurementStarted'])
         self.assertEqual(
             event['measureOracleStartTime'],
             callback_values['lastUpdate'])
 
-        operation = result.operations[0]
-        self.assertEqual(operation['destination'], source)
-        self.assertAmountEqual(operation, self.measure_start_fee)
+        if event['measureStartFee'] == 0:
+            self.assertEqual(len(result.operations), 0)
+
+        if event['measureStartFee'] > 0:
+            self.assertEqual(len(result.operations), 1)
+
+            operation = result.operations[0]
+            self.assertEqual(operation['destination'], source)
+            self.assertAmountEqual(operation, self.measure_start_fee)
 
         self.check_result_integrity(result)
         return result.storage
@@ -521,7 +525,6 @@ class StateTransformationBaseTest(TestCase):
         result = self.contract.closeCallback(callback_values).interpret(
             storage=self.storage, sender=self.oracle_address,
             now=self.current_time, source=source)
-        self.assertEqual(len(result.operations), 1)
 
         event = result.storage['events'][self.id]
         self.assertEqual(event['closedRate'], callback_values['rate'])
@@ -536,9 +539,14 @@ class StateTransformationBaseTest(TestCase):
         is_bets_for_win = dynamics > event['targetDynamics']
         self.assertEqual(event['isBetsForWin'], is_bets_for_win)
 
-        operation = result.operations[0]
-        self.assertEqual(operation['destination'], source)
-        self.assertAmountEqual(operation, self.expiration_fee)
+        if event['expirationFee'] == 0:
+            self.assertEqual(len(result.operations), 0)
+
+        if event['expirationFee'] > 0:
+            self.assertEqual(len(result.operations), 1)
+            operation = result.operations[0]
+            self.assertEqual(operation['destination'], source)
+            self.assertAmountEqual(operation, self.expiration_fee)
 
         self.check_result_integrity(result)
         return result.storage
