@@ -22,6 +22,6 @@ case params of
 | Close(p)                    -> close(p, s)
 | CloseCallback(p)            -> closeCallback(p, s)
 | Withdraw(p)                 -> withdraw(p, s)
-| UpdateConfig(p)             -> update_config(p, s)  (* TODO: style *)
+| UpdateConfig(p)             -> updateConfig(p, s)
 | TriggerForceMajeure(p)      -> triggerForceMajeure(p, s)
 end

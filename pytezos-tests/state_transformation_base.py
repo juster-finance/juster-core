@@ -579,11 +579,27 @@ class StateTransformationBaseTest(TestCase):
 
 
     def check_trigger_force_majeure_succeed(self, sender):
-        # TODO: assert that there are no operation if event is closed and
-        # one opertion if event is not closed with fees (maybe also with start fee)
 
+        event = self.storage['events'][self.id]
+        was_closed = event['isClosed']
         result = self.contract.triggerForceMajeure(self.id).interpret(
             storage=self.storage, sender=sender, now=self.current_time)
+
+        # There are should be no operation if event is closed and
+        # one opertion if event is not closed with fees
+
+        if was_closed:
+            self.assertEqual(len(result.operations), 0)
+        else:
+            self.assertEqual(len(result.operations), 1)
+            operation = result.operations[0]
+
+            # calculating fees: it should be expirationFee + meas. start fee:
+            amount = event['expirationFee']
+            if not event['isMeasurementStarted']:
+                amount += event['measureStartFee']
+
+            self.assertAmountEqual(operation, amount)
 
         return result.storage
 

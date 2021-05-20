@@ -1,4 +1,4 @@
-function update_config(
+function updateConfig(
     var updateConfigLambda : updateConfigParam;
     var store: storage) : (list(operation) * storage) is
 block {
