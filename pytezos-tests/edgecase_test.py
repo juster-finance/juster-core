@@ -21,7 +21,6 @@ class ZeroEdgecasesDeterminedTest(StateTransformationBaseTest):
 
         self.storage = self.check_new_event_succeed(
             event_params=self.default_event_params, amount=0)
-        # TODO: already error, fix either test either code
 
         # A provides liquidity with 0 tez, assert failed:
         self.check_provide_liquidity_fails_with(
@@ -63,23 +62,85 @@ class ZeroEdgecasesDeterminedTest(StateTransformationBaseTest):
             expected_against=1,
             msg_contains='Expected ratio very differs from current pool ratio')
 
-        """ TODO:
-        - A tries to adding liquidity one of the rates equal to 0 (betFor or betAgainst)
-            [or maybe with ratio > maxRatio]
+        # A provides liquidity with 0 expected for/against (again), assert failed:
+        self.check_provide_liquidity_fails_with(
+            participant=self.a,
+            amount=1_000_000,
+            expected_for=1,
+            expected_against=0,
+            msg_contains='Expected ratio in pool should be more than zero')
 
-        - A tries to Bet with winRate a lot more than expected (assert MichelsonError raises)
+        # A tries to Bet with winRate a lot more than expected:
+        self.check_bet_fails_with(
+            participant=self.a,
+            amount=1,
+            bet='against',
+            minimal_win=5,
+            msg_contains='Wrong minimalWinAmount')
 
-        - in the end: no one bets, measure
-            - assert that len operations in callback is 0 (because fee is zero)
+        # In the end: no one bets, starting measure:
+        bets_close = self.default_event_params['betsCloseTime']
+        period = self.default_event_params['measurePeriod']
+        self.current_time = RUN_TIME + bets_close
+        self.storage = self.check_start_measurement_succeed(sender=self.a)
 
-        - TODO: test that adding liquidity after bets time is not allowed
+        # Emulating callback:
+        callback_values = {
+            'currencyPair': self.currency_pair,
+            'lastUpdate': self.current_time,
+            'rate': 6_000_000
+        }
+        self.storage = self.check_start_measurement_callback_succeed(
+            callback_values=callback_values,
+            source=self.a,
+            sender=self.oracle_address)
 
-        - close, B withdraws all
-            - assert that len operations in closeCallback is 0 (because fee is zero)
-            TODO: check contract balance is 0
-            TODO: check B withdraws all the sum invested
+        # Closing event:
+        self.current_time = RUN_TIME + bets_close + period
+        self.storage = self.check_close_succeed(sender=self.a)
 
-        - TODO: test trying close twice: assert failed
-        - TODO: test trying to bet after close is failed
-        - TODO: test trying to call measurement after close is failed
-        """
+        # Emulating calback with price is increased 25%:
+        callback_values = {
+            'currencyPair': self.currency_pair,
+            'lastUpdate': self.current_time,
+            'rate': 7_500_000
+        }
+        self.storage = self.check_close_callback_succeed(
+            callback_values=callback_values,
+            source=self.a,
+            sender=self.oracle_address)
+
+        # A provides liquidity after event closed is not allowed:
+        self.check_provide_liquidity_fails_with(
+            participant=self.a,
+            amount=10,
+            expected_for=1,
+            expected_against=1,
+            msg_contains='Providing Liquidity after betCloseTime is not allowed')
+
+        # B withdraws all:
+        self.storage = self.check_withdraw_succeed(self.a, 0)
+        self.storage = self.check_withdraw_succeed(self.b, 10)
+
+        # test trying close twice: assert failed:
+        self.check_close_callback_fails_with(
+            callback_values=callback_values,
+            source=self.a,
+            sender=self.oracle_address,
+            msg_contains="Contract already closed. Can't close contract twice")
+
+        # A tries to Bet after contract is closed and failed:
+        self.check_bet_fails_with(
+            participant=self.a,
+            amount=1,
+            bet='against',
+            minimal_win=5,
+            msg_contains='Bets after betCloseTime is not allowed')
+
+        # test trying to call measurement after close is failed:
+        self.check_start_measurement_callback_fails_with(
+            callback_values=callback_values,
+            source=self.a,
+            sender=self.oracle_address,
+            msg_contains="Measurement period already started")
+

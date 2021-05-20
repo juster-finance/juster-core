@@ -11,3 +11,5 @@
 
 
 - TODO: check that all ledgers and event records is cleaned at close
+- TODO: add balance to contract model (to self.balance) and keep tracking it
+    - should I?

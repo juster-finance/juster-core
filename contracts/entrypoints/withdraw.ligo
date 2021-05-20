@@ -70,13 +70,7 @@ block {
     store.liquidityShares := Big_map.remove(key, store.liquidityShares);
     store.depositedBets := Big_map.remove(key, store.depositedBets);
 
-    const receiver : contract(unit) = getReceiver(Tezos.sender);
-    const operation : operation = Tezos.transaction(unit, payout, receiver);
-
-    (* Operation should be returned only if there are some amount to return: *)
-    var operations : list(operation) := nil;
-    if payout > 0tez then operations := operation # operations
-    else skip;
+    const operations : list(operation) = makeOperationsIfNeeded(Tezos.sender, payout);
 
     (* TODO: calculate participants/LPs count and remove event if there are 0 *)
     store.events[eventId] := event;

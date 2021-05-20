@@ -45,13 +45,9 @@ block {
     event.isClosed := True;
     event.isBetsForWin := event.closedDynamics > event.targetDynamics;
 
-    (* TODO: what should be done if all bets were For and all of them are loose?
-        All raised funds will be freezed. Should they all be winners anyway? *)
-
     (* Paying expirationFee for this method initiator: *)
-    const receiver : contract(unit) = getReceiver(Tezos.source);
-    const expirationFeeOperation : operation =
-        Tezos.transaction(unit, event.expirationFee, receiver);
+    const operations : list(operation) =
+        makeOperationsIfNeeded(Tezos.source, event.expirationFee);
 
     store.events[eventId] := event;
 
@@ -59,7 +55,7 @@ block {
     store.closeCallId := (None : eventIdType);
 
     (* TODO: this close/measurement callbacks have a lot similarities, maybe
-        there are some code that can be moved in separate function *)
+        there are some code that can be moved in separate function
+        (for example check for the oracle, but maybe it is okay to have copycode here) *)
 
-
-} with (list[expirationFeeOperation], store)
+} with (operations, store)
