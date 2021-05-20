@@ -22,16 +22,15 @@ block {
     else skip;
 
     (* TODO: calculate expected ratio using provided ratios *)
-    const expectedRatioSum : nat =
-        params.expectedRatioFor + params.expectedRatioAgainst;
     const expectedRatio : nat =
-        params.expectedRatioFor * store.ratioPrecision / expectedRatioSum;
+        params.expectedRatioFor * store.ratioPrecision
+        / params.expectedRatioAgainst;
 
     (* Calculating ratio. It is equal expected ratio if this is first LP: *)
     var ratio : nat := expectedRatio;
     (* And it is calculated if this is adding more liquidity scenario *)
     if totalBets =/= 0tez then
-        ratio := event.poolFor * store.ratioPrecision / totalBets
+        ratio := event.poolFor * store.ratioPrecision / event.poolAgainst
     else skip;
 
     (* Slippage calculated in ratioPrecision values as multiplicative difference
@@ -49,8 +48,12 @@ block {
     else skip;
 
     (* Distributing liquidity: *)
+    (* forShare is share in interval (0, store.ratioPrecision) calculated from
+        current ratio, 1:1 ratio leads to 50% share, 3:1 leads to 75% share *)
+    var forShare : nat :=
+        ratio * store.ratioPrecision / (ratio + store.ratioPrecision);
     const betFor : tez = natToTez(roundDiv(
-        tezToNat(Tezos.amount * ratio), store.ratioPrecision));
+        tezToNat(Tezos.amount * forShare), store.ratioPrecision));
     const betAgainst : tez = Tezos.amount - betFor;
 
     (* liquidity shares: *)
