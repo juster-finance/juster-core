@@ -59,10 +59,12 @@ def calculate_bet_params_change(storage, event_id, participant, bet, amount):
         top = event['poolAgainst']
         bottom = event['poolFor']
         for_count = 0 if key in storage['betsFor'] else 1
+        bet_profit = calculate_bet_return(top, bottom, amount, fee)
 
         return dict(
+            bet_profit=bet_profit,
             diff_for=amount,
-            diff_against=-calculate_bet_return(top, bottom, amount, fee),
+            diff_against=-bet_profit,
             for_count=for_count,
             against_count=0
         )
@@ -71,9 +73,11 @@ def calculate_bet_params_change(storage, event_id, participant, bet, amount):
         top = event['poolFor']
         bottom = event['poolAgainst']
         against_count = 0 if key in storage['betsAgainst'] else 1
+        bet_profit = calculate_bet_return(top, bottom, amount, fee)
 
         return dict(
-            diff_for=-calculate_bet_return(top, bottom, amount, fee),
+            bet_profit=bet_profit,
+            diff_for=-bet_profit,
             diff_against=amount,
             for_count=0,
             against_count=against_count
@@ -317,7 +321,16 @@ class StateTransformationBaseTest(TestCase):
             len(result_storage['betsAgainst']),
             len(init_storage['betsAgainst']) + bet_result['against_count'])
 
-        # TODO: check sum in participant ledgers (include liquidity fee)
+        # Checking sum in participant ledgers:
+        key = (participant, self.id)
+        diff = (result_storage['depositedBets'].get(key, 0)
+            - init_storage['depositedBets'].get(key, 0))
+        self.assertEqual(diff, amount)
+
+        ledger_name = 'betsFor' if bet == 'for' else 'betsAgainst'
+        diff = (result_storage[ledger_name].get(key, 0)
+            - init_storage[ledger_name].get(key, 0))
+        self.assertEqual(diff, bet_result['bet_profit'] + amount)
 
         self.check_result_integrity(result)
         return result_storage
