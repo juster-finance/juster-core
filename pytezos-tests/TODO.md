@@ -9,3 +9,5 @@
     - event 2: close is not started in the window time
     - event 3: no bets provided ? or this is normal ?
 
+
+- TODO: check that all ledgers and event records is cleaned at close
