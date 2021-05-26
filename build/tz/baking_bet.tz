@@ -953,13 +953,32 @@
                          CAR ;
                          CDR ;
                          ADD ;
-                         DUP 3 ;
+                         DUP ;
+                         DUP 4 ;
                          CAR ;
                          CDR ;
                          COMPARE ;
                          LT ;
                          IF { PUSH string
                                    "Can't close until lastUpdate reached measureStartTime + measurePeriod" ;
+                              FAILWITH }
+                            {} ;
+                         SWAP ;
+                         DUP ;
+                         DUG 2 ;
+                         CAR ;
+                         CDR ;
+                         CDR ;
+                         CAR ;
+                         CAR ;
+                         INT ;
+                         ADD ;
+                         DUP 3 ;
+                         CAR ;
+                         CDR ;
+                         COMPARE ;
+                         GT ;
+                         IF { PUSH string "Close failed: oracle time exceed maxAllowedMeasureLag" ;
                               FAILWITH }
                             {} ;
                          DUP ;
@@ -2058,6 +2077,30 @@
                          COMPARE ;
                          GT ;
                          IF { PUSH string "Can't start measurement untill oracle time > betsCloseTime" ;
+                              FAILWITH }
+                            {} ;
+                         DUP ;
+                         CAR ;
+                         CDR ;
+                         CDR ;
+                         CAR ;
+                         CAR ;
+                         INT ;
+                         SWAP ;
+                         DUP ;
+                         DUG 2 ;
+                         CAR ;
+                         CAR ;
+                         CAR ;
+                         CAR ;
+                         CAR ;
+                         ADD ;
+                         DUP 4 ;
+                         CAR ;
+                         CDR ;
+                         COMPARE ;
+                         GT ;
+                         IF { PUSH string "Measurement failed: oracle time exceed maxAllowedMeasureLag" ;
                               FAILWITH }
                             {} ;
                          DUP ;
