@@ -81,7 +81,7 @@ class ZeroEdgecasesDeterminedTest(StateTransformationBaseTest):
         # In the end: no one bets, starting measure:
         bets_close = self.default_event_params['betsCloseTime']
         period = self.default_event_params['measurePeriod']
-        self.current_time = RUN_TIME + bets_close
+        self.current_time = bets_close
         self.storage = self.check_start_measurement_succeed(sender=self.a)
 
         # Emulating callback:
@@ -96,7 +96,7 @@ class ZeroEdgecasesDeterminedTest(StateTransformationBaseTest):
             sender=self.oracle_address)
 
         # Closing event:
-        self.current_time = RUN_TIME + bets_close + period
+        self.current_time = bets_close + period
         self.storage = self.check_close_succeed(sender=self.a)
 
         # Emulating calback with price is increased 25%:
