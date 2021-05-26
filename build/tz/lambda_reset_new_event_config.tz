@@ -4,8 +4,6 @@
     UNPAIR ;
     PUSH mutez 200000 ;
     PUSH address "KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn" ;
-    PAIR ;
-    PUSH mutez 0 ;
     PUSH nat 5 ;
     PUSH nat 60 ;
     MUL ;
