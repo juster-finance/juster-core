@@ -2,6 +2,9 @@ function startMeasurementCallback(
     var params : callbackReturnedValueMichelson;
     var store : storage) : (list(operation) * storage) is
 block {
+
+    checkNoAmountIncluded(unit);
+
     const param : callbackReturnedValue = Layout.convert_from_right_comb(params);
 
     const eventId : nat = case store.measurementStartCallId of

@@ -3,6 +3,8 @@ function closeCallback(
     var store : storage) : (list(operation) * storage) is
 block {
 
+    checkNoAmountIncluded(unit);
+
     const eventId : nat = case store.closeCallId of
     | Some(closeCallId) -> closeCallId
     | None -> (failwith("closeCallId is empty") : nat)

@@ -3,6 +3,8 @@ function triggerForceMajeure(
     var store: storage) : (list(operation) * storage) is
 block {
 
+    checkNoAmountIncluded(unit);
+
     const event : eventType = getEvent(store, eventId);
 
     (* Force Majeure case 1: start measurement lag is too long: *)

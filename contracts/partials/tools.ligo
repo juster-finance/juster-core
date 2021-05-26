@@ -99,3 +99,12 @@ block {
     if payout > 0tez then operations := operation # operations
     else skip;
 } with operations
+
+
+(* Checking that there are no amount included in operation: *)
+function checkNoAmountIncluded(var p : unit) : unit is
+block {
+    if Tezos.amount > 0tez then
+        failwith("Including tez using this entrypoint call is not allowed")
+    else skip;
+} with unit

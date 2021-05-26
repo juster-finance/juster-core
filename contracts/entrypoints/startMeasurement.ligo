@@ -2,6 +2,9 @@ function startMeasurement(
     var eventId : nat;
     var store : storage) : (list(operation) * storage) is
 block {
+
+    checkNoAmountIncluded(unit);
+
     case store.measurementStartCallId of
     | Some(measurementStartCallId) ->
         failwith("Another call to oracle in process (should not be here)")

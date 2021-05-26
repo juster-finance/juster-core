@@ -48,6 +48,8 @@ block {
     (* TODO: allow to call this method by liquidity providers after K hours
         after close and reduce withdraw amount a bit in this case *)
 
+    checkNoAmountIncluded(unit);
+
     const event : eventType = getEvent(store, eventId);
     const key : ledgerKey = (Tezos.sender, eventId);
 

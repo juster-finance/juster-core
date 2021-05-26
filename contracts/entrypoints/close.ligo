@@ -2,6 +2,9 @@ function close(
     var eventId : nat;
     var store : storage) : (list(operation) * storage) is
 block {
+
+    checkNoAmountIncluded(unit);
+
     (* When calling close event, s.closeCallId should be equal to None,
         otherwise it looks like another callback is runned but no answer
         is received yet (is it even possible, btw?) *)
