@@ -6,7 +6,7 @@ const config = {
   measureStartFee: 100000,
   expirationFee: 100000,
   rewardCallFee: 100000,
-  oracleAddress: 'KT1RCNpUEDjZAYhabjzgz1ZfxQijCDVMEaTZ',
+  oracleAddress: 'KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn',
   minMeasurePeriod: 60*5,  // 5 mins
   maxMeasurePeriod: 60*60*24*31,  // 31 days
   minPeriodToBetsClose: 60*5,

@@ -4,7 +4,7 @@ module.exports = {
   contracts_directory: "./contracts/main",
   networks: {
     development: {
-      host: "https://edonet.smartpy.io",
+      host: "https://florencenet.smartpy.io",
       port: 443,
       network_id: "*",
       secret,
