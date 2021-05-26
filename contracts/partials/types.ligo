@@ -54,9 +54,9 @@ type newEventConfigType is record [
     minPeriodToBetsClose : nat;
     maxPeriodToBetsClose : nat;
 
-    (* TODO: maybe control min/max liquidity percent and allow events
-        with different percents? (the way measurePeriod is setted) *)
-    liquidityPercent : nat;
+    (* min/max allowed window that limits liquidityPercent *)
+    minLiquidityPercent : nat;
+    maxLiquidityPercent : nat;
 
     (* Time window when startMeasurement / close should be called
         (or it would considered as Force Majeure) *)
@@ -128,6 +128,7 @@ type newEventParams is record [
     targetDynamics : nat;
     betsCloseTime : timestamp;
     measurePeriod : nat;
+    liquidityPercent : nat;
 ]
 
 

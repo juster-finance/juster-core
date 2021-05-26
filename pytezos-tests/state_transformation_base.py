@@ -664,12 +664,14 @@ class StateTransformationBaseTest(TestCase):
             'targetDynamics': 1_000_000,
             'betsCloseTime': RUN_TIME + 24*ONE_HOUR,
             'measurePeriod': 12*ONE_HOUR,
+            'liquidityPercent': 0,
         }
 
         self.default_config = {
             'defaultTime': 0,
             'expirationFee': self.expiration_fee,
-            'liquidityPercent': 0,
+            'minLiquidityPercent': 0,
+            'maxLiquidityPercent': 300_000,  # 30% for 1_000_000 liquidityPrecision
             'maxAllowedMeasureLag': ONE_HOUR*4,  # 4 hours
             'maxMeasurePeriod': ONE_DAY*31,  # 31 day
             'maxPeriodToBetsClose': ONE_DAY*31,  # 31 day

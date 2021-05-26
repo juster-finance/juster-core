@@ -11,7 +11,8 @@ const config = {
   maxMeasurePeriod: 60*60*24*31,  // 31 days
   minPeriodToBetsClose: 60*5,
   maxPeriodToBetsClose: 60*60*24*31,
-  liquidityPercent: 0,
+  minLiquidityPercent: 0,
+  maxLiquidityPercent: 300000,
   maxAllowedMeasureLag: 60*60*4,
   defaultTime: '2018-06-30T07:07:32Z',
 };

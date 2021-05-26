@@ -16,7 +16,7 @@ class LiquidityFeeDynamicTest(StateTransformationBaseTest):
 
         # Liquidity percent is set to 1%:
         percent = int(self.storage['liquidityPrecision'] * 0.01)
-        self.default_config['liquidityPercent'] = percent
+        self.default_event_params['liquidityPercent'] = percent
         bets_close_time = self.default_event_params['betsCloseTime']
         bets_duration = bets_close_time - self.current_time
 

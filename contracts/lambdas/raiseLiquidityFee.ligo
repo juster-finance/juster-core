@@ -3,7 +3,7 @@
 function lambda (var newEventConfig : newEventConfigType) : newEventConfigType is
 block {
     const onePercent : nat = 10_000n;
-    newEventConfig.liquidityPercent :=
-        newEventConfig.liquidityPercent + onePercent;
+    newEventConfig.maxLiquidityPercent :=
+        newEventConfig.maxLiquidityPercent + onePercent;
 
 } with newEventConfig
