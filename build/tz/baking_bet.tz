@@ -244,6 +244,18 @@
          SWAP ;
          APPLY ;
          LAMBDA
+           unit
+           unit
+           { DROP ;
+             PUSH mutez 0 ;
+             AMOUNT ;
+             COMPARE ;
+             GT ;
+             IF { PUSH string "Including tez using this entrypoint call is not allowed" ;
+                  FAILWITH }
+                {} ;
+             UNIT } ;
+         LAMBDA
            (pair (pair mutez
                        (pair (pair (pair (pair (pair timestamp nat) (pair timestamp nat))
                                          (pair (pair timestamp string) (pair mutez bool)))
@@ -327,19 +339,21 @@
              EDIV ;
              IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
              CAR } ;
-         DIG 10 ;
+         DIG 11 ;
          UNPAIR ;
          IF_LEFT
            { IF_LEFT
-               { DIG 5 ;
+               { DIG 6 ;
                  DROP ;
-                 DIG 6 ;
+                 DIG 7 ;
                  DROP ;
                  IF_LEFT
-                   { DIG 3 ;
+                   { DIG 4 ;
                      DROP ;
                      IF_LEFT
                        { DIG 3 ;
+                         DROP ;
+                         DIG 3 ;
                          DROP ;
                          DUP ;
                          CAR ;
@@ -812,15 +826,20 @@
                          PAIR }
                        { DIG 2 ;
                          DROP ;
-                         DIG 3 ;
+                         DIG 4 ;
                          DROP ;
-                         DIG 3 ;
+                         DIG 4 ;
                          DROP ;
-                         DIG 3 ;
+                         DIG 4 ;
                          DROP ;
-                         DIG 3 ;
+                         DIG 4 ;
                          DROP ;
+                         DIG 4 ;
+                         DROP ;
+                         UNIT ;
                          DIG 3 ;
+                         SWAP ;
+                         EXEC ;
                          DROP ;
                          SWAP ;
                          DUP ;
@@ -866,18 +885,23 @@
                          PAIR } }
                    { DIG 2 ;
                      DROP ;
-                     DIG 3 ;
-                     DROP ;
-                     DIG 3 ;
-                     DROP ;
                      DIG 4 ;
                      DROP ;
                      DIG 4 ;
                      DROP ;
-                     DIG 4 ;
+                     DIG 5 ;
+                     DROP ;
+                     DIG 5 ;
+                     DROP ;
+                     DIG 5 ;
                      DROP ;
                      IF_LEFT
-                       { SWAP ;
+                       { UNIT ;
+                         DIG 3 ;
+                         SWAP ;
+                         EXEC ;
+                         DROP ;
+                         SWAP ;
                          DUP ;
                          DUG 2 ;
                          CAR ;
@@ -1226,6 +1250,8 @@
                          DROP ;
                          DIG 2 ;
                          DROP ;
+                         DIG 2 ;
+                         DROP ;
                          SWAP ;
                          DUP ;
                          DUG 2 ;
@@ -1466,15 +1492,17 @@
                          PAIR } } }
                { DIG 2 ;
                  DROP ;
-                 DIG 8 ;
+                 DIG 9 ;
                  DROP ;
                  IF_LEFT
-                   { DIG 2 ;
+                   { DIG 3 ;
                      DROP ;
-                     DIG 5 ;
+                     DIG 6 ;
                      DROP ;
                      IF_LEFT
                        { DIG 2 ;
+                         DROP ;
+                         DIG 2 ;
                          DROP ;
                          PUSH nat 0 ;
                          SWAP ;
@@ -1931,15 +1959,20 @@
                          PAIR ;
                          NIL operation ;
                          PAIR }
-                       { DIG 3 ;
+                       { DIG 4 ;
                          DROP ;
-                         DIG 3 ;
+                         DIG 4 ;
                          DROP ;
-                         DIG 3 ;
+                         DIG 4 ;
                          DROP ;
-                         DIG 3 ;
+                         DIG 4 ;
                          DROP ;
+                         DIG 4 ;
+                         DROP ;
+                         UNIT ;
                          DIG 3 ;
+                         SWAP ;
+                         EXEC ;
                          DROP ;
                          SWAP ;
                          DUP ;
@@ -1983,18 +2016,23 @@
                          PAIR ;
                          SWAP ;
                          PAIR } }
-                   { DIG 3 ;
+                   { DIG 4 ;
                      DROP ;
-                     DIG 3 ;
+                     DIG 4 ;
                      DROP ;
-                     DIG 3 ;
+                     DIG 4 ;
                      DROP ;
-                     DIG 5 ;
+                     DIG 6 ;
                      DROP ;
-                     DIG 5 ;
+                     DIG 6 ;
                      DROP ;
                      IF_LEFT
-                       { DIG 3 ;
+                       { DIG 4 ;
+                         DROP ;
+                         UNIT ;
+                         DIG 3 ;
+                         SWAP ;
+                         EXEC ;
                          DROP ;
                          DUP ;
                          CDR ;
@@ -2235,7 +2273,12 @@
                          PAIR ;
                          SWAP ;
                          PAIR }
-                       { DIG 2 ;
+                       { DIG 3 ;
+                         DROP ;
+                         UNIT ;
+                         DIG 3 ;
+                         SWAP ;
+                         EXEC ;
                          DROP ;
                          DUP ;
                          DUP 3 ;
@@ -2515,18 +2558,20 @@
                          PAIR } } } }
            { DIG 2 ;
              DROP ;
-             DIG 3 ;
-             DROP ;
-             DIG 5 ;
+             DIG 4 ;
              DROP ;
              DIG 6 ;
              DROP ;
-             DIG 6 ;
+             DIG 7 ;
              DROP ;
-             DIG 6 ;
+             DIG 7 ;
+             DROP ;
+             DIG 7 ;
              DROP ;
              IF_LEFT
                { DIG 2 ;
+                 DROP ;
+                 DIG 2 ;
                  DROP ;
                  DIG 2 ;
                  DROP ;
@@ -2577,7 +2622,12 @@
                  PAIR ;
                  NIL operation ;
                  PAIR }
-               { DUP ;
+               { UNIT ;
+                 DIG 3 ;
+                 SWAP ;
+                 EXEC ;
+                 DROP ;
+                 DUP ;
                  DUP 3 ;
                  PAIR ;
                  DIG 6 ;
