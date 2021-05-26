@@ -7,8 +7,9 @@
                        (string %currencyPair)
                        (pair (timestamp %lastUpdate) (nat %rate)))
                     (pair %newEvent
-                       (pair (timestamp %betsCloseTime) (string %currencyPair))
-                       (pair (nat %measurePeriod) (nat %targetDynamics)))))
+                       (pair (pair (timestamp %betsCloseTime) (string %currencyPair))
+                             (pair (nat %liquidityPercent) (nat %measurePeriod)))
+                       (nat %targetDynamics))))
             (or (or (pair %provideLiquidity
                        (pair (nat %eventId) (nat %expectedRatioAgainst))
                        (pair (nat %expectedRatioFor) (nat %maxSlippage)))
@@ -19,17 +20,17 @@
                     (nat %triggerForceMajeure))))
         (or (lambda %updateConfig
                (pair (pair (pair (pair (timestamp %defaultTime) (mutez %expirationFee))
-                                 (pair (nat %liquidityPercent) (nat %maxAllowedMeasureLag)))
+                                 (pair (nat %maxAllowedMeasureLag) (nat %maxLiquidityPercent)))
                            (pair (pair (nat %maxMeasurePeriod) (nat %maxPeriodToBetsClose))
-                                 (pair (mutez %measureStartFee) (nat %minMeasurePeriod))))
-                     (pair (pair (nat %minPeriodToBetsClose) (address %oracleAddress))
-                           (mutez %rewardCallFee)))
+                                 (pair (mutez %measureStartFee) (nat %minLiquidityPercent))))
+                     (pair (pair (nat %minMeasurePeriod) (nat %minPeriodToBetsClose))
+                           (pair (address %oracleAddress) (mutez %rewardCallFee))))
                (pair (pair (pair (pair (timestamp %defaultTime) (mutez %expirationFee))
-                                 (pair (nat %liquidityPercent) (nat %maxAllowedMeasureLag)))
+                                 (pair (nat %maxAllowedMeasureLag) (nat %maxLiquidityPercent)))
                            (pair (pair (nat %maxMeasurePeriod) (nat %maxPeriodToBetsClose))
-                                 (pair (mutez %measureStartFee) (nat %minMeasurePeriod))))
-                     (pair (pair (nat %minPeriodToBetsClose) (address %oracleAddress))
-                           (mutez %rewardCallFee))))
+                                 (pair (mutez %measureStartFee) (nat %minLiquidityPercent))))
+                     (pair (pair (nat %minMeasurePeriod) (nat %minPeriodToBetsClose))
+                           (pair (address %oracleAddress) (mutez %rewardCallFee)))))
             (nat %withdraw))) ;
   storage
     (pair (pair (pair (pair (big_map %betsAgainst (pair address nat) mutez)
@@ -53,11 +54,11 @@
           (pair (pair (pair (address %manager) (option %measurementStartCallId nat))
                       (pair (pair %newEventConfig
                                (pair (pair (pair (timestamp %defaultTime) (mutez %expirationFee))
-                                           (pair (nat %liquidityPercent) (nat %maxAllowedMeasureLag)))
+                                           (pair (nat %maxAllowedMeasureLag) (nat %maxLiquidityPercent)))
                                      (pair (pair (nat %maxMeasurePeriod) (nat %maxPeriodToBetsClose))
-                                           (pair (mutez %measureStartFee) (nat %minMeasurePeriod))))
-                               (pair (pair (nat %minPeriodToBetsClose) (address %oracleAddress))
-                                     (mutez %rewardCallFee)))
+                                           (pair (mutez %measureStartFee) (nat %minLiquidityPercent))))
+                               (pair (pair (nat %minMeasurePeriod) (nat %minPeriodToBetsClose))
+                                     (pair (address %oracleAddress) (mutez %rewardCallFee))))
                             (big_map %providedLiquidityAgainst (pair address nat) mutez)))
                 (pair (pair (big_map %providedLiquidityFor (pair address nat) mutez) (nat %ratioPrecision))
                       (pair (nat %sharePrecision) (nat %targetDynamicsPrecision))))) ;
@@ -117,7 +118,7 @@
                                    (pair nat (big_map (pair address nat) nat))))
                        (pair (pair (pair address (option nat))
                                    (pair (pair (pair (pair (pair timestamp mutez) (pair nat nat)) (pair (pair nat nat) (pair mutez nat)))
-                                               (pair (pair nat address) mutez))
+                                               (pair (pair nat nat) (pair address mutez)))
                                          (big_map (pair address nat) mutez)))
                              (pair (pair (big_map (pair address nat) mutez) nat) (pair nat nat))))
                  nat)
@@ -161,7 +162,7 @@
                                             (pair nat (big_map (pair address nat) nat))))
                                 (pair (pair (pair address (option nat))
                                             (pair (pair (pair (pair (pair timestamp mutez) (pair nat nat)) (pair (pair nat nat) (pair mutez nat)))
-                                                        (pair (pair nat address) mutez))
+                                                        (pair (pair nat nat) (pair address mutez)))
                                                   (big_map (pair address nat) mutez)))
                                       (pair (pair (big_map (pair address nat) mutez) nat) (pair nat nat))))
                           nat)
@@ -182,7 +183,7 @@
                                                (pair nat (big_map (pair address nat) nat))))
                                    (pair (pair (pair address (option nat))
                                                (pair (pair (pair (pair (pair timestamp mutez) (pair nat nat)) (pair (pair nat nat) (pair mutez nat)))
-                                                           (pair (pair nat address) mutez))
+                                                           (pair (pair nat nat) (pair address mutez)))
                                                      (big_map (pair address nat) mutez)))
                                          (pair (pair (big_map (pair address nat) mutez) nat) (pair nat nat)))))
                        (contract (pair string (pair timestamp nat)))))
@@ -273,7 +274,7 @@
                                    (pair nat (big_map (pair address nat) nat))))
                        (pair (pair (pair address (option nat))
                                    (pair (pair (pair (pair (pair timestamp mutez) (pair nat nat)) (pair (pair nat nat) (pair mutez nat)))
-                                               (pair (pair nat address) mutez))
+                                               (pair (pair nat nat) (pair address mutez)))
                                          (big_map (pair address nat) mutez)))
                              (pair (pair (big_map (pair address nat) mutez) nat) (pair nat nat)))))
            mutez
@@ -1285,24 +1286,26 @@
                          CAR ;
                          CAR ;
                          DUP 3 ;
-                         CDR ;
                          CAR ;
+                         CDR ;
+                         CDR ;
                          COMPARE ;
                          GT ;
                          IF { PUSH string "measurePeriod is exceed maximum value" ; FAILWITH } {} ;
                          DUP ;
+                         CDR ;
                          CAR ;
-                         CDR ;
-                         CDR ;
-                         CDR ;
+                         CAR ;
                          DUP 3 ;
-                         CDR ;
                          CAR ;
+                         CDR ;
+                         CDR ;
                          COMPARE ;
                          LT ;
                          IF { PUSH string "measurePeriod is less than minimal value" ; FAILWITH } {} ;
                          NOW ;
                          DUP 3 ;
+                         CAR ;
                          CAR ;
                          CAR ;
                          SUB ;
@@ -1333,16 +1336,40 @@
                          DUG 2 ;
                          CDR ;
                          CAR ;
-                         CAR ;
+                         CDR ;
                          SWAP ;
                          ABS ;
                          COMPARE ;
                          LT ;
                          IF { PUSH string "betsCloseTime is less than minimal allowed period" ; FAILWITH }
                             {} ;
+                         DUP ;
+                         CAR ;
+                         CAR ;
+                         CDR ;
+                         CDR ;
+                         DUP 3 ;
+                         CAR ;
+                         CDR ;
+                         CAR ;
+                         COMPARE ;
+                         GT ;
+                         IF { PUSH string "liquidityPercent is exceed maximum value" ; FAILWITH } {} ;
+                         DUP ;
+                         CAR ;
+                         CDR ;
+                         CDR ;
+                         CDR ;
+                         DUP 3 ;
+                         CAR ;
+                         CDR ;
+                         CAR ;
+                         COMPARE ;
+                         LT ;
+                         IF { PUSH string "liquidityPercent is less than minimal value" ; FAILWITH }
+                            {} ;
                          PUSH nat 0 ;
                          DUP 3 ;
-                         CDR ;
                          CDR ;
                          PUSH nat 0 ;
                          PAIR ;
@@ -1352,13 +1379,14 @@
                          DUG 2 ;
                          CDR ;
                          CDR ;
+                         CDR ;
                          PUSH mutez 0 ;
                          PAIR ;
                          PUSH mutez 0 ;
                          DUP 4 ;
                          CDR ;
-                         CAR ;
                          CDR ;
+                         CAR ;
                          PAIR ;
                          PAIR ;
                          PAIR ;
@@ -1370,8 +1398,9 @@
                          CDR ;
                          CAR ;
                          DUP 4 ;
-                         CDR ;
                          CAR ;
+                         CDR ;
+                         CDR ;
                          PAIR ;
                          DUP 3 ;
                          CAR ;
@@ -1382,11 +1411,10 @@
                          CAR ;
                          CAR ;
                          CDR ;
-                         CDR ;
-                         PAIR ;
-                         PAIR ;
-                         DUP 3 ;
                          CAR ;
+                         PAIR ;
+                         PAIR ;
+                         DUP 4 ;
                          CAR ;
                          CDR ;
                          CAR ;
@@ -1406,6 +1434,7 @@
                          PAIR ;
                          DUP 5 ;
                          CAR ;
+                         CAR ;
                          CDR ;
                          NOW ;
                          PAIR ;
@@ -1419,6 +1448,7 @@
                          PAIR ;
                          PUSH nat 0 ;
                          DIG 5 ;
+                         CAR ;
                          CAR ;
                          CAR ;
                          PAIR ;
