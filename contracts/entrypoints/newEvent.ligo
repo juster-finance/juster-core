@@ -31,7 +31,13 @@ block {
         failwith("betsCloseTime is less than minimal allowed period")
     else skip;
 
-    (* TODO: check that liquidityPercent is within min/max  *)
+    if eventParams.liquidityPercent > config.maxLiquidityPercent then
+        failwith("liquidityPercent is exceed maximum value")
+    else skip;
+
+    if eventParams.liquidityPercent < config.minLiquidityPercent then
+        failwith("liquidityPercent is less than minimal value")
+    else skip;
 
     const newEvent : eventType = record[
         currencyPair = eventParams.currencyPair;
