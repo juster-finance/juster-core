@@ -54,7 +54,6 @@ block {
         rewardCallFee = config.rewardCallFee;
         oracleAddress = config.oracleAddress;
         maxAllowedMeasureLag = config.maxAllowedMeasureLag;
-        minPoolSize = config.minPoolSize;
         isForceMajeure = False;
     ];
 

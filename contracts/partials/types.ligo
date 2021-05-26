@@ -58,12 +58,6 @@ type newEventConfigType is record [
         with different percents? (the way measurePeriod is setted) *)
     liquidityPercent : nat;
 
-    (* Maximal amplitude that affects ratio in one bet: *)
-    (* TODO:? maxRatioChange : nat; -need to be added to eventType *)
-
-    (* Minimal value in tez that should be keept in pool *)
-    minPoolSize : tez;
-
     (* Time window when startMeasurement / close should be called
         (or it would considered as Force Majeure) *)
     maxAllowedMeasureLag : nat;
@@ -122,7 +116,6 @@ type eventType is record [
 
     oracleAddress : address;
 
-    minPoolSize : tez;
     maxAllowedMeasureLag : nat;
 
     (* Flag that used to activate crash withdrawals *)

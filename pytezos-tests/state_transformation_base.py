@@ -676,7 +676,6 @@ class StateTransformationBaseTest(TestCase):
             'measureStartFee': self.measure_start_fee,
             'minMeasurePeriod': 60*5,  # 5 min
             'minPeriodToBetsClose': 60*5,  # 5 min
-            'minPoolSize': 0,
             'oracleAddress': self.oracle_address,
             'rewardCallFee': 100_000,
         }

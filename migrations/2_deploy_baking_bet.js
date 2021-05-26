@@ -12,7 +12,6 @@ const config = {
   minPeriodToBetsClose: 60*5,
   maxPeriodToBetsClose: 60*60*24*31,
   liquidityPercent: 0,
-  minPoolSize: 0,
   maxAllowedMeasureLag: 60*60*4,
   defaultTime: '2018-06-30T07:07:32Z',
 };
