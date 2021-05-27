@@ -3,10 +3,9 @@ build/contracts/
 package-lock.json
 yarn.lock
 faucet.json
-pytezos-jupyter-present/test-keys/*
+projects/*
 */.ipynb_checkpoints/*
 **/__pycache__/*
-pytezos-jupyter-present/
 2021-*.txt
 pytezos-tests/*.ipynb
 
