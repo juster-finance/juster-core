@@ -52,9 +52,9 @@ block {
         closedOracleTime = config.defaultTime;
         closedRate = 0n;
         closedDynamics = 0n;
-        isBetsForWin = False;
-        poolFor = 0tez;
-        poolAgainst = 0tez;
+        isbetsAboveEqWin = False;
+        poolAboveEq = 0tez;
+        poolBellow = 0tez;
         totalLiquidityShares = 0n;
         liquidityPercent = eventParams.liquidityPercent;
         measureStartFee = config.measureStartFee;

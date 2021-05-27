@@ -13,8 +13,8 @@ type oracleParam is string * contract(callbackReturnedValueMichelson)
 type eventIdType is option(nat)
 
 type betType is
-| For of unit
-| Against of unit
+| AboveEq of unit
+| Bellow of unit
 
 type betParams is record [
     eventId : nat;
@@ -99,11 +99,11 @@ type eventType is record [
     (* keeping closedRate for debugging purposes, it can be deleted after *)
     closedRate : nat;
     closedDynamics : nat;
-    isBetsForWin : bool;
+    isbetsAboveEqWin : bool;
 
-    (* Current liquidity in for and against pools, this is used to calculate current ratio: *)
-    poolFor : tez;
-    poolAgainst : tez;
+    (* Current liquidity in aboveEq and Bellow pools, this is used to calculate current ratio: *)
+    poolAboveEq : tez;
+    poolBellow : tez;
 
     totalLiquidityShares : nat;
 
@@ -136,8 +136,8 @@ type provideLiquidityParams is record [
     eventId : nat;
 
     (* Expected distribution / ratio of the event *)
-    expectedRatioFor : nat;
-    expectedRatioAgainst : nat;
+    expectedRatioAboveEq : nat;
+    expectedRatioBellow : nat;
 
     (* Max Slippage value in ratioPrecision. if 0n - ratio should be equal to expected,
         if equals K*ratioPrecision, ratio can diff not more than in (K-1) times *)
@@ -161,16 +161,16 @@ type action is
 type storage is record [
     events : big_map(nat, eventType);
 
-    (* Ledgers with winning amounts for participants if For/Against wins: *)
-    betsFor : ledgerType;
-    betsAgainst : ledgerType;
+    (* Ledgers with winning amounts for participants if AboveEq/Bellow wins: *)
+    betsAboveEq : ledgerType;
+    betsBellow : ledgerType;
 
     (* There are two ledgers used to manage liquidity:
-        - two with total provided liquidity in for/against pools,
+        - two with total provided liquidity in AboveEq/Bellow pools,
         - and one with LP share used to calculate how winning pool
             would be distributed *)
-    providedLiquidityFor : ledgerType;
-    providedLiquidityAgainst : ledgerType;
+    providedLiquidityAboveEq : ledgerType;
+    providedLiquidityBellow : ledgerType;
     liquidityShares : ledgerNatType;
 
     (* Keeping all provided bets for the Force Majeure, in case if

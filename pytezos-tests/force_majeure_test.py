@@ -24,14 +24,14 @@ class ForceMajeureDeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
             amount=2_000_000,
-            expected_for=1,
-            expected_against=1)
+            expected_above_eq=1,
+            expected_bellow=1)
 
-        # Participant B: bets FOR for 1 tez:
+        # Participant B: bets aboveEq for 1 tez:
         self.storage = self.check_bet_succeed(
             participant=self.b,
             amount=1_000_000,
-            bet='for',
+            bet='aboveEq',
             minimal_win=1_000_000)
 
         # Check that trying to run TFM after betting time

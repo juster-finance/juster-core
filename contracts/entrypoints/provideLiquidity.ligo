@@ -3,8 +3,8 @@ function provideLiquidity(
     var store : storage) : (list(operation) * storage) is
 block {
 
-    if ((params.expectedRatioAgainst = 0n)
-        or (params.expectedRatioFor = 0n)) then
+    if ((params.expectedRatioBellow = 0n)
+        or (params.expectedRatioAboveEq = 0n)) then
             failwith("Expected ratio in pool should be more than zero")
     else skip;
 
@@ -14,7 +14,7 @@ block {
 
     const eventId : nat = params.eventId;
     const event : eventType = getEvent(store, eventId);
-    const totalBets : tez = event.poolFor + event.poolAgainst;
+    const totalBets : tez = event.poolAboveEq + event.poolBellow;
     const key : ledgerKey = (Tezos.sender, eventId);
 
     if (Tezos.now > event.betsCloseTime) then
@@ -23,14 +23,14 @@ block {
 
     (* Calculating expected ratio using provided ratios: *)
     const expectedRatio : nat =
-        params.expectedRatioFor * store.ratioPrecision
-        / params.expectedRatioAgainst;
+        params.expectedRatioAboveEq * store.ratioPrecision
+        / params.expectedRatioBellow;
 
     (* Calculating ratio. It is equal expected ratio if this is first LP: *)
     var ratio : nat := expectedRatio;
     (* And it is calculated if this is adding more liquidity scenario *)
     if totalBets =/= 0tez then
-        ratio := event.poolFor * store.ratioPrecision / event.poolAgainst
+        ratio := event.poolAboveEq * store.ratioPrecision / event.poolBellow
     else skip;
 
     (* Slippage calculated in ratioPrecision values as multiplicative difference
@@ -48,32 +48,32 @@ block {
     else skip;
 
     (* Distributing liquidity: *)
-    (* forShare is share in interval (0, store.ratioPrecision) calculated from
+    (* aboveEqShare is share in interval (0, store.ratioPrecision) calculated from
         current ratio, 1:1 ratio leads to 50% share, 3:1 leads to 75% share *)
-    var forShare : nat :=
+    var aboveEqShare : nat :=
         ratio * store.ratioPrecision / (ratio + store.ratioPrecision);
-    const betFor : tez = natToTez(roundDiv(
-        tezToNat(Tezos.amount * forShare), store.ratioPrecision));
-    const betAgainst : tez = Tezos.amount - betFor;
+    const betAboveEq : tez = natToTez(roundDiv(
+        tezToNat(Tezos.amount * aboveEqShare), store.ratioPrecision));
+    const betBellow : tez = Tezos.amount - betAboveEq;
 
     (* liquidity shares: *)
     (* if this is first LP, newShares should be equal to sharePrecision *)
     var newShares : nat := store.sharePrecision;
-    (* otherwise if this is not first LP, calculating share using betFor poolit
-        it should not differ from added share to betAgainst pool: *)
+    (* otherwise if this is not first LP, calculating share using betAboveEq poolit
+        it should not differ from added share to betBellow pool: *)
     if totalBets =/= 0tez then
-        newShares := betFor * event.totalLiquidityShares / event.poolFor
+        newShares := betAboveEq * event.totalLiquidityShares / event.poolAboveEq
     else skip;
 
-    event.poolFor := event.poolFor + betFor;
-    event.poolAgainst := event.poolAgainst + betAgainst;
+    event.poolAboveEq := event.poolAboveEq + betAboveEq;
+    event.poolBellow := event.poolBellow + betBellow;
 
     (* Total liquidity by this LP: *)
-    store.providedLiquidityFor[key] := 
-        getLedgerAmount(key, store.providedLiquidityFor) + betFor;
+    store.providedLiquidityAboveEq[key] := 
+        getLedgerAmount(key, store.providedLiquidityAboveEq) + betAboveEq;
 
-    store.providedLiquidityAgainst[key] := 
-        getLedgerAmount(key, store.providedLiquidityAgainst) + betAgainst;
+    store.providedLiquidityBellow[key] := 
+        getLedgerAmount(key, store.providedLiquidityBellow) + betBellow;
 
     store.liquidityShares[key] :=
         getNatLedgerAmount(key, store.liquidityShares) + newShares;

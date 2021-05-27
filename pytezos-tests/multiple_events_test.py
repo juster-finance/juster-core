@@ -54,8 +54,8 @@ class MultipleEventsDeterminedTest(StateTransformationBaseTest):
             self.storage = self.check_provide_liquidity_succeed(
                 participant=self.b,
                 amount=1_000_000,
-                expected_for=1,
-                expected_against=1)
+                expected_above_eq=1,
+                expected_bellow=1)
 
         # Creating event 1:
         self.id = len(self.storage['events'])
@@ -67,14 +67,14 @@ class MultipleEventsDeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.b,
             amount=3_000_000,
-            expected_for=1,
-            expected_against=1)
+            expected_above_eq=1,
+            expected_bellow=1)
 
         # Checking that ratios in event 0 and 1 are the same:
         event_0 = self.storage['events'][0]
         event_1 = self.storage['events'][1]
-        self.assertEqual(event_0['poolFor'], event_1['poolFor'])
-        self.assertEqual(event_0['poolAgainst'], event_1['poolAgainst'])
+        self.assertEqual(event_0['poolAboveEq'], event_1['poolAboveEq'])
+        self.assertEqual(event_0['poolBellow'], event_1['poolBellow'])
 
         # No one bets, measure, close, B withdraws all in both events:
         bets_close_time = self.default_event_params['betsCloseTime']
@@ -104,15 +104,15 @@ class MultipleEventsDeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
             amount=4_000_000,
-            expected_for=3,
-            expected_against=1)
+            expected_above_eq=3,
+            expected_bellow=1)
 
         # B bets three times for 1 tez:
         for _ in range(3):
             self.storage = self.check_bet_succeed(
                 participant=self.b,
                 amount=1_000_000,
-                bet='for',
+                bet='aboveEq',
                 minimal_win=1_000_000)
 
         # Creating event 3:
@@ -125,21 +125,21 @@ class MultipleEventsDeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
             amount=4_000_000,
-            expected_for=3,
-            expected_against=1)
+            expected_above_eq=3,
+            expected_bellow=1)
 
         # B bets one time for 3 tez:
         self.storage = self.check_bet_succeed(
             participant=self.b,
             amount=3_000_000,
-            bet='for',
+            bet='aboveEq',
             minimal_win=3_000_000)
 
         # Checking that ratios in event 2 and 3 are the same:
         event_2 = self.storage['events'][2]
         event_3 = self.storage['events'][3]
-        self.assertEqual(event_2['poolFor'], event_3['poolFor'])
-        self.assertEqual(event_2['poolAgainst'], event_3['poolAgainst'])
+        self.assertEqual(event_2['poolAboveEq'], event_3['poolAboveEq'])
+        self.assertEqual(event_2['poolBellow'], event_3['poolBellow'])
 
         # Measure, close, B wins 1:6 0.5tez:
         for event_id in [2, 3]:

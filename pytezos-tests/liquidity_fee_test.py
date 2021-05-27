@@ -29,8 +29,8 @@ class LiquidityFeeDynamicTest(StateTransformationBaseTest):
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
             amount=2_000_000,
-            expected_for=1,
-            expected_against=1)
+            expected_above_eq=1,
+            expected_bellow=1)
 
         # Participant B: bets for 1tez at different times and
         # have different possible win amount (adjusted by liq percent):
@@ -52,10 +52,10 @@ class LiquidityFeeDynamicTest(StateTransformationBaseTest):
             result_storage = self.check_bet_succeed(
                 participant=self.b,
                 amount=1_000_000,
-                bet='for',
+                bet='aboveEq',
                 minimal_win=1_000_000)
 
-            possible_win = result_storage['betsFor'][(self.b, self.id)]
+            possible_win = result_storage['betsAboveEq'][(self.b, self.id)]
             calculated_win = calculate_possible_win(self.current_time)
 
             self.assertEqual(possible_win, calculated_win)

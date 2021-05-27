@@ -23,8 +23,8 @@ class ForceMajeureDeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
             amount=10,
-            expected_for=1,
-            expected_against=1)
+            expected_above_eq=1,
+            expected_bellow=1)
 
         self.current_time = bets_close_time + max_lag // 2
         self.storage = self.check_start_measurement_succeed(sender=self.a)

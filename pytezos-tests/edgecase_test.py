@@ -26,15 +26,15 @@ class ZeroEdgecasesDeterminedTest(StateTransformationBaseTest):
         self.check_provide_liquidity_fails_with(
             participant=self.a,
             amount=0,
-            expected_for=1,
-            expected_against=1,
+            expected_above_eq=1,
+            expected_bellow=1,
             msg_contains='Zero liquidity provided')
 
         # A tries to bet but there are no liquidity, assert failed:
         self.check_bet_fails_with(
             participant=self.a,
             amount=1_000_000,
-            bet='for',
+            bet='aboveEq',
             minimal_win=1_000_000,
             msg_contains="Can't process bet before liquidity added")
 
@@ -42,15 +42,15 @@ class ZeroEdgecasesDeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.b,
             amount=10,
-            expected_for=1,
-            expected_against=1)
+            expected_above_eq=1,
+            expected_bellow=1)
 
-        # A provides liquidity with 0 expected for/against, assert failed:
+        # A provides liquidity with 0 expected aboveEq/bellow, assert failed:
         self.check_provide_liquidity_fails_with(
             participant=self.a,
             amount=1_000_000,
-            expected_for=0,
-            expected_against=1,
+            expected_above_eq=0,
+            expected_bellow=1,
             msg_contains='Expected ratio in pool should be more than zero')
 
         # A tries to adding liquidity with rate that very different from internal rate
@@ -58,23 +58,23 @@ class ZeroEdgecasesDeterminedTest(StateTransformationBaseTest):
         self.check_provide_liquidity_fails_with(
             participant=self.a,
             amount=1_000_000,
-            expected_for=10,
-            expected_against=1,
+            expected_above_eq=10,
+            expected_bellow=1,
             msg_contains='Expected ratio very differs from current pool ratio')
 
-        # A provides liquidity with 0 expected for/against (again), assert failed:
+        # A provides liquidity with 0 expected aboveEq/bellow (again), assert failed:
         self.check_provide_liquidity_fails_with(
             participant=self.a,
             amount=1_000_000,
-            expected_for=1,
-            expected_against=0,
+            expected_above_eq=1,
+            expected_bellow=0,
             msg_contains='Expected ratio in pool should be more than zero')
 
         # A tries to Bet with winRate a lot more than expected:
         self.check_bet_fails_with(
             participant=self.a,
             amount=1,
-            bet='against',
+            bet='bellow',
             minimal_win=5,
             msg_contains='Wrong minimalWinAmount')
 
@@ -114,8 +114,8 @@ class ZeroEdgecasesDeterminedTest(StateTransformationBaseTest):
         self.check_provide_liquidity_fails_with(
             participant=self.a,
             amount=10,
-            expected_for=1,
-            expected_against=1,
+            expected_above_eq=1,
+            expected_bellow=1,
             msg_contains='Providing Liquidity after betCloseTime is not allowed')
 
         # B withdraws all:
@@ -133,7 +133,7 @@ class ZeroEdgecasesDeterminedTest(StateTransformationBaseTest):
         self.check_bet_fails_with(
             participant=self.a,
             amount=1,
-            bet='against',
+            bet='bellow',
             minimal_win=5,
             msg_contains='Bets after betCloseTime is not allowed')
 

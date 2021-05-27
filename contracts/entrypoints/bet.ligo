@@ -29,16 +29,16 @@ function bet(
     var store : storage) : (list(operation) * storage) is
 block {
 
-    (* TODO: assert that betFor / betAgainst is less than MAX_RATIO
+    (* TODO: assert that betAboveEq / betBellow is less than MAX_RATIO
         controlled by Manager *)
-    (* TODO: assert that betAgainst / betFor is less than MAX_RATIO
+    (* TODO: assert that betBellow / betAboveEq is less than MAX_RATIO
         controlled by Manager *)
 
     const eventId : nat = params.eventId;
     const event : eventType = getEvent(store, eventId);
 
     (* Checking that there are liquidity in both pools (>0) *)
-    if (event.poolFor = 0tez) or (event.poolAgainst = 0tez) then
+    if (event.poolAboveEq = 0tez) or (event.poolBellow = 0tez) then
         failwith("Can't process bet before liquidity added")
     else skip;
 
@@ -57,15 +57,15 @@ block {
     (* TODO: refactor this two similar blocks somehow?
         or keep straight and simple? *)
     case params.bet of
-    | For -> block {
+    | AboveEq -> block {
         (* adding liquidity to betting pool *)
-        event.poolFor := event.poolFor + Tezos.amount;
+        event.poolAboveEq := event.poolAboveEq + Tezos.amount;
         const winDelta : tez =
-            natToTez(tezToNat(Tezos.amount) * event.poolAgainst
-            / event.poolFor);
+            natToTez(tezToNat(Tezos.amount) * event.poolBellow
+            / event.poolAboveEq);
 
         const winDeltaPossible : tez =
-            minTez(excludeLiquidity(winDelta, event, store), event.poolAgainst);
+            minTez(excludeLiquidity(winDelta, event, store), event.poolBellow);
 
         possibleWinAmount := Tezos.amount + winDeltaPossible;
         if possibleWinAmount < params.minimalWinAmount
@@ -74,20 +74,20 @@ block {
 
         (* removing liquidity from another pool to keep ratio balanced: *)
         (* NOTE: liquidity fee is included in the delta *)
-        event.poolAgainst := event.poolAgainst - winDeltaPossible;
+        event.poolBellow := event.poolBellow - winDeltaPossible;
 
-        store.betsFor[key] :=
-            getLedgerAmount(key, store.betsFor) + possibleWinAmount;
+        store.betsAboveEq[key] :=
+            getLedgerAmount(key, store.betsAboveEq) + possibleWinAmount;
     }
-    | Against -> {
+    | Bellow -> {
         (* adding liquidity to betting pool *)
-        event.poolAgainst := event.poolAgainst + Tezos.amount;
+        event.poolBellow := event.poolBellow + Tezos.amount;
         const winDelta : tez =
-            natToTez(tezToNat(Tezos.amount) * event.poolFor
-            / event.poolAgainst);
+            natToTez(tezToNat(Tezos.amount) * event.poolAboveEq
+            / event.poolBellow);
 
         const winDeltaPossible : tez =
-            minTez(excludeLiquidity(winDelta, event, store), event.poolFor);
+            minTez(excludeLiquidity(winDelta, event, store), event.poolAboveEq);
 
         possibleWinAmount := Tezos.amount + winDeltaPossible;
         if possibleWinAmount < params.minimalWinAmount
@@ -96,15 +96,15 @@ block {
 
         (* removing liquidity from another pool to keep ratio balanced: *)
         (* NOTE: liquidity fee is included in the delta *)
-        event.poolFor := event.poolFor - winDeltaPossible;
+        event.poolAboveEq := event.poolAboveEq - winDeltaPossible;
 
-        store.betsAgainst[key] :=
-            getLedgerAmount(key, store.betsAgainst) + possibleWinAmount;
+        store.betsBellow[key] :=
+            getLedgerAmount(key, store.betsBellow) + possibleWinAmount;
     }
     end;
 
     (* Adding this bet into deposited bets ledger that tracks all bets
-        regardless for / against: *)
+        regardless above / bellow: *)
     store.depositedBets[key] :=
         getLedgerAmount(key, store.depositedBets) + Tezos.amount;
 
