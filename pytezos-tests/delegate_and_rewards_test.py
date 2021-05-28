@@ -48,3 +48,22 @@ class DelegateAndBakingRewardsDeterminedTest(StateTransformationBaseTest):
         operation = result.operations[0]
         self.assertEqual(operation['destination'], self.manager)
         self.assertAmountEqual(operation, 200_000)
+
+        # Sending another 500_000 mutez to contract:
+        result = self.contract.default().with_amount(500_000).interpret(
+            now=self.current_time,
+            storage=self.storage,
+            sender=random_delegate_from_twitter)
+        self.storage = result.storage
+
+        # Withdrawing with manager again:
+        result = self.contract.claimBakingRewards().interpret(
+            now=self.current_time,
+            storage=self.storage,
+            sender=self.manager)
+        self.storage = result.storage
+        self.assertEqual(len(result.operations), 1)
+
+        operation = result.operations[0]
+        self.assertEqual(operation['destination'], self.manager)
+        self.assertAmountEqual(operation, 500_000)
