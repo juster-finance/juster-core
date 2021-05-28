@@ -50,4 +50,4 @@ class ManagerDeterminedTest(StateTransformationBaseTest):
             source=self.a,
             sender=self.oracle_address)
 
-        self.assertTrue(self.storage['events'][self.id]['isbetsAboveEqWin'])
+        self.assertTrue(self.storage['events'][self.id]['isBetsAboveEqWin'])

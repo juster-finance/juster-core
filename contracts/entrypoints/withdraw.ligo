@@ -8,7 +8,7 @@ block {
     var payout : tez := 0tez;
     const share : nat = getNatLedgerAmount(key, store.liquidityShares);
 
-    if event.isbetsAboveEqWin then block {
+    if event.isBetsAboveEqWin then block {
         payout := getLedgerAmount(key, store.betsAboveEq);
 
         (* calculating liquidity return: *)

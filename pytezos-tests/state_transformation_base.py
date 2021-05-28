@@ -552,7 +552,7 @@ class StateTransformationBaseTest(TestCase):
         self.assertEqual(event['closedDynamics'], dynamics)
 
         is_bets_above_eq_win = dynamics >= event['targetDynamics']
-        self.assertEqual(event['isbetsAboveEqWin'], is_bets_above_eq_win)
+        self.assertEqual(event['isBetsAboveEqWin'], is_bets_above_eq_win)
 
         if event['expirationFee'] == 0:
             self.assertEqual(len(result.operations), 0)

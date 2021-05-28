@@ -49,7 +49,7 @@ block {
     event.closedDynamics :=
         param.rate * store.targetDynamicsPrecision / event.startRate;
     event.isClosed := True;
-    event.isbetsAboveEqWin := event.closedDynamics >= event.targetDynamics;
+    event.isBetsAboveEqWin := event.closedDynamics >= event.targetDynamics;
 
     (* Paying expirationFee for this method initiator: *)
     const operations : list(operation) =

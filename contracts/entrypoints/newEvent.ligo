@@ -52,7 +52,7 @@ block {
         closedOracleTime = config.defaultTime;
         closedRate = 0n;
         closedDynamics = 0n;
-        isbetsAboveEqWin = False;
+        isBetsAboveEqWin = False;
         poolAboveEq = 0tez;
         poolBellow = 0tez;
         totalLiquidityShares = 0n;

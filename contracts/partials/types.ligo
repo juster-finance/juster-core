@@ -99,7 +99,7 @@ type eventType is record [
     (* keeping closedRate for debugging purposes, it can be deleted after *)
     closedRate : nat;
     closedDynamics : nat;
-    isbetsAboveEqWin : bool;
+    isBetsAboveEqWin : bool;
 
     (* Current liquidity in aboveEq and Bellow pools, this is used to calculate current ratio: *)
     poolAboveEq : tez;
