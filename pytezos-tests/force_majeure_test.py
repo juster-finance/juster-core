@@ -24,14 +24,14 @@ class ForceMajeureDeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
             amount=2_000_000,
-            expected_for=1,
-            expected_against=1)
+            expected_above_eq=1,
+            expected_bellow=1)
 
-        # Participant B: bets FOR for 1 tez:
+        # Participant B: bets aboveEq for 1 tez:
         self.storage = self.check_bet_succeed(
             participant=self.b,
             amount=1_000_000,
-            bet='for',
+            bet='aboveEq',
             minimal_win=1_000_000)
 
         # Check that trying to run TFM after betting time
@@ -44,9 +44,22 @@ class ForceMajeureDeterminedTest(StateTransformationBaseTest):
 
         self._prepare_to_force_majeure()
 
-        # Failed to start measurement in time window, run TFM is succeed:
+        # Trying to run start measurement after time window is elapsed:
         max_lag = self.default_config['maxAllowedMeasureLag']
         self.current_time = self.default_event_params['betsCloseTime'] + max_lag*2
+        callback_values = {
+            'currencyPair': self.currency_pair,
+            'lastUpdate': self.current_time - 1*ONE_HOUR,
+            'rate': 6_000_000
+        }
+
+        self.check_start_measurement_callback_fails_with(
+            callback_values=callback_values,
+            source=self.a,
+            sender=self.oracle_address,
+            msg_contains='Measurement failed: oracle time exceed maxAllowedMeasureLag')
+
+        # Failed to start measurement in time window, run TFM is succeed:
         self.storage = self.check_trigger_force_majeure_succeed(sender=self.a)
 
         # Trying to bet / LP after TFM should fail with Bets / Providing
@@ -90,8 +103,18 @@ class ForceMajeureDeterminedTest(StateTransformationBaseTest):
         self.current_time = bets_close_time + measure_period + max_lag // 2
         self.check_trigger_force_majeure_fails_with(sender=self.a)
 
-        # Failed to close in time window, run TFM is succeed:
+        # Trying to run close after time window is elapsed:
+        max_lag = self.default_config['maxAllowedMeasureLag']
         self.current_time = bets_close_time + measure_period + max_lag * 2
+        callback_values.update({'lastUpdate': self.current_time - 1*ONE_HOUR})
+
+        self.check_close_callback_fails_with(
+            callback_values=callback_values,
+            source=self.a,
+            sender=self.oracle_address,
+            msg_contains='Close failed: oracle time exceed maxAllowedMeasureLag')
+
+        # Failed to close in time window, run TFM is succeed:
         self.storage = self.check_trigger_force_majeure_succeed(sender=self.a)
 
         # check A withdraws the same value as he lp-ed:

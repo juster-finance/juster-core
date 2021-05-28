@@ -3,7 +3,7 @@
 
     Three participants: a, b and c making next interactions:
         (1) participant A adds initial liquidity at the beginning (0 hours from start): 100k with ratio 1:1
-        (2) participant B betFor with 50k (1 hour from start)
+        (2) participant B betAboveEq with 50k (1 hour from start)
             rate at bet 50:100, if S: win amount +25k*L, if ~S: loose amount -50k
             rate after bet 100:25 == 4:1
         (3) participant A adds more liquidity (12 hours from start): 50k with ratio 4:1 (f:a)
@@ -13,11 +13,11 @@
         (7) participant B cals close_call at 38 hours from the start
         (8) oracle returns that price at the close is 7.5$ per xtz. Oracle measurement time is behind one hour
 
-    Closed dynamics is +25%, betsFor pool is wins
+    Closed dynamics is +25%, betsAboveEq pool is wins
                                     (1)      (2)      (3)       (4)
     Total event pool:               100_000 + 25_000 + 50_000 + 100_000 = 265_000
-    betForLiquidityPool:             50_000 + 50_000 + 40_000 +  80_000 = 220_000
-    betAgainstLiquidityPool:         50_000 - 25_000 + 10_000 +  20_000 =  55_000
+    betAboveEqLiquidityPool:             50_000 + 50_000 + 40_000 +  80_000 = 220_000
+    betBellowLiquidityPool:         50_000 - 25_000 + 10_000 +  20_000 =  55_000
             (liquidity rate is not included in the pools)
 
     if participant B wins he get 50_000 + 25_000 * 100% = 75_000 (this value should be saved in winning amounts ledger)
@@ -26,13 +26,13 @@
     Total win ~S LP profit / loss:        0 + 50_000 +      0 +       0 =  50_000  (and not including L bonus for bets)
             (liquidity rate is included in profit/loss pools)
 
-    Total liquidity For bonuses:     50_000 +      0 + 20_000 +       0 =  70_000
-    Total liquidity Against bonuses: 50_000 +      0 +  5_000 +       0 =  55_000
+    Total liquidity AboveEq bonuses:     50_000 +      0 + 20_000 +       0 =  70_000
+    Total liquidity Bellow bonuses: 50_000 +      0 +  5_000 +       0 =  55_000
     Total provided Liquidity:       100_000 +      0 + 50_000 + 100_000 = 250_000
 
-    selected liquidity pool to distribute profits: liquidity Against
+    selected liquidity pool to distribute profits: liquidity Bellow
 
-    liquidity Against shares:
+    liquidity Bellow shares:
         A: 55_000 / 55_000 = 100%
         C: 0      / 55_000 = 0%
 
@@ -75,23 +75,23 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
             amount=100_000,
-            expected_for=1,
-            expected_against=1)
+            expected_above_eq=1,
+            expected_bellow=1)
 
         # Testing that with current ratio 1:1, bet with 10:1 ratio fails:
         self.check_bet_fails_with(
             participant=self.a,
             amount=100_000,
-            bet='for',
+            bet='aboveEq',
             minimal_win=1_000_000,
             msg_contains='Wrong minimalWinAmount')
 
-        # Participant B: bets for 50_000 after 1 hour:
+        # Participant B: bets aboveEq 50_000 after 1 hour:
         self.current_time = RUN_TIME + ONE_HOUR
         self.storage = self.check_bet_succeed(
             participant=self.b,
             amount=50_000,
-            bet='for',
+            bet='aboveEq',
             minimal_win=50_000)
 
         # Participant A: adding more liquidity after 12 hours
@@ -100,16 +100,16 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
             amount=50_000,
-            expected_for=4,
-            expected_against=1)
+            expected_above_eq=4,
+            expected_bellow=1)
 
         # Participant C: adding more liquidity at the very end:
         self.current_time = RUN_TIME + 24*ONE_HOUR
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.c,
             amount=100_000,
-            expected_for=4,
-            expected_against=1)
+            expected_above_eq=4,
+            expected_bellow=1)
 
         # Running measurement and make failwith checks:
         self.current_time = RUN_TIME + 26*ONE_HOUR
@@ -166,7 +166,7 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
         self.check_bet_fails_with(
             participant=self.a,
             amount=100_000,
-            bet='against',
+            bet='bellow',
             minimal_win=100_000,
             msg_contains='Bets after betCloseTime is not allowed')
 
@@ -174,8 +174,8 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
         self.check_provide_liquidity_fails_with(
             participant=self.c,
             amount=100_000,
-            expected_for=1,
-            expected_against=1,
+            expected_above_eq=1,
+            expected_bellow=1,
             msg_contains='Providing Liquidity after betCloseTime is not allowed')
 
         # Check that that calling measurement after it was already succesfully

@@ -2,6 +2,9 @@ function startMeasurementCallback(
     var params : callbackReturnedValueMichelson;
     var store : storage) : (list(operation) * storage) is
 block {
+
+    checkNoAmountIncluded(unit);
+
     const param : callbackReturnedValue = Layout.convert_from_right_comb(params);
 
     const eventId : nat = case store.measurementStartCallId of
@@ -22,8 +25,12 @@ block {
     if event.betsCloseTime > param.lastUpdate
     then failwith("Can't start measurement untill oracle time > betsCloseTime")
     else skip;
-    (* TODO: need to decide, should it be possible to run method if time
-        exceed allowed window *)
+
+    const lastAllowedTime : timestamp =
+        event.betsCloseTime + int(event.maxAllowedMeasureLag);
+    if param.lastUpdate > lastAllowedTime
+    then failwith("Measurement failed: oracle time exceed maxAllowedMeasureLag")
+    else skip;
 
     (* Starting measurement: *)
     event.measureOracleStartTime := param.lastUpdate;

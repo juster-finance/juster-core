@@ -8,25 +8,25 @@ block {
     var payout : tez := 0tez;
     const share : nat = getNatLedgerAmount(key, store.liquidityShares);
 
-    if event.isBetsForWin then block {
-        payout := getLedgerAmount(key, store.betsFor);
+    if event.isBetsAboveEqWin then block {
+        payout := getLedgerAmount(key, store.betsAboveEq);
 
         (* calculating liquidity return: *)
-        const providedFor : tez =
-            getLedgerAmount(key, store.providedLiquidityFor);
-        const againstReturn : tez =
-            share * event.poolAgainst/ event.totalLiquidityShares;
-        payout := payout + providedFor + againstReturn;
+        const providedAboveEq : tez =
+            getLedgerAmount(key, store.providedLiquidityAboveEq);
+        const bellowReturn : tez =
+            share * event.poolBellow/ event.totalLiquidityShares;
+        payout := payout + providedAboveEq + bellowReturn;
     }
     else block {
-        payout := getLedgerAmount(key, store.betsAgainst);
+        payout := getLedgerAmount(key, store.betsBellow);
 
         (* calculating liquidity return. It is distributed by loosed ledger: *)
-        const providedAgainst : tez =
-            getLedgerAmount(key, store.providedLiquidityAgainst);
-        const forReturn : tez =
-            share * event.poolFor / event.totalLiquidityShares;
-        payout := payout + providedAgainst + forReturn;
+        const providedBellow : tez =
+            getLedgerAmount(key, store.providedLiquidityBellow);
+        const aboveEqReturn : tez =
+            share * event.poolAboveEq / event.totalLiquidityShares;
+        payout := payout + providedBellow + aboveEqReturn;
     };
 } with payout
 
@@ -35,8 +35,8 @@ function forceMajeureReturnPayout(
     var store: storage;
     var key : ledgerKey) : tez is (
         getLedgerAmount(key, store.depositedBets)
-        + getLedgerAmount(key, store.providedLiquidityFor)
-        + getLedgerAmount(key, store.providedLiquidityAgainst))
+        + getLedgerAmount(key, store.providedLiquidityAboveEq)
+        + getLedgerAmount(key, store.providedLiquidityBellow))
 
 
 function withdraw(
@@ -47,6 +47,8 @@ block {
         and make it possible to call it by anyone *)
     (* TODO: allow to call this method by liquidity providers after K hours
         after close and reduce withdraw amount a bit in this case *)
+
+    checkNoAmountIncluded(unit);
 
     const event : eventType = getEvent(store, eventId);
     const key : ledgerKey = (Tezos.sender, eventId);
@@ -62,11 +64,11 @@ block {
     else skip;
 
     (* Removing key from all ledgers: *)
-    store.betsFor := Big_map.remove(key, store.betsFor);
-    store.betsAgainst := Big_map.remove(key, store.betsAgainst);
-    store.providedLiquidityFor := Big_map.remove(key, store.providedLiquidityFor);
-    store.providedLiquidityAgainst :=
-        Big_map.remove(key, store.providedLiquidityAgainst);
+    store.betsAboveEq := Big_map.remove(key, store.betsAboveEq);
+    store.betsBellow := Big_map.remove(key, store.betsBellow);
+    store.providedLiquidityAboveEq := Big_map.remove(key, store.providedLiquidityAboveEq);
+    store.providedLiquidityBellow :=
+        Big_map.remove(key, store.providedLiquidityBellow);
     store.liquidityShares := Big_map.remove(key, store.liquidityShares);
     store.depositedBets := Big_map.remove(key, store.depositedBets);
 

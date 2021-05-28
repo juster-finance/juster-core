@@ -7,8 +7,8 @@
                                                +30m
                                      A.LP B.F  A.LP C.LP D.A  B.F  A.LP
                                      (1)  (2)  (3)  (4)  (5)  (6)  (7)
-    poolAgainst:                     1.0  0.5  1.0  2.0  4.0  2.0  2.5
-    poolFor:                         1.0  2.0  4.0  8.0  4.0  8.0 10.0
+    poolBellow:                     1.0  0.5  1.0  2.0  4.0  2.0  2.5
+    poolAboveEq:                         1.0  2.0  4.0  8.0  4.0  8.0 10.0
 
     liquidityShares % added          -         100% 100%           25%
     liquidityShares diff             100  -    100  200  -    -    100
@@ -16,15 +16,15 @@
 
     A shares: 300, C shares: 200
 
-    (2) participant B bets FOR 1tez
+    (2) participant B bets aboveEq 1tez
         - new ratio: 0.5:2
     (3) participant A adds more liquidity: 2.5tez with ratio 1:4, after 30 mins
     (4) participant C adds more liquidity: 5tez with ratio 1:4, after 30 mins
-    (5) participant D bets AGAINST for 2tez
-    (6) participant B bets FOR 4tez
+    (5) participant D bets bellow for 2tez
+    (6) participant B bets aboveEq 4tez
     (7) participant A adds more liquidity 5tez
 
-    Result: betAgainst win
+    Result: betBellow win
         - A: get liquidity bonus:
             (1) get 100% of first B bet: + 1.0
             (2) loose 50% of D bet: -2.0
@@ -68,14 +68,14 @@ class MultipleLPDeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
             amount=2_000_000,
-            expected_for=1,
-            expected_against=1)
+            expected_above_eq=1,
+            expected_bellow=1)
 
-        # Participant B: bets FOR for 1 tez:
+        # Participant B: bets aboveEq for 1 tez:
         self.storage = self.check_bet_succeed(
             participant=self.b,
             amount=1_000_000,
-            bet='for',
+            bet='aboveEq',
             minimal_win=1_000_000)
 
         # Participant A: adding more liquidity after 30 mins with 1:4:
@@ -83,36 +83,36 @@ class MultipleLPDeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
             amount=2_500_000,
-            expected_for=4,
-            expected_against=1)
+            expected_above_eq=4,
+            expected_bellow=1)
 
         # Participant C: adding more liquidity after 30 mins with 1:4:
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.c,
             amount=5_000_000,
-            expected_for=4,
-            expected_against=1)
+            expected_above_eq=4,
+            expected_bellow=1)
 
-        # Participant D: bets AGAINST for 2 tez:
+        # Participant D: bets bellow for 2 tez:
         self.storage = self.check_bet_succeed(
             participant=self.d,
             amount=2_000_000,
-            bet='against',
+            bet='bellow',
             minimal_win=2_000_000)
 
-        # Participant B: bets FOR for 4 tez:
+        # Participant B: bets aboveEq for 4 tez:
         self.storage = self.check_bet_succeed(
             participant=self.b,
             amount=4_000_000,
-            bet='for',
+            bet='aboveEq',
             minimal_win=4_000_000)
 
         # Participant A: adding more liquidity after 30 mins with 1:4:
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
             amount=5_000_000,
-            expected_for=4,
-            expected_against=1)
+            expected_above_eq=4,
+            expected_bellow=1)
 
         # Running measurement:
         self.current_time = RUN_TIME + 2*ONE_HOUR

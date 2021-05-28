@@ -3,7 +3,7 @@
 
     Four participants: a, b, c and d making next interactions:
         (1) participant A adds initial liquidity at the beginning (0 hours from start): 100k with ratio 1:1
-        (2) participant B bets For with 50k (1 hour from start)
+        (2) participant B bets AboveEq with 50k (1 hour from start)
             rate before bet 50:50
             rate at bet     50:100, if S: win amount +25k*L, if ~S: loose amount -50k
             rate after bet  25:100 == 1:4 (a:f)
@@ -16,7 +16,7 @@
             totalLiquidityShares: 140
             newShares for D: 360
 
-        (5) participant D bets Against with 125k (14 hours from start)
+        (5) participant D bets Bellow with 125k (14 hours from start)
             rate before bet 500:125
             rate at bet     500:250 (f:a), if ~S: win amount +250k*L, if S: loose amount 125k
             rate after bet  250:250
@@ -30,11 +30,11 @@
         (9) participant B cals close_call at 38 hours from the start
         (10) oracle returns that price at the close is 7.5$ per xtz. Oracle measurement time is behind one hour
 
-    Closed dynamics is +25%, betsFor pool is wins
+    Closed dynamics is +25%, betsAboveEq pool is wins
                                       (1)      (2)      (3)       (4)       (5)       (6)
     Total event pool:               100_000 + 25_000 + 50_000 + 450_000 + 125_000 + 100_000 = 850_000
-    betForLiquidityPool:             50_000 + 50_000 + 40_000 + 360_000 - 250_000 +  50_000 = 300_000
-    betAgainstLiquidityPool:         50_000 - 25_000 + 10_000 +  90_000 + 125_000 +  50_000 = 300_000
+    betAboveEqLiquidityPool:             50_000 + 50_000 + 40_000 + 360_000 - 250_000 +  50_000 = 300_000
+    betBellowLiquidityPool:         50_000 - 25_000 + 10_000 +  90_000 + 125_000 +  50_000 = 300_000
             (liquidity rate is not included in the pools)
 
     if S:
@@ -47,9 +47,9 @@
     Total win S  LP profit / loss:        0 - 25_000 +      0 +       0 + 125_000 +       0 = 100_000
     Total win ~S LP profit / loss:        0 + 50_000 +      0 +       0 - 125_000 +       0 = -75_000
 
-    Selected liquidity pool to distribute profits: liquidity Against (because For wins)
+    Selected liquidity pool to distribute profits: liquidity Bellow (because AboveEq wins)
 
-    liquidity For profit / loss distribution:
+    liquidity AboveEq profit / loss distribution:
         A: -25_000 * 1.00 + 125_000 * 140/500 = 10_000
         D: 360/500 * 125_000 = 90_000
         C: 0
@@ -88,15 +88,15 @@ class FourParticipantsDeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
             amount=100_000,
-            expected_for=1,
-            expected_against=1)
+            expected_above_eq=1,
+            expected_bellow=1)
 
-        # Participant B: bets for 50_000 after 1 hour:
+        # Participant B: bets aboveEq 50_000 after 1 hour:
         self.current_time = RUN_TIME + ONE_HOUR
         self.storage = self.check_bet_succeed(
             participant=self.b,
             amount=50_000,
-            bet='for',
+            bet='aboveEq',
             minimal_win=50_000)
 
         # Participant A: adding more liquidity after 12 hours (1/2 of the bets period):
@@ -104,21 +104,21 @@ class FourParticipantsDeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
             amount=50_000,
-            expected_for=4,
-            expected_against=1)
+            expected_above_eq=4,
+            expected_bellow=1)
 
         # Participant D: adding more liquidity after 12 hours:
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.d,
             amount=450_000,
-            expected_for=4,
-            expected_against=1)
+            expected_above_eq=4,
+            expected_bellow=1)
 
-        # Participant D: bets against 125_000 after 12 hours:
+        # Participant D: bets bellow 125_000 after 12 hours:
         self.storage = self.check_bet_succeed(
             participant=self.d,
             amount=125_000,
-            bet='against',
+            bet='bellow',
             minimal_win=125_000)
 
         # Participant C: adding more liquidity at the very end:
@@ -126,8 +126,8 @@ class FourParticipantsDeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.c,
             amount=100_000,
-            expected_for=1,
-            expected_against=1)
+            expected_above_eq=1,
+            expected_bellow=1)
 
         # Running measurement:
         self.current_time = RUN_TIME + 26*ONE_HOUR

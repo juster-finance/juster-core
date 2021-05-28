@@ -50,5 +50,23 @@ class EventConfigurationDeterminedTest(StateTransformationBaseTest):
             amount=self.measure_start_fee + self.expiration_fee,
             msg_contains='betsCloseTime is exceed maximum allowed period')
 
-        # TODO: if there are would be controlled liquidity percent
-        # there are should be similar tests for this liquidity params
+
+        # Checking that creating event with too small liquidity fee is failed:
+        self.storage['newEventConfig']['minLiquidityPercent'] = 10_000
+        event_params = self.default_event_params.copy()
+        event_params['liquidityPercent'] = 1_000
+
+        self.check_new_event_fails_with(
+            event_params=event_params,
+            amount=self.measure_start_fee + self.expiration_fee,
+            msg_contains='liquidityPercent is less than minimal value')
+
+        # Checking that creating event with too big liquidity fee is failed:
+        max_liquidity_fee = self.default_config['maxLiquidityPercent']
+        event_params = self.default_event_params.copy()
+        event_params['liquidityPercent'] = max_liquidity_fee * 2
+
+        self.check_new_event_fails_with(
+            event_params=event_params,
+            amount=self.measure_start_fee + self.expiration_fee,
+            msg_contains='liquidityPercent is exceed maximum value')

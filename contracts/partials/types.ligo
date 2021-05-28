@@ -13,8 +13,8 @@ type oracleParam is string * contract(callbackReturnedValueMichelson)
 type eventIdType is option(nat)
 
 type betType is
-| For of unit
-| Against of unit
+| AboveEq of unit
+| Bellow of unit
 
 type betParams is record [
     eventId : nat;
@@ -54,15 +54,9 @@ type newEventConfigType is record [
     minPeriodToBetsClose : nat;
     maxPeriodToBetsClose : nat;
 
-    (* TODO: maybe control min/max liquidity percent and allow events
-        with different percents? (the way measurePeriod is setted) *)
-    liquidityPercent : nat;
-
-    (* Maximal amplitude that affects ratio in one bet: *)
-    (* TODO:? maxRatioChange : nat; -need to be added to eventType *)
-
-    (* Minimal value in tez that should be keept in pool *)
-    minPoolSize : tez;
+    (* min/max allowed window that limits liquidityPercent *)
+    minLiquidityPercent : nat;
+    maxLiquidityPercent : nat;
 
     (* Time window when startMeasurement / close should be called
         (or it would considered as Force Majeure) *)
@@ -105,11 +99,11 @@ type eventType is record [
     (* keeping closedRate for debugging purposes, it can be deleted after *)
     closedRate : nat;
     closedDynamics : nat;
-    isBetsForWin : bool;
+    isBetsAboveEqWin : bool;
 
-    (* Current liquidity in for and against pools, this is used to calculate current ratio: *)
-    poolFor : tez;
-    poolAgainst : tez;
+    (* Current liquidity in aboveEq and Bellow pools, this is used to calculate current ratio: *)
+    poolAboveEq : tez;
+    poolBellow : tez;
 
     totalLiquidityShares : nat;
 
@@ -122,7 +116,6 @@ type eventType is record [
 
     oracleAddress : address;
 
-    minPoolSize : tez;
     maxAllowedMeasureLag : nat;
 
     (* Flag that used to activate crash withdrawals *)
@@ -135,6 +128,7 @@ type newEventParams is record [
     targetDynamics : nat;
     betsCloseTime : timestamp;
     measurePeriod : nat;
+    liquidityPercent : nat;
 ]
 
 
@@ -142,8 +136,8 @@ type provideLiquidityParams is record [
     eventId : nat;
 
     (* Expected distribution / ratio of the event *)
-    expectedRatioFor : nat;
-    expectedRatioAgainst : nat;
+    expectedRatioAboveEq : nat;
+    expectedRatioBellow : nat;
 
     (* Max Slippage value in ratioPrecision. if 0n - ratio should be equal to expected,
         if equals K*ratioPrecision, ratio can diff not more than in (K-1) times *)
@@ -167,16 +161,16 @@ type action is
 type storage is record [
     events : big_map(nat, eventType);
 
-    (* Ledgers with winning amounts for participants if For/Against wins: *)
-    betsFor : ledgerType;
-    betsAgainst : ledgerType;
+    (* Ledgers with winning amounts for participants if AboveEq/Bellow wins: *)
+    betsAboveEq : ledgerType;
+    betsBellow : ledgerType;
 
     (* There are two ledgers used to manage liquidity:
-        - two with total provided liquidity in for/against pools,
+        - two with total provided liquidity in AboveEq/Bellow pools,
         - and one with LP share used to calculate how winning pool
             would be distributed *)
-    providedLiquidityFor : ledgerType;
-    providedLiquidityAgainst : ledgerType;
+    providedLiquidityAboveEq : ledgerType;
+    providedLiquidityBellow : ledgerType;
     liquidityShares : ledgerNatType;
 
     (* Keeping all provided bets for the Force Majeure, in case if

@@ -3,6 +3,8 @@ function closeCallback(
     var store : storage) : (list(operation) * storage) is
 block {
 
+    checkNoAmountIncluded(unit);
+
     const eventId : nat = case store.closeCallId of
     | Some(closeCallId) -> closeCallId
     | None -> (failwith("closeCallId is empty") : nat)
@@ -32,8 +34,12 @@ block {
     if param.lastUpdate < endTime then
         failwith("Can't close until lastUpdate reached measureStartTime + measurePeriod")
     else skip;
-    (* TODO: what should be done if time is very late?
-        (i.e. cancel event and allow withdrawals?) *)
+
+    const lastAllowedTime : timestamp = endTime + int(event.maxAllowedMeasureLag);
+    if param.lastUpdate > lastAllowedTime
+    then failwith("Close failed: oracle time exceed maxAllowedMeasureLag")
+    else skip;
+
     if event.isClosed then failwith("Contract already closed. Can't close contract twice")
     else skip;
 
@@ -43,7 +49,7 @@ block {
     event.closedDynamics :=
         param.rate * store.targetDynamicsPrecision / event.startRate;
     event.isClosed := True;
-    event.isBetsForWin := event.closedDynamics > event.targetDynamics;
+    event.isBetsAboveEqWin := event.closedDynamics >= event.targetDynamics;
 
     (* Paying expirationFee for this method initiator: *)
     const operations : list(operation) =

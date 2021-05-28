@@ -14,8 +14,8 @@ record[
     maxMeasurePeriod = 31n*oneDay;
     minPeriodToBetsClose = 60n*5n;
     maxPeriodToBetsClose = 31n*oneDay;
-    liquidityPercent = 0n;
-    minPoolSize = 0tez;
+    minLiquidityPercent = 0n;
+    maxLiquidityPercent = 300_000n;  // 30% for 1_000_000 liquidityPrecision
     maxAllowedMeasureLag = oneHour*4n;
     defaultTime = ("2018-06-30T07:07:32Z" : timestamp);
 ]

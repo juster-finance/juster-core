@@ -57,32 +57,32 @@ def calculate_bet_params_change(
     fee *= calculate_liquidity_bonus_multiplier(event, current_time)
     key = (participant, event_id)
 
-    if bet == 'for':
-        top = event['poolAgainst']
-        bottom = event['poolFor']
-        for_count = 0 if key in storage['betsFor'] else 1
+    if bet == 'aboveEq':
+        top = event['poolBellow']
+        bottom = event['poolAboveEq']
+        above_eq_count = 0 if key in storage['betsAboveEq'] else 1
         bet_profit = calculate_bet_return(top, bottom, amount, fee)
 
         return dict(
             bet_profit=bet_profit,
-            diff_for=amount,
-            diff_against=-bet_profit,
-            for_count=for_count,
-            against_count=0
+            diff_above_eq=amount,
+            diff_bellow=-bet_profit,
+            above_eq_count=above_eq_count,
+            bellow_count=0
         )
 
-    elif bet == 'against':
-        top = event['poolFor']
-        bottom = event['poolAgainst']
-        against_count = 0 if key in storage['betsAgainst'] else 1
+    elif bet == 'bellow':
+        top = event['poolAboveEq']
+        bottom = event['poolBellow']
+        bellow_count = 0 if key in storage['betsBellow'] else 1
         bet_profit = calculate_bet_return(top, bottom, amount, fee)
 
         return dict(
             bet_profit=bet_profit,
-            diff_for=-bet_profit,
-            diff_against=amount,
-            for_count=0,
-            against_count=against_count
+            diff_above_eq=-bet_profit,
+            diff_bellow=amount,
+            above_eq_count=0,
+            bellow_count=bellow_count
         )
 
     else:
@@ -131,10 +131,10 @@ class StateTransformationBaseTest(TestCase):
                 value if (key[1] == event_id) & (value is not None) else 0
                 for key, value in ledger.items())
 
-        bets_for = result.storage['betsFor']
-        bets_against = result.storage['betsAgainst']
-        pl_for = result.storage['providedLiquidityFor']
-        pl_against = result.storage['providedLiquidityAgainst']
+        bets_above_eq = result.storage['betsAboveEq']
+        bets_bellow = result.storage['betsBellow']
+        pl_above_eq = result.storage['providedLiquidityAboveEq']
+        pl_bellow = result.storage['providedLiquidityBellow']
         deposited_bets = result.storage['depositedBets']
 
         for event_id, event in result.storage['events'].items():
@@ -143,18 +143,18 @@ class StateTransformationBaseTest(TestCase):
             if event['isClosed']:
                 continue
 
-            wins_for_event = sum_ledger_by_event(bets_for, event_id)
-            wins_against_event = sum_ledger_by_event(bets_against, event_id)
-            liquidity_for_event = sum_ledger_by_event(pl_for, event_id)
-            liquidity_against_event = sum_ledger_by_event(pl_against, event_id)
+            wins_above_eq_event = sum_ledger_by_event(bets_above_eq, event_id)
+            wins_bellow_event = sum_ledger_by_event(bets_bellow, event_id)
+            liquidity_above_eq_event = sum_ledger_by_event(pl_above_eq, event_id)
+            liquidity_bellow_event = sum_ledger_by_event(pl_bellow, event_id)
             sum_of_bets = sum_ledger_by_event(deposited_bets, event_id)
 
-            pool_difference = event['poolFor'] - event['poolAgainst']
+            pool_difference = event['poolAboveEq'] - event['poolBellow']
             pool_difference_check = (
-                liquidity_for_event - liquidity_against_event
-                - wins_against_event + wins_for_event
-                # + deposited_bets_against - deposited_bets_for
-                # + deposited_bets_for - deposited_bets_against
+                liquidity_above_eq_event - liquidity_bellow_event
+                - wins_bellow_event + wins_above_eq_event
+                # + deposited_bets_bellow - deposited_bets_above_eq
+                # + deposited_bets_above_eq - deposited_bets_bellow
             )
             self.assertEqual(pool_difference, pool_difference_check)
 
@@ -174,14 +174,14 @@ class StateTransformationBaseTest(TestCase):
 
 
     def check_provide_liquidity_succeed(
-            self, participant, amount, expected_for, expected_against,
+            self, participant, amount, expected_above_eq, expected_bellow,
             max_slippage=100_000):
 
         # Running transaction:
         transaction = self.contract.provideLiquidity(
             eventId=self.id,
-            expectedRatioAgainst=expected_against,
-            expectedRatioFor=expected_for,
+            expectedRatioBellow=expected_bellow,
+            expectedRatioAboveEq=expected_above_eq,
             maxSlippage=max_slippage
         ).with_amount(amount)
 
@@ -196,65 +196,65 @@ class StateTransformationBaseTest(TestCase):
         result_event = result_storage['events'][self.id]
 
         # Checking that state changed as expected:
-        total_liquidity = (init_event['poolFor']
-                           + init_event['poolAgainst'])
+        total_liquidity = (init_event['poolAboveEq']
+                           + init_event['poolBellow'])
 
         if total_liquidity > 0:
-            added_for_share = (
-                init_event['poolFor'] / total_liquidity)
-            added_against_share = (
-                init_event['poolAgainst'] / total_liquidity)
+            added_above_eq_share = (
+                init_event['poolAboveEq'] / total_liquidity)
+            added_bellow_share = (
+                init_event['poolBellow'] / total_liquidity)
 
         else:
             # scenario with first LP:
-            added_for_share = (
-                expected_for / (expected_for + expected_against))
-            added_against_share = (
-                expected_against / (expected_for + expected_against))
+            added_above_eq_share = (
+                expected_above_eq / (expected_above_eq + expected_bellow))
+            added_bellow_share = (
+                expected_bellow / (expected_above_eq + expected_bellow))
 
-        added_for = int(amount * added_for_share)
-        added_against = int(amount * added_against_share)
+        added_above_eq = int(amount * added_above_eq_share)
+        added_bellow = int(amount * added_bellow_share)
 
-        difference_for = (result_event['poolFor']
-                          - init_event['poolFor'])
-        difference_against = (result_event['poolAgainst']
-                              - init_event['poolAgainst'])
+        difference_above_eq = (result_event['poolAboveEq']
+                          - init_event['poolAboveEq'])
+        difference_bellow = (result_event['poolBellow']
+                              - init_event['poolBellow'])
 
-        self.assertEqual(difference_for, added_for)
-        self.assertEqual(difference_against, added_against)
-
-        self.assertEqual(
-            len(result_storage['betsFor']),
-            len(init_storage['betsFor']))
+        self.assertEqual(difference_above_eq, added_above_eq)
+        self.assertEqual(difference_bellow, added_bellow)
 
         self.assertEqual(
-            len(result_storage['betsAgainst']),
-            len(init_storage['betsAgainst']))
+            len(result_storage['betsAboveEq']),
+            len(init_storage['betsAboveEq']))
+
+        self.assertEqual(
+            len(result_storage['betsBellow']),
+            len(init_storage['betsBellow']))
 
         # If participant added liquidity before, it should not change
         # ledger records count. If it is not - records should be incresed by 1
 
-        is_already_lp = (participant, self.id) in init_storage['providedLiquidityFor']
+        is_already_lp = (participant, self.id) in init_storage['providedLiquidityAboveEq']
         added_count = 0 if is_already_lp else 1
 
         self.assertEqual(
-            len(result_storage['providedLiquidityFor']),
-            len(init_storage['providedLiquidityFor']) + added_count)
+            len(result_storage['providedLiquidityAboveEq']),
+            len(init_storage['providedLiquidityAboveEq']) + added_count)
 
         self.assertEqual(
-            len(result_storage['providedLiquidityAgainst']),
-            len(init_storage['providedLiquidityAgainst']) + added_count)
+            len(result_storage['providedLiquidityBellow']),
+            len(init_storage['providedLiquidityBellow']) + added_count)
 
         self.assertEqual(
             len(result_storage['liquidityShares']),
             len(init_storage['liquidityShares']) + added_count)
 
-        if init_event['poolFor'] == 0:
+        if init_event['poolAboveEq'] == 0:
             # scenario with first provided liquidity:
             added_shares = init_storage['sharePrecision']
         else:
             # scenario with adding more liquidity:
-            added_shares = added_for / init_event['poolFor'] * init_event['totalLiquidityShares']
+            added_shares = added_above_eq / init_event['poolAboveEq'] * init_event['totalLiquidityShares']
 
         self.assertEqual(
             result_event['totalLiquidityShares'],
@@ -265,15 +265,15 @@ class StateTransformationBaseTest(TestCase):
 
 
     def check_provide_liquidity_fails_with(
-        self, participant, amount, expected_for, expected_against,
+        self, participant, amount, expected_above_eq, expected_bellow,
         max_slippage=100_000, msg_contains=''):
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
             # Running transaction:
             transaction = self.contract.provideLiquidity(
                 eventId=self.id,
-                expectedRatioAgainst=expected_against,
-                expectedRatioFor=expected_for,
+                expectedRatioBellow=expected_bellow,
+                expectedRatioAboveEq=expected_above_eq,
                 maxSlippage=max_slippage
             ).with_amount(amount)
 
@@ -308,20 +308,20 @@ class StateTransformationBaseTest(TestCase):
             init_storage, self.id, participant, bet, amount, self.current_time)
 
         self.assertEqual(
-            result_event['poolFor'],
-            init_event['poolFor'] + bet_result['diff_for'])
+            result_event['poolAboveEq'],
+            init_event['poolAboveEq'] + bet_result['diff_above_eq'])
 
         self.assertEqual(
-            result_event['poolAgainst'],
-            init_event['poolAgainst'] + bet_result['diff_against'])
+            result_event['poolBellow'],
+            init_event['poolBellow'] + bet_result['diff_bellow'])
 
         self.assertEqual(
-            len(result_storage['betsFor']),
-            len(init_storage['betsFor']) + bet_result['for_count'])
+            len(result_storage['betsAboveEq']),
+            len(init_storage['betsAboveEq']) + bet_result['above_eq_count'])
 
         self.assertEqual(
-            len(result_storage['betsAgainst']),
-            len(init_storage['betsAgainst']) + bet_result['against_count'])
+            len(result_storage['betsBellow']),
+            len(init_storage['betsBellow']) + bet_result['bellow_count'])
 
         # Checking sum in participant ledgers:
         key = (participant, self.id)
@@ -329,7 +329,7 @@ class StateTransformationBaseTest(TestCase):
             - init_storage['depositedBets'].get(key, 0))
         self.assertEqual(diff, amount)
 
-        ledger_name = 'betsFor' if bet == 'for' else 'betsAgainst'
+        ledger_name = 'betsAboveEq' if bet == 'aboveEq' else 'betsBellow'
         diff = (result_storage[ledger_name].get(key, 0)
             - init_storage[ledger_name].get(key, 0))
         self.assertEqual(diff, bet_result['bet_profit'] + amount)
@@ -376,10 +376,10 @@ class StateTransformationBaseTest(TestCase):
         storage = self.remove_none_values(result.storage)
         # Checking that participant removed from all ledgers:
         key = (participant, self.id)
-        self.assertFalse(key in storage['betsFor'])
-        self.assertFalse(key in storage['betsAgainst'])
-        self.assertFalse(key in storage['providedLiquidityFor'])
-        self.assertFalse(key in storage['providedLiquidityAgainst'])
+        self.assertFalse(key in storage['betsAboveEq'])
+        self.assertFalse(key in storage['betsBellow'])
+        self.assertFalse(key in storage['providedLiquidityAboveEq'])
+        self.assertFalse(key in storage['providedLiquidityBellow'])
         self.assertFalse(key in storage['liquidityShares'])
         self.assertFalse(key in storage['depositedBets'])
 
@@ -413,8 +413,8 @@ class StateTransformationBaseTest(TestCase):
         # value at the moment of creation:
         proper_event = event_params.copy()
         proper_event.update({
-            'poolAgainst': 0,
-            'poolFor': 0,
+            'poolBellow': 0,
+            'poolAboveEq': 0,
             'isClosed': False,
             'isMeasurementStarted': False,
             'totalLiquidityShares': 0,
@@ -551,8 +551,8 @@ class StateTransformationBaseTest(TestCase):
                        * self.storage['targetDynamicsPrecision'])
         self.assertEqual(event['closedDynamics'], dynamics)
 
-        is_bets_for_win = dynamics > event['targetDynamics']
-        self.assertEqual(event['isBetsForWin'], is_bets_for_win)
+        is_bets_above_eq_win = dynamics >= event['targetDynamics']
+        self.assertEqual(event['isBetsAboveEqWin'], is_bets_above_eq_win)
 
         if event['expirationFee'] == 0:
             self.assertEqual(len(result.operations), 0)
@@ -664,29 +664,30 @@ class StateTransformationBaseTest(TestCase):
             'targetDynamics': 1_000_000,
             'betsCloseTime': RUN_TIME + 24*ONE_HOUR,
             'measurePeriod': 12*ONE_HOUR,
+            'liquidityPercent': 0,
         }
 
         self.default_config = {
             'defaultTime': 0,
             'expirationFee': self.expiration_fee,
-            'liquidityPercent': 0,
+            'minLiquidityPercent': 0,
+            'maxLiquidityPercent': 300_000,  # 30% for 1_000_000 liquidityPrecision
             'maxAllowedMeasureLag': ONE_HOUR*4,  # 4 hours
             'maxMeasurePeriod': ONE_DAY*31,  # 31 day
             'maxPeriodToBetsClose': ONE_DAY*31,  # 31 day
             'measureStartFee': self.measure_start_fee,
             'minMeasurePeriod': 60*5,  # 5 min
             'minPeriodToBetsClose': 60*5,  # 5 min
-            'minPoolSize': 0,
             'oracleAddress': self.oracle_address,
             'rewardCallFee': 100_000,
         }
 
         self.init_storage = {
             'events': {},
-            'betsFor': {},
-            'betsAgainst': {},
-            'providedLiquidityFor': {},
-            'providedLiquidityAgainst': {},
+            'betsAboveEq': {},
+            'betsBellow': {},
+            'providedLiquidityAboveEq': {},
+            'providedLiquidityBellow': {},
             'liquidityShares': {},
             'depositedBets': {},
             'lastEventId': 0,

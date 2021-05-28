@@ -31,6 +31,14 @@ block {
         failwith("betsCloseTime is less than minimal allowed period")
     else skip;
 
+    if eventParams.liquidityPercent > config.maxLiquidityPercent then
+        failwith("liquidityPercent is exceed maximum value")
+    else skip;
+
+    if eventParams.liquidityPercent < config.minLiquidityPercent then
+        failwith("liquidityPercent is less than minimal value")
+    else skip;
+
     const newEvent : eventType = record[
         currencyPair = eventParams.currencyPair;
         createdTime = Tezos.now;
@@ -44,17 +52,16 @@ block {
         closedOracleTime = config.defaultTime;
         closedRate = 0n;
         closedDynamics = 0n;
-        isBetsForWin = False;
-        poolFor = 0tez;
-        poolAgainst = 0tez;
+        isBetsAboveEqWin = False;
+        poolAboveEq = 0tez;
+        poolBellow = 0tez;
         totalLiquidityShares = 0n;
-        liquidityPercent = config.liquidityPercent;
+        liquidityPercent = eventParams.liquidityPercent;
         measureStartFee = config.measureStartFee;
         expirationFee = config.expirationFee;
         rewardCallFee = config.rewardCallFee;
         oracleAddress = config.oracleAddress;
         maxAllowedMeasureLag = config.maxAllowedMeasureLag;
-        minPoolSize = config.minPoolSize;
         isForceMajeure = False;
     ];
 

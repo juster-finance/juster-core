@@ -6,23 +6,23 @@ const config = {
   measureStartFee: 100000,
   expirationFee: 100000,
   rewardCallFee: 100000,
-  oracleAddress: 'KT1RCNpUEDjZAYhabjzgz1ZfxQijCDVMEaTZ',
+  oracleAddress: 'KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn',
   minMeasurePeriod: 60*5,  // 5 mins
   maxMeasurePeriod: 60*60*24*31,  // 31 days
   minPeriodToBetsClose: 60*5,
   maxPeriodToBetsClose: 60*60*24*31,
-  liquidityPercent: 0,
-  minPoolSize: 0,
+  minLiquidityPercent: 0,
+  maxLiquidityPercent: 300000,
   maxAllowedMeasureLag: 60*60*4,
   defaultTime: '2018-06-30T07:07:32Z',
 };
 
 const initialStorage = {  
   events: new MichelsonMap(),
-  betsFor: new MichelsonMap(),
-  betsAgainst: new MichelsonMap(),
-  providedLiquidityFor: new MichelsonMap(),
-  providedLiquidityAgainst: new MichelsonMap(),
+  betsAboveEq: new MichelsonMap(),
+  betsBellow: new MichelsonMap(),
+  providedLiquidityAboveEq: new MichelsonMap(),
+  providedLiquidityBellow: new MichelsonMap(),
   liquidityShares: new MichelsonMap(),
   depositedBets: new MichelsonMap(),
   lastEventId: 0,
