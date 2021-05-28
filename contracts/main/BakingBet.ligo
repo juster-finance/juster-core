@@ -10,6 +10,7 @@
 #include "../entrypoints/withdraw.ligo"
 #include "../entrypoints/updateConfig.ligo"
 #include "../entrypoints/triggerForceMajeure.ligo"
+#include "../entrypoints/setDelegate.ligo"
 
 
 function main (var params : action; var s : storage) : (list(operation) * storage) is
@@ -24,4 +25,5 @@ case params of
 | Withdraw(p)                 -> withdraw(p, s)
 | UpdateConfig(p)             -> updateConfig(p, s)
 | TriggerForceMajeure(p)      -> triggerForceMajeure(p, s)
+| SetDelegate(p)              -> setDelegate(p, s)
 end

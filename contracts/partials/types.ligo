@@ -156,6 +156,7 @@ type action is
 | Withdraw of nat
 | UpdateConfig of updateConfigParam
 | TriggerForceMajeure of nat
+| SetDelegate of option (key_hash)
 
 
 type storage is record [
