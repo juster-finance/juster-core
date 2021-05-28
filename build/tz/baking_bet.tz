@@ -41,9 +41,9 @@
                                (pair (pair (pair (pair (pair (timestamp %betsCloseTime) (nat %closedDynamics))
                                                        (pair (timestamp %closedOracleTime) (nat %closedRate)))
                                                  (pair (pair (timestamp %createdTime) (string %currencyPair))
-                                                       (pair (mutez %expirationFee) (bool %isClosed))))
-                                           (pair (pair (pair (bool %isForceMajeure) (bool %isMeasurementStarted))
-                                                       (pair (bool %isbetsAboveEqWin) (nat %liquidityPercent)))
+                                                       (pair (mutez %expirationFee) (bool %isBetsAboveEqWin))))
+                                           (pair (pair (pair (bool %isClosed) (bool %isForceMajeure))
+                                                       (pair (bool %isMeasurementStarted) (nat %liquidityPercent)))
                                                  (pair (pair (nat %maxAllowedMeasureLag) (timestamp %measureOracleStartTime))
                                                        (pair (nat %measurePeriod) (mutez %measureStartFee)))))
                                      (pair (pair (pair (address %oracleAddress) (mutez %poolAboveEq))
@@ -398,10 +398,10 @@
                          IF { PUSH string "Bets after betCloseTime is not allowed" ; FAILWITH } {} ;
                          DUP ;
                          CAR ;
+                         CDR ;
                          CAR ;
-                         CDR ;
-                         CDR ;
-                         CDR ;
+                         CAR ;
+                         CAR ;
                          IF { PUSH string "Event already closed" ; FAILWITH } {} ;
                          SWAP ;
                          DUP ;
@@ -956,8 +956,8 @@
                          CAR ;
                          CDR ;
                          CAR ;
-                         CAR ;
                          CDR ;
+                         CAR ;
                          NOT ;
                          IF { PUSH string "Can't close contract before measurement period started" ;
                               FAILWITH }
@@ -1008,10 +1008,10 @@
                             {} ;
                          DUP ;
                          CAR ;
+                         CDR ;
                          CAR ;
-                         CDR ;
-                         CDR ;
-                         CDR ;
+                         CAR ;
+                         CAR ;
                          IF { PUSH string "Contract already closed. Can't close contract twice" ;
                               FAILWITH }
                             {} ;
@@ -1124,7 +1124,47 @@
                          DUG 2 ;
                          CAR ;
                          CDR ;
+                         CDR ;
+                         DUP 3 ;
+                         CAR ;
+                         CDR ;
+                         CAR ;
+                         CDR ;
+                         DUP 4 ;
+                         CAR ;
+                         CDR ;
+                         CAR ;
+                         CAR ;
+                         CDR ;
                          PUSH bool True ;
+                         PAIR ;
+                         PAIR ;
+                         PAIR ;
+                         DIG 2 ;
+                         CAR ;
+                         CAR ;
+                         PAIR ;
+                         PAIR ;
+                         DUP ;
+                         CDR ;
+                         SWAP ;
+                         DUP ;
+                         DUG 2 ;
+                         CAR ;
+                         CDR ;
+                         DUP 3 ;
+                         CDR ;
+                         CDR ;
+                         CAR ;
+                         CDR ;
+                         DUP 4 ;
+                         CAR ;
+                         CAR ;
+                         CAR ;
+                         CAR ;
+                         CDR ;
+                         COMPARE ;
+                         GE ;
                          DUP 4 ;
                          CAR ;
                          CAR ;
@@ -1143,46 +1183,6 @@
                          CAR ;
                          CAR ;
                          PAIR ;
-                         PAIR ;
-                         PAIR ;
-                         DUP ;
-                         CDR ;
-                         SWAP ;
-                         DUP ;
-                         DUG 2 ;
-                         CAR ;
-                         CDR ;
-                         CDR ;
-                         DUP 3 ;
-                         CAR ;
-                         CDR ;
-                         CAR ;
-                         CDR ;
-                         CDR ;
-                         DUP 4 ;
-                         CDR ;
-                         CDR ;
-                         CAR ;
-                         CDR ;
-                         DUP 5 ;
-                         CAR ;
-                         CAR ;
-                         CAR ;
-                         CAR ;
-                         CDR ;
-                         COMPARE ;
-                         GE ;
-                         PAIR ;
-                         DUP 4 ;
-                         CAR ;
-                         CDR ;
-                         CAR ;
-                         CAR ;
-                         PAIR ;
-                         PAIR ;
-                         DIG 2 ;
-                         CAR ;
-                         CAR ;
                          PAIR ;
                          PAIR ;
                          DUP ;
@@ -2118,8 +2118,8 @@
                          CAR ;
                          CDR ;
                          CAR ;
-                         CAR ;
                          CDR ;
+                         CAR ;
                          IF { PUSH string "Measurement period already started" ; FAILWITH } {} ;
                          DUP 3 ;
                          CAR ;
@@ -2228,14 +2228,14 @@
                          CDR ;
                          CAR ;
                          CDR ;
+                         CDR ;
                          PUSH bool True ;
-                         DUP 5 ;
+                         PAIR ;
+                         DUP 4 ;
                          CAR ;
                          CDR ;
                          CAR ;
                          CAR ;
-                         CAR ;
-                         PAIR ;
                          PAIR ;
                          PAIR ;
                          DIG 2 ;
@@ -2357,10 +2357,10 @@
                          PAIR ;
                          DUP 6 ;
                          CAR ;
+                         CDR ;
                          CAR ;
-                         CDR ;
-                         CDR ;
-                         CDR ;
+                         CAR ;
+                         CAR ;
                          NOT ;
                          DUP 7 ;
                          CAR ;
@@ -2382,8 +2382,8 @@
                          CAR ;
                          CDR ;
                          CAR ;
-                         CAR ;
                          CDR ;
+                         CAR ;
                          NOT ;
                          DUP 7 ;
                          CAR ;
@@ -2406,8 +2406,8 @@
                               CAR ;
                               CDR ;
                               CAR ;
-                              CAR ;
                               CDR ;
+                              CAR ;
                               NOT ;
                               IF { DUP 4 ; CAR ; CDR ; CDR ; CDR ; CDR ; DIG 2 ; ADD } { SWAP } ;
                               SWAP ;
@@ -2424,10 +2424,10 @@
                               PAIR ;
                               DUP 4 ;
                               CAR ;
+                              CDR ;
                               CAR ;
-                              CDR ;
-                              CDR ;
-                              CDR ;
+                              CAR ;
+                              CAR ;
                               NOT ;
                               IF { DUP 4 ; CAR ; CAR ; CDR ; CDR ; CAR ; DIG 2 ; ADD } { SWAP } ;
                               SWAP ;
@@ -2476,13 +2476,13 @@
                               CDR ;
                               CAR ;
                               CDR ;
-                              DUP 5 ;
-                              CAR ;
-                              CDR ;
-                              CAR ;
-                              CAR ;
-                              CDR ;
                               PUSH bool True ;
+                              DUP 6 ;
+                              CAR ;
+                              CDR ;
+                              CAR ;
+                              CAR ;
+                              CAR ;
                               PAIR ;
                               PAIR ;
                               PAIR ;
@@ -2498,25 +2498,25 @@
                               DUG 2 ;
                               CAR ;
                               CDR ;
+                              CDR ;
+                              DUP 3 ;
+                              CAR ;
+                              CDR ;
+                              CAR ;
+                              CDR ;
+                              DUP 4 ;
+                              CAR ;
+                              CDR ;
+                              CAR ;
+                              CAR ;
+                              CDR ;
                               PUSH bool True ;
-                              DUP 4 ;
-                              CAR ;
-                              CAR ;
-                              CDR ;
-                              CDR ;
-                              CAR ;
                               PAIR ;
-                              DUP 4 ;
-                              CAR ;
-                              CAR ;
-                              CDR ;
-                              CAR ;
                               PAIR ;
-                              DUP 4 ;
-                              CAR ;
-                              CAR ;
-                              CAR ;
                               PAIR ;
+                              DUP 3 ;
+                              CAR ;
+                              CAR ;
                               PAIR ;
                               PAIR ;
                               DUP 3 ;
@@ -2675,10 +2675,10 @@
                  DUP ;
                  DUG 2 ;
                  CAR ;
+                 CDR ;
                  CAR ;
-                 CDR ;
-                 CDR ;
-                 CDR ;
+                 CAR ;
+                 CAR ;
                  IF {}
                     { PUSH string "Withdraw is not allowed until contract is closed" ; FAILWITH } ;
                  DUP ;
@@ -2696,10 +2696,10 @@
                  EXEC ;
                  DUP 3 ;
                  CAR ;
-                 CDR ;
                  CAR ;
                  CDR ;
-                 CAR ;
+                 CDR ;
+                 CDR ;
                  IF { SWAP ;
                       DUP ;
                       DUG 2 ;
@@ -2785,7 +2785,7 @@
                  CDR ;
                  CAR ;
                  CAR ;
-                 CAR ;
+                 CDR ;
                  IF { DROP ;
                       DUP ;
                       DUP 5 ;
