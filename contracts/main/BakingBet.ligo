@@ -11,6 +11,7 @@
 #include "../entrypoints/updateConfig.ligo"
 #include "../entrypoints/triggerForceMajeure.ligo"
 #include "../entrypoints/setDelegate.ligo"
+#include "../entrypoints/default.ligo"
 
 
 function main (var params : action; var s : storage) : (list(operation) * storage) is
@@ -26,4 +27,5 @@ case params of
 | UpdateConfig(p)             -> updateConfig(p, s)
 | TriggerForceMajeure(p)      -> triggerForceMajeure(p, s)
 | SetDelegate(p)              -> setDelegate(p, s)
+| Default(p)                  -> default(p, s)
 end

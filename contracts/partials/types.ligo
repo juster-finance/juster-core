@@ -157,6 +157,7 @@ type action is
 | UpdateConfig of updateConfigParam
 | TriggerForceMajeure of nat
 | SetDelegate of option (key_hash)
+| Default of unit
 
 
 type storage is record [
