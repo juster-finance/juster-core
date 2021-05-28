@@ -1,4 +1,8 @@
 function default(
     var param : unit;
-    var store : storage) : (list (operation) * storage) is 
-((nil: list(operation)), store)
+    var store : storage) : (list (operation) * storage) is
+block {
+
+    store.bakingRewards := store.bakingRewards + Tezos.amount;
+
+} with ((nil: list(operation)), store)

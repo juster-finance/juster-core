@@ -700,6 +700,8 @@ class StateTransformationBaseTest(TestCase):
             'ratioPrecision': 100_000_000,
             'sharePrecision': 100_000_000,
             'targetDynamicsPrecision': 1_000_000,
+
+            'bakingRewards': 0,
         }
 
         # this self.storage will be used in all blocks:

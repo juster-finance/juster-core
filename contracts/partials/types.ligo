@@ -158,6 +158,7 @@ type action is
 | TriggerForceMajeure of nat
 | SetDelegate of option (key_hash)
 | Default of unit
+| ClaimBakingRewards of unit
 
 
 type storage is record [
@@ -192,4 +193,6 @@ type storage is record [
     sharePrecision : nat;
     liquidityPrecision : nat;
     ratioPrecision : nat;
+
+    bakingRewards : tez;
 ]

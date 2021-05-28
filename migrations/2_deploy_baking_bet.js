@@ -35,6 +35,7 @@ const initialStorage = {
   sharePrecision: 100000000,
   liquidityPrecision: 1000000,
   ratioPrecision: 100000000,
+  bakingRewards: 0,
 };
 
 module.exports = deployer => {
