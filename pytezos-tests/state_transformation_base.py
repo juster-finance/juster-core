@@ -360,6 +360,52 @@ class StateTransformationBaseTest(TestCase):
         self.assertTrue(msg_contains in str(cm.exception))
 
 
+    def _check_withdrawals_sums(
+            self, withdraw_amount, result, participant, sender):
+
+        """ Checking that calculated operations are correct """
+
+        # If there are no withdrawal -> there are shouln't be any operations:
+        if withdraw_amount == 0:
+            self.assertTrue(len(result.operations) == 0)
+            return
+
+        # If withdraw amount is positive, there would be 1 or 2 operations:
+        # - one if (a) sender === participant
+        # - one if (b) time before rewardFeeSplitAfter
+        # - one if (c) reward_fee > withdraw_amount
+        # - one if (d) it is force majeure
+        # - two in all other cases
+
+        event = self.storage['events'][self.id]
+        closed_time = event['closedOracleTime']
+        reward_fee_split_after = self.storage['config']['rewardFeeSplitAfter']
+        reward_fee = self.storage['config']['rewardCallFee']
+
+        is_time_before_split = self.current_time < closed_time + reward_fee_split_after
+        is_sender_equals_participant = participant == sender
+        is_force_majeure = event['isForceMajeure']
+
+        if is_time_before_split or is_sender_equals_participant or is_force_majeure:
+            self.assertEqual(len(result.operations), 1)
+            self.assertAmountEqual(result.operations[0], withdraw_amount)
+
+        else:
+            if reward_fee > withdraw_amount:
+                self.assertTrue(len(result.operations) == 1)
+            else:
+                self.assertTrue(len(result.operations) == 2)
+
+            amounts = {
+                operation['destination']: int(operation['amount'])
+                for operation in result.operations}
+
+            self.assertEqual(sum(amounts.values()), withdraw_amount)
+            self.assertTrue(amounts[sender] <= reward_fee)
+            participant_amount = max(0, withdraw_amount - reward_fee)
+            self.assertEqual(amounts.get(participant, 0), participant_amount)
+
+
     def check_withdraw_succeed(self, participant, withdraw_amount, sender=None):
 
         # If sender is not setted, assuming that participant is the sender:
@@ -370,12 +416,8 @@ class StateTransformationBaseTest(TestCase):
         result = self.contract.withdraw(params).interpret(
             storage=self.storage, sender=sender, now=self.current_time)
 
-        # If there are no withdrawal -> there are shouln't be any operations:
-        if withdraw_amount == 0:
-            self.assertTrue(len(result.operations) == 0)
-        else:
-            # Checking that withdrawals amount equal to expected:
-            self.assertAmountEqual(result.operations[0], withdraw_amount)
+        self._check_withdrawals_sums(
+            withdraw_amount, result, participant, sender)
 
         storage = self.remove_none_values(result.storage)
         # Checking that participant removed from all ledgers:
