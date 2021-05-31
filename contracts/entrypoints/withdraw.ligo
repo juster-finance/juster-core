@@ -40,7 +40,7 @@ function forceMajeureReturnPayout(
 
 
 function withdraw(
-    var eventId : nat;
+    var params : withdrawParams;
     var store: storage) : (list(operation) * storage) is
 block {
     (* TODO: add list of reciever addresses to make bulk transactions
@@ -50,18 +50,25 @@ block {
 
     checkNoAmountIncluded(unit);
 
-    const event : eventType = getEvent(store, eventId);
-    const key : ledgerKey = (Tezos.sender, eventId);
+    const event : eventType = getEvent(store, params.eventId);
+    const key : ledgerKey = (Tezos.sender, params.eventId);
 
     if event.isClosed then skip
     else failwith("Withdraw is not allowed until contract is closed");
 
     var payout : tez := calculatePayout(store, event, key);
+    (* Splitting payout fee if time passed from closed is more than
+        config rewardFeeSplitAfter: *)
+    (* TODO: *)
+    var operations : list(operation) := nil;
+    operations := makeOperationsIfNotZero(Tezos.sender, payout);
 
     (* If Force Majeure was activated, returning payout calcs differently: *)
     if event.isForceMajeure then
-        payout := forceMajeureReturnPayout(store, key)
-    else skip;
+    block {
+        payout := forceMajeureReturnPayout(store, key);
+        operations := makeOperationsIfNotZero(Tezos.sender, payout);
+    } else skip;
 
     (* Removing key from all ledgers: *)
     store.betsAboveEq := Big_map.remove(key, store.betsAboveEq);
@@ -72,9 +79,7 @@ block {
     store.liquidityShares := Big_map.remove(key, store.liquidityShares);
     store.depositedBets := Big_map.remove(key, store.depositedBets);
 
-    const operations : list(operation) = makeOperationsIfNeeded(Tezos.sender, payout);
-
     (* TODO: calculate participants/LPs count and remove event if there are 0 *)
-    store.events[eventId] := event;
+    store.events[params.eventId] := event;
 
 } with (operations, store)

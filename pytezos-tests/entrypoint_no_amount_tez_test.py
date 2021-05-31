@@ -87,7 +87,8 @@ class ForceMajeureDeterminedTest(StateTransformationBaseTest):
         self.storage['events'][self.id]['isClosed'] = True
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            call = self.contract.withdraw(self.id)
+            params = {'eventId': self.id, 'participantAddress': self.a}
+            call = self.contract.withdraw(params)
             call.with_amount(10).interpret(
                 storage=self.storage,
                 sender=self.a,

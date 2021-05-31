@@ -85,19 +85,29 @@ block {
 } with list[callback]
 
 
-(* Creates operation list with one operation if payout > 0tez, else returns
-    empty list of operations: *)
-function makeOperationsIfNeeded(
+function prepareOperation(
     var addressTo : address;
-    var payout : tez) : list(operation) is
+    var payout : tez) : operation is
+
 block {
     const receiver : contract(unit) = getReceiver(addressTo);
     const operation : operation = Tezos.transaction(unit, payout, receiver);
+} with operation
 
-    (* Operation should be returned only if there are some amount to return: *)
+
+(* Creates operation list with one operation if payout > 0tez, else returns
+    empty list of operations: *)
+function makeOperationsIfNotZero(
+    var addressTo : address;
+    var payout : tez) : list(operation) is
+block {
+
     var operations : list(operation) := nil;
-    if payout > 0tez then operations := operation # operations
+    (* Operation should be returned only if there are some amount to return: *)
+    if payout > 0tez then
+        operations := prepareOperation(addressTo, payout) # operations
     else skip;
+
 } with operations
 
 

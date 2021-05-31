@@ -8,6 +8,6 @@ block {
         payout := store.bakingRewards;
         store.bakingRewards := 0tez;
     } else failwith("Only contract manager allowed to claim baking rewards");
-    const operations : list(operation) = makeOperationsIfNeeded(Tezos.sender, payout);
+    const operations : list(operation) = makeOperationsIfNotZero(Tezos.sender, payout);
 
 } with (operations, store)

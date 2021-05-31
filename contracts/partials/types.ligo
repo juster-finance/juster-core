@@ -66,6 +66,9 @@ type newEventConfigType is record [
         meaning value:
         TODO: maybe it is better to use option(timestamp) ? *)
     defaultTime : timestamp;
+
+    (* Period following the close in seconds after which rewardFee is activated *)
+    // rewardFeeSplitAfter : nat;
 ]
 
 type updateConfigParam is newEventConfigType -> newEventConfigType
@@ -145,6 +148,12 @@ type provideLiquidityParams is record [
 ]
 
 
+type withdrawParams is record [
+    eventId : nat;
+    participantAddress : address;
+]
+
+
 type action is
 | NewEvent of newEventParams
 | ProvideLiquidity of provideLiquidityParams
@@ -153,7 +162,7 @@ type action is
 | StartMeasurementCallback of callbackReturnedValueMichelson
 | Close of nat
 | CloseCallback of callbackReturnedValueMichelson
-| Withdraw of nat
+| Withdraw of withdrawParams
 | UpdateConfig of updateConfigParam
 | TriggerForceMajeure of nat
 | SetDelegate of option (key_hash)

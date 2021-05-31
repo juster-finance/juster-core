@@ -360,11 +360,15 @@ class StateTransformationBaseTest(TestCase):
         self.assertTrue(msg_contains in str(cm.exception))
 
 
-    def check_withdraw_succeed(self, participant, withdraw_amount):
+    def check_withdraw_succeed(self, participant, withdraw_amount, sender=None):
+
+        # If sender is not setted, assuming that participant is the sender:
+        sender = sender or participant
 
         # Running transaction:
-        result = self.contract.withdraw(self.id).interpret(
-            storage=self.storage, sender=participant, now=self.current_time)
+        params = {'eventId': self.id, 'participantAddress': participant}
+        result = self.contract.withdraw(params).interpret(
+            storage=self.storage, sender=sender, now=self.current_time)
 
         # If there are no withdrawal -> there are shouln't be any operations:
         if withdraw_amount == 0:
@@ -387,11 +391,16 @@ class StateTransformationBaseTest(TestCase):
         return storage
 
 
-    def check_withdraw_fails_with(self, participant, withdraw_amount, msg_contains=''):
+    def check_withdraw_fails_with(self, participant, withdraw_amount,
+                                  sender=None, msg_contains=''):
+
+        # If sender is not setted, assuming that participant is the sender:
+        sender = sender or participant
+        params = {'eventId': self.id, 'participantAddress': participant}
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            res = self.contract.withdraw(self.id).interpret(
-                storage=self.storage, sender=participant, now=self.current_time)
+            res = self.contract.withdraw(params).interpret(
+                storage=self.storage, sender=sender, now=self.current_time)
 
         self.assertTrue(msg_contains in str(cm.exception))
 

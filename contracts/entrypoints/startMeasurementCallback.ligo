@@ -39,7 +39,7 @@ block {
 
     (* Paying measureStartFee for this method initiator: *)
     const operations : list(operation) =
-        makeOperationsIfNeeded(Tezos.source, event.measureStartFee);
+        makeOperationsIfNotZero(Tezos.source, event.measureStartFee);
 
     store.events[eventId] := event;
 
