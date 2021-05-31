@@ -63,6 +63,7 @@ block {
         oracleAddress = config.oracleAddress;
         maxAllowedMeasureLag = config.maxAllowedMeasureLag;
         isForceMajeure = False;
+        participants = 0n;
     ];
 
     store.events[store.lastEventId] := newEvent;

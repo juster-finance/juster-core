@@ -47,6 +47,11 @@ block {
         failwith("Expected ratio very differs from current pool ratio")
     else skip;
 
+    (* Increasing providers count if this participant is not provider yet: *)
+    if isParticipant(store, key)
+    then skip
+    else event.participants := event.participants + 1n;
+
     (* Distributing liquidity: *)
     (* aboveEqShare is share in interval (0, store.ratioPrecision) calculated from
         current ratio, 1:1 ratio leads to 50% share, 3:1 leads to 75% share *)

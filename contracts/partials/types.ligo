@@ -123,6 +123,10 @@ type eventType is record [
 
     (* Flag that used to activate crash withdrawals *)
     isForceMajeure : bool;
+
+    (* Calculating participants/providers count to remove them from events
+        after all withdrawals completed: *)
+    participants : nat;
 ]
 
 

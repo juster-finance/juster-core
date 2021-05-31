@@ -118,3 +118,26 @@ block {
         failwith("Including tez using this entrypoint call is not allowed")
     else skip;
 } with unit
+
+
+function isHaveValueTez(const k : ledgerKey; const l : ledgerType) : bool is
+    case Big_map.find_opt(k, l) of
+    | Some(value) -> True
+    | None -> False
+    end
+
+
+function isHaveValueNat(const k : ledgerKey; const l : ledgerNatType) : bool is
+    case Big_map.find_opt(k, l) of
+    | Some(value) -> True
+    | None -> False
+    end
+
+
+function isParticipant(
+    const store : storage;
+    const key : ledgerKey) : bool is
+
+    isHaveValueTez(key, store.betsAboveEq)
+    or isHaveValueTez(key, store.betsBellow)
+    or isHaveValueNat(key, store.liquidityShares)

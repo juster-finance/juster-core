@@ -102,6 +102,24 @@ block {
 } with operations;
 
 
+(* Removing key from all ledgers: *)
+function removeKeyFromAllLedgers(
+    var store : storage;
+    const key : ledgerKey) : storage is
+block {
+
+    store.betsAboveEq := Big_map.remove(key, store.betsAboveEq);
+    store.betsBellow := Big_map.remove(key, store.betsBellow);
+    store.providedLiquidityAboveEq :=
+        Big_map.remove(key, store.providedLiquidityAboveEq);
+    store.providedLiquidityBellow :=
+        Big_map.remove(key, store.providedLiquidityBellow);
+    store.liquidityShares := Big_map.remove(key, store.liquidityShares);
+    store.depositedBets := Big_map.remove(key, store.depositedBets);
+
+} with store
+
+
 function withdraw(
     var params : withdrawParams;
     var store: storage) : (list(operation) * storage) is
@@ -118,14 +136,12 @@ block {
     const operations : list(operation) =
         makeWithdrawOperations(store, params, event, key);
 
-    (* Removing key from all ledgers: *)
-    store.betsAboveEq := Big_map.remove(key, store.betsAboveEq);
-    store.betsBellow := Big_map.remove(key, store.betsBellow);
-    store.providedLiquidityAboveEq := Big_map.remove(key, store.providedLiquidityAboveEq);
-    store.providedLiquidityBellow :=
-        Big_map.remove(key, store.providedLiquidityBellow);
-    store.liquidityShares := Big_map.remove(key, store.liquidityShares);
-    store.depositedBets := Big_map.remove(key, store.depositedBets);
+    (* Decreasing participants count: *)
+    if isParticipant(store, key)
+    then event.participants := abs(event.participants - 1n)
+    else skip;
+
+    store := removeKeyFromAllLedgers(store, key);
 
     (* TODO: calculate participants/LPs count and remove event if there are 0 *)
     store.events[params.eventId] := event;
