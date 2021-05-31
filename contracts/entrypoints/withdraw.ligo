@@ -39,42 +39,111 @@ function forceMajeureReturnPayout(
         + getLedgerAmount(key, store.providedLiquidityBellow))
 
 
-function withdraw(
-    var eventId : nat;
-    var store: storage) : (list(operation) * storage) is
+function excludeFeeReward(
+    const store : storage;
+    const params : withdrawParams;
+    const payout : tez) : list(operation) is
+
 block {
-    (* TODO: add list of reciever addresses to make bulk transactions
-        and make it possible to call it by anyone *)
-    (* TODO: allow to call this method by liquidity providers after K hours
-        after close and reduce withdraw amount a bit in this case *)
+    var operations : list(operation) := nil;
+    var participantPayout : tez := 0tez;
+    var senderPayout : tez := 0tez;
 
-    checkNoAmountIncluded(unit);
+    if payout > store.config.rewardCallFee
+    then block {
+        participantPayout := payout - store.config.rewardCallFee;
+        senderPayout := store.config.rewardCallFee;
+    } else senderPayout := payout;
 
-    const event : eventType = getEvent(store, eventId);
-    const key : ledgerKey = (Tezos.sender, eventId);
+    if participantPayout > 0tez
+    then operations := prepareOperation(
+            params.participantAddress, participantPayout) # operations
+    else skip;
 
-    if event.isClosed then skip
-    else failwith("Withdraw is not allowed until contract is closed");
+    if senderPayout > 0tez
+    then operations := prepareOperation(
+            Tezos.sender, senderPayout) # operations
+    else skip;
+
+} with operations
+
+
+function makeWithdrawOperations(
+    const store : storage;
+    const params : withdrawParams;
+    const event : eventType;
+    const key : ledgerKey) : list(operation) is
+block {
 
     var payout : tez := calculatePayout(store, event, key);
 
-    (* If Force Majeure was activated, returning payout calcs differently: *)
-    if event.isForceMajeure then
-        payout := forceMajeureReturnPayout(store, key)
+    (* By default creating one operation to participantAddress: *)
+    var operations : list(operation) :=
+        makeOperationsIfNotZero(params.participantAddress, payout);
+
+    (* If a lot time passed from closed time, splitting reward and
+        rewriting operations: *)
+    const feeTime : timestamp =
+        event.closedOracleTime + int(store.config.rewardFeeSplitAfter);
+
+    if (Tezos.sender =/= params.participantAddress) and (Tezos.now >= feeTime)
+    then operations := excludeFeeReward(store, params, payout)
     else skip;
 
-    (* Removing key from all ledgers: *)
+    (* If Force Majeure was activated, returning all bets and provided liquidity.
+        - in force majeure reward fee split should be not active so it is
+        just rewriting all operations: *)
+    if event.isForceMajeure then
+    block {
+        payout := forceMajeureReturnPayout(store, key);
+        operations := makeOperationsIfNotZero(params.participantAddress, payout);
+    } else skip;
+
+} with operations;
+
+
+(* Removing key from all ledgers: *)
+function removeKeyFromAllLedgers(
+    var store : storage;
+    const key : ledgerKey) : storage is
+block {
+
     store.betsAboveEq := Big_map.remove(key, store.betsAboveEq);
     store.betsBellow := Big_map.remove(key, store.betsBellow);
-    store.providedLiquidityAboveEq := Big_map.remove(key, store.providedLiquidityAboveEq);
+    store.providedLiquidityAboveEq :=
+        Big_map.remove(key, store.providedLiquidityAboveEq);
     store.providedLiquidityBellow :=
         Big_map.remove(key, store.providedLiquidityBellow);
     store.liquidityShares := Big_map.remove(key, store.liquidityShares);
     store.depositedBets := Big_map.remove(key, store.depositedBets);
 
-    const operations : list(operation) = makeOperationsIfNeeded(Tezos.sender, payout);
+} with store
+
+
+function withdraw(
+    var params : withdrawParams;
+    var store: storage) : (list(operation) * storage) is
+block {
+
+    checkNoAmountIncluded(unit);
+
+    const event : eventType = getEvent(store, params.eventId);
+    const key : ledgerKey = (params.participantAddress, params.eventId);
+
+    if event.isClosed then skip
+    else failwith("Withdraw is not allowed until contract is closed");
+
+    const operations : list(operation) =
+        makeWithdrawOperations(store, params, event, key);
+
+    (* Decreasing participants count: *)
+    if isParticipant(store, key)
+    then event.participants := abs(event.participants - 1n)
+    else skip;
+
+    store := removeKeyFromAllLedgers(store, key);
 
     (* TODO: calculate participants/LPs count and remove event if there are 0 *)
-    store.events[eventId] := event;
+    store.events[params.eventId] := event;
 
 } with (operations, store)

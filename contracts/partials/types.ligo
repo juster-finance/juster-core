@@ -34,7 +34,7 @@ type ledgerNatType is big_map(ledgerKey, nat)
 (* params that used in new event creation that can be configured by
     contract manager (changing this params would not affect existing events
     and would only applied to future events): *)
-type newEventConfigType is record [
+type configType is record [
 
     (* Fees, that should be provided during contract origination *)
     measureStartFee : tez;
@@ -66,9 +66,12 @@ type newEventConfigType is record [
         meaning value:
         TODO: maybe it is better to use option(timestamp) ? *)
     defaultTime : timestamp;
+
+    (* Period following the close in seconds after which rewardFee is activated *)
+    rewardFeeSplitAfter : nat;
 ]
 
-type updateConfigParam is newEventConfigType -> newEventConfigType
+type updateConfigParam is configType -> configType
 
 type eventType is record [
     currencyPair : string;
@@ -120,6 +123,10 @@ type eventType is record [
 
     (* Flag that used to activate crash withdrawals *)
     isForceMajeure : bool;
+
+    (* Calculating participants/providers count to remove them from events
+        after all withdrawals completed: *)
+    participants : nat;
 ]
 
 
@@ -145,6 +152,12 @@ type provideLiquidityParams is record [
 ]
 
 
+type withdrawParams is record [
+    eventId : nat;
+    participantAddress : address;
+]
+
+
 type action is
 | NewEvent of newEventParams
 | ProvideLiquidity of provideLiquidityParams
@@ -153,9 +166,12 @@ type action is
 | StartMeasurementCallback of callbackReturnedValueMichelson
 | Close of nat
 | CloseCallback of callbackReturnedValueMichelson
-| Withdraw of nat
+| Withdraw of withdrawParams
 | UpdateConfig of updateConfigParam
 | TriggerForceMajeure of nat
+| SetDelegate of option (key_hash)
+| Default of unit
+| ClaimBakingRewards of unit
 
 
 type storage is record [
@@ -181,7 +197,7 @@ type storage is record [
     closeCallId : eventIdType;
     measurementStartCallId : eventIdType;
 
-    newEventConfig : newEventConfigType;
+    config : configType;
 
     (* Manager is the one who can change config *)
     manager : address;
@@ -190,4 +206,6 @@ type storage is record [
     sharePrecision : nat;
     liquidityPrecision : nat;
     ratioPrecision : nat;
+
+    bakingRewards : tez;
 ]

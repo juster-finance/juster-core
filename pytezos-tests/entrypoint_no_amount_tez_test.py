@@ -87,7 +87,18 @@ class ForceMajeureDeterminedTest(StateTransformationBaseTest):
         self.storage['events'][self.id]['isClosed'] = True
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            call = self.contract.withdraw(self.id)
+            params = {'eventId': self.id, 'participantAddress': self.a}
+            call = self.contract.withdraw(params)
+            call.with_amount(10).interpret(
+                storage=self.storage,
+                sender=self.a,
+                now=self.current_time)
+        self.assertTrue(ERROR_MSG in str(cm.exception))
+
+        # Set delegate with amount > 0 should not be allowed too:
+        random_delegate_from_twitter = 'tz3e7LbZvUtoXhpUD1yb6wuFodZpfYRb9nWJ'
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            call = self.contract.setDelegate(random_delegate_from_twitter)
             call.with_amount(10).interpret(
                 storage=self.storage,
                 sender=self.a,

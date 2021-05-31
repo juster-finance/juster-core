@@ -3,7 +3,7 @@ function newEvent(
     var store : storage) : (list(operation) * storage) is
 block {
 
-    const config : newEventConfigType = store.newEventConfig;
+    const config : configType = store.config;
     const fees : tez = config.measureStartFee + config.expirationFee;
 
     if fees =/= Tezos.amount then
@@ -63,6 +63,7 @@ block {
         oracleAddress = config.oracleAddress;
         maxAllowedMeasureLag = config.maxAllowedMeasureLag;
         isForceMajeure = False;
+        participants = 0n;
     ];
 
     store.events[store.lastEventId] := newEvent;

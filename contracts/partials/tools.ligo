@@ -85,19 +85,29 @@ block {
 } with list[callback]
 
 
-(* Creates operation list with one operation if payout > 0tez, else returns
-    empty list of operations: *)
-function makeOperationsIfNeeded(
+function prepareOperation(
     var addressTo : address;
-    var payout : tez) : list(operation) is
+    var payout : tez) : operation is
+
 block {
     const receiver : contract(unit) = getReceiver(addressTo);
     const operation : operation = Tezos.transaction(unit, payout, receiver);
+} with operation
 
-    (* Operation should be returned only if there are some amount to return: *)
+
+(* Creates operation list with one operation if payout > 0tez, else returns
+    empty list of operations: *)
+function makeOperationsIfNotZero(
+    var addressTo : address;
+    var payout : tez) : list(operation) is
+block {
+
     var operations : list(operation) := nil;
-    if payout > 0tez then operations := operation # operations
+    (* Operation should be returned only if there are some amount to return: *)
+    if payout > 0tez then
+        operations := prepareOperation(addressTo, payout) # operations
     else skip;
+
 } with operations
 
 
@@ -108,3 +118,26 @@ block {
         failwith("Including tez using this entrypoint call is not allowed")
     else skip;
 } with unit
+
+
+function isHaveValueTez(const k : ledgerKey; const l : ledgerType) : bool is
+    case Big_map.find_opt(k, l) of
+    | Some(value) -> True
+    | None -> False
+    end
+
+
+function isHaveValueNat(const k : ledgerKey; const l : ledgerNatType) : bool is
+    case Big_map.find_opt(k, l) of
+    | Some(value) -> True
+    | None -> False
+    end
+
+
+function isParticipant(
+    const store : storage;
+    const key : ledgerKey) : bool is
+
+    isHaveValueTez(key, store.betsAboveEq)
+    or isHaveValueTez(key, store.betsBellow)
+    or isHaveValueNat(key, store.liquidityShares)

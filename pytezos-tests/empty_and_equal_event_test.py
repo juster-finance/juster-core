@@ -7,9 +7,9 @@ from state_transformation_base import (
 from pytezos import MichelsonRuntimeError
 
 
-class ManagerDeterminedTest(StateTransformationBaseTest):
+class EmptyEqualEventDeterminedTest(StateTransformationBaseTest):
 
-    def test_update_config(self):
+    def test_empty_equal_event(self):
 
         self.current_time = RUN_TIME
         self.id = len(self.storage['events'])

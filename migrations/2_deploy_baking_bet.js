@@ -15,6 +15,7 @@ const config = {
   maxLiquidityPercent: 300000,
   maxAllowedMeasureLag: 60*60*4,
   defaultTime: '2018-06-30T07:07:32Z',
+  rewardFeeSplitAfter: 60*60*24,  // one day
 };
 
 const initialStorage = {  
@@ -28,13 +29,14 @@ const initialStorage = {
   lastEventId: 0,
   closeCallEventId: null,
   measurementStartCallEventId: null,
-  newEventConfig: config,
+  config: config,
   manager: pkh,
 
   targetDynamicsPrecision: 1000000,
   sharePrecision: 100000000,
   liquidityPrecision: 1000000,
   ratioPrecision: 100000000,
+  bakingRewards: 0,
 };
 
 module.exports = deployer => {

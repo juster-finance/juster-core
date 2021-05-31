@@ -53,7 +53,7 @@ block {
 
     (* Paying expirationFee for this method initiator: *)
     const operations : list(operation) =
-        makeOperationsIfNeeded(Tezos.source, event.expirationFee);
+        makeOperationsIfNotZero(Tezos.source, event.expirationFee);
 
     store.events[eventId] := event;
 

@@ -70,6 +70,7 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_new_event_succeed(
             event_params=self.default_event_params,
             amount=amount)
+        self.assertEqual(self.storage['events'][self.id]['participants'], 0)
 
         # Participant A: adding liquidity 50/50 just at start:
         self.storage = self.check_provide_liquidity_succeed(
@@ -77,6 +78,7 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
             amount=100_000,
             expected_above_eq=1,
             expected_bellow=1)
+        self.assertEqual(self.storage['events'][self.id]['participants'], 1)
 
         # Testing that with current ratio 1:1, bet with 10:1 ratio fails:
         self.check_bet_fails_with(
@@ -93,6 +95,7 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
             amount=50_000,
             bet='aboveEq',
             minimal_win=50_000)
+        self.assertEqual(self.storage['events'][self.id]['participants'], 2)
 
         # Participant A: adding more liquidity after 12 hours
         # (1/2 of the bets period):
@@ -102,6 +105,7 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
             amount=50_000,
             expected_above_eq=4,
             expected_bellow=1)
+        self.assertEqual(self.storage['events'][self.id]['participants'], 2)
 
         # Participant C: adding more liquidity at the very end:
         self.current_time = RUN_TIME + 24*ONE_HOUR
@@ -110,6 +114,7 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
             amount=100_000,
             expected_above_eq=4,
             expected_bellow=1)
+        self.assertEqual(self.storage['events'][self.id]['participants'], 3)
 
         # Running measurement and make failwith checks:
         self.current_time = RUN_TIME + 26*ONE_HOUR
@@ -212,8 +217,19 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
         self.check_trigger_force_majeure_fails_with(sender=self.a)
 
         # Withdrawals:
+        self.assertEqual(self.storage['events'][self.id]['participants'], 3)
         self.current_time = RUN_TIME + 64*ONE_HOUR
+    
         self.storage = self.check_withdraw_succeed(self.a, 125_000)
-        self.storage = self.check_withdraw_succeed(self.b, 75_000)
-        self.storage = self.check_withdraw_succeed(self.c, 100_000)
+        self.assertEqual(self.storage['events'][self.id]['participants'], 2)
 
+        # Withdrawing twice is allowed, but it should not change anything:
+        self.storage = self.check_withdraw_succeed(self.a, 0, sender=self.c)
+        self.assertEqual(self.storage['events'][self.id]['participants'], 2)
+
+        # Another withdrawals:
+        self.storage = self.check_withdraw_succeed(self.b, 75_000)
+        self.assertEqual(self.storage['events'][self.id]['participants'], 1)
+
+        self.storage = self.check_withdraw_succeed(self.c, 100_000)
+        self.assertEqual(self.storage['events'][self.id]['participants'], 0)

@@ -54,6 +54,11 @@ block {
     const key : ledgerKey = (Tezos.sender, eventId);
     var possibleWinAmount : tez := 0tez;        
 
+    (* Increasing participants count if this participant is not counted yet: *)
+    if isParticipant(store, key)
+    then skip
+    else event.participants := event.participants + 1n;
+
     (* TODO: refactor this two similar blocks somehow?
         or keep straight and simple? *)
     case params.bet of
