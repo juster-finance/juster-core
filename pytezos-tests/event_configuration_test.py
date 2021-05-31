@@ -52,7 +52,7 @@ class EventConfigurationDeterminedTest(StateTransformationBaseTest):
 
 
         # Checking that creating event with too small liquidity fee is failed:
-        self.storage['newEventConfig']['minLiquidityPercent'] = 10_000
+        self.storage['config']['minLiquidityPercent'] = 10_000
         event_params = self.default_event_params.copy()
         event_params['liquidityPercent'] = 1_000
 

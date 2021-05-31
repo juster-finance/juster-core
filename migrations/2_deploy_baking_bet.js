@@ -28,7 +28,7 @@ const initialStorage = {
   lastEventId: 0,
   closeCallEventId: null,
   measurementStartCallEventId: null,
-  newEventConfig: config,
+  config: config,
   manager: pkh,
 
   targetDynamicsPrecision: 1000000,

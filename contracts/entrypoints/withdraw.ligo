@@ -43,10 +43,6 @@ function withdraw(
     var params : withdrawParams;
     var store: storage) : (list(operation) * storage) is
 block {
-    (* TODO: add list of reciever addresses to make bulk transactions
-        and make it possible to call it by anyone *)
-    (* TODO: allow to call this method by liquidity providers after K hours
-        after close and reduce withdraw amount a bit in this case *)
 
     checkNoAmountIncluded(unit);
 
@@ -57,13 +53,16 @@ block {
     else failwith("Withdraw is not allowed until contract is closed");
 
     var payout : tez := calculatePayout(store, event, key);
-    (* Splitting payout fee if time passed from closed is more than
-        config rewardFeeSplitAfter: *)
-    (* TODO: *)
-    var operations : list(operation) := nil;
     operations := makeOperationsIfNotZero(Tezos.sender, payout);
 
-    (* If Force Majeure was activated, returning payout calcs differently: *)
+    (* Splitting payout fee if time passed from closed is more than
+        config rewardFeeSplitAfter: *)
+    // if Tezos.now > event.closedOracleTime + store.
+    // var operations : list(operation) := nil;
+
+    (* If Force Majeure was activated, returning payout calcs differently.
+        - in force majeure reward fee split should be not active so it is
+        just rewriting all operations: *)
     if event.isForceMajeure then
     block {
         payout := forceMajeureReturnPayout(store, key);

@@ -34,7 +34,7 @@ type ledgerNatType is big_map(ledgerKey, nat)
 (* params that used in new event creation that can be configured by
     contract manager (changing this params would not affect existing events
     and would only applied to future events): *)
-type newEventConfigType is record [
+type configType is record [
 
     (* Fees, that should be provided during contract origination *)
     measureStartFee : tez;
@@ -71,7 +71,7 @@ type newEventConfigType is record [
     // rewardFeeSplitAfter : nat;
 ]
 
-type updateConfigParam is newEventConfigType -> newEventConfigType
+type updateConfigParam is configType -> configType
 
 type eventType is record [
     currencyPair : string;
@@ -193,7 +193,7 @@ type storage is record [
     closeCallId : eventIdType;
     measurementStartCallId : eventIdType;
 
-    newEventConfig : newEventConfigType;
+    config : configType;
 
     (* Manager is the one who can change config *)
     manager : address;

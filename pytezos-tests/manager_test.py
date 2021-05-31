@@ -30,11 +30,11 @@ class ManagerDeterminedTest(StateTransformationBaseTest):
             amount=self.measure_start_fee + self.expiration_fee)
 
         # Default max liquidity percent is 30%:
-        assert self.storage['newEventConfig']['maxLiquidityPercent'] == 300_000
+        assert self.storage['config']['maxLiquidityPercent'] == 300_000
 
         # raise_liq_code lambda should raise maxLiquidityPercent to 310_000:
         self.storage = self.check_update_config_succeed(raise_liq_code, self.manager)
-        assert self.storage['newEventConfig']['maxLiquidityPercent'] == 310_000
+        assert self.storage['config']['maxLiquidityPercent'] == 310_000
 
         # Creating next event with default params:
         next_event_id = len(self.storage['events'])
@@ -52,8 +52,8 @@ class ManagerDeterminedTest(StateTransformationBaseTest):
 
         # Testing that second time lambda applied:
         self.storage = self.check_update_config_succeed(raise_liq_code, self.manager)
-        assert self.storage['newEventConfig']['maxLiquidityPercent'] == 320_000
+        assert self.storage['config']['maxLiquidityPercent'] == 320_000
 
         # Testing reset config lambda applied:
         self.storage = self.check_update_config_succeed(reset_config_code, self.manager)
-        assert self.storage['newEventConfig']['maxLiquidityPercent'] == 300_000
+        assert self.storage['config']['maxLiquidityPercent'] == 300_000

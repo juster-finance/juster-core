@@ -14,7 +14,7 @@ class ZeroEdgecasesDeterminedTest(StateTransformationBaseTest):
         self.measure_start_fee = 0
         self.expiration_fee = 0
 
-        self.storage['newEventConfig'].update({
+        self.storage['config'].update({
             'measureStartFee': self.measure_start_fee,
             'expirationFee': self.expiration_fee,
         })

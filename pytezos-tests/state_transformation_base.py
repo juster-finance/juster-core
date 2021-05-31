@@ -113,7 +113,7 @@ class StateTransformationBaseTest(TestCase):
 
         def is_should_be_cleaned(key, value):
             is_dict = type(value) is dict
-            is_not_config = key != 'newEventConfig'
+            is_not_config = key != 'config'
             return is_dict and is_not_config
 
         return {
@@ -702,7 +702,7 @@ class StateTransformationBaseTest(TestCase):
             'lastEventId': 0,
             'closeCallId': None,
             'measurementStartCallId': None,
-            'newEventConfig': self.default_config,
+            'config': self.default_config,
             'manager': self.manager,
 
             'liquidityPrecision': 1_000_000,

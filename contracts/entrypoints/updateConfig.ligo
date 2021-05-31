@@ -6,8 +6,8 @@ block {
         failwith("Only contract manager can call updateConfig")
     else skip;
 
-    const newEventConfig : newEventConfigType =
-        updateConfigLambda(store.newEventConfig);
-    store.newEventConfig := newEventConfig;
+    const config : configType =
+        updateConfigLambda(store.config);
+    store.config := config;
 
 } with ((nil: list(operation)), store)
