@@ -689,6 +689,7 @@ class StateTransformationBaseTest(TestCase):
             'minPeriodToBetsClose': 60*5,  # 5 min
             'oracleAddress': self.oracle_address,
             'rewardCallFee': 100_000,
+            'rewardFeeSplitAfter': ONE_DAY
         }
 
         self.init_storage = {

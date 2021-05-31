@@ -68,7 +68,7 @@ type configType is record [
     defaultTime : timestamp;
 
     (* Period following the close in seconds after which rewardFee is activated *)
-    // rewardFeeSplitAfter : nat;
+    rewardFeeSplitAfter : nat;
 ]
 
 type updateConfigParam is configType -> configType

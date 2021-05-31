@@ -15,6 +15,7 @@ const config = {
   maxLiquidityPercent: 300000,
   maxAllowedMeasureLag: 60*60*4,
   defaultTime: '2018-06-30T07:07:32Z',
+  rewardFeeSplitAfter: 60*60*24,  // one day
 };
 
 const initialStorage = {  
