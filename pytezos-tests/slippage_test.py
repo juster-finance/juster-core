@@ -10,7 +10,7 @@ class SlippageDeterminedTest(StateTransformationBaseTest):
         """ Testing bet minimal win option: """
 
         self.current_time = RUN_TIME
-        self.id = len(self.storage['events'])
+        self.id = self.storage['lastEventId']
 
         # Creating default event:
         self.storage = self.check_new_event_succeed(
@@ -44,7 +44,7 @@ class SlippageDeterminedTest(StateTransformationBaseTest):
         """ Testing provide liquidity slippage option: """
 
         self.current_time = RUN_TIME
-        self.id = len(self.storage['events'])
+        self.id = self.storage['lastEventId']
 
         # Creating default event:
         self.storage = self.check_new_event_succeed(

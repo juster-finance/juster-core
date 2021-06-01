@@ -52,7 +52,7 @@ class MultipleLPDeterminedTest(StateTransformationBaseTest):
     def test_with_multiple_providers(self):
 
         self.current_time = RUN_TIME
-        self.id = len(self.storage['events'])
+        self.id = self.storage['lastEventId']
 
         # Creating event:
         event_params = self.default_event_params.copy()

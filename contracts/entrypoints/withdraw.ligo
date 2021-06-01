@@ -143,7 +143,9 @@ block {
 
     store := removeKeyFromAllLedgers(store, key);
 
-    (* TODO: calculate participants/LPs count and remove event if there are 0 *)
-    store.events[params.eventId] := event;
+    (* If there are no participants in event left: removing event: *)
+    if event.participants = 0n
+    then store.events := Big_map.remove(params.eventId, store.events)
+    else store.events[params.eventId] := event;
 
 } with (operations, store)

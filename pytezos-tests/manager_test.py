@@ -19,7 +19,7 @@ class ManagerDeterminedTest(StateTransformationBaseTest):
     def test_update_config(self):
         
         self.current_time = RUN_TIME
-        self.id = len(self.storage['events'])
+        self.id = self.storage['lastEventId']
 
         raise_liq_code = open(join(dirname(__file__), RAISE_LIQ_FEE_LAMBDA_FN)).read()
         reset_config_code = open(join(dirname(__file__), RESET_CONFIG_LAMBDA_FN)).read()
@@ -37,15 +37,14 @@ class ManagerDeterminedTest(StateTransformationBaseTest):
         assert self.storage['config']['maxLiquidityPercent'] == 310_000
 
         # Creating next event with default params:
-        next_event_id = len(self.storage['events'])
         new_params = self.default_event_params.copy()
         new_params['liquidityPercent'] = 310_000
-        self.id = next_event_id
+        self.id = self.storage['lastEventId']
         self.storage = self.check_new_event_succeed(
             event_params=new_params,
             amount=self.measure_start_fee + self.expiration_fee)
 
-        assert self.storage['events'][next_event_id]['liquidityPercent'] == 310_000
+        assert self.storage['events'][self.id]['liquidityPercent'] == 310_000
 
         # Testing that updateConfig from address =/= manager is failed:
         self.check_update_config_fails_with(raise_liq_code, self.c)

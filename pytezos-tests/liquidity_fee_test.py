@@ -12,7 +12,7 @@ class LiquidityFeeDynamicTest(StateTransformationBaseTest):
     def test_liquidity_fee(self):
 
         self.current_time = RUN_TIME
-        self.id = len(self.storage['events'])
+        self.id = self.storage['lastEventId']
 
         # Liquidity percent is set to 1%:
         percent = int(self.storage['liquidityPrecision'] * 0.01)

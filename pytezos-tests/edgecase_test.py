@@ -8,7 +8,7 @@ class ZeroEdgecasesDeterminedTest(StateTransformationBaseTest):
 
     def test_zero_edgecases(self):
         self.current_time = RUN_TIME
-        self.id = len(self.storage['events'])
+        self.id = self.storage['lastEventId']
 
         # Creating event, both fees equal to zero:
         self.measure_start_fee = 0
@@ -118,11 +118,7 @@ class ZeroEdgecasesDeterminedTest(StateTransformationBaseTest):
             expected_bellow=1,
             msg_contains='Providing Liquidity after betCloseTime is not allowed')
 
-        # B withdraws all:
-        self.storage = self.check_withdraw_succeed(self.a, 0)
-        self.storage = self.check_withdraw_succeed(self.b, 10)
-
-        # test trying close twice: assert failed:
+        # Test trying close twice: assert failed:
         self.check_close_callback_fails_with(
             callback_values=callback_values,
             source=self.a,
@@ -144,3 +140,20 @@ class ZeroEdgecasesDeterminedTest(StateTransformationBaseTest):
             sender=self.oracle_address,
             msg_contains="Measurement period already started")
 
+        # B withdraws all:
+        self.storage = self.check_withdraw_succeed(self.a, 0)
+        self.storage = self.check_withdraw_succeed(self.b, 10)
+
+        # Test that event was deleted and any interaction would lead to error:
+        self.check_close_callback_fails_with(
+            callback_values=callback_values,
+            source=self.a,
+            sender=self.oracle_address,
+            msg_contains="Event is not found")
+
+        self.check_bet_fails_with(
+            participant=self.a,
+            amount=1,
+            bet='bellow',
+            minimal_win=5,
+            msg_contains='Event is not found')
