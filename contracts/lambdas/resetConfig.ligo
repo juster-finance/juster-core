@@ -19,4 +19,5 @@ record[
     maxAllowedMeasureLag = oneHour*4n;
     defaultTime = ("2018-06-30T07:07:32Z" : timestamp);
     rewardFeeSplitAfter = oneDay;
+    providerProfitFee = 100_000n;  // 10%
 ]

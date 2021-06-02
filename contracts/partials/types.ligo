@@ -69,6 +69,10 @@ type configType is record [
 
     (* Period following the close in seconds after which rewardFee is activated *)
     rewardFeeSplitAfter : nat;
+
+    (* Amount of profits that cutted from provider and that
+        go to the community fond: *)
+    providerProfitFee : nat;
 ]
 
 type updateConfigParam is configType -> configType
@@ -206,6 +210,8 @@ type storage is record [
     sharePrecision : nat;
     liquidityPrecision : nat;
     ratioPrecision : nat;
+    providerProfitFeePrecision : nat;
 
     bakingRewards : tez;
+    retainedProfits : tez;
 ]

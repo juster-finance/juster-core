@@ -731,7 +731,8 @@ class StateTransformationBaseTest(TestCase):
             'minPeriodToBetsClose': 60*5,  # 5 min
             'oracleAddress': self.oracle_address,
             'rewardCallFee': 100_000,
-            'rewardFeeSplitAfter': ONE_DAY
+            'rewardFeeSplitAfter': ONE_DAY,
+            'providerProfitFee': 0,  # 0% for all tests that written before this fee
         }
 
         self.init_storage = {
@@ -752,8 +753,10 @@ class StateTransformationBaseTest(TestCase):
             'ratioPrecision': 100_000_000,
             'sharePrecision': 100_000_000,
             'targetDynamicsPrecision': 1_000_000,
+            'providerProfitFeePrecision': 1_000_000,
 
             'bakingRewards': 0,
+            'retainedProfits': 0,
         }
 
         # this self.storage will be used in all blocks:
