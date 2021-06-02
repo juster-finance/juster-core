@@ -70,6 +70,9 @@ block {
         newShares := betAboveEq * event.totalLiquidityShares / event.poolAboveEq
     else skip;
 
+    if newShares = 0n then failwith("Added liquidity is less than one share")
+    else skip;
+
     event.poolAboveEq := event.poolAboveEq + betAboveEq;
     event.poolBellow := event.poolBellow + betBellow;
 
