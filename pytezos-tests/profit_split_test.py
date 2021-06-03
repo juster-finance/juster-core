@@ -125,32 +125,50 @@ class ProfitSplitDeterminedTest(StateTransformationBaseTest):
         self.default_config.update({'providerProfitFee': 10_000})  # 1%
         self._create_event_and_provide_liquidity()
 
-        # Participant B: bets aboveEq 50_000:
+        # Participant B: bets bellow 50_000 (and loses):
         self.storage = self.check_bet_succeed(
             participant=self.b,
             amount=50_000,
+            bet='bellow',
+            minimal_win=75_000)
+
+        # current ratio 25:100
+        # Participant D: adding liquidity with same share as A (and loose some):
+        self.storage = self.check_provide_liquidity_succeed(
+            participant=self.d,
+            amount=125_000,
+            expected_above_eq=1,
+            expected_bellow=4)
+
+        # current ratio 50:200
+        # Participant C: bets aboveEq 30_000 (and wins 75_000):
+        self.storage = self.check_bet_succeed(
+            participant=self.c,
+            amount=30_000,
             bet='aboveEq',
             minimal_win=75_000)
 
-        # current ratio 100:25
-        # Participant C: bets bellow 75_000:
-        self.storage = self.check_bet_succeed(
-            participant=self.c,
-            amount=75_000,
-            bet='bellow',
-            minimal_win=150_000)
-
+        # current ratio 80:125
         self._run_measurement_and_close()
-        # Bet aboveEq wins, A losses, B wins
-        net_profit = int((75_000 - 25_000) * 0.99)
+
+        # A takes all that B looses (expect 1% contract fee) and splits with D
+        # sum that C wins:
+        b_losses = 50_000
+        c_wins = 75_000
+        a_share, d_share = 0.5, 0.5
+        a_net_profit = int((b_losses - c_wins * a_share) * 0.99)
+        contract_profit = int((b_losses - c_wins * a_share) * 0.01)
+
+        # D got loses from C wins:
+        d_net_loss = int(c_wins * a_share)
 
         # Withdrawals:
-        self.storage = self.check_withdraw_succeed(self.a, 100_000 + net_profit)
-        self.storage = self.check_withdraw_succeed(self.c, 0)
-        self.storage = self.check_withdraw_succeed(self.b, 75_000)
+        self.storage = self.check_withdraw_succeed(self.a, 100_000 + a_net_profit)
+        self.storage = self.check_withdraw_succeed(self.b, 0)
+        self.storage = self.check_withdraw_succeed(self.c, 30_000 + c_wins)
+        self.storage = self.check_withdraw_succeed(self.d, 125_000 - d_net_loss)
 
         # Claiming profits with manager succeed:
-        contract_profit = int((75_000 - 25_000) * 0.01)
         self.assertEqual(self.storage['retainedProfits'], contract_profit)
 
         # Claiming profits with manager succeed:
