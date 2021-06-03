@@ -1,11 +1,23 @@
+(* Returned record from calculatePayout function: *)
+type payoutInfo is record [
+    bet : tez;
+    provider : tez;
+    fee : tez;
+]
+
+
 function calculatePayout(
     var store: storage;
     var event : eventType;
-    var key : ledgerKey) : tez is
+    var key : ledgerKey) : payoutInfo is
 
 block {
 
-    var betPayout : tez := 0tez;
+    var payout : payoutInfo := record[
+        bet=0tez;
+        provider=0tez;
+        fee=0tez];
+
     var providerProfit : int := 0;
 
     const share : nat = getNatLedgerAmount(key, store.liquidityShares);
@@ -15,7 +27,7 @@ block {
         getLedgerAmount(key, store.providedLiquidityBellow);
 
     if event.isBetsAboveEqWin then block {
-        betPayout := getLedgerAmount(key, store.betsAboveEq);
+        payout.bet := getLedgerAmount(key, store.betsAboveEq);
 
         (* calculating liquidity provider profit: *)
         const bellowReturn : tez =
@@ -23,7 +35,7 @@ block {
         providerProfit := tezToInt(bellowReturn) - tezToInt(providedBellow);
     }
     else block {
-        betPayout := getLedgerAmount(key, store.betsBellow);
+        payout.bet := getLedgerAmount(key, store.betsBellow);
 
         (* calculating liquidity provider profit: *)
         const aboveEqReturn : tez =
@@ -32,24 +44,17 @@ block {
     };
 
     (* Cutting profits from provided liquidity: *)
-    var providerPayout : tez := 0tez;
     if providerProfit > 0
     then block {
-        const contractFee : tez =
-            abs(providerProfit) * store.config.providerProfitFee
+        payout.fee := abs(providerProfit) * store.config.providerProfitFee
             / store.providerProfitFeePrecision * 1mutez;
-        const netProfit : tez = abs(providerProfit) * 1mutez - contractFee;
-        (* TODO: THIS STORE STATE IS NOT SAVED:
-            - return store with this func?
-            - split this method in separate and change store outside this method?
-        *)
-        store.retainedProfits := store.retainedProfits + contractFee;
-        providerPayout := providedAboveEq + providedBellow + netProfit;
+        const netProfit : tez = abs(providerProfit) * 1mutez - payout.fee;
+        payout.provider := providedAboveEq + providedBellow + netProfit;
     }
-    else providerPayout :=
+    else payout.provider :=
         providedAboveEq + providedBellow - abs(providerProfit) * 1mutez;
 
-} with betPayout + providerPayout
+} with payout
 
 
 function forceMajeureReturnPayout(
@@ -153,9 +158,11 @@ block {
     if event.isClosed then skip
     else failwith("Withdraw is not allowed until contract is closed");
 
-    var payout : tez := calculatePayout(store, event, key);
-    const operations : list(operation) =
-        makeWithdrawOperations(store, params, event, key, payout);
+    var payout : payoutInfo := calculatePayout(store, event, key);
+    store.retainedProfits := store.retainedProfits + payout.fee;
+
+    const operations : list(operation) = makeWithdrawOperations(
+        store, params, event, key, payout.bet + payout.provider);
 
     (* Decreasing participants count: *)
     if isParticipant(store, key)
