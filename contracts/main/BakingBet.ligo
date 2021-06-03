@@ -13,6 +13,7 @@
 #include "../entrypoints/setDelegate.ligo"
 #include "../entrypoints/default.ligo"
 #include "../entrypoints/claimBakingRewards.ligo"
+#include "../entrypoints/claimRetainedProfits.ligo"
 
 
 function main (var params : action; var s : storage) : (list(operation) * storage) is
@@ -30,4 +31,5 @@ case params of
 | SetDelegate(p)              -> setDelegate(p, s)
 | Default(p)                  -> default(p, s)
 | ClaimBakingRewards(p)       -> claimBakingRewards(p, s)
+| ClaimRetainedProfits(p)     -> claimRetainedProfits(p, s)
 end

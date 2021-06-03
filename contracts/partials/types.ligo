@@ -176,6 +176,7 @@ type action is
 | SetDelegate of option (key_hash)
 | Default of unit
 | ClaimBakingRewards of unit
+| ClaimRetainedProfits of unit
 
 
 type storage is record [

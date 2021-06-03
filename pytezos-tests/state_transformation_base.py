@@ -713,6 +713,33 @@ class StateTransformationBaseTest(TestCase):
         self.assertTrue(msg_contains in str(cm.exception))
 
 
+    def check_claim_retained_profits_succeed(self, expected_profit, sender):
+
+        result = self.contract.claimRetainedProfits().interpret(
+            now=self.current_time,
+            storage=self.storage,
+            sender=sender)
+        self.assertEqual(len(result.operations), 1)
+
+        operation = result.operations[0]
+        self.assertEqual(operation['destination'], self.manager)
+        self.assertAmountEqual(operation, expected_profit)
+
+        return result.storage
+
+
+    def check_claim_retained_profits_fails_with(
+        self, expected_profit, sender, msg_contains=''):
+
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            result = self.contract.claimRetainedProfits().interpret(
+                now=self.current_time,
+                storage=self.storage,
+                sender=sender)
+
+        self.assertTrue(msg_contains in str(cm.exception))
+
+
     def setUp(self):
 
         self.contract = ContractInterface.from_file(join(dirname(__file__), CONTRACT_FN))
