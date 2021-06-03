@@ -18,10 +18,17 @@ function excludeLiquidity(
             event.liquidityPercent when event.betsCloseTime comes *)
         const timeAdjustedPercent : nat =
             event.liquidityPercent * abs(elapsedTime) / totalBettingTime;
-
-        value := value * abs(store.liquidityPrecision - timeAdjustedPercent)
-            / store.liquidityPrecision;
+        const multiplier : nat = abs(store.liquidityPrecision - timeAdjustedPercent);
+        value := natToTez(tezToNat(value) * multiplier / store.liquidityPrecision);
     } with value
+
+
+function calculateWinDelta(
+    const value : tez;
+    const top : tez;
+    const bottom : tez) : tez is
+
+    natToTez(tezToNat(value) * tezToNat(top) / tezToNat(bottom))
 
 
 function bet(
@@ -66,8 +73,7 @@ block {
         (* adding liquidity to betting pool *)
         event.poolAboveEq := event.poolAboveEq + Tezos.amount;
         const winDelta : tez =
-            natToTez(tezToNat(Tezos.amount) * event.poolBellow
-            / event.poolAboveEq);
+            calculateWinDelta(Tezos.amount, event.poolBellow, event.poolAboveEq);
 
         const winDeltaPossible : tez =
             minTez(excludeLiquidity(winDelta, event, store), event.poolBellow);
@@ -88,8 +94,7 @@ block {
         (* adding liquidity to betting pool *)
         event.poolBellow := event.poolBellow + Tezos.amount;
         const winDelta : tez =
-            natToTez(tezToNat(Tezos.amount) * event.poolAboveEq
-            / event.poolBellow);
+            calculateWinDelta(Tezos.amount, event.poolAboveEq, event.poolBellow);
 
         const winDeltaPossible : tez =
             minTez(excludeLiquidity(winDelta, event, store), event.poolAboveEq);

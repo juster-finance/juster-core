@@ -30,7 +30,8 @@ block {
     var ratio : nat := expectedRatio;
     (* And it is calculated if this is adding more liquidity scenario *)
     if totalBets =/= 0tez then
-        ratio := event.poolAboveEq * store.ratioPrecision / event.poolBellow
+        ratio := tezToNat(event.poolAboveEq) * store.ratioPrecision
+            / tezToNat(event.poolBellow)
     else skip;
 
     (* Slippage calculated in ratioPrecision values as multiplicative difference
@@ -58,7 +59,7 @@ block {
     var aboveEqShare : nat :=
         ratio * store.ratioPrecision / (ratio + store.ratioPrecision);
     const betAboveEq : tez = natToTez(roundDiv(
-        tezToNat(Tezos.amount * aboveEqShare), store.ratioPrecision));
+        tezToNat(Tezos.amount) * aboveEqShare, store.ratioPrecision));
     const betBellow : tez = Tezos.amount - betAboveEq;
 
     (* liquidity shares: *)
@@ -67,7 +68,8 @@ block {
     (* otherwise if this is not first LP, calculating share using betAboveEq poolit
         it should not differ from added share to betBellow pool: *)
     if totalBets =/= 0tez then
-        newShares := betAboveEq * event.totalLiquidityShares / event.poolAboveEq
+        newShares := tezToNat(betAboveEq) * event.totalLiquidityShares
+            / tezToNat(event.poolAboveEq)
     else skip;
 
     if newShares = 0n then failwith("Added liquidity is less than one share")

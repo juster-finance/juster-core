@@ -31,7 +31,8 @@ block {
 
         (* calculating liquidity provider profit: *)
         const bellowReturn : tez =
-            share * event.poolBellow / event.totalLiquidityShares;
+            natToTez(share * tezToNat(event.poolBellow)
+            / event.totalLiquidityShares);
         providerProfit := tezToInt(bellowReturn) - tezToInt(providedBellow);
     }
     else block {
@@ -39,7 +40,8 @@ block {
 
         (* calculating liquidity provider profit: *)
         const aboveEqReturn : tez =
-            share * event.poolAboveEq / event.totalLiquidityShares;
+            natToTez(share * tezToNat(event.poolAboveEq)
+            / event.totalLiquidityShares);
         providerProfit := tezToInt(aboveEqReturn) - tezToInt(providedAboveEq);
     };
 

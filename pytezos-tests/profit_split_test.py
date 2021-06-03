@@ -1,4 +1,5 @@
-""" Test how providerProfitFee calculated and how claim retained profits works """
+""" Test how providerProfitFee calculated and how claim retained profits works
+    + in this test checking how contracts work with very big numbers """
 
 from state_transformation_base import StateTransformationBaseTest, RUN_TIME, ONE_HOUR
 from pytezos import MichelsonRuntimeError
@@ -6,7 +7,7 @@ from pytezos import MichelsonRuntimeError
 
 class ProfitSplitDeterminedTest(StateTransformationBaseTest):
 
-    def _create_event_and_provide_liquidity(self):
+    def _create_event(self):
         """ Creates default event with fee and adds 100k liquidity 1:1 """
 
         self.current_time = RUN_TIME
@@ -17,13 +18,6 @@ class ProfitSplitDeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_new_event_succeed(
             event_params=self.default_event_params,
             amount=amount)
-
-        # Participant A: adding liquidity 50/50 just at start:
-        self.storage = self.check_provide_liquidity_succeed(
-            participant=self.a,
-            amount=100_000,
-            expected_above_eq=1,
-            expected_bellow=1)
 
 
     def _run_measurement_and_close(self):
@@ -66,7 +60,14 @@ class ProfitSplitDeterminedTest(StateTransformationBaseTest):
     def test_profit_split_when_provider_have_profit(self):
 
         self.default_config.update({'providerProfitFee': 500_000})  # 50%
-        self._create_event_and_provide_liquidity()
+        self._create_event()
+
+        # Participant A: adding liquidity 50/50 just at start:
+        self.storage = self.check_provide_liquidity_succeed(
+            participant=self.a,
+            amount=100_000,
+            expected_above_eq=1,
+            expected_bellow=1)
 
         # Participant B: bets bellow 50_000:
         self.storage = self.check_bet_succeed(
@@ -100,7 +101,14 @@ class ProfitSplitDeterminedTest(StateTransformationBaseTest):
     def test_profit_split_when_provider_have_losses(self):
 
         self.default_config.update({'providerProfitFee': 100_000})  # 10%
-        self._create_event_and_provide_liquidity()
+        self._create_event()
+
+        # Participant A: adding liquidity 50/50 just at start:
+        self.storage = self.check_provide_liquidity_succeed(
+            participant=self.a,
+            amount=100_000,
+            expected_above_eq=1,
+            expected_bellow=1)
 
         # Participant B: bets aboveEq 50_000:
         self.storage = self.check_bet_succeed(
@@ -120,41 +128,52 @@ class ProfitSplitDeterminedTest(StateTransformationBaseTest):
         self.assertEqual(self.storage['retainedProfits'], 0)
 
 
-    def test_profit_split_complex(self):
+    def test_profit_split_very_big_numbers(self):
 
         self.default_config.update({'providerProfitFee': 10_000})  # 1%
-        self._create_event_and_provide_liquidity()
+        self._create_event()
 
-        # Participant B: bets bellow 50_000 (and loses):
+        tez = 1_000_000
+        million = 1_000_000
+
+        # Participant A: adding liquidity 50/50 just at start:
+        # 1 bln tez is more than current supply
+        self.storage = self.check_provide_liquidity_succeed(
+            participant=self.a,
+            amount=1_000*million*tez,
+            expected_above_eq=1,
+            expected_bellow=1)
+
+        # Participant B: bets bellow 500 mln tez (and loses):
         self.storage = self.check_bet_succeed(
             participant=self.b,
-            amount=50_000,
+            amount=500*million*tez,
             bet='bellow',
-            minimal_win=75_000)
+            minimal_win=750*million*tez)
 
         # current ratio 25:100
         # Participant D: adding liquidity with same share as A (and loose some):
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.d,
-            amount=125_000,
+            amount=1_250*million*tez,
             expected_above_eq=1,
             expected_bellow=4)
 
         # current ratio 50:200
-        # Participant C: bets aboveEq 30_000 (and wins 75_000):
+        # Participant C: bets aboveEq 300 mln (and wins 750 mln):
         self.storage = self.check_bet_succeed(
             participant=self.c,
-            amount=30_000,
+            amount=300*million*tez,
             bet='aboveEq',
-            minimal_win=75_000)
+            minimal_win=750*million*tez)
 
         # current ratio 80:125
         self._run_measurement_and_close()
 
         # A takes all that B looses (expect 1% contract fee) and splits with D
         # sum that C wins:
-        b_losses = 50_000
-        c_wins = 75_000
+        b_losses = 500*million*tez
+        c_wins = 750*million*tez
         a_share, d_share = 0.5, 0.5
         a_net_profit = int((b_losses - c_wins * a_share) * 0.99)
         contract_profit = int((b_losses - c_wins * a_share) * 0.01)
@@ -163,10 +182,14 @@ class ProfitSplitDeterminedTest(StateTransformationBaseTest):
         d_net_loss = int(c_wins * a_share)
 
         # Withdrawals:
-        self.storage = self.check_withdraw_succeed(self.a, 100_000 + a_net_profit)
-        self.storage = self.check_withdraw_succeed(self.b, 0)
-        self.storage = self.check_withdraw_succeed(self.c, 30_000 + c_wins)
-        self.storage = self.check_withdraw_succeed(self.d, 125_000 - d_net_loss)
+        self.storage = self.check_withdraw_succeed(
+            self.a, 1_000*million*tez + a_net_profit)
+        self.storage = self.check_withdraw_succeed(
+            self.b, 0)
+        self.storage = self.check_withdraw_succeed(
+            self.c, 300*million*tez + c_wins)
+        self.storage = self.check_withdraw_succeed(
+            self.d, 1_250*million*tez - d_net_loss)
 
         # Claiming profits with manager succeed:
         self.assertEqual(self.storage['retainedProfits'], contract_profit)
