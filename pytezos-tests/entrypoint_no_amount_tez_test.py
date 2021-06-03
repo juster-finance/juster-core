@@ -104,3 +104,19 @@ class ForceMajeureDeterminedTest(StateTransformationBaseTest):
                 sender=self.a,
                 now=self.current_time)
         self.assertTrue(ERROR_MSG in str(cm.exception))
+
+        # claimBakingRewards with amount > 0 should not be allowed:
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.contract.claimBakingRewards().with_amount(10).interpret(
+                storage=self.storage,
+                sender=self.a,
+                now=self.current_time)
+        self.assertTrue(ERROR_MSG in str(cm.exception))
+
+        # claimRetainedProfits with amount > 0 should not be allowed:
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.contract.claimRetainedProfits().with_amount(10).interpret(
+                storage=self.storage,
+                sender=self.a,
+                now=self.current_time)
+        self.assertTrue(ERROR_MSG in str(cm.exception))
