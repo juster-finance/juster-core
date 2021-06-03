@@ -686,6 +686,33 @@ class StateTransformationBaseTest(TestCase):
         self.assertTrue(msg_contains in str(cm.exception))
 
 
+    def check_claim_baking_rewards_succeed(self, expected_reward, sender):
+
+        result = self.contract.claimBakingRewards().interpret(
+            now=self.current_time,
+            storage=self.storage,
+            sender=sender)
+        self.assertEqual(len(result.operations), 1)
+
+        operation = result.operations[0]
+        self.assertEqual(operation['destination'], self.manager)
+        self.assertAmountEqual(operation, expected_reward)
+
+        return result.storage
+
+
+    def check_claim_baking_rewards_fails_with(
+        self, expected_reward, sender, msg_contains=''):
+
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            result = self.contract.claimBakingRewards().interpret(
+                now=self.current_time,
+                storage=self.storage,
+                sender=sender)
+
+        self.assertTrue(msg_contains in str(cm.exception))
+
+
     def setUp(self):
 
         self.contract = ContractInterface.from_file(join(dirname(__file__), CONTRACT_FN))

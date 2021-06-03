@@ -29,25 +29,14 @@ class DelegateAndBakingRewardsDeterminedTest(StateTransformationBaseTest):
         self.storage = result.storage
 
         # Trying to withdraw with address different from manager:
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            result = self.contract.claimBakingRewards().interpret(
-                now=self.current_time,
-                storage=self.storage,
-                sender=self.c)
-        msg = 'Only contract manager allowed to claim baking rewards'
-        self.assertTrue(msg in str(cm.exception))
+        self.check_claim_baking_rewards_fails_with(
+            expected_reward=200_000,
+            sender=self.c,
+            msg_contains='Only contract manager allowed to claim baking rewards')
 
         # Withdrawing with manager:
-        result = self.contract.claimBakingRewards().interpret(
-            now=self.current_time,
-            storage=self.storage,
-            sender=self.manager)
-        self.storage = result.storage
-        self.assertEqual(len(result.operations), 1)
-
-        operation = result.operations[0]
-        self.assertEqual(operation['destination'], self.manager)
-        self.assertAmountEqual(operation, 200_000)
+        self.storage = self.check_claim_baking_rewards_succeed(
+            expected_reward=200_000, sender=self.manager)
 
         # Sending another 500_000 mutez to contract:
         result = self.contract.default().with_amount(500_000).interpret(
@@ -57,13 +46,5 @@ class DelegateAndBakingRewardsDeterminedTest(StateTransformationBaseTest):
         self.storage = result.storage
 
         # Withdrawing with manager again:
-        result = self.contract.claimBakingRewards().interpret(
-            now=self.current_time,
-            storage=self.storage,
-            sender=self.manager)
-        self.storage = result.storage
-        self.assertEqual(len(result.operations), 1)
-
-        operation = result.operations[0]
-        self.assertEqual(operation['destination'], self.manager)
-        self.assertAmountEqual(operation, 500_000)
+        self.storage = self.check_claim_baking_rewards_succeed(
+            expected_reward=500_000, sender=self.manager)
