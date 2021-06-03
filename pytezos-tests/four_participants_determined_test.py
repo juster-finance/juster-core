@@ -76,7 +76,7 @@ class FourParticipantsDeterminedTest(StateTransformationBaseTest):
     def test_with_four_participants(self):
 
         self.current_time = RUN_TIME
-        self.id = len(self.storage['events'])
+        self.id = self.storage['lastEventId']
 
         # Creating event:
         amount = self.measure_start_fee + self.expiration_fee

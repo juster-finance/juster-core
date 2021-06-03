@@ -122,7 +122,7 @@ class StateTransformationBaseTest(TestCase):
         }
 
 
-    def check_result_integrity(self, result):
+    def check_storage_integrity(self, storage):
 
         def sum_ledger_by_event(ledger, event_id):
             """ Sums all values in ledger for given event_id """
@@ -131,13 +131,13 @@ class StateTransformationBaseTest(TestCase):
                 value if (key[1] == event_id) & (value is not None) else 0
                 for key, value in ledger.items())
 
-        bets_above_eq = result.storage['betsAboveEq']
-        bets_bellow = result.storage['betsBellow']
-        pl_above_eq = result.storage['providedLiquidityAboveEq']
-        pl_bellow = result.storage['providedLiquidityBellow']
-        deposited_bets = result.storage['depositedBets']
+        bets_above_eq = storage['betsAboveEq']
+        bets_bellow = storage['betsBellow']
+        pl_above_eq = storage['providedLiquidityAboveEq']
+        pl_bellow = storage['providedLiquidityBellow']
+        deposited_bets = storage['depositedBets']
 
-        for event_id, event in result.storage['events'].items():
+        for event_id, event in storage['events'].items():
             # Checking that sum of the bets and L is equal to sum in pools.
             # This check should be performed before any withdrawals:
             if event['isClosed']:
@@ -170,7 +170,7 @@ class StateTransformationBaseTest(TestCase):
                 period = event['measurePeriod']
                 self.assertTrue(event['closedOracleTime'] >= start + period)
 
-        self.assertTrue(result.storage['lastEventId'] > 0)
+        self.assertTrue(storage['lastEventId'] > 0)
 
 
     def check_provide_liquidity_succeed(
@@ -260,7 +260,7 @@ class StateTransformationBaseTest(TestCase):
             result_event['totalLiquidityShares'],
             init_event['totalLiquidityShares'] + int(added_shares))
 
-        self.check_result_integrity(result)
+        self.check_storage_integrity(result_storage)
         return result_storage
 
 
@@ -334,7 +334,7 @@ class StateTransformationBaseTest(TestCase):
             - init_storage[ledger_name].get(key, 0))
         self.assertEqual(diff, bet_result['bet_profit'] + amount)
 
-        self.check_result_integrity(result)
+        self.check_storage_integrity(result_storage)
         return result_storage
 
 
@@ -429,7 +429,7 @@ class StateTransformationBaseTest(TestCase):
         self.assertFalse(key in storage['liquidityShares'])
         self.assertFalse(key in storage['depositedBets'])
 
-        self.check_result_integrity(result)
+        self.check_storage_integrity(storage)
         return storage
 
 
@@ -475,7 +475,7 @@ class StateTransformationBaseTest(TestCase):
             k: v for k, v in result_event.items() if k in proper_event}
         self.assertDictEqual(proper_event, selected_event_keys)
 
-        self.check_result_integrity(result)
+        self.check_storage_integrity(result_storage)
         return result_storage
 
 
@@ -509,7 +509,7 @@ class StateTransformationBaseTest(TestCase):
         event = result.storage['events'][self.id]
         self.assertFalse(event['isMeasurementStarted'])
 
-        self.check_result_integrity(result)
+        self.check_storage_integrity(result.storage)
         return result.storage
 
 
@@ -542,7 +542,7 @@ class StateTransformationBaseTest(TestCase):
             self.assertEqual(operation['destination'], source)
             self.assertAmountEqual(operation, self.measure_start_fee)
 
-        self.check_result_integrity(result)
+        self.check_storage_integrity(result.storage)
         return result.storage
 
 
@@ -555,10 +555,10 @@ class StateTransformationBaseTest(TestCase):
             is inside string form of cathced exception
         """
 
-        result = self.contract.startMeasurement(self.id).interpret(
-            storage=self.storage, sender=source, now=self.current_time)
-
         with self.assertRaises(MichelsonRuntimeError) as cm:
+            result = self.contract.startMeasurement(self.id).interpret(
+                storage=self.storage, sender=source, now=self.current_time)
+
             res = self.contract.startMeasurementCallback(callback_values).interpret(
                 storage=result.storage, sender=sender, now=self.current_time)
 
@@ -580,7 +580,7 @@ class StateTransformationBaseTest(TestCase):
         currency_pair = operation['parameters']['value']['args'][0]['string']
         self.assertEqual(currency_pair, self.currency_pair)
 
-        self.check_result_integrity(result)
+        self.check_storage_integrity(result.storage)
         return result.storage
 
 
@@ -614,7 +614,7 @@ class StateTransformationBaseTest(TestCase):
             self.assertEqual(operation['destination'], source)
             self.assertAmountEqual(operation, self.expiration_fee)
 
-        self.check_result_integrity(result)
+        self.check_storage_integrity(result.storage)
         return result.storage
 
 
@@ -622,10 +622,10 @@ class StateTransformationBaseTest(TestCase):
             self, callback_values, source, sender, msg_contains=''):
         """ Checking that closing fails with message msg_contains """
 
-        result = self.contract.close(self.id).interpret(
-            storage=self.storage, sender=source, now=self.current_time)
-
         with self.assertRaises(MichelsonRuntimeError) as cm:
+            result = self.contract.close(self.id).interpret(
+                storage=self.storage, sender=source, now=self.current_time)
+
             res = self.contract.closeCallback(callback_values).interpret(
                 storage=result.storage, sender=sender, now=self.current_time)
 
@@ -686,6 +686,60 @@ class StateTransformationBaseTest(TestCase):
         self.assertTrue(msg_contains in str(cm.exception))
 
 
+    def check_claim_baking_rewards_succeed(self, expected_reward, sender):
+
+        result = self.contract.claimBakingRewards().interpret(
+            now=self.current_time,
+            storage=self.storage,
+            sender=sender)
+        self.assertEqual(len(result.operations), 1)
+
+        operation = result.operations[0]
+        self.assertEqual(operation['destination'], self.manager)
+        self.assertAmountEqual(operation, expected_reward)
+
+        return result.storage
+
+
+    def check_claim_baking_rewards_fails_with(
+        self, expected_reward, sender, msg_contains=''):
+
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            result = self.contract.claimBakingRewards().interpret(
+                now=self.current_time,
+                storage=self.storage,
+                sender=sender)
+
+        self.assertTrue(msg_contains in str(cm.exception))
+
+
+    def check_claim_retained_profits_succeed(self, expected_profit, sender):
+
+        result = self.contract.claimRetainedProfits().interpret(
+            now=self.current_time,
+            storage=self.storage,
+            sender=sender)
+        self.assertEqual(len(result.operations), 1)
+
+        operation = result.operations[0]
+        self.assertEqual(operation['destination'], self.manager)
+        self.assertAmountEqual(operation, expected_profit)
+
+        return result.storage
+
+
+    def check_claim_retained_profits_fails_with(
+        self, expected_profit, sender, msg_contains=''):
+
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            result = self.contract.claimRetainedProfits().interpret(
+                now=self.current_time,
+                storage=self.storage,
+                sender=sender)
+
+        self.assertTrue(msg_contains in str(cm.exception))
+
+
     def setUp(self):
 
         self.contract = ContractInterface.from_file(join(dirname(__file__), CONTRACT_FN))
@@ -731,7 +785,8 @@ class StateTransformationBaseTest(TestCase):
             'minPeriodToBetsClose': 60*5,  # 5 min
             'oracleAddress': self.oracle_address,
             'rewardCallFee': 100_000,
-            'rewardFeeSplitAfter': ONE_DAY
+            'rewardFeeSplitAfter': ONE_DAY,
+            'providerProfitFee': 0,  # 0% for all tests that written before this fee
         }
 
         self.init_storage = {
@@ -752,8 +807,10 @@ class StateTransformationBaseTest(TestCase):
             'ratioPrecision': 100_000_000,
             'sharePrecision': 100_000_000,
             'targetDynamicsPrecision': 1_000_000,
+            'providerProfitFeePrecision': 1_000_000,
 
             'bakingRewards': 0,
+            'retainedProfits': 0,
         }
 
         # this self.storage will be used in all blocks:

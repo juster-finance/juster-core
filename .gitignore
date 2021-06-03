@@ -8,4 +8,5 @@ projects/*
 **/__pycache__/*
 2021-*.txt
 pytezos-tests/*.ipynb
+NAMES.MD
 

@@ -56,7 +56,7 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
     def test_with_three_participants(self):
 
         self.current_time = RUN_TIME
-        self.id = len(self.storage['events'])
+        self.id = self.storage['lastEventId']
 
         # Trying to create event without providing correct fees:
         amount = self.measure_start_fee + self.expiration_fee
@@ -231,5 +231,6 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_withdraw_succeed(self.b, 75_000)
         self.assertEqual(self.storage['events'][self.id]['participants'], 1)
 
+        # This is last participant, checking that event is removed:
         self.storage = self.check_withdraw_succeed(self.c, 100_000)
-        self.assertEqual(self.storage['events'][self.id]['participants'], 0)
+        self.assertFalse(self.id in self.storage['events'])

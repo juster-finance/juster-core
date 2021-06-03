@@ -5,7 +5,15 @@
 function tezToNat(var t : tez) : nat is t / 1mutez;
 
 
+function tezToInt(var t : tez) : int is int(tezToNat(t));
+
+
 function natToTez(var t : nat) : tez is t * 1mutez;
+
+
+function intToTez(var t : int) : tez is 
+    if t >= 0 then natToTez(abs(t))
+    else (failwith("Wrong intToTez amount (<0)") : tez);
 
 
 (* Returns minimal value from two nat variables a & b *)

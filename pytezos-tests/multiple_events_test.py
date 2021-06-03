@@ -42,7 +42,7 @@ class MultipleEventsDeterminedTest(StateTransformationBaseTest):
 
     def test_with_multiple_events(self):
         self.current_time = RUN_TIME
-        self.id = len(self.storage['events'])
+        self.id = self.storage['lastEventId']
 
         # Creating event 0:
         self.storage = self.check_new_event_succeed(
@@ -58,7 +58,7 @@ class MultipleEventsDeterminedTest(StateTransformationBaseTest):
                 expected_bellow=1)
 
         # Creating event 1:
-        self.id = len(self.storage['events'])
+        self.id = self.storage['lastEventId']
         self.storage = self.check_new_event_succeed(
             event_params=self.default_event_params,
             amount=self.measure_start_fee + self.expiration_fee)
@@ -95,7 +95,7 @@ class MultipleEventsDeterminedTest(StateTransformationBaseTest):
 
         # Creating event 2:
         self.current_time = RUN_TIME
-        self.id = len(self.storage['events'])
+        self.id = self.storage['lastEventId']
         self.storage = self.check_new_event_succeed(
             event_params=self.default_event_params,
             amount=self.measure_start_fee + self.expiration_fee)
@@ -116,7 +116,7 @@ class MultipleEventsDeterminedTest(StateTransformationBaseTest):
                 minimal_win=1_000_000)
 
         # Creating event 3:
-        self.id = len(self.storage['events'])
+        self.id = self.storage['lastEventId']
         self.storage = self.check_new_event_succeed(
             event_params=self.default_event_params,
             amount=self.measure_start_fee + self.expiration_fee)

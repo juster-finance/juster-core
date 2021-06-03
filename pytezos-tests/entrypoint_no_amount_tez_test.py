@@ -9,7 +9,7 @@ class ForceMajeureDeterminedTest(StateTransformationBaseTest):
     def test_entrypoints_no_amount(self):
 
         self.current_time = RUN_TIME
-        self.id = len(self.storage['events'])
+        self.id = self.storage['lastEventId']
 
         # Creating default event:
         self.storage = self.check_new_event_succeed(

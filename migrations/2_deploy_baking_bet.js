@@ -16,6 +16,7 @@ const config = {
   maxAllowedMeasureLag: 60*60*4,
   defaultTime: '2018-06-30T07:07:32Z',
   rewardFeeSplitAfter: 60*60*24,  // one day
+  providerProfitFee: 100000,  // 10%
 };
 
 const initialStorage = {  
@@ -36,7 +37,9 @@ const initialStorage = {
   sharePrecision: 100000000,
   liquidityPrecision: 1000000,
   ratioPrecision: 100000000,
+  providerProfitFeePrecision: 1000000,
   bakingRewards: 0,
+  retainedProfits: 0,
 };
 
 module.exports = deployer => {
