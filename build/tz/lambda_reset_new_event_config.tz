@@ -4,6 +4,8 @@
     UNPAIR ;
     DUP ;
     PUSH mutez 200000 ;
+    PAIR ;
+    PUSH nat 100000 ;
     PUSH address "KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn" ;
     PAIR ;
     PUSH nat 5 ;
