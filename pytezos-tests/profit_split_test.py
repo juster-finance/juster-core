@@ -199,3 +199,33 @@ class ProfitSplitDeterminedTest(StateTransformationBaseTest):
             expected_profit=contract_profit,
             sender=self.manager)
 
+
+    def test_profit_split_when_manager_is_crazy(self):
+        """ Testing that withdraw failed when manager sets fee more than 100% """
+
+        # fee is too high:
+        self.default_config.update({'providerProfitFee': 4_200_000})
+        self._create_event()
+
+        # Participant A: adding liquidity 50/50 just at start:
+        self.storage = self.check_provide_liquidity_succeed(
+            participant=self.a,
+            amount=100_000,
+            expected_above_eq=1,
+            expected_bellow=1)
+
+        # Participant B: bets bellow 50_000:
+        self.storage = self.check_bet_succeed(
+            participant=self.b,
+            amount=50_000,
+            bet='bellow',
+            minimal_win=75_000)
+
+        self._run_measurement_and_close()
+        # Bet aboveEq wins, B losses, A wins:
+        a_wins = int(50_000 * (1 - 4.20))
+
+        # Withdrawals:
+        self.check_withdraw_fails_with(
+            self.a, 100_000 + a_wins, msg_contains="Fee is more than 100%")
+
