@@ -1,5 +1,5 @@
 function close(
-    var eventId : nat;
+    const eventId : nat;
     var store : storage) : (list(operation) * storage) is
 block {
 

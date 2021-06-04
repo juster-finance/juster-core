@@ -1,5 +1,5 @@
 function newEvent(
-    var eventParams : newEventParams;
+    const eventParams : newEventParams;
     var store : storage) : (list(operation) * storage) is
 block {
 

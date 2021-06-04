@@ -16,7 +16,7 @@
 #include "../entrypoints/claimRetainedProfits.ligo"
 
 
-function main (var params : action; var s : storage) : (list(operation) * storage) is
+function main (const params : action; var s : storage) : (list(operation) * storage) is
 case params of
 | NewEvent(p)                 -> newEvent(p, s)
 | Bet(p)                      -> bet(p, s)

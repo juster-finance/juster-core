@@ -1,8 +1,8 @@
 
 function excludeLiquidity(
         var value : tez;
-        var event : eventType;
-        var store : storage) : tez is
+        const event : eventType;
+        const store : storage) : tez is
     block {
 
         (* Calculating liquidity bonus: *)
@@ -32,7 +32,7 @@ function calculateWinDelta(
 
 
 function bet(
-    var params : betParams;
+    const params : betParams;
     var store : storage) : (list(operation) * storage) is
 block {
 

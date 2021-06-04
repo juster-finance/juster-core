@@ -7,9 +7,9 @@ type payoutInfo is record [
 
 
 function calculatePayout(
-    var store: storage;
-    var event : eventType;
-    var key : ledgerKey) : payoutInfo is
+    const store: storage;
+    const event : eventType;
+    const key : ledgerKey) : payoutInfo is
 
 block {
 
@@ -60,8 +60,8 @@ block {
 
 
 function forceMajeureReturnPayout(
-    var store: storage;
-    var key : ledgerKey) : tez is (
+    const store: storage;
+    const key : ledgerKey) : tez is (
         getLedgerAmount(key, store.depositedBets)
         + getLedgerAmount(key, store.providedLiquidityAboveEq)
         + getLedgerAmount(key, store.providedLiquidityBellow))
@@ -148,7 +148,7 @@ block {
 
 
 function withdraw(
-    var params : withdrawParams;
+    const params : withdrawParams;
     var store: storage) : (list(operation) * storage) is
 block {
 

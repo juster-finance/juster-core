@@ -1,5 +1,5 @@
 function provideLiquidity(
-    var params : provideLiquidityParams;
+    const params : provideLiquidityParams;
     var store : storage) : (list(operation) * storage) is
 block {
 

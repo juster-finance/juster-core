@@ -1,5 +1,5 @@
 function updateConfig(
-    var updateConfigLambda : updateConfigParam;
+    const updateConfigLambda : updateConfigParam;
     var store: storage) : (list(operation) * storage) is
 block {
     if Tezos.sender =/= store.manager then
