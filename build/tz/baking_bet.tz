@@ -443,10 +443,9 @@
                          EDIV ;
                          IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
                          CAR ;
-                         DUP 5 ;
-                         DUP 10 ;
-                         DUP 5 ;
-                         DIG 3 ;
+                         DUP 9 ;
+                         DUP 4 ;
+                         DIG 2 ;
                          SWAP ;
                          DUP ;
                          DUG 2 ;
@@ -509,7 +508,7 @@
                          EDIV ;
                          IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
                          CAR ;
-                         SWAP ;
+                         DUP 5 ;
                          DUP ;
                          DUG 2 ;
                          SWAP ;
