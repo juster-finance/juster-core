@@ -1,8 +1,8 @@
 
 function excludeLiquidity(
-        var value : tez;
+        var value : nat;
         const event : eventType;
-        const store : storage) : tez is
+        const store : storage) : nat is
     block {
 
         (* Calculating liquidity bonus: *)
@@ -19,16 +19,8 @@ function excludeLiquidity(
         const timeAdjustedPercent : nat =
             event.liquidityPercent * abs(elapsedTime) / totalBettingTime;
         const multiplier : nat = abs(store.liquidityPrecision - timeAdjustedPercent);
-        value := natToTez(tezToNat(value) * multiplier / store.liquidityPrecision);
+        value := value * multiplier / store.liquidityPrecision;
     } with value
-
-
-function calculateWinDelta(
-    const value : tez;
-    const top : tez;
-    const bottom : tez) : tez is
-
-    natToTez(tezToNat(value) * tezToNat(top) / tezToNat(bottom))
 
 
 function bet(
@@ -59,57 +51,53 @@ block {
         lead to junk records in ledgers, that would not be removed) *)
 
     const key : ledgerKey = (Tezos.sender, eventId);
-    var possibleWinAmount : tez := 0tez;        
+
+    var poolFor : nat := case params.bet of
+    | AboveEq -> tezToNat(event.poolAboveEq)
+    | Bellow -> tezToNat(event.poolBellow)
+    end;
+
+    var poolAgainst : nat := case params.bet of
+    | AboveEq -> tezToNat(event.poolBellow)
+    | Bellow -> tezToNat(event.poolAboveEq)
+    end;
+
+    const betValue : nat = tezToNat(Tezos.amount);
 
     (* Increasing participants count if this participant is not counted yet: *)
     if isParticipant(store, key)
     then skip
     else event.participants := event.participants + 1n;
 
-    (* TODO: refactor this two similar blocks somehow?
-        or keep straight and simple? *)
+    (* adding liquidity to betting pool *)
+    poolFor := poolFor + betValue;
+
+    const winDelta : nat = betValue * poolAgainst / poolFor;
+    const winDeltaPossible : nat =
+        minNat(excludeLiquidity(winDelta, event, store), poolAgainst);
+
+    (* removing liquidity from another pool to keep ratio balanced: *)
+    (* NOTE: liquidity fee is included in the delta *)
+    poolAgainst := abs(poolAgainst - winDeltaPossible);
+
+    const possibleWinAmount : tez = natToTez(betValue + winDeltaPossible);
+    if possibleWinAmount < params.minimalWinAmount
+    then failwith("Wrong minimalWinAmount")
+    else skip;
+
+    (* Updating event and ledger: *)
     case params.bet of
     | AboveEq -> block {
-        (* adding liquidity to betting pool *)
-        event.poolAboveEq := event.poolAboveEq + Tezos.amount;
-        const winDelta : tez =
-            calculateWinDelta(Tezos.amount, event.poolBellow, event.poolAboveEq);
-
-        const winDeltaPossible : tez =
-            minTez(excludeLiquidity(winDelta, event, store), event.poolBellow);
-
-        possibleWinAmount := Tezos.amount + winDeltaPossible;
-        if possibleWinAmount < params.minimalWinAmount
-        then failwith("Wrong minimalWinAmount")
-        else skip;
-
-        (* removing liquidity from another pool to keep ratio balanced: *)
-        (* NOTE: liquidity fee is included in the delta *)
-        event.poolBellow := event.poolBellow - winDeltaPossible;
-
         store.betsAboveEq[key] :=
             getLedgerAmount(key, store.betsAboveEq) + possibleWinAmount;
+        event.poolAboveEq := natToTez(poolFor);
+        event.poolBellow := natToTez(poolAgainst);
     }
-    | Bellow -> {
-        (* adding liquidity to betting pool *)
-        event.poolBellow := event.poolBellow + Tezos.amount;
-        const winDelta : tez =
-            calculateWinDelta(Tezos.amount, event.poolAboveEq, event.poolBellow);
-
-        const winDeltaPossible : tez =
-            minTez(excludeLiquidity(winDelta, event, store), event.poolAboveEq);
-
-        possibleWinAmount := Tezos.amount + winDeltaPossible;
-        if possibleWinAmount < params.minimalWinAmount
-        then failwith("Wrong minimalWinAmount")
-        else skip;
-
-        (* removing liquidity from another pool to keep ratio balanced: *)
-        (* NOTE: liquidity fee is included in the delta *)
-        event.poolAboveEq := event.poolAboveEq - winDeltaPossible;
-
+    | Bellow -> block {
         store.betsBellow[key] :=
             getLedgerAmount(key, store.betsBellow) + possibleWinAmount;
+        event.poolAboveEq := natToTez(poolAgainst);
+        event.poolBellow := natToTez(poolFor);
     }
     end;
 
@@ -119,4 +107,5 @@ block {
         getLedgerAmount(key, store.depositedBets) + Tezos.amount;
 
     store.events[eventId] := event;
+
 } with ((nil: list(operation)), store)
