@@ -3,46 +3,48 @@ function provideLiquidity(
     var store : storage) : (list(operation) * storage) is
 block {
 
-    if ((params.expectedRatioBellow = 0n)
-        or (params.expectedRatioAboveEq = 0n)) then
-            failwith("Expected ratio in pool should be more than zero")
+    const expectedA : nat = params.expectedRatioAboveEq;
+    const expectedB : nat = params.expectedRatioBellow;
+    const precision : nat = store.ratioPrecision;
+
+    const eventId : nat = params.eventId;
+    const event : eventType = getEvent(store, eventId);
+    const totalBets : tez = event.poolAboveEq + event.poolBellow;
+    const key : ledgerKey = (Tezos.sender, eventId);
+    const poolA : nat = tezToNat(event.poolAboveEq);
+    const poolB : nat = tezToNat(event.poolBellow);
+    const providedAmount : nat = tezToNat(Tezos.amount);
+    const totalShares : nat = event.totalLiquidityShares;
+
+    if ((expectedA = 0n) or (expectedB = 0n)) then
+        failwith("Expected ratio in pool should be more than zero")
     else skip;
 
     if (Tezos.amount = 0tez) then
         failwith("Zero liquidity provided")
     else skip;
 
-    const eventId : nat = params.eventId;
-    const event : eventType = getEvent(store, eventId);
-    const totalBets : tez = event.poolAboveEq + event.poolBellow;
-    const key : ledgerKey = (Tezos.sender, eventId);
 
     if (Tezos.now > event.betsCloseTime) then
         failwith("Providing Liquidity after betCloseTime is not allowed")
     else skip;
 
     (* Calculating expected ratio using provided ratios: *)
-    const expectedRatio : nat =
-        params.expectedRatioAboveEq * store.ratioPrecision
-        / params.expectedRatioBellow;
+    const expectedRatio : nat = expectedA * precision / expectedB;
 
     (* Calculating ratio. It is equal expected ratio if this is first LP: *)
-    var ratio : nat := expectedRatio;
-    (* And it is calculated if this is adding more liquidity scenario *)
-    if totalBets =/= 0tez then
-        ratio := tezToNat(event.poolAboveEq) * store.ratioPrecision
-            / tezToNat(event.poolBellow)
-    else skip;
+    var ratio : nat := if totalBets =/= 0tez
+        then poolA * precision / poolB
+        else expectedRatio;
 
     (* Slippage calculated in ratioPrecision values as multiplicative difference
         between bigger and smaller ratios: *)
-    var slippage : nat := store.ratioPrecision * ratio / expectedRatio;
-    if expectedRatio > ratio then
-        slippage := store.ratioPrecision * expectedRatio / ratio;
-    else skip;
+    var slippage : nat := if expectedRatio > ratio
+        then precision * expectedRatio / ratio;
+        else precision * ratio / expectedRatio;
 
     (* At this point slippage is always >= store.ratioPrecision *)
-    slippage := abs(slippage - store.ratioPrecision);
+    slippage := abs(slippage - precision);
 
     if (slippage > params.maxSlippage) then
         failwith("Expected ratio very differs from current pool ratio")
@@ -56,38 +58,34 @@ block {
     (* Distributing liquidity: *)
     (* aboveEqShare is share in interval (0, store.ratioPrecision) calculated from
         current ratio, 1:1 ratio leads to 50% share, 3:1 leads to 75% share *)
-    var aboveEqShare : nat :=
-        ratio * store.ratioPrecision / (ratio + store.ratioPrecision);
-    const betAboveEq : tez = natToTez(roundDiv(
-        tezToNat(Tezos.amount) * aboveEqShare, store.ratioPrecision));
-    const betBellow : tez = Tezos.amount - betAboveEq;
+    var aboveEqShare : nat := ratio * precision / (ratio + precision);
+    const betA : nat = roundDiv(providedAmount * aboveEqShare, precision);
+    const betB : nat = abs(providedAmount - betA);
 
     (* liquidity shares: *)
-    (* if this is first LP, newShares should be equal to sharePrecision *)
-    var newShares : nat := store.sharePrecision;
-    (* otherwise if this is not first LP, calculating share using betAboveEq poolit
+    (* - if this is first LP, newShares should be equal to sharePrecision *)
+    (* - otherwise if this is not first LP, calculating share using betAboveEq poolit
         it should not differ from added share to betBellow pool: *)
-    if totalBets =/= 0tez then
-        newShares := tezToNat(betAboveEq) * event.totalLiquidityShares
-            / tezToNat(event.poolAboveEq)
-    else skip;
+    const newShares : nat = if totalBets =/= 0tez
+        then betA * totalShares / poolA
+        else precision;
 
     if newShares = 0n then failwith("Added liquidity is less than one share")
     else skip;
 
-    event.poolAboveEq := event.poolAboveEq + betAboveEq;
-    event.poolBellow := event.poolBellow + betBellow;
+    event.poolAboveEq := event.poolAboveEq + natToTez(betA);
+    event.poolBellow := event.poolBellow + natToTez(betB);
 
     (* Total liquidity by this LP: *)
     store.providedLiquidityAboveEq[key] := 
-        getLedgerAmount(key, store.providedLiquidityAboveEq) + betAboveEq;
+        getLedgerAmount(key, store.providedLiquidityAboveEq) + natToTez(betA);
 
     store.providedLiquidityBellow[key] := 
-        getLedgerAmount(key, store.providedLiquidityBellow) + betBellow;
+        getLedgerAmount(key, store.providedLiquidityBellow) + natToTez(betB);
 
     store.liquidityShares[key] :=
         getNatLedgerAmount(key, store.liquidityShares) + newShares;
-    event.totalLiquidityShares := event.totalLiquidityShares + newShares;
+    event.totalLiquidityShares := totalShares + newShares;
 
     store.events[eventId] := event;
 
