@@ -52,12 +52,14 @@ block {
 
     const key : ledgerKey = (Tezos.sender, eventId);
 
-    var poolFor : nat := case params.bet of
+    (* poolTo is the pool where bet goes *)
+    var poolTo : nat := case params.bet of
     | AboveEq -> tezToNat(event.poolAboveEq)
     | Bellow -> tezToNat(event.poolBellow)
     end;
 
-    var poolAgainst : nat := case params.bet of
+    (* poolFrom is the pool where possible win earrings coming *)
+    var poolFrom : nat := case params.bet of
     | AboveEq -> tezToNat(event.poolBellow)
     | Bellow -> tezToNat(event.poolAboveEq)
     end;
@@ -65,20 +67,19 @@ block {
     const betValue : nat = tezToNat(Tezos.amount);
 
     (* Increasing participants count if this participant is not counted yet: *)
-    if isParticipant(store, key)
-    then skip
+    if isParticipant(store, key) then skip
     else event.participants := event.participants + 1n;
 
     (* adding liquidity to betting pool *)
-    poolFor := poolFor + betValue;
+    poolTo := poolTo + betValue;
 
-    const winDelta : nat = betValue * poolAgainst / poolFor;
-    const winDeltaPossible : nat =
-        minNat(excludeLiquidity(winDelta, event, store), poolAgainst);
+    const winDelta : nat = betValue * poolFrom / poolTo;
+    const winDeltaCut : nat = excludeLiquidity(winDelta, event, store);
+    const winDeltaPossible : nat = minNat(winDeltaCut, poolFrom);
 
     (* removing liquidity from another pool to keep ratio balanced: *)
     (* NOTE: liquidity fee is included in the delta *)
-    poolAgainst := abs(poolAgainst - winDeltaPossible);
+    poolFrom := abs(poolFrom - winDeltaPossible);
 
     const possibleWinAmount : tez = natToTez(betValue + winDeltaPossible);
     if possibleWinAmount < params.minimalWinAmount
@@ -90,14 +91,14 @@ block {
     | AboveEq -> block {
         store.betsAboveEq[key] :=
             getLedgerAmount(key, store.betsAboveEq) + possibleWinAmount;
-        event.poolAboveEq := natToTez(poolFor);
-        event.poolBellow := natToTez(poolAgainst);
+        event.poolAboveEq := natToTez(poolTo);
+        event.poolBellow := natToTez(poolFrom);
     }
     | Bellow -> block {
         store.betsBellow[key] :=
             getLedgerAmount(key, store.betsBellow) + possibleWinAmount;
-        event.poolAboveEq := natToTez(poolAgainst);
-        event.poolBellow := natToTez(poolFor);
+        event.poolAboveEq := natToTez(poolFrom);
+        event.poolBellow := natToTez(poolTo);
     }
     end;
 
