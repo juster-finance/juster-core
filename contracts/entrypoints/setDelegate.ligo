@@ -1,5 +1,5 @@
 function setDelegate(
-    var newDelegate : option (key_hash);
+    const newDelegate : option (key_hash);
     var store : storage) : (list (operation) * storage) is
 block {
 

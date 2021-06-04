@@ -1,5 +1,5 @@
 function closeCallback(
-    var params : callbackReturnedValueMichelson;
+    const params : callbackReturnedValueMichelson;
     var store : storage) : (list(operation) * storage) is
 block {
 

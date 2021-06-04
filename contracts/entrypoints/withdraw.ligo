@@ -1,65 +1,56 @@
 (* Returned record from calculatePayout function: *)
 type payoutInfo is record [
-    bet : tez;
-    provider : tez;
-    fee : tez;
+    bet : nat;
+    provider : nat;
+    fee : nat;
 ]
 
 
 function calculatePayout(
-    var store: storage;
-    var event : eventType;
-    var key : ledgerKey) : payoutInfo is
+    const store: storage;
+    const event : eventType;
+    const key : ledgerKey) : payoutInfo is
 
 block {
 
-    var payout : payoutInfo := record[
-        bet=0tez;
-        provider=0tez;
-        fee=0tez];
+    (* Calculating bet return: *)
+    const betA : nat = tezToNat(getLedgerAmount(key, store.betsAboveEq));
+    const betB : nat = tezToNat(getLedgerAmount(key, store.betsBellow));
+    const bet : nat = if event.isBetsAboveEqWin then betA else betB;
 
-    var providerProfit : int := 0;
-
+    (* Calculating provider return: *)
     const share : nat = getNatLedgerAmount(key, store.liquidityShares);
-    const providedAboveEq : tez =
-        getLedgerAmount(key, store.providedLiquidityAboveEq);
-    const providedBellow : tez =
-        getLedgerAmount(key, store.providedLiquidityBellow);
+    const providedA : nat = tezToNat(
+        getLedgerAmount(key, store.providedLiquidityAboveEq));
+    const providedB : nat = tezToNat(
+        getLedgerAmount(key, store.providedLiquidityBellow));
+    const poolA : nat = tezToNat(event.poolAboveEq);
+    const poolB : nat = tezToNat(event.poolBellow);
+    const totalShares : nat = event.totalLiquidityShares;
 
-    if event.isBetsAboveEqWin then block {
-        payout.bet := getLedgerAmount(key, store.betsAboveEq);
-
-        (* calculating liquidity provider profit: *)
-        const bellowReturn : tez =
-            share * event.poolBellow / event.totalLiquidityShares;
-        providerProfit := tezToInt(bellowReturn) - tezToInt(providedBellow);
-    }
-    else block {
-        payout.bet := getLedgerAmount(key, store.betsBellow);
-
-        (* calculating liquidity provider profit: *)
-        const aboveEqReturn : tez =
-            share * event.poolAboveEq / event.totalLiquidityShares;
-        providerProfit := tezToInt(aboveEqReturn) - tezToInt(providedAboveEq);
-    };
+    const providerProfit : int = if event.isBetsAboveEqWin
+        then share * poolB / totalShares - providedB
+        else share * poolA / totalShares - providedA;
 
     (* Cutting profits from provided liquidity: *)
-    if providerProfit > 0
-    then block {
-        payout.fee := abs(providerProfit) * store.config.providerProfitFee
-            / store.providerProfitFeePrecision * 1mutez;
-        const netProfit : tez = abs(providerProfit) * 1mutez - payout.fee;
-        payout.provider := providedAboveEq + providedBellow + netProfit;
-    }
-    else payout.provider :=
-        providedAboveEq + providedBellow - abs(providerProfit) * 1mutez;
+    const profitFee : nat = store.config.providerProfitFee;
+    const precision : nat = store.providerProfitFeePrecision;
 
-} with payout
+    const fee : nat = if providerProfit > 0
+        then abs(providerProfit) * profitFee / precision
+        else 0n;
+
+    if fee > abs(providerProfit) then failwith("Fee is more than 100%")
+    else skip;
+
+    const provider : nat = abs(providedA + providedB + providerProfit - fee);
+
+} with record[bet=bet; provider=provider; fee=fee];
 
 
 function forceMajeureReturnPayout(
-    var store: storage;
-    var key : ledgerKey) : tez is (
+    const store: storage;
+    const key : ledgerKey) : tez is (
         getLedgerAmount(key, store.depositedBets)
         + getLedgerAmount(key, store.providedLiquidityAboveEq)
         + getLedgerAmount(key, store.providedLiquidityBellow))
@@ -146,7 +137,7 @@ block {
 
 
 function withdraw(
-    var params : withdrawParams;
+    const params : withdrawParams;
     var store: storage) : (list(operation) * storage) is
 block {
 
@@ -158,11 +149,12 @@ block {
     if event.isClosed then skip
     else failwith("Withdraw is not allowed until contract is closed");
 
-    var payout : payoutInfo := calculatePayout(store, event, key);
-    store.retainedProfits := store.retainedProfits + payout.fee;
+    const payout : payoutInfo = calculatePayout(store, event, key);
+    store.retainedProfits := store.retainedProfits + natToTez(payout.fee);
+    const payoutValue : tez = natToTez(payout.bet + payout.provider);
 
     const operations : list(operation) = makeWithdrawOperations(
-        store, params, event, key, payout.bet + payout.provider);
+        store, params, event, key, payoutValue);
 
     (* Decreasing participants count: *)
     if isParticipant(store, key)
