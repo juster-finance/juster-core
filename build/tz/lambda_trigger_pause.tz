@@ -9,18 +9,18 @@
   CAR ;
   CAR ;
   CDR ;
-  CDR ;
   DUP 4 ;
   CAR ;
   CAR ;
+  CAR ;
   CDR ;
-  CAR ;
   NOT ;
+  DIG 4 ;
+  CAR ;
+  CAR ;
+  CAR ;
+  CAR ;
   PAIR ;
-  DIG 3 ;
-  CAR ;
-  CAR ;
-  CAR ;
   PAIR ;
   PAIR ;
   PAIR }

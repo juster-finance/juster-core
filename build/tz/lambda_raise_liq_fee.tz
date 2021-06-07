@@ -5,24 +5,24 @@
   DUG 2 ;
   CAR ;
   CDR ;
-  CDR ;
-  DUP 3 ;
-  CAR ;
-  CDR ;
-  CAR ;
-  CDR ;
   PUSH nat 10000 ;
-  DUP 5 ;
+  DUP 4 ;
+  CAR ;
+  CAR ;
+  CDR ;
+  CDR ;
+  ADD ;
+  DUP 4 ;
+  CAR ;
   CAR ;
   CDR ;
   CAR ;
-  CAR ;
-  ADD ;
   PAIR ;
+  DIG 3 ;
+  CAR ;
+  CAR ;
+  CAR ;
   PAIR ;
-  DIG 2 ;
-  CAR ;
-  CAR ;
   PAIR ;
   PAIR }
 
