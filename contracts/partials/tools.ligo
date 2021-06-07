@@ -149,3 +149,9 @@ function isParticipant(
     isHaveValueTez(key, store.betsAboveEq)
     or isHaveValueTez(key, store.betsBellow)
     or isHaveValueNat(key, store.liquidityShares)
+
+
+function allowOnlyManager(const store : storage) : unit is
+    if Tezos.sender =/= store.manager then
+        failwith("Not a contract manager")
+    else unit;
