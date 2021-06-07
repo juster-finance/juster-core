@@ -787,6 +787,7 @@ class StateTransformationBaseTest(TestCase):
             'rewardCallFee': 100_000,
             'rewardFeeSplitAfter': ONE_DAY,
             'providerProfitFee': 0,  # 0% for all tests that written before this fee
+            'isEventCreationPaused': False
         }
 
         self.init_storage = {

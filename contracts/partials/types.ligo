@@ -73,6 +73,9 @@ type configType is record [
     (* Amount of profits that cutted from provider and that
         go to the community fond: *)
     providerProfitFee : nat;
+
+    (* Flag that used to pause event creation: *)
+    isEventCreationPaused : bool;
 ]
 
 type updateConfigParam is configType -> configType

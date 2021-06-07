@@ -17,6 +17,7 @@ const config = {
   defaultTime: '2018-06-30T07:07:32Z',
   rewardFeeSplitAfter: 60*60*24,  // one day
   providerProfitFee: 100000,  // 10%
+  isEventCreationPaused: false,
 };
 
 const initialStorage = {  

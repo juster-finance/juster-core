@@ -39,6 +39,10 @@ block {
         failwith("liquidityPercent is less than minimal value")
     else skip;
 
+    if config.isEventCreationPaused then
+        failwith("Event creation is paused")
+    else skip;
+
     const newEvent : eventType = record[
         currencyPair = eventParams.currencyPair;
         createdTime = Tezos.now;
