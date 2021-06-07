@@ -48,12 +48,11 @@ block {
         createdTime = Tezos.now;
         targetDynamics = eventParams.targetDynamics;
         betsCloseTime = eventParams.betsCloseTime;
-        measureOracleStartTime = config.defaultTime;
-        isMeasurementStarted = False;
+        measureOracleStartTime = (None : option(timestamp));
         startRate = 0n;
         measurePeriod = eventParams.measurePeriod;
         isClosed = False;
-        closedOracleTime = config.defaultTime;
+        closedOracleTime = (None : option(timestamp));
         closedRate = 0n;
         closedDynamics = 0n;
         isBetsAboveEqWin = False;

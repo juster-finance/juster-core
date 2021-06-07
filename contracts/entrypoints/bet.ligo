@@ -40,7 +40,6 @@ block {
         failwith("Bets after betCloseTime is not allowed")
     else skip;
 
-    if event.isClosed then failwith("Event already closed") else skip;
     if Tezos.amount = 0tez then failwith("Bet without tez") else skip;
 
     const key : ledgerKey = (Tezos.sender, eventId);

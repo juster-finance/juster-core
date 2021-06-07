@@ -20,8 +20,12 @@ block {
     then failwith("Unknown sender") else skip;
     if param.currencyPair =/= event.currencyPair
     then failwith("Unexpected currency pair") else skip;
-    if event.isMeasurementStarted
-    then failwith("Measurement period already started") else skip;
+
+    case event.measureOracleStartTime of
+    | Some(time) -> failwith("Measurement period already started")
+    | None -> skip
+    end;
+
     if event.betsCloseTime > param.lastUpdate
     then failwith("Can't start measurement untill oracle time > betsCloseTime")
     else skip;
@@ -33,14 +37,14 @@ block {
     else skip;
 
     (* Starting measurement: *)
-    event.measureOracleStartTime := param.lastUpdate;
+    event.measureOracleStartTime := Some(param.lastUpdate);
     event.startRate := param.rate;
-    event.isMeasurementStarted := True;
 
     (* Paying measureStartFee for this method initiator: *)
     const operations : list(operation) =
         makeOperationsIfNotZero(Tezos.source, event.measureStartFee);
 
+    event.measureStartFee := 0tez;
     store.events[eventId] := event;
 
     (* Cleaning up event ID: *)

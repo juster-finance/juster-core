@@ -62,11 +62,6 @@ type configType is record [
         (or it would considered as Force Majeure) *)
     maxAllowedMeasureLag : nat;
 
-    (* Time, used for filling timestamp values while they have no
-        meaning value:
-        TODO: maybe it is better to use option(timestamp) ? *)
-    defaultTime : timestamp;
-
     (* Period following the close in seconds after which rewardFee is activated *)
     rewardFeeSplitAfter : nat;
 
@@ -93,23 +88,22 @@ type eventType is record [
     betsCloseTime : timestamp;
 
     (* time that setted when recieved callback from startMeasurement *)
-    measureOracleStartTime : timestamp;
-    isMeasurementStarted : bool;
+    measureOracleStartTime : option(timestamp);
 
     (* the rate at the begining of the measurement *)
-    startRate : nat;
+    startRate : nat;  (* TODO: option? *)
 
     (* measurePeriod is amount of seconds from measureStartTime before 
         anyone can call close tp finish event *)
     measurePeriod : nat;
 
     isClosed : bool;
-    closedOracleTime : timestamp;
+    closedOracleTime : option(timestamp);
 
     (* keeping closedRate for debugging purposes, it can be deleted after *)
-    closedRate : nat;
-    closedDynamics : nat;
-    isBetsAboveEqWin : bool;
+    closedRate : nat;  (* TODO: option? *)
+    closedDynamics : nat;  (* TODO: option? *)
+    isBetsAboveEqWin : bool;  (* TODO: option? *)
 
     (* Current liquidity in aboveEq and Bellow pools, this is used to calculate current ratio: *)
     poolAboveEq : tez;

@@ -14,7 +14,6 @@ const config = {
   minLiquidityPercent: 0,
   maxLiquidityPercent: 300000,
   maxAllowedMeasureLag: 60*60*4,
-  defaultTime: '2018-06-30T07:07:32Z',
   rewardFeeSplitAfter: 60*60*24,  // one day
   providerProfitFee: 100000,  // 10%
   isEventCreationPaused: false,

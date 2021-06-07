@@ -99,12 +99,17 @@ block {
 
     (* If a lot time passed from closed time, splitting reward and
         rewriting operations: *)
-    const feeTime : timestamp =
-        event.closedOracleTime + int(store.config.rewardFeeSplitAfter);
 
-    if (Tezos.sender =/= params.participantAddress) and (Tezos.now >= feeTime)
-    then operations := excludeFeeReward(store, params, payout)
-    else skip;
+    case event.closedOracleTime of
+    | Some(time) -> block{
+        const feeTime : timestamp = time + int(store.config.rewardFeeSplitAfter);
+
+        if (Tezos.sender =/= params.participantAddress) and (Tezos.now >= feeTime)
+        then operations := excludeFeeReward(store, params, payout)
+        else skip;
+    }
+    | None -> skip
+    end;
 
     (* If Force Majeure was activated, returning all bets and provided liquidity.
         - in force majeure reward fee split should be not active so it is

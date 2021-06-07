@@ -161,7 +161,7 @@ class StateTransformationBaseTest(TestCase):
             self.assertTrue(event['betsCloseTime'] > event['createdTime'])
             self.assertTrue(event['targetDynamics'] > 0)
 
-            if event['isMeasurementStarted']:
+            if event['measureOracleStartTime'] is not None:
                 self.assertTrue(
                     event['measureOracleStartTime'] >= event['betsCloseTime'])
 
@@ -382,7 +382,11 @@ class StateTransformationBaseTest(TestCase):
         reward_fee_split_after = self.storage['config']['rewardFeeSplitAfter']
         reward_fee = self.storage['config']['rewardCallFee']
 
-        is_time_before_split = self.current_time < closed_time + reward_fee_split_after
+        if closed_time is None:
+            is_time_before_split = False
+        else:
+            is_time_before_split = self.current_time < closed_time + reward_fee_split_after
+    
         is_sender_equals_participant = participant == sender
         is_force_majeure = event['isForceMajeure']
 
@@ -467,7 +471,6 @@ class StateTransformationBaseTest(TestCase):
             'poolBellow': 0,
             'poolAboveEq': 0,
             'isClosed': False,
-            'isMeasurementStarted': False,
             'totalLiquidityShares': 0,
         })
 
@@ -507,7 +510,7 @@ class StateTransformationBaseTest(TestCase):
         self.assertEqual(currency_pair, self.currency_pair)
 
         event = result.storage['events'][self.id]
-        self.assertFalse(event['isMeasurementStarted'])
+        self.assertTrue(event['measureOracleStartTime'] is None)
 
         self.check_storage_integrity(result.storage)
         return result.storage
@@ -525,17 +528,18 @@ class StateTransformationBaseTest(TestCase):
             storage=self.storage, sender=sender,
             now=self.current_time, source=source)
 
+        init_event = self.storage['events'][self.id]
         event = result.storage['events'][self.id]
+
         self.assertEqual(event['startRate'], callback_values['rate'])
-        self.assertTrue(event['isMeasurementStarted'])
         self.assertEqual(
             event['measureOracleStartTime'],
             callback_values['lastUpdate'])
 
-        if event['measureStartFee'] == 0:
+        if init_event['measureStartFee'] == 0:
             self.assertEqual(len(result.operations), 0)
 
-        if event['measureStartFee'] > 0:
+        if init_event['measureStartFee'] > 0:
             self.assertEqual(len(result.operations), 1)
 
             operation = result.operations[0]
@@ -592,7 +596,9 @@ class StateTransformationBaseTest(TestCase):
             storage=self.storage, sender=self.oracle_address,
             now=self.current_time, source=source)
 
+        init_event = self.storage['events'][self.id]
         event = result.storage['events'][self.id]
+
         self.assertEqual(event['closedRate'], callback_values['rate'])
         self.assertTrue(event['isClosed'])
         self.assertEqual(event['closedOracleTime'], callback_values['lastUpdate'])
@@ -605,10 +611,10 @@ class StateTransformationBaseTest(TestCase):
         is_bets_above_eq_win = dynamics >= event['targetDynamics']
         self.assertEqual(event['isBetsAboveEqWin'], is_bets_above_eq_win)
 
-        if event['expirationFee'] == 0:
+        if init_event['expirationFee'] == 0:
             self.assertEqual(len(result.operations), 0)
 
-        if event['expirationFee'] > 0:
+        if init_event['expirationFee'] > 0:
             self.assertEqual(len(result.operations), 1)
             operation = result.operations[0]
             self.assertEqual(operation['destination'], source)
@@ -669,7 +675,7 @@ class StateTransformationBaseTest(TestCase):
 
             # calculating fees: it should be expirationFee + meas. start fee:
             amount = event['expirationFee']
-            if not event['isMeasurementStarted']:
+            if event['measureOracleStartTime'] is None:
                 amount += event['measureStartFee']
 
             self.assertAmountEqual(operation, amount)
@@ -773,7 +779,6 @@ class StateTransformationBaseTest(TestCase):
         }
 
         self.default_config = {
-            'defaultTime': 0,
             'expirationFee': self.expiration_fee,
             'minLiquidityPercent': 0,
             'maxLiquidityPercent': 300_000,  # 30% for 1_000_000 liquidityPrecision
