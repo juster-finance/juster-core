@@ -78,6 +78,14 @@ class ZeroEdgecasesDeterminedTest(StateTransformationBaseTest):
             minimal_win=5,
             msg_contains='Wrong minimalWinAmount')
 
+        # A tries to Bet 0 tez:
+        self.check_bet_fails_with(
+            participant=self.a,
+            amount=0,
+            bet='bellow',
+            minimal_win=0,
+            msg_contains='Bet without tez')
+
         # In the end: no one bets, starting measure:
         bets_close = self.default_event_params['betsCloseTime']
         period = self.default_event_params['measurePeriod']
