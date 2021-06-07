@@ -1810,11 +1810,6 @@
                          OR ;
                          IF { PUSH string "Expected ratio in pool should be more than zero" ; FAILWITH }
                             {} ;
-                         PUSH mutez 0 ;
-                         AMOUNT ;
-                         COMPARE ;
-                         EQ ;
-                         IF { PUSH string "Zero liquidity provided" ; FAILWITH } {} ;
                          DUP 7 ;
                          CAR ;
                          CAR ;
@@ -1949,6 +1944,18 @@
                          DIG 4 ;
                          SUB ;
                          ABS ;
+                         PUSH nat 0 ;
+                         SWAP ;
+                         DUP ;
+                         DUG 2 ;
+                         COMPARE ;
+                         EQ ;
+                         PUSH nat 0 ;
+                         DUP 4 ;
+                         COMPARE ;
+                         EQ ;
+                         OR ;
+                         IF { PUSH string "Zero liquidity provided" ; FAILWITH } {} ;
                          PUSH mutez 0 ;
                          DIG 7 ;
                          COMPARE ;
