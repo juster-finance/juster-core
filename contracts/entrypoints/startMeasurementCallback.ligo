@@ -46,7 +46,4 @@ block {
     (* Cleaning up event ID: *)
     store.measurementStartCallId := (None : eventIdType);
 
-    (* TODO: this close/measurement callbacks have a lot similarities, maybe
-        there are some code that can be moved in separate function *)
-
 } with (operations, store)

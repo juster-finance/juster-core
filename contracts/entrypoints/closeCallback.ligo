@@ -10,12 +10,7 @@ block {
     | None -> (failwith("closeCallId is empty") : nat)
     end;
 
-    (* TODO: Check that current time is not far away from measurementStartTime
-        + timedelta, if it is, run Force Majeure. Give Manager ability to
-        control this timedelta *)
-
     const param : callbackReturnedValue = Layout.convert_from_right_comb(params);
-
     const event : eventType = getEvent(store, eventId);
 
     (* Check that callback runs from right address
@@ -59,9 +54,5 @@ block {
 
     (* Cleaning up event ID: *)
     store.closeCallId := (None : eventIdType);
-
-    (* TODO: this close/measurement callbacks have a lot similarities, maybe
-        there are some code that can be moved in separate function
-        (for example check for the oracle, but maybe it is okay to have copycode here) *)
 
 } with (operations, store)
