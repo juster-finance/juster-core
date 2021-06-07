@@ -1,14 +1,12 @@
 { DUP ;
   CDR ;
   CDR ;
-  SWAP ;
-  DUP ;
-  DUG 2 ;
+  PUSH address "KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn" ;
+  DUP 3 ;
   CDR ;
   CAR ;
   CDR ;
-  CDR ;
-  PUSH address "KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn" ;
+  CAR ;
   PAIR ;
   DUP 3 ;
   CDR ;
