@@ -14,6 +14,8 @@
 #include "../entrypoints/default.ligo"
 #include "../entrypoints/claimBakingRewards.ligo"
 #include "../entrypoints/claimRetainedProfits.ligo"
+#include "../entrypoints/changeManager.ligo"
+#include "../entrypoints/acceptOwnership.ligo"
 
 
 function main (const params : action; var s : storage) : (list(operation) * storage) is
@@ -32,4 +34,6 @@ case params of
 | Default(p)                  -> default(p, s)
 | ClaimBakingRewards(p)       -> claimBakingRewards(p, s)
 | ClaimRetainedProfits(p)     -> claimRetainedProfits(p, s)
+| ChangeManager(p)            -> changeManager(p, s)
+| AcceptOwnership(p)          -> acceptOwnership(p, s)
 end

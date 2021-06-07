@@ -4,6 +4,7 @@ function setDelegate(
 block {
 
     checkNoAmountIncluded(unit);
+    allowOnlyManager(store);
     const operations : list (operation) = list [Tezos.set_delegate(newDelegate)];
 
 } with (operations, store)

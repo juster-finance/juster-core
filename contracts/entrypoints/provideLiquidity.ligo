@@ -20,11 +20,6 @@ block {
         failwith("Expected ratio in pool should be more than zero")
     else skip;
 
-    if (Tezos.amount = 0tez) then
-        failwith("Zero liquidity provided")
-    else skip;
-
-
     if (Tezos.now > event.betsCloseTime) then
         failwith("Providing Liquidity after betCloseTime is not allowed")
     else skip;
@@ -61,6 +56,10 @@ block {
     var aboveEqShare : nat := ratio * precision / (ratio + precision);
     const betA : nat = roundDiv(providedAmount * aboveEqShare, precision);
     const betB : nat = abs(providedAmount - betA);
+
+    if (betA = 0n) or (betB = 0n) then
+        failwith("Zero liquidity provided")
+    else skip;
 
     (* liquidity shares: *)
     (* - if this is first LP, newShares should be equal to sharePrecision *)

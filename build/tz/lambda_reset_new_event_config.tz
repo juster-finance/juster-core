@@ -33,8 +33,8 @@
     DIG 4 ;
     MUL ;
     PAIR ;
+    PUSH bool False ;
     PUSH mutez 100000 ;
-    PUSH timestamp "2018-06-30T07:07:32Z" ;
     PAIR ;
     PAIR ;
     PAIR ;

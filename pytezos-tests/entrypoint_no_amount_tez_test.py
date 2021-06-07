@@ -67,7 +67,7 @@ class ForceMajeureDeterminedTest(StateTransformationBaseTest):
         # Running close with amount > 0 shold not be allowed:
 
         callback_values.update({'lastUpdate': self.current_time - 1*ONE_HOUR})
-        self.storage['events'][self.id]['isMeasurementStarted'] = True
+        self.storage['events'][self.id]['measureOracleStartTime'] = self.current_time
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.contract.close(self.id).with_amount(10).interpret(
@@ -116,6 +116,22 @@ class ForceMajeureDeterminedTest(StateTransformationBaseTest):
         # claimRetainedProfits with amount > 0 should not be allowed:
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.contract.claimRetainedProfits().with_amount(10).interpret(
+                storage=self.storage,
+                sender=self.a,
+                now=self.current_time)
+        self.assertTrue(ERROR_MSG in str(cm.exception))
+
+        # changeManager with amount > 0 should not be allowed:
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.contract.changeManager(self.d).with_amount(10).interpret(
+                storage=self.storage,
+                sender=self.a,
+                now=self.current_time)
+        self.assertTrue(ERROR_MSG in str(cm.exception))
+
+        # acceptOwnership with amount > 0 should not be allowed:
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.contract.acceptOwnership().with_amount(10).interpret(
                 storage=self.storage,
                 sender=self.a,
                 now=self.current_time)

@@ -16,7 +16,14 @@ block {
     (* Calculating bet return: *)
     const betA : nat = tezToNat(getLedgerAmount(key, store.betsAboveEq));
     const betB : nat = tezToNat(getLedgerAmount(key, store.betsBellow));
-    const bet : nat = if event.isBetsAboveEqWin then betA else betB;
+
+    const isBetsAboveEqWin : bool = case event.isBetsAboveEqWin of
+    | Some(isWin) -> isWin
+    (* should not be here: *)
+    | None -> (failwith("Winner is undefined") : bool)
+    end;
+
+    const bet : nat = if isBetsAboveEqWin then betA else betB;
 
     (* Calculating provider return: *)
     const share : nat = getNatLedgerAmount(key, store.liquidityShares);
@@ -28,7 +35,7 @@ block {
     const poolB : nat = tezToNat(event.poolBellow);
     const totalShares : nat = event.totalLiquidityShares;
 
-    const providerProfit : int = if event.isBetsAboveEqWin
+    const providerProfit : int = if isBetsAboveEqWin
         then share * poolB / totalShares - providedB
         else share * poolA / totalShares - providedA;
 
@@ -99,21 +106,16 @@ block {
 
     (* If a lot time passed from closed time, splitting reward and
         rewriting operations: *)
-    const feeTime : timestamp =
-        event.closedOracleTime + int(store.config.rewardFeeSplitAfter);
+    case event.closedOracleTime of
+    | Some(time) -> block{
+        const feeTime : timestamp = time + int(store.config.rewardFeeSplitAfter);
 
-    if (Tezos.sender =/= params.participantAddress) and (Tezos.now >= feeTime)
-    then operations := excludeFeeReward(store, params, payout)
-    else skip;
-
-    (* If Force Majeure was activated, returning all bets and provided liquidity.
-        - in force majeure reward fee split should be not active so it is
-        just rewriting all operations: *)
-    if event.isForceMajeure then
-    block {
-        payout := forceMajeureReturnPayout(store, key);
-        operations := makeOperationsIfNotZero(params.participantAddress, payout);
-    } else skip;
+        if (Tezos.sender =/= params.participantAddress) and (Tezos.now >= feeTime)
+        then operations := excludeFeeReward(store, params, payout)
+        else skip;
+    }
+    | None -> skip
+    end;
 
 } with operations;
 
@@ -149,12 +151,22 @@ block {
     if event.isClosed then skip
     else failwith("Withdraw is not allowed until contract is closed");
 
-    const payout : payoutInfo = calculatePayout(store, event, key);
-    store.retainedProfits := store.retainedProfits + natToTez(payout.fee);
-    const payoutValue : tez = natToTez(payout.bet + payout.provider);
+    var operations : list(operation) := nil;
 
-    const operations : list(operation) = makeWithdrawOperations(
-        store, params, event, key, payoutValue);
+    (* If Force Majeure was activated, returning all bets and provided liquidity.
+        - in force majeure reward fee split should be not active so it is
+        just rewriting all operations: *)
+    if event.isForceMajeure then
+    block {
+        const payoutValue : tez = forceMajeureReturnPayout(store, key);
+        operations := makeOperationsIfNotZero(params.participantAddress, payoutValue);
+    }
+    else block {
+        const payout : payoutInfo = calculatePayout(store, event, key);
+        store.retainedProfits := store.retainedProfits + natToTez(payout.fee);
+        const payoutValue : tez = natToTez(payout.bet + payout.provider);
+        operations := makeWithdrawOperations(store, params, event, key, payoutValue);
+    };
 
     (* Decreasing participants count: *)
     if isParticipant(store, key)

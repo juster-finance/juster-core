@@ -1,0 +1,27 @@
+{ DUP ;
+  CDR ;
+  SWAP ;
+  DUP ;
+  DUG 2 ;
+  CAR ;
+  CDR ;
+  DUP 3 ;
+  CAR ;
+  CAR ;
+  CDR ;
+  DUP 4 ;
+  CAR ;
+  CAR ;
+  CAR ;
+  CDR ;
+  NOT ;
+  DIG 4 ;
+  CAR ;
+  CAR ;
+  CAR ;
+  CAR ;
+  PAIR ;
+  PAIR ;
+  PAIR ;
+  PAIR }
+

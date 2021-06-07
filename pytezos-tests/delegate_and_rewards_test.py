@@ -11,8 +11,15 @@ class DelegateAndBakingRewardsDeterminedTest(StateTransformationBaseTest):
 
         self.current_time = RUN_TIME
         random_delegate_from_twitter = 'tz3e7LbZvUtoXhpUD1yb6wuFodZpfYRb9nWJ'
+
+        # Only manager can set delegate:
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.contract.setDelegate(random_delegate_from_twitter).interpret(
+                now=self.current_time, storage=self.storage, sender=self.d)
+        self.assertTrue("Not a contract manager" in str(cm.exception))
+
         result = self.contract.setDelegate(random_delegate_from_twitter).interpret(
-            now=self.current_time, storage=self.storage)
+            now=self.current_time, storage=self.storage, sender=self.manager)
 
         self.assertTrue(len(result.operations) == 1)
 
@@ -32,7 +39,7 @@ class DelegateAndBakingRewardsDeterminedTest(StateTransformationBaseTest):
         self.check_claim_baking_rewards_fails_with(
             expected_reward=200_000,
             sender=self.c,
-            msg_contains='Only contract manager allowed to claim baking rewards')
+            msg_contains='Not a contract manager')
 
         # Withdrawing with manager:
         self.storage = self.check_claim_baking_rewards_succeed(

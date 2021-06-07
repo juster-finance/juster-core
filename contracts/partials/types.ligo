@@ -62,17 +62,15 @@ type configType is record [
         (or it would considered as Force Majeure) *)
     maxAllowedMeasureLag : nat;
 
-    (* Time, used for filling timestamp values while they have no
-        meaning value:
-        TODO: maybe it is better to use option(timestamp) ? *)
-    defaultTime : timestamp;
-
     (* Period following the close in seconds after which rewardFee is activated *)
     rewardFeeSplitAfter : nat;
 
     (* Amount of profits that cutted from provider and that
         go to the community fond: *)
     providerProfitFee : nat;
+
+    (* Flag that used to pause event creation: *)
+    isEventCreationPaused : bool;
 ]
 
 type updateConfigParam is configType -> configType
@@ -90,23 +88,22 @@ type eventType is record [
     betsCloseTime : timestamp;
 
     (* time that setted when recieved callback from startMeasurement *)
-    measureOracleStartTime : timestamp;
-    isMeasurementStarted : bool;
+    measureOracleStartTime : option(timestamp);
 
     (* the rate at the begining of the measurement *)
-    startRate : nat;
+    startRate : option(nat);
 
     (* measurePeriod is amount of seconds from measureStartTime before 
         anyone can call close tp finish event *)
     measurePeriod : nat;
 
     isClosed : bool;
-    closedOracleTime : timestamp;
+    closedOracleTime : option(timestamp);
 
     (* keeping closedRate for debugging purposes, it can be deleted after *)
-    closedRate : nat;
-    closedDynamics : nat;
-    isBetsAboveEqWin : bool;
+    closedRate : option(nat);
+    closedDynamics : option(nat);
+    isBetsAboveEqWin : option(bool);
 
     (* Current liquidity in aboveEq and Bellow pools, this is used to calculate current ratio: *)
     poolAboveEq : tez;
@@ -177,6 +174,8 @@ type action is
 | Default of unit
 | ClaimBakingRewards of unit
 | ClaimRetainedProfits of unit
+| ChangeManager of address
+| AcceptOwnership of unit
 
 
 type storage is record [
@@ -215,4 +214,7 @@ type storage is record [
 
     bakingRewards : tez;
     retainedProfits : tez;
+
+    (* Address of the manager who can accept ownership: *)
+    proposedManager : option(address);
 ]

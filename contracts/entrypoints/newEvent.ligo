@@ -39,20 +39,23 @@ block {
         failwith("liquidityPercent is less than minimal value")
     else skip;
 
+    if config.isEventCreationPaused then
+        failwith("Event creation is paused")
+    else skip;
+
     const newEvent : eventType = record[
         currencyPair = eventParams.currencyPair;
         createdTime = Tezos.now;
         targetDynamics = eventParams.targetDynamics;
         betsCloseTime = eventParams.betsCloseTime;
-        measureOracleStartTime = config.defaultTime;
-        isMeasurementStarted = False;
-        startRate = 0n;
+        measureOracleStartTime = (None : option(timestamp));
+        startRate = (None : option(nat));
         measurePeriod = eventParams.measurePeriod;
         isClosed = False;
-        closedOracleTime = config.defaultTime;
-        closedRate = 0n;
-        closedDynamics = 0n;
-        isBetsAboveEqWin = False;
+        closedOracleTime = (None : option(timestamp));
+        closedRate = (None : option(nat));
+        closedDynamics = (None : option(nat));
+        isBetsAboveEqWin = (None : option(bool));
         poolAboveEq = 0tez;
         poolBellow = 0tez;
         totalLiquidityShares = 0n;

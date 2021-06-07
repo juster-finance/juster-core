@@ -28,11 +28,6 @@ function bet(
     var store : storage) : (list(operation) * storage) is
 block {
 
-    (* TODO: assert that betAboveEq / betBellow is less than MAX_RATIO
-        controlled by Manager *)
-    (* TODO: assert that betBellow / betAboveEq is less than MAX_RATIO
-        controlled by Manager *)
-
     const eventId : nat = params.eventId;
     const event : eventType = getEvent(store, eventId);
 
@@ -45,10 +40,7 @@ block {
         failwith("Bets after betCloseTime is not allowed")
     else skip;
 
-    if event.isClosed then failwith("Event already closed") else skip;
-
-    (* TODO: assert that Tezos.amount is more than zero? (instead it can
-        lead to junk records in ledgers, that would not be removed) *)
+    if Tezos.amount = 0tez then failwith("Bet without tez") else skip;
 
     const key : ledgerKey = (Tezos.sender, eventId);
 

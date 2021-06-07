@@ -90,7 +90,7 @@ class ProfitSplitDeterminedTest(StateTransformationBaseTest):
         self.check_claim_retained_profits_fails_with(
             expected_profit=contract_profit,
             sender=self.c,
-            msg_contains="Only contract manager allowed to claim retained profits")
+            msg_contains="Not a contract manager")
 
         # Claiming profits with manager succeed:
         self.check_claim_retained_profits_succeed(

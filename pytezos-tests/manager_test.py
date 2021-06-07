@@ -2,7 +2,7 @@
 
     - update config x2
     - reset config
-    - TODO: change manager test
+    - change manager
 
 """
 
@@ -56,3 +56,82 @@ class ManagerDeterminedTest(StateTransformationBaseTest):
         # Testing reset config lambda applied:
         self.storage = self.check_update_config_succeed(reset_config_code, self.manager)
         assert self.storage['config']['maxLiquidityPercent'] == 300_000
+
+
+    def test_change_manager(self):
+
+        # C tries to run acceptOwnership rights with no success:
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.contract.acceptOwnership().interpret(
+                storage=self.storage,
+                sender=self.c)
+        self.assertTrue("Not allowed to accept ownership" in str(cm.exception))
+
+        # manager A call transfer rights to another address B:
+        result = self.contract.changeManager(self.b).interpret(
+                storage=self.storage,
+                sender=self.manager)
+        assert result.storage['proposedManager'] == self.b
+        self.storage = result.storage
+
+        # Checking that another address C can't claim baking rewards:
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.contract.claimBakingRewards().interpret(
+                    storage=self.storage,
+                    sender=self.c)
+        self.assertTrue("Not a contract manager" in str(cm.exception))
+
+        # Checking that proposed manager can't claim retained profits:
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.contract.claimRetainedProfits().interpret(
+                    storage=self.storage,
+                    sender=self.b)
+        self.assertTrue("Not a contract manager" in str(cm.exception))
+
+        # And checking that current manager still can run claim:
+        self.contract.claimBakingRewards().interpret(
+                storage=self.storage,
+                sender=self.manager)
+
+        # Checking that the same old manager A can change rights
+        # again to another address C:
+        result = self.contract.changeManager(self.c).interpret(
+                storage=self.storage,
+                sender=self.manager)
+        assert result.storage['proposedManager'] == self.c
+        self.storage = result.storage
+
+        # Checking that another address D can't accpept rights:
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.contract.acceptOwnership().interpret(
+                storage=self.storage,
+                sender=self.d)
+        self.assertTrue("Not allowed to accept ownership" in str(cm.exception))
+
+        # Check that another address B can't accpept rights too:
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.contract.acceptOwnership().interpret(
+                storage=self.storage,
+                sender=self.b)
+        self.assertTrue("Not allowed to accept ownership" in str(cm.exception))
+
+        # check that another address C can accpept rights:
+        result = self.contract.acceptOwnership().interpret(
+            storage=self.storage,
+            sender=self.c)
+        assert result.storage['manager'] == self.c
+        assert result.storage['proposedManager'] == None
+        self.storage = result.storage
+
+        # Check that another address C can run now withdraw both
+        # baking rewards and retained profits:
+
+        result = self.contract.claimRetainedProfits().interpret(
+                storage=self.storage,
+                sender=self.c)
+        self.storage = result.storage
+
+        result = self.contract.claimBakingRewards().interpret(
+                storage=self.storage,
+                sender=self.c)
+        self.storage = result.storage

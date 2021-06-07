@@ -2,9 +2,8 @@ function updateConfig(
     const updateConfigLambda : updateConfigParam;
     var store: storage) : (list(operation) * storage) is
 block {
-    if Tezos.sender =/= store.manager then
-        failwith("Only contract manager can call updateConfig")
-    else skip;
+
+    allowOnlyManager(store);
 
     const config : configType =
         updateConfigLambda(store.config);
