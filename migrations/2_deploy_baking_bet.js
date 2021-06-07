@@ -40,6 +40,7 @@ const initialStorage = {
   providerProfitFeePrecision: 1000000,
   bakingRewards: 0,
   retainedProfits: 0,
+  proposedManager: null
 };
 
 module.exports = deployer => {

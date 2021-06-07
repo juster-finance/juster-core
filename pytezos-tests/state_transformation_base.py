@@ -817,6 +817,7 @@ class StateTransformationBaseTest(TestCase):
 
             'bakingRewards': 0,
             'retainedProfits': 0,
+            'proposedManager': None
         }
 
         # this self.storage will be used in all blocks:

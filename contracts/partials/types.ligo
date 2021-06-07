@@ -174,6 +174,8 @@ type action is
 | Default of unit
 | ClaimBakingRewards of unit
 | ClaimRetainedProfits of unit
+| ChangeManager of address
+| AcceptOwnership of unit
 
 
 type storage is record [
@@ -212,4 +214,7 @@ type storage is record [
 
     bakingRewards : tez;
     retainedProfits : tez;
+
+    (* Address of the manager who can accept ownership: *)
+    proposedManager : option(address);
 ]

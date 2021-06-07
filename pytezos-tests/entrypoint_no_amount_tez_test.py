@@ -120,3 +120,19 @@ class ForceMajeureDeterminedTest(StateTransformationBaseTest):
                 sender=self.a,
                 now=self.current_time)
         self.assertTrue(ERROR_MSG in str(cm.exception))
+
+        # changeManager with amount > 0 should not be allowed:
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.contract.changeManager(self.d).with_amount(10).interpret(
+                storage=self.storage,
+                sender=self.a,
+                now=self.current_time)
+        self.assertTrue(ERROR_MSG in str(cm.exception))
+
+        # acceptOwnership with amount > 0 should not be allowed:
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.contract.acceptOwnership().with_amount(10).interpret(
+                storage=self.storage,
+                sender=self.a,
+                now=self.current_time)
+        self.assertTrue(ERROR_MSG in str(cm.exception))
