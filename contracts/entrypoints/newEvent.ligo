@@ -49,13 +49,13 @@ block {
         targetDynamics = eventParams.targetDynamics;
         betsCloseTime = eventParams.betsCloseTime;
         measureOracleStartTime = (None : option(timestamp));
-        startRate = 0n;
+        startRate = (None : option(nat));
         measurePeriod = eventParams.measurePeriod;
         isClosed = False;
         closedOracleTime = (None : option(timestamp));
-        closedRate = 0n;
-        closedDynamics = 0n;
-        isBetsAboveEqWin = False;
+        closedRate = (None : option(nat));
+        closedDynamics = (None : option(nat));
+        isBetsAboveEqWin = (None : option(bool));
         poolAboveEq = 0tez;
         poolBellow = 0tez;
         totalLiquidityShares = 0n;

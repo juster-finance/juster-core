@@ -38,7 +38,7 @@ block {
 
     (* Starting measurement: *)
     event.measureOracleStartTime := Some(param.lastUpdate);
-    event.startRate := param.rate;
+    event.startRate := Some(param.rate);
 
     (* Paying measureStartFee for this method initiator: *)
     const operations : list(operation) =

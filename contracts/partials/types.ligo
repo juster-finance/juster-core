@@ -91,7 +91,7 @@ type eventType is record [
     measureOracleStartTime : option(timestamp);
 
     (* the rate at the begining of the measurement *)
-    startRate : nat;  (* TODO: option? *)
+    startRate : option(nat);
 
     (* measurePeriod is amount of seconds from measureStartTime before 
         anyone can call close tp finish event *)
@@ -101,9 +101,9 @@ type eventType is record [
     closedOracleTime : option(timestamp);
 
     (* keeping closedRate for debugging purposes, it can be deleted after *)
-    closedRate : nat;  (* TODO: option? *)
-    closedDynamics : nat;  (* TODO: option? *)
-    isBetsAboveEqWin : bool;  (* TODO: option? *)
+    closedRate : option(nat);
+    closedDynamics : option(nat);
+    isBetsAboveEqWin : option(bool);
 
     (* Current liquidity in aboveEq and Bellow pools, this is used to calculate current ratio: *)
     poolAboveEq : tez;

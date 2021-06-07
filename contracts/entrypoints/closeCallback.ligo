@@ -42,11 +42,18 @@ block {
 
     (* Closing contract: *)
     event.closedOracleTime := Some(param.lastUpdate);
-    event.closedRate := param.rate;
-    event.closedDynamics :=
-        param.rate * store.targetDynamicsPrecision / event.startRate;
+    event.closedRate := Some(param.rate);
+
+    const closeDynamics : nat = case event.startRate of
+    | Some(startRate) -> param.rate * store.targetDynamicsPrecision / startRate
+    (* should not be here: *)
+    | None -> (failwith("event.startRate is empty") : nat)
+    end;
+
+    event.closedDynamics := Some(closeDynamics);
+
     event.isClosed := True;
-    event.isBetsAboveEqWin := event.closedDynamics >= event.targetDynamics;
+    event.isBetsAboveEqWin := Some(closeDynamics >= event.targetDynamics);
 
     (* Paying expirationFee for this method initiator: *)
     const operations : list(operation) =
