@@ -36,11 +36,9 @@ block {
     const totalShares : nat = event.totalLiquidityShares;
 
     (* Leveraged liquidity provided in the smallest pool should be excluded: *)
-    const providedLeverage : nat = minNat(providedA, providedB);
-
     const providerProfit : int = if isBetsAboveEqWin
-        then share * poolB / totalShares - providedB - providedLeverage
-        else share * poolA / totalShares - providedA - providedLeverage;
+        then share * poolB / totalShares - providedB
+        else share * poolA / totalShares - providedA;
 
     (* Cutting profits from provided liquidity: *)
     const profitFee : nat = store.config.providerProfitFee;
@@ -53,17 +51,27 @@ block {
     if fee > abs(providerProfit) then failwith("Fee is more than 100%")
     else skip;
 
-    const provider : nat = abs(providedA + providedB + providerProfit - fee);
+    const provider : nat =
+        abs(maxNat(providedA, providedB) + providerProfit - fee);
 
 } with record[bet=bet; provider=provider; fee=fee];
 
 
 function forceMajeureReturnPayout(
     const store: storage;
-    const key : ledgerKey) : tez is (
+    const key : ledgerKey) : tez is
+block {
+
+    const providedA : nat = tezToNat(
+        getLedgerAmount(key, store.providedLiquidityAboveEq));
+    const providedB : nat = tezToNat(
+        getLedgerAmount(key, store.providedLiquidityBellow));
+    const providedMax : nat = maxNat(providedA, providedB);
+    const returnAmount : tez =
         getLedgerAmount(key, store.depositedBets)
-        + getLedgerAmount(key, store.providedLiquidityAboveEq)
-        + getLedgerAmount(key, store.providedLiquidityBellow))
+        + natToTez(providedMax)
+
+} with returnAmount
 
 
 function excludeFeeReward(

@@ -103,7 +103,7 @@ class MultipleEventsDeterminedTest(StateTransformationBaseTest):
         # A provides liquidity with 3:1 rate:
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
-            amount=4_000_000,
+            amount=3_000_000,
             expected_above_eq=3,
             expected_bellow=1)
 
@@ -124,7 +124,7 @@ class MultipleEventsDeterminedTest(StateTransformationBaseTest):
         # A provides liquidity with 3:1 rate:
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
-            amount=4_000_000,
+            amount=3_000_000,
             expected_above_eq=3,
             expected_bellow=1)
 
@@ -151,6 +151,6 @@ class MultipleEventsDeterminedTest(StateTransformationBaseTest):
             self.current_time = bets_close_time + measure_period + max_lag // 2
             self._run_close()
 
-            self.storage = self.check_withdraw_succeed(self.a, 3_500_000)
+            self.storage = self.check_withdraw_succeed(self.a, 2_500_000)
             self.storage = self.check_withdraw_succeed(self.b, 3_500_000)
 

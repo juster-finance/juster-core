@@ -28,7 +28,7 @@ class LiquidityFeeDynamicTest(StateTransformationBaseTest):
         # Participant A: adding liquidity 1tez in both pools:
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
-            amount=2_000_000,
+            amount=1_000_000,
             expected_above_eq=1,
             expected_bellow=1)
 
@@ -46,6 +46,7 @@ class LiquidityFeeDynamicTest(StateTransformationBaseTest):
             # Model in tests and in contract works a little different with
             # divisions and sometimes it diverges by 1mutez. To simplify
             # this case, random_elapsed_time is in multiples of 1/100:
+            # TODO: need to make model working the same way, man!
 
             random_elapsed_time = randint(0, 100) * bets_duration // 100
             self.current_time = RUN_TIME + random_elapsed_time

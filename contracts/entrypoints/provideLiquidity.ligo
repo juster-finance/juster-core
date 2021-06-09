@@ -32,11 +32,17 @@ block {
     const providedAmount : nat = tezToNat(Tezos.amount);
     const totalShares : nat = event.totalLiquidityShares;
 
+    const isFirstLP : bool = totalBets = 0tez;
+    const isNoShares : bool = totalShares = 0n;
+
+    (* This check should never be true, but it better to have one: *)
+    if isFirstLP =/= isNoShares then failwith("Wrong state") else skip;
+
     (* If pools are epmty, using expected pools provided in params: *)
-    const poolA : nat = if totalBets = 0tez
+    const poolA : nat = if isFirstLP
         then expectedA else tezToNat(event.poolAboveEq);
-    const poolB : nat = if totalBets = 0tez
-        then expectedA else tezToNat(event.poolBellow);
+    const poolB : nat = if isFirstLP
+        then expectedB else tezToNat(event.poolBellow);
 
     if ((expectedA = 0n) or (expectedB = 0n)) then
         failwith("Expected ratio in pool should be more than zero")
@@ -65,10 +71,10 @@ block {
         to fill only the largest pool, because only one pool loose in the end: *)
     const maxPool : nat = maxNat(poolA, poolB);
 
-    const betA : nat = roundDiv(providedAmount * poolA, maxPool);
-    const betB : nat = roundDiv(providedAmount * poolB, maxPool);
+    const providedA : nat = roundDiv(providedAmount * poolA, maxPool);
+    const providedB : nat = roundDiv(providedAmount * poolB, maxPool);
 
-    if (betA = 0n) or (betB = 0n) then
+    if (providedA = 0n) or (providedB = 0n) then
         failwith("Zero liquidity provided")
     else skip;
 
@@ -76,22 +82,21 @@ block {
     (* - if this is first LP, newShares should be equal to sharePrecision *)
     (* - otherwise if this is not first LP, calculating share as the amount
         LP provided to maxPool amount: *)
-    const newShares : nat = if totalShares = 0n
-        then providedAmount * totalShares / maxPool
-        else precision;
+    const newShares : nat = if isFirstLP then precision
+        else providedAmount * totalShares / maxPool;
 
     if newShares = 0n then failwith("Added liquidity is less than one share")
     else skip;
 
-    event.poolAboveEq := event.poolAboveEq + natToTez(betA);
-    event.poolBellow := event.poolBellow + natToTez(betB);
+    event.poolAboveEq := event.poolAboveEq + natToTez(providedA);
+    event.poolBellow := event.poolBellow + natToTez(providedB);
 
     (* Total liquidity by this LP: *)
     store.providedLiquidityAboveEq[key] := 
-        getLedgerAmount(key, store.providedLiquidityAboveEq) + natToTez(betA);
+        getLedgerAmount(key, store.providedLiquidityAboveEq) + natToTez(providedA);
 
     store.providedLiquidityBellow[key] := 
-        getLedgerAmount(key, store.providedLiquidityBellow) + natToTez(betB);
+        getLedgerAmount(key, store.providedLiquidityBellow) + natToTez(providedB);
 
     store.liquidityShares[key] :=
         getNatLedgerAmount(key, store.liquidityShares) + newShares;

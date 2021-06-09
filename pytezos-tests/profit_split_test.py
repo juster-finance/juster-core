@@ -65,7 +65,7 @@ class ProfitSplitDeterminedTest(StateTransformationBaseTest):
         # Participant A: adding liquidity 50/50 just at start:
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
-            amount=100_000,
+            amount=50_000,
             expected_above_eq=1,
             expected_bellow=1)
 
@@ -81,7 +81,7 @@ class ProfitSplitDeterminedTest(StateTransformationBaseTest):
         net_profit = int(50_000 * 0.5)
 
         # Withdrawals:
-        self.storage = self.check_withdraw_succeed(self.a, 100_000 + net_profit)
+        self.storage = self.check_withdraw_succeed(self.a, 50_000 + net_profit)
         self.storage = self.check_withdraw_succeed(self.b, 0)
 
         # Trying claim profits with not manager assert fails:
@@ -106,7 +106,7 @@ class ProfitSplitDeterminedTest(StateTransformationBaseTest):
         # Participant A: adding liquidity 50/50 just at start:
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
-            amount=100_000,
+            amount=50_000,
             expected_above_eq=1,
             expected_bellow=1)
 
@@ -122,7 +122,7 @@ class ProfitSplitDeterminedTest(StateTransformationBaseTest):
         losses = 25_000
 
         # Withdrawals:
-        self.storage = self.check_withdraw_succeed(self.a, 100_000 - losses)
+        self.storage = self.check_withdraw_succeed(self.a, 50_000 - losses)
         self.storage = self.check_withdraw_succeed(self.b, 75_000)
 
         self.assertEqual(self.storage['retainedProfits'], 0)
@@ -137,10 +137,10 @@ class ProfitSplitDeterminedTest(StateTransformationBaseTest):
         million = 1_000_000
 
         # Participant A: adding liquidity 50/50 just at start:
-        # 1 bln tez is more than current supply
+        # 500 tez is less than current supply but almost
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
-            amount=1_000*million*tez,
+            amount=500*million*tez,
             expected_above_eq=1,
             expected_bellow=1)
 
@@ -155,7 +155,7 @@ class ProfitSplitDeterminedTest(StateTransformationBaseTest):
         # Participant D: adding liquidity with same share as A (and loose some):
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.d,
-            amount=1_250*million*tez,
+            amount=1_000*million*tez,
             expected_above_eq=1,
             expected_bellow=4)
 
@@ -183,13 +183,13 @@ class ProfitSplitDeterminedTest(StateTransformationBaseTest):
 
         # Withdrawals:
         self.storage = self.check_withdraw_succeed(
-            self.a, 1_000*million*tez + a_net_profit)
+            self.a, 500*million*tez + a_net_profit)
         self.storage = self.check_withdraw_succeed(
             self.b, 0)
         self.storage = self.check_withdraw_succeed(
             self.c, 300*million*tez + c_wins)
         self.storage = self.check_withdraw_succeed(
-            self.d, 1_250*million*tez - d_net_loss)
+            self.d, 1_000*million*tez - d_net_loss)
 
         # Claiming profits with manager succeed:
         self.assertEqual(self.storage['retainedProfits'], contract_profit)
@@ -210,7 +210,7 @@ class ProfitSplitDeterminedTest(StateTransformationBaseTest):
         # Participant A: adding liquidity 50/50 just at start:
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
-            amount=100_000,
+            amount=50_000,
             expected_above_eq=1,
             expected_bellow=1)
 

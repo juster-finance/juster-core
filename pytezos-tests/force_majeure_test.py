@@ -23,7 +23,7 @@ class ForceMajeureDeterminedTest(StateTransformationBaseTest):
         # Participant A: adding liquidity 1/1 just at start:
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
-            amount=2_000_000,
+            amount=1_000_000,
             expected_above_eq=1,
             expected_bellow=1)
 
@@ -67,7 +67,7 @@ class ForceMajeureDeterminedTest(StateTransformationBaseTest):
         # scenario is not tested here
 
         # check A withdraws the same value as he lp-ed:
-        self.storage = self.check_withdraw_succeed(self.a, 2_000_000)
+        self.storage = self.check_withdraw_succeed(self.a, 1_000_000)
         # B withdraws the same value as he betted:
         self.storage = self.check_withdraw_succeed(self.b, 1_000_000)
 
@@ -118,6 +118,6 @@ class ForceMajeureDeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_trigger_force_majeure_succeed(sender=self.a)
 
         # check A withdraws the same value as he lp-ed:
-        self.storage = self.check_withdraw_succeed(self.a, 2_000_000)
+        self.storage = self.check_withdraw_succeed(self.a, 1_000_000)
         # B withdraws the same value as he betted:
         self.storage = self.check_withdraw_succeed(self.b, 1_000_000)

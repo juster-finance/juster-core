@@ -18,75 +18,13 @@ from unittest import TestCase
 import time
 from os.path import dirname, join
 from pytezos import ContractInterface, pytezos, MichelsonRuntimeError
+from model import BakingBetModel
 
 
 CONTRACT_FN = '../build/tz/baking_bet.tz'
 RUN_TIME = int(time.time())
 ONE_HOUR = 60*60
 ONE_DAY = ONE_HOUR*24
-
-
-""" Some smart contract logic reimplemented here: """
-
-def calculate_liquidity_bonus_multiplier(event, current_time):
-    """ Returns multiplier that applied to reduce bets """
-
-    close_time = event['betsCloseTime']
-    start_time = event['createdTime']
-    return (current_time - start_time) / (close_time - start_time)
-
-
-def calculate_bet_return(top, bottom, amount, fee=0):
-    """ Calculates the amount that would be returned if participant wins
-        Not included the bet amount itself, only added value
-    """
-
-    ratio = top / (bottom + amount)
-    return int(amount * ratio * (1-fee))
-
-
-def calculate_bet_params_change(
-        storage, event_id, participant, bet, amount, current_time):
-
-    """ Returns dict with differences that caused
-        by adding new bet to event
-    """
-
-    event = storage['events'][event_id]
-    fee = event['liquidityPercent'] / storage['liquidityPrecision']
-    fee *= calculate_liquidity_bonus_multiplier(event, current_time)
-    key = (participant, event_id)
-
-    if bet == 'aboveEq':
-        top = event['poolBellow']
-        bottom = event['poolAboveEq']
-        above_eq_count = 0 if key in storage['betsAboveEq'] else 1
-        bet_profit = calculate_bet_return(top, bottom, amount, fee)
-
-        return dict(
-            bet_profit=bet_profit,
-            diff_above_eq=amount,
-            diff_bellow=-bet_profit,
-            above_eq_count=above_eq_count,
-            bellow_count=0
-        )
-
-    elif bet == 'bellow':
-        top = event['poolAboveEq']
-        bottom = event['poolBellow']
-        bellow_count = 0 if key in storage['betsBellow'] else 1
-        bet_profit = calculate_bet_return(top, bottom, amount, fee)
-
-        return dict(
-            bet_profit=bet_profit,
-            diff_above_eq=-bet_profit,
-            diff_bellow=amount,
-            above_eq_count=0,
-            bellow_count=bellow_count
-        )
-
-    else:
-        raise Exception('Wrong bet type')
 
 
 class StateTransformationBaseTest(TestCase):
@@ -196,32 +134,20 @@ class StateTransformationBaseTest(TestCase):
         result_event = result_storage['events'][self.id]
 
         # Checking that state changed as expected:
-        total_liquidity = (init_event['poolAboveEq']
-                           + init_event['poolBellow'])
+        lp_result = self.model.calc_provide_liquidity_split(
+            provided_amount=amount,
+            pool_a=init_event['poolAboveEq'] or expected_above_eq,
+            pool_b=init_event['poolBellow'] or expected_bellow,
+            total_shares=init_event['totalLiquidityShares']
+        )
 
-        if total_liquidity > 0:
-            added_above_eq_share = (
-                init_event['poolAboveEq'] / total_liquidity)
-            added_bellow_share = (
-                init_event['poolBellow'] / total_liquidity)
+        difference_above_eq = (
+            result_event['poolAboveEq'] - init_event['poolAboveEq'])
+        difference_bellow = (
+            result_event['poolBellow'] - init_event['poolBellow'])
 
-        else:
-            # scenario with first LP:
-            added_above_eq_share = (
-                expected_above_eq / (expected_above_eq + expected_bellow))
-            added_bellow_share = (
-                expected_bellow / (expected_above_eq + expected_bellow))
-
-        added_above_eq = int(amount * added_above_eq_share)
-        added_bellow = int(amount * added_bellow_share)
-
-        difference_above_eq = (result_event['poolAboveEq']
-                          - init_event['poolAboveEq'])
-        difference_bellow = (result_event['poolBellow']
-                              - init_event['poolBellow'])
-
-        self.assertEqual(difference_above_eq, added_above_eq)
-        self.assertEqual(difference_bellow, added_bellow)
+        self.assertEqual(difference_above_eq, lp_result['provided_a'])
+        self.assertEqual(difference_bellow, lp_result['provided_b'])
 
         self.assertEqual(
             len(result_storage['betsAboveEq']),
@@ -249,16 +175,9 @@ class StateTransformationBaseTest(TestCase):
             len(result_storage['liquidityShares']),
             len(init_storage['liquidityShares']) + added_count)
 
-        if init_event['poolAboveEq'] == 0:
-            # scenario with first provided liquidity:
-            added_shares = init_storage['sharePrecision']
-        else:
-            # scenario with adding more liquidity:
-            added_shares = added_above_eq / init_event['poolAboveEq'] * init_event['totalLiquidityShares']
-
         self.assertEqual(
             result_event['totalLiquidityShares'],
-            init_event['totalLiquidityShares'] + int(added_shares))
+            init_event['totalLiquidityShares'] + lp_result['shares'])
 
         self.check_storage_integrity(result_storage)
         return result_storage
@@ -304,8 +223,13 @@ class StateTransformationBaseTest(TestCase):
         result_event = result_storage['events'][self.id]
 
         # Checking that state changed as expected:
-        bet_result = calculate_bet_params_change(
-            init_storage, self.id, participant, bet, amount, self.current_time)
+        bet_result = self.model.calc_bet_params_change(
+            storage=init_storage,
+            event_id=self.id,
+            participant=participant,
+            bet=bet,
+            amount=amount,
+            current_time=self.current_time)
 
         self.assertEqual(
             result_event['poolAboveEq'],
@@ -822,3 +746,5 @@ class StateTransformationBaseTest(TestCase):
 
         # this self.storage will be used in all blocks:
         self.storage = self.init_storage.copy()
+
+        self.model = BakingBetModel()

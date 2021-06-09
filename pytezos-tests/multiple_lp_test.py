@@ -2,7 +2,7 @@
     Liquidity pool 0%
 
     Three participants: a, b and c making next interactions:
-    (1) participant A adds initial liquidity at the beginning: 2tez with ratio 1:1
+    (1) participant A adds initial liquidity at the beginning: 1tez with ratio 1:1
 
                                                +30m
                                      A.LP B.F  A.LP C.LP D.A  B.F  A.LP
@@ -18,29 +18,26 @@
 
     (2) participant B bets aboveEq 1tez
         - new ratio: 0.5:2
-    (3) participant A adds more liquidity: 2.5tez with ratio 1:4, after 30 mins
-    (4) participant C adds more liquidity: 5tez with ratio 1:4, after 30 mins
+    (3) participant A adds more liquidity: 2.0tez with ratio 1:4, after 30 mins
+    (4) participant C adds more liquidity: 4tez with ratio 1:4, after 30 mins
     (5) participant D bets bellow for 2tez
     (6) participant B bets aboveEq 4tez
-    (7) participant A adds more liquidity 5tez
+    (7) participant A adds more liquidity 4tez
 
     Result: betBellow win
         - A: get liquidity bonus:
             (1) get 100% of first B bet: + 1.0
             (2) loose 50% of D bet: -2.0
             (3) get 50% of second B bet: +2.0
-            (4) returns all provided liquidity in the end: 9.5tez
-                --- +10.50tez
+            (4) returns all provided liquidity in the end: 7tez
+                --- +8tez
         - B: loose 5 tez (returns 0)
         - C: get liquidity bonus:
             (5) looses to participant D: -2.0
             (6) get 50% of second B bet: +2.0
-            (7) returns liquidity: 5tez
-                --- +5.00tez
+            (7) returns liquidity: 4tez
+                --- +4.00tez
         - D: wins 4 tez: 2 + 4
-
-            10.5 + 0 + 5 + 6
-        - total 21.5 tez
 """
 
 from state_transformation_base import StateTransformationBaseTest, RUN_TIME, ONE_HOUR
@@ -67,7 +64,7 @@ class MultipleLPDeterminedTest(StateTransformationBaseTest):
         # Participant A: adding liquidity 1/1 just at start:
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
-            amount=2_000_000,
+            amount=1_000_000,
             expected_above_eq=1,
             expected_bellow=1)
 
@@ -82,14 +79,14 @@ class MultipleLPDeterminedTest(StateTransformationBaseTest):
         self.current_time = int(RUN_TIME + 0.5*ONE_HOUR)
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
-            amount=2_500_000,
+            amount=2_000_000,
             expected_above_eq=4,
             expected_bellow=1)
 
         # Participant C: adding more liquidity after 30 mins with 1:4:
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.c,
-            amount=5_000_000,
+            amount=4_000_000,
             expected_above_eq=4,
             expected_bellow=1)
 
@@ -110,7 +107,7 @@ class MultipleLPDeterminedTest(StateTransformationBaseTest):
         # Participant A: adding more liquidity after 30 mins with 1:4:
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
-            amount=5_000_000,
+            amount=4_000_000,
             expected_above_eq=4,
             expected_bellow=1)
 
@@ -146,7 +143,7 @@ class MultipleLPDeterminedTest(StateTransformationBaseTest):
 
         # Withdrawals:
         self.current_time = RUN_TIME + 4*ONE_HOUR
-        self.storage = self.check_withdraw_succeed(self.a, 10_500_000)
+        self.storage = self.check_withdraw_succeed(self.a, 8_000_000)
         self.storage = self.check_withdraw_succeed(self.b, 0)
-        self.storage = self.check_withdraw_succeed(self.c, 5_000_000)
+        self.storage = self.check_withdraw_succeed(self.c, 4_000_000)
         self.storage = self.check_withdraw_succeed(self.d, 6_000_000)

@@ -2,12 +2,12 @@
     Liquidity pool 0%
 
     Three participants: a, b and c making next interactions:
-        (1) participant A adds initial liquidity at the beginning (0 hours from start): 100k with ratio 1:1
+        (1) participant A adds initial liquidity at the beginning (0 hours from start): 50k with ratio 1:1
         (2) participant B betAboveEq with 50k (1 hour from start)
             rate at bet 50:100, if S: win amount +25k*L, if ~S: loose amount -50k
             rate after bet 100:25 == 4:1
-        (3) participant A adds more liquidity (12 hours from start): 50k with ratio 4:1 (f:a)
-        (4) participant C adds more liquidity at the very end (24 hours from start): 100k with ratio 4:1 (f:a)
+        (3) participant A adds more liquidity (12 hours from start): 40k with ratio 4:1 (f:a)
+        (4) participant C adds more liquidity at the very end (24 hours from start): 80k with ratio 4:1 (f:a)
         (5) particiapnt A calls running_measurement 26 hours from the start
         (6) oracle returns that price at the measurement start is 6.0$ per xtz. Oracle measurement time is behind one hour
         (7) participant B cals close_call at 38 hours from the start
@@ -15,9 +15,9 @@
 
     Closed dynamics is +25%, betsAboveEq pool is wins
                                     (1)      (2)      (3)       (4)
-    Total event pool:               100_000 + 25_000 + 50_000 + 100_000 = 265_000
-    betAboveEqLiquidityPool:             50_000 + 50_000 + 40_000 +  80_000 = 220_000
-    betBellowLiquidityPool:         50_000 - 25_000 + 10_000 +  20_000 =  55_000
+    Total event pool:               50_000 + 25_000 + 40_000 +  80_000 = 195_000
+    A:                              50_000 + 50_000 + 40_000 +  80_000 = 220_000
+    B:                              50_000 - 25_000 + 10_000 +  20_000 =  55_000
             (liquidity rate is not included in the pools)
 
     if participant B wins he get 50_000 + 25_000 * 100% = 75_000 (this value should be saved in winning amounts ledger)
@@ -26,24 +26,20 @@
     Total win ~S LP profit / loss:        0 + 50_000 +      0 +       0 =  50_000  (and not including L bonus for bets)
             (liquidity rate is included in profit/loss pools)
 
-    Total liquidity AboveEq bonuses:     50_000 +      0 + 20_000 +       0 =  70_000
-    Total liquidity Bellow bonuses: 50_000 +      0 +  5_000 +       0 =  55_000
-    Total provided Liquidity:       100_000 +      0 + 50_000 + 100_000 = 250_000
-
     selected liquidity pool to distribute profits: liquidity Bellow
 
-    liquidity Bellow shares:
-        A: 55_000 / 55_000 = 100%
-        C: 0      / 55_000 = 0%
+    liquidity shares:
+        A: 1.4
+        C: 0.8
 
     LP withdraw = Profit/Loss * LP_share + ProvidedL
-    A withdraws: -24_000 * 100% + 100_000 + 50_000 = 126_000
-    C withdraws: 100_000
+    A withdraws: -25_000 * 100% + 50_000 + 40_000 = 65_000
+    C withdraws: 80_000
 
     Changes:
-        A: 125_000 / 150_000 = 0.840
-        B: 75_000 / 50_000 = 1.480
-        C: 100_000 / 100_000 = 1.000
+        A: 65_000 / 90_000 = 0.722
+        B: 75_000 / 50_000 = 1.500
+        C: 80_000 / 80_000 = 1.000
 """
 
 from state_transformation_base import (
@@ -75,7 +71,7 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
         # Participant A: adding liquidity 50/50 just at start:
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
-            amount=100_000,
+            amount=50_000,
             expected_above_eq=1,
             expected_bellow=1)
         self.assertEqual(self.storage['events'][self.id]['participants'], 1)
@@ -102,7 +98,7 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
         self.current_time = RUN_TIME + 12*ONE_HOUR
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
-            amount=50_000,
+            amount=40_000,
             expected_above_eq=4,
             expected_bellow=1)
         self.assertEqual(self.storage['events'][self.id]['participants'], 2)
@@ -111,7 +107,7 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
         self.current_time = RUN_TIME + 24*ONE_HOUR
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.c,
-            amount=100_000,
+            amount=80_000,
             expected_above_eq=4,
             expected_bellow=1)
         self.assertEqual(self.storage['events'][self.id]['participants'], 3)
@@ -220,7 +216,7 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
         self.assertEqual(self.storage['events'][self.id]['participants'], 3)
         self.current_time = RUN_TIME + 64*ONE_HOUR
     
-        self.storage = self.check_withdraw_succeed(self.a, 125_000)
+        self.storage = self.check_withdraw_succeed(self.a, 65_000)
         self.assertEqual(self.storage['events'][self.id]['participants'], 2)
 
         # Withdrawing twice is allowed, but it should not change anything:
@@ -232,5 +228,5 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
         self.assertEqual(self.storage['events'][self.id]['participants'], 1)
 
         # This is last participant, checking that event is removed:
-        self.storage = self.check_withdraw_succeed(self.c, 100_000)
+        self.storage = self.check_withdraw_succeed(self.c, 80_000)
         self.assertFalse(self.id in self.storage['events'])

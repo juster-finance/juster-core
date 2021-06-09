@@ -15,10 +15,10 @@ class RewardFeeSplitDeterminedTest(StateTransformationBaseTest):
         self.storage = self.check_new_event_succeed(
             event_params=self.default_event_params, amount=fees)
 
-        # D provides 2tez liquidity:
+        # D provides 1tez liquidity:
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.d,
-            amount=2_000_000,
+            amount=1_000_000,
             expected_above_eq=1,
             expected_bellow=1)
 
@@ -79,7 +79,7 @@ class RewardFeeSplitDeterminedTest(StateTransformationBaseTest):
         self.check_withdraw_succeed(self.a, 1_500_000, sender=self.d)
         self.check_withdraw_succeed(self.b, 0, sender=self.c)
         self.check_withdraw_succeed(self.c, 10, sender=self.b)
-        self.check_withdraw_succeed(self.d, 2_000_000, sender=self.a)
+        self.check_withdraw_succeed(self.d, 1_000_000, sender=self.a)
 
         # withdrawing after reward fee with sender === participant should not
         # be different:
@@ -89,14 +89,14 @@ class RewardFeeSplitDeterminedTest(StateTransformationBaseTest):
         self.check_withdraw_succeed(self.a, 1_500_000, sender=self.a)
         self.check_withdraw_succeed(self.b, 0, sender=self.b)
         self.check_withdraw_succeed(self.c, 10, sender=self.c)
-        self.check_withdraw_succeed(self.d, 2_000_000, sender=self.d)
+        self.check_withdraw_succeed(self.d, 1_000_000, sender=self.d)
 
         # withdrawing after reward fee with sender =/= participant should
         # make additional transactions to sender:
         self.check_withdraw_succeed(self.a, 1_500_000, sender=self.d)
         self.check_withdraw_succeed(self.b, 0, sender=self.c)
         self.check_withdraw_succeed(self.c, 10, sender=self.b)
-        self.check_withdraw_succeed(self.d, 2_000_000, sender=self.a)
+        self.check_withdraw_succeed(self.d, 1_000_000, sender=self.a)
 
         # implicit test with participant D:
         params = {'eventId': self.id, 'participantAddress': self.d}
@@ -110,7 +110,7 @@ class RewardFeeSplitDeterminedTest(StateTransformationBaseTest):
         reward_fee = self.default_config['rewardCallFee']
 
         self.assertEqual(amounts[self.a], reward_fee)
-        self.assertEqual(amounts[self.d], 2_000_000 - reward_fee)
+        self.assertEqual(amounts[self.d], 1_000_000 - reward_fee)
 
         # implicit test that all all withdraw amount for C is goes to sender:
         params = {'eventId': self.id, 'participantAddress': self.c}
@@ -125,7 +125,7 @@ class RewardFeeSplitDeterminedTest(StateTransformationBaseTest):
         self.check_withdraw_succeed(self.a, 1_000_000, sender=self.d)
         self.check_withdraw_succeed(self.b, 500_000, sender=self.c)
         self.check_withdraw_succeed(self.c, 10, sender=self.b)
-        self.check_withdraw_succeed(self.d, 2_000_000, sender=self.a)
+        self.check_withdraw_succeed(self.d, 1_000_000, sender=self.a)
 
         # implicit test with participant C:
         params = {'eventId': self.id, 'participantAddress': self.c}

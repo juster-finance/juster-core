@@ -2,17 +2,17 @@
     Liquidity pool 0%
 
     Four participants: a, b, c and d making next interactions:
-        (1) participant A adds initial liquidity at the beginning (0 hours from start): 100k with ratio 1:1
+        (1) participant A adds initial liquidity at the beginning (0 hours from start): 50k with ratio 1:1
         (2) participant B bets AboveEq with 50k (1 hour from start)
             rate before bet 50:50
             rate at bet     50:100, if S: win amount +25k*L, if ~S: loose amount -50k
             rate after bet  25:100 == 1:4 (a:f)
 
-        (3) participant A adds more liquidity (12 hours from start): 50k with ratio 4:1 (f:a)
+        (3) participant A adds more liquidity (12 hours from start): 40k with ratio 4:1 (f:a)
             totalLiquidityShares: 100
             newShares for A: 40
 
-        (4) participant D adds more liquidity (12 hours from start): 450k with ratio 4:1 (f:a)
+        (4) participant D adds more liquidity (12 hours from start): 360k with ratio 4:1 (f:a)
             totalLiquidityShares: 140
             newShares for D: 360
 
@@ -21,7 +21,7 @@
             rate at bet     500:250 (f:a), if ~S: win amount +250k*L, if S: loose amount 125k
             rate after bet  250:250
 
-        (6) participant C adds more liquidity at the very end (24 hours from start): 100k with ratio 1:1 (f:a)
+        (6) participant C adds more liquidity at the very end (24 hours from start): 50k with ratio 1:1 (f:a)
             totalLiquidityShares: 500
             newShares for C: 50/250 * 500 = 100
 
@@ -32,20 +32,10 @@
 
     Closed dynamics is +25%, betsAboveEq pool is wins
                                       (1)      (2)      (3)       (4)       (5)       (6)
-    Total event pool:               100_000 + 25_000 + 50_000 + 450_000 + 125_000 + 100_000 = 850_000
-    betAboveEqLiquidityPool:             50_000 + 50_000 + 40_000 + 360_000 - 250_000 +  50_000 = 300_000
-    betBellowLiquidityPool:         50_000 - 25_000 + 10_000 +  90_000 + 125_000 +  50_000 = 300_000
+    Total event pool:               50_000 + 25_000 + 40_000 + 360_000 + 125_000 +  50_000 = 850_000
+    A:                              50_000 + 50_000 + 40_000 + 360_000 - 250_000 +  50_000 = 300_000
+    B:                              50_000 - 25_000 + 10_000 +  90_000 + 125_000 +  50_000 = 300_000
             (liquidity rate is not included in the pools)
-
-    if S:
-        participant B wins and get 50_000 + 25_000 = 75_000
-        participant D loose his bet 35_000 + provided liquidity 75_000
-    if ~S:
-        participant B loose his bet 50_000
-        participant D wins and get 35_000 + 70_000 + provided liquidity 75_000 = 177_200
-
-    Total win S  LP profit / loss:        0 - 25_000 +      0 +       0 + 125_000 +       0 = 100_000
-    Total win ~S LP profit / loss:        0 + 50_000 +      0 +       0 - 125_000 +       0 = -75_000
 
     Selected liquidity pool to distribute profits: liquidity Bellow (because AboveEq wins)
 
@@ -55,16 +45,16 @@
         C: 0
 
     LP withdraw = Profit/Loss * LP_share + ProvidedL
-    A withdraws: 10_000 + 100_000 + 50_000 = 160_000
+    A withdraws: 10_000 + 50_000 + 40_000 = 100_000
     B withdraws: 50_000 + 25_000 = 75_000
-    C withdraws: 100_000
-    D withdraws: 90_000 + 450_000 = 540_000
+    C withdraws: 50_000
+    D withdraws: 90_000 + 360_000 = 450_000
 
     Changes:
-        A: 160_000 / 150_000 = 1.067
+        A: 100_000 /  90_000 = 1.111
         B:  75_000 /  50_000 = 1.500
-        C: 100_000 / 100_000 = 1.000
-        D: 540_000 / 575_000 = 0.939
+        C: 50_000  /  50_000 = 1.000
+        D: 450_000 / 485_000 = 0.927
 """
 
 from state_transformation_base import StateTransformationBaseTest, RUN_TIME, ONE_HOUR
@@ -87,7 +77,7 @@ class FourParticipantsDeterminedTest(StateTransformationBaseTest):
         # Participant A: adding liquidity 50/50 just at start:
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
-            amount=100_000,
+            amount=50_000,
             expected_above_eq=1,
             expected_bellow=1)
 
@@ -103,14 +93,14 @@ class FourParticipantsDeterminedTest(StateTransformationBaseTest):
         self.current_time = RUN_TIME + 12*ONE_HOUR
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.a,
-            amount=50_000,
+            amount=40_000,
             expected_above_eq=4,
             expected_bellow=1)
 
         # Participant D: adding more liquidity after 12 hours:
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.d,
-            amount=450_000,
+            amount=360_000,
             expected_above_eq=4,
             expected_bellow=1)
 
@@ -125,7 +115,7 @@ class FourParticipantsDeterminedTest(StateTransformationBaseTest):
         self.current_time = RUN_TIME + 24*ONE_HOUR
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.c,
-            amount=100_000,
+            amount=50_000,
             expected_above_eq=1,
             expected_bellow=1)
 
@@ -161,7 +151,7 @@ class FourParticipantsDeterminedTest(StateTransformationBaseTest):
 
         # Withdrawals:
         self.current_time = RUN_TIME + 64*ONE_HOUR
-        self.storage = self.check_withdraw_succeed(self.b, 75_000)
-        self.storage = self.check_withdraw_succeed(self.a, 160_000)
-        self.storage = self.check_withdraw_succeed(self.c, 100_000)
-        self.storage = self.check_withdraw_succeed(self.d, 540_000)
+        self.storage = self.check_withdraw_succeed(self.b,  75_000)
+        self.storage = self.check_withdraw_succeed(self.a, 100_000)
+        self.storage = self.check_withdraw_succeed(self.c,  50_000)
+        self.storage = self.check_withdraw_succeed(self.d, 450_000)
