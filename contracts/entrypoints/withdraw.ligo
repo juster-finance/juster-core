@@ -35,9 +35,12 @@ block {
     const poolB : nat = tezToNat(event.poolBellow);
     const totalShares : nat = event.totalLiquidityShares;
 
+    (* Leveraged liquidity provided in the smallest pool should be excluded: *)
+    const providedLeverage : nat = minNat(providedA, providedB);
+
     const providerProfit : int = if isBetsAboveEqWin
-        then share * poolB / totalShares - providedB
-        else share * poolA / totalShares - providedA;
+        then share * poolB / totalShares - providedB - providedLeverage
+        else share * poolA / totalShares - providedA - providedLeverage;
 
     (* Cutting profits from provided liquidity: *)
     const profitFee : nat = store.config.providerProfitFee;

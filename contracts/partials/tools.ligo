@@ -24,6 +24,14 @@ block {
 } with minValue
 
 
+(* Returns maximal value from two nat variables a & b *)
+function maxNat(const a : nat; const b : nat) : nat is
+block {
+    var maxValue : nat := a;
+    if (a < b) then maxValue := b else skip;
+} with maxValue
+
+
 function minTez(const a : tez; const b : tez) : tez is
 natToTez(minNat(tezToNat(a), tezToNat(b)))
 
