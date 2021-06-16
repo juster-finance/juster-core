@@ -10,7 +10,7 @@ class ForceMajeureDeterminedTest(StateTransformationBaseTest):
         """ This code is the same for two tests: """
 
         self.current_time = RUN_TIME
-        self.id = self.storage['lastEventId']
+        self.id = self.storage['nextEventId']
 
         # Creating default event:
         self.storage = self.check_new_event_succeed(

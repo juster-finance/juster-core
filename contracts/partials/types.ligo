@@ -197,7 +197,7 @@ type storage is record [
         they needed to be returned *)
     depositedBets : ledgerType;
 
-    lastEventId : nat;
+    nextEventId : nat;
     closeCallId : eventIdType;
     measurementStartCallId : eventIdType;
 

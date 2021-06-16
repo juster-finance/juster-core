@@ -9,7 +9,7 @@ class RewardFeeSplitDeterminedTest(StateTransformationBaseTest):
     def _prepare_to_test(self):
 
         self.current_time = RUN_TIME
-        self.id = self.storage['lastEventId']
+        self.id = self.storage['nextEventId']
 
         fees = self.measure_start_fee + self.expiration_fee
         self.storage = self.check_new_event_succeed(

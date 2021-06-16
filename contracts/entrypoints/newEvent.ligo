@@ -69,7 +69,7 @@ block {
         participants = 0n;
     ];
 
-    store.events[store.lastEventId] := newEvent;
-    store.lastEventId := store.lastEventId + 1n;
+    store.events[store.nextEventId] := newEvent;
+    store.nextEventId := store.nextEventId + 1n;
 
 } with ((nil: list(operation)), store)

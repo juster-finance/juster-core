@@ -52,7 +52,7 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
     def test_with_three_participants(self):
 
         self.current_time = RUN_TIME
-        self.id = self.storage['lastEventId']
+        self.id = self.storage['nextEventId']
 
         # Trying to create event without providing correct fees:
         amount = self.measure_start_fee + self.expiration_fee

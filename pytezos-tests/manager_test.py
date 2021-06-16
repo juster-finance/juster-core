@@ -19,7 +19,7 @@ class ManagerDeterminedTest(StateTransformationBaseTest):
     def test_update_config(self):
         
         self.current_time = RUN_TIME
-        self.id = self.storage['lastEventId']
+        self.id = self.storage['nextEventId']
 
         raise_liq_code = open(join(dirname(__file__), RAISE_LIQ_FEE_LAMBDA_FN)).read()
         reset_config_code = open(join(dirname(__file__), RESET_CONFIG_LAMBDA_FN)).read()
@@ -39,7 +39,7 @@ class ManagerDeterminedTest(StateTransformationBaseTest):
         # Creating next event with default params:
         new_params = self.default_event_params.copy()
         new_params['liquidityPercent'] = 310_000
-        self.id = self.storage['lastEventId']
+        self.id = self.storage['nextEventId']
         self.storage = self.check_new_event_succeed(
             event_params=new_params,
             amount=self.measure_start_fee + self.expiration_fee)

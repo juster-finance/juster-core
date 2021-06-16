@@ -27,7 +27,7 @@ const initialStorage = {
   providedLiquidityBelow: new MichelsonMap(),
   liquidityShares: new MichelsonMap(),
   depositedBets: new MichelsonMap(),
-  lastEventId: 0,
+  nextEventId: 0,
   closeCallEventId: null,
   measurementStartCallEventId: null,
   config: config,

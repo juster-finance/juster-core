@@ -108,7 +108,7 @@ class StateTransformationBaseTest(TestCase):
                 period = event['measurePeriod']
                 self.assertTrue(event['closedOracleTime'] >= start + period)
 
-        self.assertTrue(storage['lastEventId'] > 0)
+        self.assertTrue(storage['nextEventId'] > 0)
 
 
     def check_provide_liquidity_succeed(
@@ -727,7 +727,7 @@ class StateTransformationBaseTest(TestCase):
             'providedLiquidityBelow': {},
             'liquidityShares': {},
             'depositedBets': {},
-            'lastEventId': 0,
+            'nextEventId': 0,
             'closeCallId': None,
             'measurementStartCallId': None,
             'config': self.default_config,

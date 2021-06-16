@@ -8,7 +8,7 @@ class EventConfigurationDeterminedTest(StateTransformationBaseTest):
 
     def test_event_configuration(self):
         self.current_time = RUN_TIME
-        self.id = self.storage['lastEventId']
+        self.id = self.storage['nextEventId']
 
         # Checking that creating event with too short measure period is failed:
         min_measure_period = self.default_config['minMeasurePeriod']

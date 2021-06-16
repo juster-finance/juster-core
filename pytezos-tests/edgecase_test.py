@@ -8,7 +8,7 @@ class ZeroEdgecasesDeterminedTest(StateTransformationBaseTest):
 
     def test_zero_edgecases(self):
         self.current_time = RUN_TIME
-        self.id = self.storage['lastEventId']
+        self.id = self.storage['nextEventId']
 
         # Creating event, both fees equal to zero:
         self.measure_start_fee = 0

@@ -11,7 +11,7 @@ class ProfitSplitDeterminedTest(StateTransformationBaseTest):
         """ Creates default event with fee and adds 100k liquidity 1:1 """
 
         self.current_time = RUN_TIME
-        self.id = self.storage['lastEventId']
+        self.id = self.storage['nextEventId']
 
         # Creating event:
         amount = self.measure_start_fee + self.expiration_fee

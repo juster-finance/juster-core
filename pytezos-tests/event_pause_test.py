@@ -15,7 +15,7 @@ class EventPauseDeterminedTest(StateTransformationBaseTest):
         trigger_pause = open(join(dirname(__file__), TRIGGER_PAUSE_LAMBDA_FN)).read()
 
         self.current_time = RUN_TIME
-        self.id = self.storage['lastEventId']
+        self.id = self.storage['nextEventId']
         self.assertFalse(self.storage['config']['isEventCreationPaused'])
 
         # Creating event with no pause:
