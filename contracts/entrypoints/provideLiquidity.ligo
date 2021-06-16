@@ -13,7 +13,7 @@ block {
     (* At this point slippage is always >= store.ratioPrecision *)
     slippage := abs(slippage - precision);
 
-} with slippage 
+} with slippage
 
 
 function provideLiquidity(

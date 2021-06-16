@@ -133,7 +133,7 @@ class FourParticipantsDeterminedTest(StateTransformationBaseTest):
             callback_values=callback_values,
             source=self.a,
             sender=self.oracle_address)
-            
+
         # Closing event:
         self.current_time = RUN_TIME + 38*ONE_HOUR
         self.storage = self.check_close_succeed(sender=self.b)

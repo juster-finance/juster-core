@@ -136,7 +136,7 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
             sender=self.oracle_address,
             msg_contains='Unexpected currency pair'
         )
-    
+
         # Check that measurement during bets time is failed:
         callback_in_betstime = start_callback_values.copy()
         callback_in_betstime.update({'lastUpdate': RUN_TIME + 12*ONE_HOUR})
@@ -215,7 +215,7 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
         # Withdrawals:
         self.assertEqual(self.storage['events'][self.id]['participants'], 3)
         self.current_time = RUN_TIME + 64*ONE_HOUR
-    
+
         self.storage = self.check_withdraw_succeed(self.a, 65_000)
         self.assertEqual(self.storage['events'][self.id]['participants'], 2)
 

@@ -31,7 +31,7 @@ class StateTransformationBaseTest(TestCase):
     """ Methods used to check different state transformations
         Each check method runs one transaction and then compare storage
         before and after transaction execution. At the end each check
-        method returns new storage 
+        method returns new storage
     """
 
     def assertAmountEqual(self, operation, amount):
@@ -310,7 +310,7 @@ class StateTransformationBaseTest(TestCase):
             is_time_before_split = False
         else:
             is_time_before_split = self.current_time < closed_time + reward_fee_split_after
-    
+
         is_sender_equals_participant = participant == sender
         is_force_majeure = event['isForceMajeure']
 
@@ -444,7 +444,7 @@ class StateTransformationBaseTest(TestCase):
             self, callback_values, source, sender):
         """ Check that emulated callback from oracle is successfull """
 
-        # Pre-transaction storage check:    
+        # Pre-transaction storage check:
         self.assertEqual(self.storage['measurementStartCallId'], self.id)
 
         # Running transaction:

@@ -17,7 +17,7 @@ RESET_CONFIG_LAMBDA_FN = '../build/tz/lambda_reset_new_event_config.tz'
 class ManagerDeterminedTest(StateTransformationBaseTest):
 
     def test_update_config(self):
-        
+
         self.current_time = RUN_TIME
         self.id = self.storage['nextEventId']
 

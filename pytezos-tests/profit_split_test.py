@@ -40,7 +40,7 @@ class ProfitSplitDeterminedTest(StateTransformationBaseTest):
             callback_values=callback_values,
             source=self.a,
             sender=self.oracle_address)
-            
+
         # Closing event:
         self.current_time = bets_close_time + measure_period
         self.storage = self.check_close_succeed(sender=self.b)
