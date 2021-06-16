@@ -14,7 +14,7 @@ type eventIdType is option(nat)
 
 type betType is
 | AboveEq of unit
-| Bellow of unit
+| Below of unit
 
 type betParams is record [
     eventId : nat;
@@ -105,9 +105,9 @@ type eventType is record [
     closedDynamics : option(nat);
     isBetsAboveEqWin : option(bool);
 
-    (* Current liquidity in aboveEq and Bellow pools, this is used to calculate current ratio: *)
+    (* Current liquidity in aboveEq and Below pools, this is used to calculate current ratio: *)
     poolAboveEq : tez;
-    poolBellow : tez;
+    poolBelow : tez;
 
     totalLiquidityShares : nat;
 
@@ -145,7 +145,7 @@ type provideLiquidityParams is record [
 
     (* Expected distribution / ratio of the event *)
     expectedRatioAboveEq : nat;
-    expectedRatioBellow : nat;
+    expectedRatioBelow : nat;
 
     (* Max Slippage value in ratioPrecision. if 0n - ratio should be equal to expected,
         if equals K*ratioPrecision, ratio can diff not more than in (K-1) times *)
@@ -181,16 +181,16 @@ type action is
 type storage is record [
     events : big_map(nat, eventType);
 
-    (* Ledgers with winning amounts for participants if AboveEq/Bellow wins: *)
+    (* Ledgers with winning amounts for participants if AboveEq/Below wins: *)
     betsAboveEq : ledgerType;
-    betsBellow : ledgerType;
+    betsBelow : ledgerType;
 
     (* There are two ledgers used to manage liquidity:
-        - two with total provided liquidity in AboveEq/Bellow pools,
+        - two with total provided liquidity in AboveEq/Below pools,
         - and one with LP share used to calculate how winning pool
             would be distributed *)
     providedLiquidityAboveEq : ledgerType;
-    providedLiquidityBellow : ledgerType;
+    providedLiquidityBelow : ledgerType;
     liquidityShares : ledgerNatType;
 
     (* Keeping all provided bets for the Force Majeure, in case if

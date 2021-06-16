@@ -61,7 +61,7 @@ class BakingBetModel:
         key = (participant, event_id)
 
         if bet == 'aboveEq':
-            top = event['poolBellow']
+            top = event['poolBelow']
             bottom = event['poolAboveEq']
             above_eq_count = 0 if key in storage['betsAboveEq'] else 1
             bet_profit = self.calc_bet_return(top, bottom, amount, fee)
@@ -69,23 +69,23 @@ class BakingBetModel:
             return dict(
                 bet_profit=bet_profit,
                 diff_above_eq=amount,
-                diff_bellow=-bet_profit,
+                diff_below=-bet_profit,
                 above_eq_count=above_eq_count,
-                bellow_count=0
+                below_count=0
             )
 
-        elif bet == 'bellow':
+        elif bet == 'below':
             top = event['poolAboveEq']
-            bottom = event['poolBellow']
-            bellow_count = 0 if key in storage['betsBellow'] else 1
+            bottom = event['poolBelow']
+            below_count = 0 if key in storage['betsBelow'] else 1
             bet_profit = self.calc_bet_return(top, bottom, amount, fee)
 
             return dict(
                 bet_profit=bet_profit,
                 diff_above_eq=-bet_profit,
-                diff_bellow=amount,
+                diff_below=amount,
                 above_eq_count=0,
-                bellow_count=bellow_count
+                below_count=below_count
             )
 
         else:

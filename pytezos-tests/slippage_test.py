@@ -22,7 +22,7 @@ class SlippageDeterminedTest(StateTransformationBaseTest):
             participant=self.a,
             amount=2_000_000,
             expected_above_eq=1,
-            expected_bellow=1)
+            expected_below=1)
 
         # Participant B bets aboveEq with 1tez, expected minimal win 1_500_000 succeed:
         self.storage = self.check_bet_succeed(
@@ -56,7 +56,7 @@ class SlippageDeterminedTest(StateTransformationBaseTest):
             participant=self.a,
             amount=3_000_000,
             expected_above_eq=2,
-            expected_bellow=1)
+            expected_below=1)
 
         # Participant B: adding liquidity 400:100 with slippage 100% succeed:
         slippage_100 = self.storage['ratioPrecision']
@@ -65,7 +65,7 @@ class SlippageDeterminedTest(StateTransformationBaseTest):
             participant=self.a,
             amount=3_000_000,
             expected_above_eq=400,
-            expected_bellow=100,
+            expected_below=100,
             max_slippage=slippage_100)
 
         # Participant B: adding liquidity 401:100 with slippage 100% fails:
@@ -73,7 +73,7 @@ class SlippageDeterminedTest(StateTransformationBaseTest):
             participant=self.a,
             amount=3_000_000,
             expected_above_eq=401,
-            expected_bellow=100,
+            expected_below=100,
             max_slippage=slippage_100,
             msg_contains='Expected ratio very differs from current pool ratio')
 
@@ -82,7 +82,7 @@ class SlippageDeterminedTest(StateTransformationBaseTest):
             participant=self.a,
             amount=3_000_000,
             expected_above_eq=100,
-            expected_bellow=100,
+            expected_below=100,
             max_slippage=slippage_100)
 
         # Participant B: adding liquidity 100:101 with slippage 100% fails:
@@ -90,7 +90,7 @@ class SlippageDeterminedTest(StateTransformationBaseTest):
             participant=self.a,
             amount=3_000_000,
             expected_above_eq=100,
-            expected_bellow=101,
+            expected_below=101,
             max_slippage=slippage_100,
             msg_contains='Expected ratio very differs from current pool ratio')
 
@@ -101,7 +101,7 @@ class SlippageDeterminedTest(StateTransformationBaseTest):
             participant=self.a,
             amount=3_000_000,
             expected_above_eq=300,
-            expected_bellow=100,
+            expected_below=100,
             max_slippage=slippage_50)
 
         # Participant B: adding liquidity 301:100 with slippage 50% fails:
@@ -109,7 +109,7 @@ class SlippageDeterminedTest(StateTransformationBaseTest):
             participant=self.a,
             amount=3_000_000,
             expected_above_eq=301,
-            expected_bellow=100,
+            expected_below=100,
             max_slippage=slippage_50,
             msg_contains='Expected ratio very differs from current pool ratio')
 

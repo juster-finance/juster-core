@@ -22,12 +22,12 @@ function provideLiquidity(
 block {
 
     const expectedA : nat = params.expectedRatioAboveEq;
-    const expectedB : nat = params.expectedRatioBellow;
+    const expectedB : nat = params.expectedRatioBelow;
     const precision : nat = store.ratioPrecision;
 
     const eventId : nat = params.eventId;
     const event : eventType = getEvent(store, eventId);
-    const totalBets : tez = event.poolAboveEq + event.poolBellow;
+    const totalBets : tez = event.poolAboveEq + event.poolBelow;
     const key : ledgerKey = (Tezos.sender, eventId);
     const providedAmount : nat = tezToNat(Tezos.amount);
     const totalShares : nat = event.totalLiquidityShares;
@@ -42,7 +42,7 @@ block {
     const poolA : nat = if isFirstLP
         then expectedA else tezToNat(event.poolAboveEq);
     const poolB : nat = if isFirstLP
-        then expectedB else tezToNat(event.poolBellow);
+        then expectedB else tezToNat(event.poolBelow);
 
     if ((expectedA = 0n) or (expectedB = 0n)) then
         failwith("Expected ratio in pool should be more than zero")
@@ -89,14 +89,14 @@ block {
     else skip;
 
     event.poolAboveEq := event.poolAboveEq + natToTez(providedA);
-    event.poolBellow := event.poolBellow + natToTez(providedB);
+    event.poolBelow := event.poolBelow + natToTez(providedB);
 
     (* Total liquidity by this LP: *)
     store.providedLiquidityAboveEq[key] := 
         getLedgerAmount(key, store.providedLiquidityAboveEq) + natToTez(providedA);
 
-    store.providedLiquidityBellow[key] := 
-        getLedgerAmount(key, store.providedLiquidityBellow) + natToTez(providedB);
+    store.providedLiquidityBelow[key] := 
+        getLedgerAmount(key, store.providedLiquidityBelow) + natToTez(providedB);
 
     store.liquidityShares[key] :=
         getNatLedgerAmount(key, store.liquidityShares) + newShares;

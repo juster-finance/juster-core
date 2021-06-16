@@ -15,7 +15,7 @@ block {
 
     (* Calculating bet return: *)
     const betA : nat = tezToNat(getLedgerAmount(key, store.betsAboveEq));
-    const betB : nat = tezToNat(getLedgerAmount(key, store.betsBellow));
+    const betB : nat = tezToNat(getLedgerAmount(key, store.betsBelow));
 
     const isBetsAboveEqWin : bool = case event.isBetsAboveEqWin of
     | Some(isWin) -> isWin
@@ -30,9 +30,9 @@ block {
     const providedA : nat = tezToNat(
         getLedgerAmount(key, store.providedLiquidityAboveEq));
     const providedB : nat = tezToNat(
-        getLedgerAmount(key, store.providedLiquidityBellow));
+        getLedgerAmount(key, store.providedLiquidityBelow));
     const poolA : nat = tezToNat(event.poolAboveEq);
-    const poolB : nat = tezToNat(event.poolBellow);
+    const poolB : nat = tezToNat(event.poolBelow);
     const totalShares : nat = event.totalLiquidityShares;
 
     (* Leveraged liquidity provided in the smallest pool should be excluded: *)
@@ -65,7 +65,7 @@ block {
     const providedA : nat = tezToNat(
         getLedgerAmount(key, store.providedLiquidityAboveEq));
     const providedB : nat = tezToNat(
-        getLedgerAmount(key, store.providedLiquidityBellow));
+        getLedgerAmount(key, store.providedLiquidityBelow));
     const providedMax : nat = maxNat(providedA, providedB);
     const returnAmount : tez =
         getLedgerAmount(key, store.depositedBets)
@@ -138,11 +138,11 @@ function removeKeyFromAllLedgers(
 block {
 
     store.betsAboveEq := Big_map.remove(key, store.betsAboveEq);
-    store.betsBellow := Big_map.remove(key, store.betsBellow);
+    store.betsBelow := Big_map.remove(key, store.betsBelow);
     store.providedLiquidityAboveEq :=
         Big_map.remove(key, store.providedLiquidityAboveEq);
-    store.providedLiquidityBellow :=
-        Big_map.remove(key, store.providedLiquidityBellow);
+    store.providedLiquidityBelow :=
+        Big_map.remove(key, store.providedLiquidityBelow);
     store.liquidityShares := Big_map.remove(key, store.liquidityShares);
     store.depositedBets := Big_map.remove(key, store.depositedBets);
 

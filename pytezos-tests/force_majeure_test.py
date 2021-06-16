@@ -25,7 +25,7 @@ class ForceMajeureDeterminedTest(StateTransformationBaseTest):
             participant=self.a,
             amount=1_000_000,
             expected_above_eq=1,
-            expected_bellow=1)
+            expected_below=1)
 
         # Participant B: bets aboveEq for 1 tez:
         self.storage = self.check_bet_succeed(

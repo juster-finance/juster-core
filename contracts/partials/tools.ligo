@@ -155,7 +155,7 @@ function isParticipant(
     const key : ledgerKey) : bool is
 
     isHaveValueTez(key, store.betsAboveEq)
-    or isHaveValueTez(key, store.betsBellow)
+    or isHaveValueTez(key, store.betsBelow)
     or isHaveValueNat(key, store.liquidityShares)
 
 

@@ -22,9 +22,9 @@ const config = {
 const initialStorage = {  
   events: new MichelsonMap(),
   betsAboveEq: new MichelsonMap(),
-  betsBellow: new MichelsonMap(),
+  betsBelow: new MichelsonMap(),
   providedLiquidityAboveEq: new MichelsonMap(),
-  providedLiquidityBellow: new MichelsonMap(),
+  providedLiquidityBelow: new MichelsonMap(),
   liquidityShares: new MichelsonMap(),
   depositedBets: new MichelsonMap(),
   lastEventId: 0,

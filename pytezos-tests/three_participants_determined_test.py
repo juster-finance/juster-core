@@ -26,7 +26,7 @@
     Total win ~S LP profit / loss:        0 + 50_000 +      0 +       0 =  50_000  (and not including L bonus for bets)
             (liquidity rate is included in profit/loss pools)
 
-    selected liquidity pool to distribute profits: liquidity Bellow
+    selected liquidity pool to distribute profits: liquidity Below
 
     liquidity shares:
         A: 1.4
@@ -73,7 +73,7 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
             participant=self.a,
             amount=50_000,
             expected_above_eq=1,
-            expected_bellow=1)
+            expected_below=1)
         self.assertEqual(self.storage['events'][self.id]['participants'], 1)
 
         # Testing that with current ratio 1:1, bet with 10:1 ratio fails:
@@ -100,7 +100,7 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
             participant=self.a,
             amount=40_000,
             expected_above_eq=4,
-            expected_bellow=1)
+            expected_below=1)
         self.assertEqual(self.storage['events'][self.id]['participants'], 2)
 
         # Participant C: adding more liquidity at the very end:
@@ -109,7 +109,7 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
             participant=self.c,
             amount=80_000,
             expected_above_eq=4,
-            expected_bellow=1)
+            expected_below=1)
         self.assertEqual(self.storage['events'][self.id]['participants'], 3)
 
         # Running measurement and make failwith checks:
@@ -167,7 +167,7 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
         self.check_bet_fails_with(
             participant=self.a,
             amount=100_000,
-            bet='bellow',
+            bet='below',
             minimal_win=100_000,
             msg_contains='Bets after betCloseTime is not allowed')
 
@@ -176,7 +176,7 @@ class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
             participant=self.c,
             amount=100_000,
             expected_above_eq=1,
-            expected_bellow=1,
+            expected_below=1,
             msg_contains='Providing Liquidity after betCloseTime is not allowed')
 
         # Check that that calling measurement after it was already succesfully

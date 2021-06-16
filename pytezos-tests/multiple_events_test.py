@@ -55,7 +55,7 @@ class MultipleEventsDeterminedTest(StateTransformationBaseTest):
                 participant=self.b,
                 amount=1_000_000,
                 expected_above_eq=1,
-                expected_bellow=1)
+                expected_below=1)
 
         # Creating event 1:
         self.id = self.storage['lastEventId']
@@ -68,13 +68,13 @@ class MultipleEventsDeterminedTest(StateTransformationBaseTest):
             participant=self.b,
             amount=3_000_000,
             expected_above_eq=1,
-            expected_bellow=1)
+            expected_below=1)
 
         # Checking that ratios in event 0 and 1 are the same:
         event_0 = self.storage['events'][0]
         event_1 = self.storage['events'][1]
         self.assertEqual(event_0['poolAboveEq'], event_1['poolAboveEq'])
-        self.assertEqual(event_0['poolBellow'], event_1['poolBellow'])
+        self.assertEqual(event_0['poolBelow'], event_1['poolBelow'])
 
         # No one bets, measure, close, B withdraws all in both events:
         bets_close_time = self.default_event_params['betsCloseTime']
@@ -105,7 +105,7 @@ class MultipleEventsDeterminedTest(StateTransformationBaseTest):
             participant=self.a,
             amount=3_000_000,
             expected_above_eq=3,
-            expected_bellow=1)
+            expected_below=1)
 
         # B bets three times for 1 tez:
         for _ in range(3):
@@ -126,7 +126,7 @@ class MultipleEventsDeterminedTest(StateTransformationBaseTest):
             participant=self.a,
             amount=3_000_000,
             expected_above_eq=3,
-            expected_bellow=1)
+            expected_below=1)
 
         # B bets one time for 3 tez:
         self.storage = self.check_bet_succeed(
@@ -139,7 +139,7 @@ class MultipleEventsDeterminedTest(StateTransformationBaseTest):
         event_2 = self.storage['events'][2]
         event_3 = self.storage['events'][3]
         self.assertEqual(event_2['poolAboveEq'], event_3['poolAboveEq'])
-        self.assertEqual(event_2['poolBellow'], event_3['poolBellow'])
+        self.assertEqual(event_2['poolBelow'], event_3['poolBelow'])
 
         # Measure, close, B wins 1:6 0.5tez:
         for event_id in [2, 3]:

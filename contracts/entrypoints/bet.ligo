@@ -32,7 +32,7 @@ block {
     const event : eventType = getEvent(store, eventId);
 
     (* Checking that there are liquidity in both pools (>0) *)
-    if (event.poolAboveEq = 0tez) or (event.poolBellow = 0tez) then
+    if (event.poolAboveEq = 0tez) or (event.poolBelow = 0tez) then
         failwith("Can't process bet before liquidity added")
     else skip;
 
@@ -47,13 +47,13 @@ block {
     (* poolTo is the pool where bet goes *)
     var poolTo : nat := case params.bet of
     | AboveEq -> tezToNat(event.poolAboveEq)
-    | Bellow -> tezToNat(event.poolBellow)
+    | Below -> tezToNat(event.poolBelow)
     end;
 
     (* poolFrom is the pool where possible win earrings coming *)
     var poolFrom : nat := case params.bet of
-    | AboveEq -> tezToNat(event.poolBellow)
-    | Bellow -> tezToNat(event.poolAboveEq)
+    | AboveEq -> tezToNat(event.poolBelow)
+    | Below -> tezToNat(event.poolAboveEq)
     end;
 
     const betValue : nat = tezToNat(Tezos.amount);
@@ -84,18 +84,18 @@ block {
         store.betsAboveEq[key] :=
             getLedgerAmount(key, store.betsAboveEq) + possibleWinAmount;
         event.poolAboveEq := natToTez(poolTo);
-        event.poolBellow := natToTez(poolFrom);
+        event.poolBelow := natToTez(poolFrom);
     }
-    | Bellow -> block {
-        store.betsBellow[key] :=
-            getLedgerAmount(key, store.betsBellow) + possibleWinAmount;
+    | Below -> block {
+        store.betsBelow[key] :=
+            getLedgerAmount(key, store.betsBelow) + possibleWinAmount;
         event.poolAboveEq := natToTez(poolFrom);
-        event.poolBellow := natToTez(poolTo);
+        event.poolBelow := natToTez(poolTo);
     }
     end;
 
     (* Adding this bet into deposited bets ledger that tracks all bets
-        regardless above / bellow: *)
+        regardless above / below: *)
     store.depositedBets[key] :=
         getLedgerAmount(key, store.depositedBets) + Tezos.amount;
 

@@ -27,7 +27,7 @@ class ZeroEdgecasesDeterminedTest(StateTransformationBaseTest):
             participant=self.a,
             amount=0,
             expected_above_eq=1,
-            expected_bellow=1,
+            expected_below=1,
             msg_contains='Zero liquidity provided')
 
         # A tries to bet but there are no liquidity, assert failed:
@@ -43,14 +43,14 @@ class ZeroEdgecasesDeterminedTest(StateTransformationBaseTest):
             participant=self.b,
             amount=10,
             expected_above_eq=1,
-            expected_bellow=1)
+            expected_below=1)
 
-        # A provides liquidity with 0 expected aboveEq/bellow, assert failed:
+        # A provides liquidity with 0 expected aboveEq/below, assert failed:
         self.check_provide_liquidity_fails_with(
             participant=self.a,
             amount=1_000_000,
             expected_above_eq=0,
-            expected_bellow=1,
+            expected_below=1,
             msg_contains='Expected ratio in pool should be more than zero')
 
         # A tries to adding liquidity with rate that very different from internal rate
@@ -59,22 +59,22 @@ class ZeroEdgecasesDeterminedTest(StateTransformationBaseTest):
             participant=self.a,
             amount=1_000_000,
             expected_above_eq=10,
-            expected_bellow=1,
+            expected_below=1,
             msg_contains='Expected ratio very differs from current pool ratio')
 
-        # A provides liquidity with 0 expected aboveEq/bellow (again), assert failed:
+        # A provides liquidity with 0 expected aboveEq/below (again), assert failed:
         self.check_provide_liquidity_fails_with(
             participant=self.a,
             amount=1_000_000,
             expected_above_eq=1,
-            expected_bellow=0,
+            expected_below=0,
             msg_contains='Expected ratio in pool should be more than zero')
 
         # A tries to Bet with winRate a lot more than expected:
         self.check_bet_fails_with(
             participant=self.a,
             amount=1,
-            bet='bellow',
+            bet='below',
             minimal_win=5,
             msg_contains='Wrong minimalWinAmount')
 
@@ -82,7 +82,7 @@ class ZeroEdgecasesDeterminedTest(StateTransformationBaseTest):
         self.check_bet_fails_with(
             participant=self.a,
             amount=0,
-            bet='bellow',
+            bet='below',
             minimal_win=0,
             msg_contains='Bet without tez')
 
@@ -123,7 +123,7 @@ class ZeroEdgecasesDeterminedTest(StateTransformationBaseTest):
             participant=self.a,
             amount=10,
             expected_above_eq=1,
-            expected_bellow=1,
+            expected_below=1,
             msg_contains='Providing Liquidity after betCloseTime is not allowed')
 
         # Test trying close twice: assert failed:
@@ -137,7 +137,7 @@ class ZeroEdgecasesDeterminedTest(StateTransformationBaseTest):
         self.check_bet_fails_with(
             participant=self.a,
             amount=1,
-            bet='bellow',
+            bet='below',
             minimal_win=5,
             msg_contains='Bets after betCloseTime is not allowed')
 
@@ -162,6 +162,6 @@ class ZeroEdgecasesDeterminedTest(StateTransformationBaseTest):
         self.check_bet_fails_with(
             participant=self.a,
             amount=1,
-            bet='bellow',
+            bet='below',
             minimal_win=5,
             msg_contains='Event is not found')

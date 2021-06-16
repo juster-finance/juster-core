@@ -20,7 +20,7 @@ class RewardFeeSplitDeterminedTest(StateTransformationBaseTest):
             participant=self.d,
             amount=1_000_000,
             expected_above_eq=1,
-            expected_bellow=1)
+            expected_below=1)
 
         # A bets above 1tez and wins:
         self.storage = self.check_bet_succeed(
@@ -29,11 +29,11 @@ class RewardFeeSplitDeterminedTest(StateTransformationBaseTest):
             bet='aboveEq',
             minimal_win=1_500_000)
 
-        # B bets bellow 1tez and looses:
+        # B bets below 1tez and looses:
         self.storage = self.check_bet_succeed(
             participant=self.b,
             amount=500_000,
-            bet='bellow',
+            bet='below',
             minimal_win=1_500_000)
 
         # C provides 10mutez liquidity (to test transaction less than reward fee):
@@ -41,7 +41,7 @@ class RewardFeeSplitDeterminedTest(StateTransformationBaseTest):
             participant=self.c,
             amount=10,
             expected_above_eq=1,
-            expected_bellow=1)
+            expected_below=1)
 
         # In the end: no one bets, starting measure:
         bets_close = self.default_event_params['betsCloseTime']

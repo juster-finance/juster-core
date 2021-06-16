@@ -24,7 +24,7 @@ class ForceMajeureDeterminedTest(StateTransformationBaseTest):
             participant=self.a,
             amount=10,
             expected_above_eq=1,
-            expected_bellow=1)
+            expected_below=1)
 
         self.current_time = bets_close_time + max_lag // 2
         self.storage = self.check_start_measurement_succeed(sender=self.a)

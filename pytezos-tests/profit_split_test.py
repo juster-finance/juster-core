@@ -67,13 +67,13 @@ class ProfitSplitDeterminedTest(StateTransformationBaseTest):
             participant=self.a,
             amount=50_000,
             expected_above_eq=1,
-            expected_bellow=1)
+            expected_below=1)
 
-        # Participant B: bets bellow 50_000:
+        # Participant B: bets below 50_000:
         self.storage = self.check_bet_succeed(
             participant=self.b,
             amount=50_000,
-            bet='bellow',
+            bet='below',
             minimal_win=50_000)
 
         self._run_measurement_and_close()
@@ -108,7 +108,7 @@ class ProfitSplitDeterminedTest(StateTransformationBaseTest):
             participant=self.a,
             amount=50_000,
             expected_above_eq=1,
-            expected_bellow=1)
+            expected_below=1)
 
         # Participant B: bets aboveEq 50_000:
         self.storage = self.check_bet_succeed(
@@ -142,13 +142,13 @@ class ProfitSplitDeterminedTest(StateTransformationBaseTest):
             participant=self.a,
             amount=500*million*tez,
             expected_above_eq=1,
-            expected_bellow=1)
+            expected_below=1)
 
-        # Participant B: bets bellow 500 mln tez (and loses):
+        # Participant B: bets below 500 mln tez (and loses):
         self.storage = self.check_bet_succeed(
             participant=self.b,
             amount=500*million*tez,
-            bet='bellow',
+            bet='below',
             minimal_win=750*million*tez)
 
         # current ratio 25:100
@@ -157,7 +157,7 @@ class ProfitSplitDeterminedTest(StateTransformationBaseTest):
             participant=self.d,
             amount=1_000*million*tez,
             expected_above_eq=1,
-            expected_bellow=4)
+            expected_below=4)
 
         # current ratio 50:200
         # Participant C: bets aboveEq 300 mln (and wins 750 mln):
@@ -212,13 +212,13 @@ class ProfitSplitDeterminedTest(StateTransformationBaseTest):
             participant=self.a,
             amount=50_000,
             expected_above_eq=1,
-            expected_bellow=1)
+            expected_below=1)
 
-        # Participant B: bets bellow 50_000:
+        # Participant B: bets below 50_000:
         self.storage = self.check_bet_succeed(
             participant=self.b,
             amount=50_000,
-            bet='bellow',
+            bet='below',
             minimal_win=75_000)
 
         self._run_measurement_and_close()

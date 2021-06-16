@@ -30,7 +30,7 @@ class LiquidityFeeDynamicTest(StateTransformationBaseTest):
             participant=self.a,
             amount=1_000_000,
             expected_above_eq=1,
-            expected_bellow=1)
+            expected_below=1)
 
         # Participant B: bets for 1tez at different times and
         # have different possible win amount (adjusted by liq percent):

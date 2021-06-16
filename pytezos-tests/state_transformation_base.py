@@ -70,9 +70,9 @@ class StateTransformationBaseTest(TestCase):
                 for key, value in ledger.items())
 
         bets_above_eq = storage['betsAboveEq']
-        bets_bellow = storage['betsBellow']
+        bets_below = storage['betsBelow']
         pl_above_eq = storage['providedLiquidityAboveEq']
-        pl_bellow = storage['providedLiquidityBellow']
+        pl_below = storage['providedLiquidityBelow']
         deposited_bets = storage['depositedBets']
 
         for event_id, event in storage['events'].items():
@@ -82,17 +82,17 @@ class StateTransformationBaseTest(TestCase):
                 continue
 
             wins_above_eq_event = sum_ledger_by_event(bets_above_eq, event_id)
-            wins_bellow_event = sum_ledger_by_event(bets_bellow, event_id)
+            wins_below_event = sum_ledger_by_event(bets_below, event_id)
             liquidity_above_eq_event = sum_ledger_by_event(pl_above_eq, event_id)
-            liquidity_bellow_event = sum_ledger_by_event(pl_bellow, event_id)
+            liquidity_below_event = sum_ledger_by_event(pl_below, event_id)
             sum_of_bets = sum_ledger_by_event(deposited_bets, event_id)
 
-            pool_difference = event['poolAboveEq'] - event['poolBellow']
+            pool_difference = event['poolAboveEq'] - event['poolBelow']
             pool_difference_check = (
-                liquidity_above_eq_event - liquidity_bellow_event
-                - wins_bellow_event + wins_above_eq_event
-                # + deposited_bets_bellow - deposited_bets_above_eq
-                # + deposited_bets_above_eq - deposited_bets_bellow
+                liquidity_above_eq_event - liquidity_below_event
+                - wins_below_event + wins_above_eq_event
+                # + deposited_bets_below - deposited_bets_above_eq
+                # + deposited_bets_above_eq - deposited_bets_below
             )
             self.assertEqual(pool_difference, pool_difference_check)
 
@@ -112,13 +112,13 @@ class StateTransformationBaseTest(TestCase):
 
 
     def check_provide_liquidity_succeed(
-            self, participant, amount, expected_above_eq, expected_bellow,
+            self, participant, amount, expected_above_eq, expected_below,
             max_slippage=100_000):
 
         # Running transaction:
         transaction = self.contract.provideLiquidity(
             eventId=self.id,
-            expectedRatioBellow=expected_bellow,
+            expectedRatioBelow=expected_below,
             expectedRatioAboveEq=expected_above_eq,
             maxSlippage=max_slippage
         ).with_amount(amount)
@@ -137,25 +137,25 @@ class StateTransformationBaseTest(TestCase):
         lp_result = self.model.calc_provide_liquidity_split(
             provided_amount=amount,
             pool_a=init_event['poolAboveEq'] or expected_above_eq,
-            pool_b=init_event['poolBellow'] or expected_bellow,
+            pool_b=init_event['poolBelow'] or expected_below,
             total_shares=init_event['totalLiquidityShares']
         )
 
         difference_above_eq = (
             result_event['poolAboveEq'] - init_event['poolAboveEq'])
-        difference_bellow = (
-            result_event['poolBellow'] - init_event['poolBellow'])
+        difference_below = (
+            result_event['poolBelow'] - init_event['poolBelow'])
 
         self.assertEqual(difference_above_eq, lp_result['provided_a'])
-        self.assertEqual(difference_bellow, lp_result['provided_b'])
+        self.assertEqual(difference_below, lp_result['provided_b'])
 
         self.assertEqual(
             len(result_storage['betsAboveEq']),
             len(init_storage['betsAboveEq']))
 
         self.assertEqual(
-            len(result_storage['betsBellow']),
-            len(init_storage['betsBellow']))
+            len(result_storage['betsBelow']),
+            len(init_storage['betsBelow']))
 
         # If participant added liquidity before, it should not change
         # ledger records count. If it is not - records should be incresed by 1
@@ -168,8 +168,8 @@ class StateTransformationBaseTest(TestCase):
             len(init_storage['providedLiquidityAboveEq']) + added_count)
 
         self.assertEqual(
-            len(result_storage['providedLiquidityBellow']),
-            len(init_storage['providedLiquidityBellow']) + added_count)
+            len(result_storage['providedLiquidityBelow']),
+            len(init_storage['providedLiquidityBelow']) + added_count)
 
         self.assertEqual(
             len(result_storage['liquidityShares']),
@@ -184,14 +184,14 @@ class StateTransformationBaseTest(TestCase):
 
 
     def check_provide_liquidity_fails_with(
-        self, participant, amount, expected_above_eq, expected_bellow,
+        self, participant, amount, expected_above_eq, expected_below,
         max_slippage=100_000, msg_contains=''):
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
             # Running transaction:
             transaction = self.contract.provideLiquidity(
                 eventId=self.id,
-                expectedRatioBellow=expected_bellow,
+                expectedRatioBelow=expected_below,
                 expectedRatioAboveEq=expected_above_eq,
                 maxSlippage=max_slippage
             ).with_amount(amount)
@@ -236,16 +236,16 @@ class StateTransformationBaseTest(TestCase):
             init_event['poolAboveEq'] + bet_result['diff_above_eq'])
 
         self.assertEqual(
-            result_event['poolBellow'],
-            init_event['poolBellow'] + bet_result['diff_bellow'])
+            result_event['poolBelow'],
+            init_event['poolBelow'] + bet_result['diff_below'])
 
         self.assertEqual(
             len(result_storage['betsAboveEq']),
             len(init_storage['betsAboveEq']) + bet_result['above_eq_count'])
 
         self.assertEqual(
-            len(result_storage['betsBellow']),
-            len(init_storage['betsBellow']) + bet_result['bellow_count'])
+            len(result_storage['betsBelow']),
+            len(init_storage['betsBelow']) + bet_result['below_count'])
 
         # Checking sum in participant ledgers:
         key = (participant, self.id)
@@ -253,7 +253,7 @@ class StateTransformationBaseTest(TestCase):
             - init_storage['depositedBets'].get(key, 0))
         self.assertEqual(diff, amount)
 
-        ledger_name = 'betsAboveEq' if bet == 'aboveEq' else 'betsBellow'
+        ledger_name = 'betsAboveEq' if bet == 'aboveEq' else 'betsBelow'
         diff = (result_storage[ledger_name].get(key, 0)
             - init_storage[ledger_name].get(key, 0))
         self.assertEqual(diff, bet_result['bet_profit'] + amount)
@@ -351,9 +351,9 @@ class StateTransformationBaseTest(TestCase):
         # Checking that participant removed from all ledgers:
         key = (participant, self.id)
         self.assertFalse(key in storage['betsAboveEq'])
-        self.assertFalse(key in storage['betsBellow'])
+        self.assertFalse(key in storage['betsBelow'])
         self.assertFalse(key in storage['providedLiquidityAboveEq'])
-        self.assertFalse(key in storage['providedLiquidityBellow'])
+        self.assertFalse(key in storage['providedLiquidityBelow'])
         self.assertFalse(key in storage['liquidityShares'])
         self.assertFalse(key in storage['depositedBets'])
 
@@ -392,7 +392,7 @@ class StateTransformationBaseTest(TestCase):
         # value at the moment of creation:
         proper_event = event_params.copy()
         proper_event.update({
-            'poolBellow': 0,
+            'poolBelow': 0,
             'poolAboveEq': 0,
             'isClosed': False,
             'totalLiquidityShares': 0,
@@ -722,9 +722,9 @@ class StateTransformationBaseTest(TestCase):
         self.init_storage = {
             'events': {},
             'betsAboveEq': {},
-            'betsBellow': {},
+            'betsBelow': {},
             'providedLiquidityAboveEq': {},
-            'providedLiquidityBellow': {},
+            'providedLiquidityBelow': {},
             'liquidityShares': {},
             'depositedBets': {},
             'lastEventId': 0,

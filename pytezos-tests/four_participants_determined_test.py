@@ -16,7 +16,7 @@
             totalLiquidityShares: 140
             newShares for D: 360
 
-        (5) participant D bets Bellow with 125k (14 hours from start)
+        (5) participant D bets Below with 125k (14 hours from start)
             rate before bet 500:125
             rate at bet     500:250 (f:a), if ~S: win amount +250k*L, if S: loose amount 125k
             rate after bet  250:250
@@ -37,7 +37,7 @@
     B:                              50_000 - 25_000 + 10_000 +  90_000 + 125_000 +  50_000 = 300_000
             (liquidity rate is not included in the pools)
 
-    Selected liquidity pool to distribute profits: liquidity Bellow (because AboveEq wins)
+    Selected liquidity pool to distribute profits: liquidity Below (because AboveEq wins)
 
     liquidity AboveEq profit / loss distribution:
         A: -25_000 * 1.00 + 125_000 * 140/500 = 10_000
@@ -79,7 +79,7 @@ class FourParticipantsDeterminedTest(StateTransformationBaseTest):
             participant=self.a,
             amount=50_000,
             expected_above_eq=1,
-            expected_bellow=1)
+            expected_below=1)
 
         # Participant B: bets aboveEq 50_000 after 1 hour:
         self.current_time = RUN_TIME + ONE_HOUR
@@ -95,20 +95,20 @@ class FourParticipantsDeterminedTest(StateTransformationBaseTest):
             participant=self.a,
             amount=40_000,
             expected_above_eq=4,
-            expected_bellow=1)
+            expected_below=1)
 
         # Participant D: adding more liquidity after 12 hours:
         self.storage = self.check_provide_liquidity_succeed(
             participant=self.d,
             amount=360_000,
             expected_above_eq=4,
-            expected_bellow=1)
+            expected_below=1)
 
-        # Participant D: bets bellow 125_000 after 12 hours:
+        # Participant D: bets below 125_000 after 12 hours:
         self.storage = self.check_bet_succeed(
             participant=self.d,
             amount=125_000,
-            bet='bellow',
+            bet='below',
             minimal_win=125_000)
 
         # Participant C: adding more liquidity at the very end:
@@ -117,7 +117,7 @@ class FourParticipantsDeterminedTest(StateTransformationBaseTest):
             participant=self.c,
             amount=50_000,
             expected_above_eq=1,
-            expected_bellow=1)
+            expected_below=1)
 
         # Running measurement:
         self.current_time = RUN_TIME + 26*ONE_HOUR

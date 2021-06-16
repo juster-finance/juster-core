@@ -57,7 +57,7 @@ block {
         closedDynamics = (None : option(nat));
         isBetsAboveEqWin = (None : option(bool));
         poolAboveEq = 0tez;
-        poolBellow = 0tez;
+        poolBelow = 0tez;
         totalLiquidityShares = 0n;
         liquidityPercent = eventParams.liquidityPercent;
         measureStartFee = config.measureStartFee;
