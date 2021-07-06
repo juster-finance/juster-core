@@ -2,7 +2,7 @@
     implemented in contract """
 
 
-class BakingBetModel:
+class JusterModel:
     share_precision = 100_000_000
 
     def __init__(self):

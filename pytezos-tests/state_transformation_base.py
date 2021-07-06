@@ -18,10 +18,10 @@ from unittest import TestCase
 import time
 from os.path import dirname, join
 from pytezos import ContractInterface, pytezos, MichelsonRuntimeError
-from model import BakingBetModel
+from model import JusterModel
 
 
-CONTRACT_FN = '../build/tz/baking_bet.tz'
+CONTRACT_FN = '../build/tz/juster.tz'
 RUN_TIME = int(time.time())
 ONE_HOUR = 60*60
 ONE_DAY = ONE_HOUR*24
@@ -747,4 +747,4 @@ class StateTransformationBaseTest(TestCase):
         # this self.storage will be used in all blocks:
         self.storage = self.init_storage.copy()
 
-        self.model = BakingBetModel()
+        self.model = JusterModel()

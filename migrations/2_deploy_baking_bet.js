@@ -1,4 +1,4 @@
-const BakingBet = artifacts.require("BakingBet");
+const Juster = artifacts.require("Juster");
 const { MichelsonMap } = require("@taquito/taquito");
 const { pkh } = require("../faucet.json");
 
@@ -44,5 +44,5 @@ const initialStorage = {
 };
 
 module.exports = deployer => {
-  deployer.deploy(BakingBet, initialStorage);
+  deployer.deploy(Juster, initialStorage);
 };
