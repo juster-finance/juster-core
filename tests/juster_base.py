@@ -19,12 +19,10 @@ import time
 from os.path import dirname, join
 from pytezos import ContractInterface, pytezos, MichelsonRuntimeError
 from model import JusterModel
-
+from test_data import generate_storage, ONE_HOUR, ONE_DAY
 
 CONTRACT_FN = '../build/tz/juster.tz'
 RUN_TIME = int(time.time())
-ONE_HOUR = 60*60
-ONE_DAY = ONE_HOUR*24
 
 
 class JusterBaseTestCase(TestCase):
@@ -683,12 +681,9 @@ class JusterBaseTestCase(TestCase):
         self.manager = self.a
 
         self.oracle_address = 'KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn'
-        # florencenet: KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn
-        # edo2net:     KT1RCNpUEDjZAYhabjzgz1ZfxQijCDVMEaTZ
-
+                # florencenet: KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn
+                # edo2net:     KT1RCNpUEDjZAYhabjzgz1ZfxQijCDVMEaTZ
         self.currency_pair = 'XTZ-USD'
-        self.measure_start_fee = 200_000
-        self.expiration_fee = 100_000
         self.current_time = RUN_TIME
 
         # this is eventId that for the tests:
@@ -702,49 +697,13 @@ class JusterBaseTestCase(TestCase):
             'liquidityPercent': 0,
         }
 
-        self.default_config = {
-            'expirationFee': self.expiration_fee,
-            'minLiquidityPercent': 0,
-            'maxLiquidityPercent': 300_000,  # 30% for 1_000_000 liquidityPrecision
-            'maxAllowedMeasureLag': ONE_HOUR*4,  # 4 hours
-            'maxMeasurePeriod': ONE_DAY*31,  # 31 day
-            'maxPeriodToBetsClose': ONE_DAY*31,  # 31 day
-            'measureStartFee': self.measure_start_fee,
-            'minMeasurePeriod': 60*5,  # 5 min
-            'minPeriodToBetsClose': 60*5,  # 5 min
-            'oracleAddress': self.oracle_address,
-            'rewardCallFee': 100_000,
-            'rewardFeeSplitAfter': ONE_DAY,
-            'providerProfitFee': 0,  # 0% for all tests that written before this fee
-            'isEventCreationPaused': False
-        }
-
-        self.init_storage = {
-            'events': {},
-            'betsAboveEq': {},
-            'betsBelow': {},
-            'providedLiquidityAboveEq': {},
-            'providedLiquidityBelow': {},
-            'liquidityShares': {},
-            'depositedBets': {},
-            'nextEventId': 0,
-            'closeCallId': None,
-            'measurementStartCallId': None,
-            'config': self.default_config,
-            'manager': self.manager,
-
-            'liquidityPrecision': 1_000_000,
-            'ratioPrecision': 100_000_000,
-            'sharePrecision': 100_000_000,
-            'targetDynamicsPrecision': 1_000_000,
-            'providerProfitFeePrecision': 1_000_000,
-
-            'bakingRewards': 0,
-            'retainedProfits': 0,
-            'proposedManager': None
-        }
+        self.init_storage = generate_storage(self.manager, self.oracle_address)
+        self.default_config = self.init_storage['config']
+        self.measure_start_fee = self.init_storage['config']['measureStartFee']
+        self.expiration_fee = self.init_storage['config']['expirationFee']
 
         # this self.storage will be used in all blocks:
         self.storage = self.init_storage.copy()
 
         self.model = JusterModel()
+
