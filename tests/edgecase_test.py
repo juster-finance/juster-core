@@ -1,10 +1,10 @@
 """ EDGECASE 1 test, different zero-cases """
 
-from state_transformation_base import StateTransformationBaseTest, RUN_TIME, ONE_HOUR
+from juster_base import JusterBaseTestCase, RUN_TIME, ONE_HOUR
 from pytezos import MichelsonRuntimeError
 
 
-class ZeroEdgecasesDeterminedTest(StateTransformationBaseTest):
+class ZeroEdgecasesTest(JusterBaseTestCase):
 
     def test_zero_edgecases(self):
         self.current_time = RUN_TIME

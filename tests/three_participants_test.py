@@ -42,12 +42,12 @@
         C: 80_000 / 80_000 = 1.000
 """
 
-from state_transformation_base import (
-    StateTransformationBaseTest, RUN_TIME, ONE_HOUR)
+from juster_base import (
+    JusterBaseTestCase, RUN_TIME, ONE_HOUR)
 from pytezos import MichelsonRuntimeError
 
 
-class ThreeParticipantsDeterminedTest(StateTransformationBaseTest):
+class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
 
     def test_with_three_participants(self):
 

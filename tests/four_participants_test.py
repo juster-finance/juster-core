@@ -57,11 +57,11 @@
         D: 450_000 / 485_000 = 0.927
 """
 
-from state_transformation_base import StateTransformationBaseTest, RUN_TIME, ONE_HOUR
+from juster_base import JusterBaseTestCase, RUN_TIME, ONE_HOUR
 from pytezos import MichelsonRuntimeError
 
 
-class FourParticipantsDeterminedTest(StateTransformationBaseTest):
+class FourParticipantsDeterminedTest(JusterBaseTestCase):
 
     def test_with_four_participants(self):
 

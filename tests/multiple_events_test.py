@@ -1,10 +1,10 @@
 """ Test with simple multiple events + models equal """
 
-from state_transformation_base import StateTransformationBaseTest, RUN_TIME, ONE_HOUR
+from juster_base import JusterBaseTestCase, RUN_TIME, ONE_HOUR
 from pytezos import MichelsonRuntimeError
 
 
-class MultipleEventsDeterminedTest(StateTransformationBaseTest):
+class MultipleEventsTest(JusterBaseTestCase):
 
     def _run_measurement(self):
         """ Run defaul measurement call and callback: """

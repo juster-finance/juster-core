@@ -1,10 +1,10 @@
 """ Tests that checks different edgecases in event creation """
 
-from state_transformation_base import StateTransformationBaseTest, RUN_TIME, ONE_HOUR
+from juster_base import JusterBaseTestCase, RUN_TIME, ONE_HOUR
 from pytezos import MichelsonRuntimeError
 
 
-class EventConfigurationDeterminedTest(StateTransformationBaseTest):
+class EventConfigurationTest(JusterBaseTestCase):
 
     def test_event_configuration(self):
         self.current_time = RUN_TIME

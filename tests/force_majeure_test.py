@@ -1,10 +1,10 @@
 """ Tests for Force Majeure circumstances """
 
-from state_transformation_base import StateTransformationBaseTest, RUN_TIME, ONE_HOUR
+from juster_base import JusterBaseTestCase, RUN_TIME, ONE_HOUR
 from pytezos import MichelsonRuntimeError
 
 
-class ForceMajeureDeterminedTest(StateTransformationBaseTest):
+class ForceMajeureTest(JusterBaseTestCase):
 
     def _prepare_to_force_majeure(self):
         """ This code is the same for two tests: """

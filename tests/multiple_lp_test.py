@@ -40,11 +40,11 @@
         - D: wins 4 tez: 2 + 4
 """
 
-from state_transformation_base import StateTransformationBaseTest, RUN_TIME, ONE_HOUR
+from juster_base import JusterBaseTestCase, RUN_TIME, ONE_HOUR
 from pytezos import MichelsonRuntimeError
 
 
-class MultipleLPDeterminedTest(StateTransformationBaseTest):
+class MultipleLPTest(JusterBaseTestCase):
 
     def test_with_multiple_providers(self):
 

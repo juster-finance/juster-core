@@ -1,10 +1,10 @@
 """ Checking that some of the entrypoints disallow including tez """
 
-from state_transformation_base import StateTransformationBaseTest, RUN_TIME, ONE_HOUR
+from juster_base import JusterBaseTestCase, RUN_TIME, ONE_HOUR
 from pytezos import MichelsonRuntimeError
 
 
-class ForceMajeureDeterminedTest(StateTransformationBaseTest):
+class ForceMajeureTest(JusterBaseTestCase):
 
     def test_entrypoints_no_amount(self):
 

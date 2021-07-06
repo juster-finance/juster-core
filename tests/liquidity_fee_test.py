@@ -1,11 +1,11 @@
 """ Test that checks that liquidity fee for bets calculation is correct """
 
-from state_transformation_base import StateTransformationBaseTest, RUN_TIME, ONE_HOUR
+from juster_base import JusterBaseTestCase, RUN_TIME, ONE_HOUR
 from pytezos import MichelsonRuntimeError
 from random import randint
 
 
-class LiquidityFeeDynamicTest(StateTransformationBaseTest):
+class LiquidityFeeDynamicTest(JusterBaseTestCase):
     """ This is experimental version of test with dynamic parameters.
         Trying to understand is it good or evil """
 

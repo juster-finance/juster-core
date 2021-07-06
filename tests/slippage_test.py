@@ -1,10 +1,10 @@
 """ Tests for Force Majeure circumstances """
 
-from state_transformation_base import StateTransformationBaseTest, RUN_TIME, ONE_HOUR
+from juster_base import JusterBaseTestCase, RUN_TIME, ONE_HOUR
 from pytezos import MichelsonRuntimeError
 
 
-class SlippageDeterminedTest(StateTransformationBaseTest):
+class SlippageTest(JusterBaseTestCase):
 
     def test_minimal_win(self):
         """ Testing bet minimal win option: """

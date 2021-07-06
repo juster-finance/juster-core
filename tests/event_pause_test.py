@@ -1,6 +1,6 @@
 """ Test that when pause is setted it is impossible to create new events """
 
-from state_transformation_base import StateTransformationBaseTest, RUN_TIME, ONE_HOUR
+from juster_base import JusterBaseTestCase, RUN_TIME, ONE_HOUR
 from pytezos import MichelsonRuntimeError
 from os.path import join, dirname
 
@@ -8,7 +8,7 @@ from os.path import join, dirname
 TRIGGER_PAUSE_LAMBDA_FN = '../build/tz/lambda_trigger_pause.tz'
 
 
-class EventPauseDeterminedTest(StateTransformationBaseTest):
+class EventPauseTest(JusterBaseTestCase):
 
     def test_event_pause(self):
 

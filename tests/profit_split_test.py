@@ -1,11 +1,11 @@
 """ Test how providerProfitFee calculated and how claim retained profits works
     + in this test checking how contracts work with very big numbers """
 
-from state_transformation_base import StateTransformationBaseTest, RUN_TIME, ONE_HOUR
+from juster_base import JusterBaseTestCase, RUN_TIME, ONE_HOUR
 from pytezos import MichelsonRuntimeError
 
 
-class ProfitSplitDeterminedTest(StateTransformationBaseTest):
+class ProfitSplitTest(JusterBaseTestCase):
 
     def _create_event(self):
         """ Creates default event with fee and adds 100k liquidity 1:1 """

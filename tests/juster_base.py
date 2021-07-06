@@ -27,7 +27,7 @@ ONE_HOUR = 60*60
 ONE_DAY = ONE_HOUR*24
 
 
-class StateTransformationBaseTest(TestCase):
+class JusterBaseTestCase(TestCase):
     """ Methods used to check different state transformations
         Each check method runs one transaction and then compare storage
         before and after transaction execution. At the end each check

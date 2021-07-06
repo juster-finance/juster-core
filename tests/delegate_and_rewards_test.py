@@ -1,11 +1,11 @@
 """ Testing that set delegate is works properly """
 
-from state_transformation_base import (
-    StateTransformationBaseTest, RUN_TIME, ONE_HOUR)
+from juster_base import (
+    JusterBaseTestCase, RUN_TIME, ONE_HOUR)
 from pytezos import MichelsonRuntimeError
 
 
-class DelegateAndBakingRewardsDeterminedTest(StateTransformationBaseTest):
+class DelegateAndBakingRewardsTest(JusterBaseTestCase):
 
     def test_delegate_and_baking_rewards(self):
 

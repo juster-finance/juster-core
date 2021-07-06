@@ -2,12 +2,12 @@
     Test for event that ends EQ (target dynamics === actual dynamics)
 """
 
-from state_transformation_base import (
-    StateTransformationBaseTest, RUN_TIME, ONE_HOUR)
+from juster_base import (
+    JusterBaseTestCase, RUN_TIME, ONE_HOUR)
 from pytezos import MichelsonRuntimeError
 
 
-class EmptyEqualEventDeterminedTest(StateTransformationBaseTest):
+class EmptyEqualEventTest(JusterBaseTestCase):
 
     def test_empty_equal_event(self):
 
