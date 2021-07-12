@@ -12,7 +12,24 @@ type updateAction is
 
 type updateOperatorParams is updateAction
 type updateOperatorsParams is list(updateOperatorParams)
-type transferParams is unit
+
+
+type transactionType is
+    [@layout:comb]
+    record [
+        to_ : address;
+        token_id : nat;
+        amount : nat;
+]
+
+type singleTransferParams is
+    [@layout:comb]
+    record [
+        from_ : address;
+        txs : list(transactionType)
+    ]
+
+type transferParams is list(singleTransferParams)
 type balanceOfParams is unit
 
 
