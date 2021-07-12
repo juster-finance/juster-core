@@ -30,7 +30,30 @@ type singleTransferParams is
     ]
 
 type transferParams is list(singleTransferParams)
-type balanceOfParams is unit
+
+
+type requestType is
+    [@layout:comb]
+    record [
+        owner : address;
+        token_id : nat;
+]
+
+type balanceRequest is
+    [@layout:comb]
+    record [
+        request : requestType;
+        balance : nat;
+]
+
+type balanceOfCallbackParams is list(balanceRequest)
+
+type balanceOfParams is
+    [@layout:comb]
+    record [
+        requests : list(requestType);
+        callback : contract(balanceOfCallbackParams)
+]
 
 
 type action is
