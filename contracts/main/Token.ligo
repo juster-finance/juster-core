@@ -1,6 +1,19 @@
+type operatorParam is
+    [@layout:comb]
+    record [
+        owner : address;
+        operator : address;
+        token_id : nat;
+    ]
+
+type updateAction is
+| Add_operator of operatorParam
+| Remove_operator of operatorParam
+
+type updateOperatorParams is updateAction
+type updateOperatorsParams is list(updateOperatorParams)
 type transferParams is unit
 type balanceOfParams is unit
-type updateOperatorsParams is unit
 
 
 type action is
