@@ -4,7 +4,7 @@ package-lock.json
 yarn.lock
 faucet.json
 projects/*
-*/.ipynb_checkpoints/*
+**/.ipynb_checkpoints/*
 **/__pycache__/*
 2021-*.txt
 pytezos-tests/*.ipynb
