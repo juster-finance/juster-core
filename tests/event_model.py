@@ -36,7 +36,7 @@ class EventModel:
     def bet(self, user, amount, pool, time):
 
         multiplier = self.juster.calc_liquidity_bonus_multiplier(time, 0, 1)
-        is_above = pool == 'above_Eq'
+        is_above = pool == 'aboveEq'
 
         top = self.pool_b if is_above else self.pool_a
         bottom = self.pool_a if is_above else self.pool_b
@@ -104,8 +104,8 @@ def event_model_tests():
     event = EventModel(fee=0.03, winning_pool='aboveEq', a=1_000_000, b=1_000_000)
     event.bet('user', 1_000_000, 'aboveEq', 0)
     assert event.diffs['user'] == 500_000
-    assert event.pool_a == 500_000
-    assert event.pool_b == 2_000_000
+    assert event.pool_a == 2_000_000
+    assert event.pool_b == 500_000
 
     # bet pool B win test:
     event = EventModel(fee=0, winning_pool='below', a=4_000_000, b=1_000_000)
@@ -148,8 +148,8 @@ def event_model_tests():
     event = EventModel(fee=0.2, winning_pool='aboveEq', a=1_000_000, b=1_000_000)
     event.bet('user', 1_000_000, 'aboveEq', 0.5)
     assert event.diffs['user'] == 450_000
-    assert event.pool_a == 550_000
-    assert event.pool_b == 2_000_000
+    assert event.pool_a == 2_000_000
+    assert event.pool_b == 550_000
 
 
     # TODO: test from_storage

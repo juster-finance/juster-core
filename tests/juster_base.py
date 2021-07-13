@@ -130,6 +130,7 @@ class JusterBaseTestCase(TestCase):
         result_storage = result.storage
 
         # Checking that state changed as expected:
+        # TODO: this self.winning_pool is very ugly, feel very bad about this
         self.assertEqual(
             (EventModel.from_storage(init_storage, self.id, self.winning_pool)
                 .provide_liquidity(participant, amount, expected_above_eq, expected_below)),
@@ -188,6 +189,11 @@ class JusterBaseTestCase(TestCase):
         self.assertTrue(msg_contains in str(cm.exception))
 
 
+    def calc_elapsed_time(self, event):
+        return ((self.current_time - event['createdTime'])
+            / (event['betsCloseTime'] - event['createdTime']))
+
+
     def check_bet_succeed(
             self, participant, amount, bet, minimal_win):
 
@@ -205,41 +211,23 @@ class JusterBaseTestCase(TestCase):
         init_event = init_storage['events'][self.id]
         result_event = result_storage['events'][self.id]
 
+        elapsed_time = self.calc_elapsed_time(init_event)
         # Checking that state changed as expected:
-        bet_result = self.model.calc_bet_params_change(
-            storage=init_storage,
-            event_id=self.id,
-            participant=participant,
-            bet=bet,
-            amount=amount,
-            current_time=self.current_time)
-
         self.assertEqual(
-            result_event['poolAboveEq'],
-            init_event['poolAboveEq'] + bet_result['diff_above_eq'])
+            (EventModel.from_storage(init_storage, self.id, self.winning_pool)
+                .bet(participant, amount, bet, elapsed_time)),
+            EventModel.from_storage(result_storage, self.id, self.winning_pool)
+        )
 
-        self.assertEqual(
-            result_event['poolBelow'],
-            init_event['poolBelow'] + bet_result['diff_below'])
-
-        self.assertEqual(
-            len(result_storage['betsAboveEq']),
-            len(init_storage['betsAboveEq']) + bet_result['above_eq_count'])
-
-        self.assertEqual(
-            len(result_storage['betsBelow']),
-            len(init_storage['betsBelow']) + bet_result['below_count'])
+        # TODO: missing betsAboveEq ledger count check
+        # TODO: missing betsBelow ledger count check
+        # TODO: missing betsAboveEq / betsBelow participant record change check
 
         # Checking sum in participant ledgers:
         key = (participant, self.id)
         diff = (result_storage['depositedBets'].get(key, 0)
             - init_storage['depositedBets'].get(key, 0))
         self.assertEqual(diff, amount)
-
-        ledger_name = 'betsAboveEq' if bet == 'aboveEq' else 'betsBelow'
-        diff = (result_storage[ledger_name].get(key, 0)
-            - init_storage[ledger_name].get(key, 0))
-        self.assertEqual(diff, bet_result['bet_profit'] + amount)
 
         self.check_storage_integrity(result_storage)
         return result_storage
