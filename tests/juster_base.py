@@ -243,20 +243,6 @@ class JusterBaseTestCase(TestCase):
         return storage
 
 
-    def check_withdraw_fails_with(self, participant, withdraw_amount,
-                                  sender=None, msg_contains=''):
-
-        # If sender is not setted, assuming that participant is the sender:
-        sender = sender or participant
-        params = {'eventId': self.id, 'participantAddress': participant}
-
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            res = self.contract.withdraw(params).interpret(
-                storage=self.storage, sender=sender, now=self.current_time)
-
-        self.assertTrue(msg_contains in str(cm.exception))
-
-
     def check_new_event_succeed(self, event_params, amount):
         """ Testing creating event with settings that should succeed """
 

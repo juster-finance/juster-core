@@ -195,10 +195,12 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
         )
 
         # Checking that withdrawal before contract is closed is not allowed:
-        self.check_withdraw_fails_with(
-            participant=self.a,
-            withdraw_amount=100_000,
-            msg_contains='Withdraw is not allowed until contract is closed')
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_withdraw_succeed(
+                participant=self.a,
+                withdraw_amount=100_000)
+        msg = 'Withdraw is not allowed until contract is closed'
+        self.assertTrue(msg in str(cm.exception))
 
         # Closing event:
         self.current_time = RUN_TIME + 38*ONE_HOUR

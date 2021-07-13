@@ -226,6 +226,8 @@ class ProfitSplitTest(JusterBaseTestCase):
         a_wins = int(50_000 * (1 - 4.20))
 
         # Withdrawals:
-        self.check_withdraw_fails_with(
-            self.a, 100_000 + a_wins, msg_contains="Fee is more than 100%")
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_withdraw_succeed(self.a, 100_000 + a_wins)
+        msg = 'Fee is more than 100%'
+        self.assertTrue(msg in str(cm.exception))
 
