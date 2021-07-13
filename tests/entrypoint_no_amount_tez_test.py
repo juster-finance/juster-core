@@ -27,7 +27,6 @@ class ForceMajeureTest(JusterBaseTestCase):
             expected_below=1)
 
         self.current_time = bets_close_time + max_lag // 2
-        self.storage = self.check_start_measurement_succeed(sender=self.a)
 
         ERROR_MSG = 'Including tez using this entrypoint call is not allowed'
 

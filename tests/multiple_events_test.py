@@ -9,15 +9,13 @@ class MultipleEventsTest(JusterBaseTestCase):
     def _run_measurement(self):
         """ Run defaul measurement call and callback: """
 
-        self.storage = self.check_start_measurement_succeed(sender=self.a)
-
         # Emulating callback:
         callback_values = {
             'currencyPair': self.currency_pair,
             'lastUpdate': self.current_time - int(0.5*ONE_HOUR),
             'rate': 8_000_000
         }
-        self.storage = self.check_start_measurement_callback_succeed(
+        self.storage = self.check_start_measurement_succeed(
             callback_values=callback_values,
             source=self.a,
             sender=self.oracle_address)

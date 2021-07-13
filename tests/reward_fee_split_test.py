@@ -47,7 +47,6 @@ class RewardFeeSplitTest(JusterBaseTestCase):
         bets_close = self.default_event_params['betsCloseTime']
         period = self.default_event_params['measurePeriod']
         self.current_time = bets_close
-        self.storage = self.check_start_measurement_succeed(sender=self.a)
 
         # Emulating callback:
         callback_values = {
@@ -55,7 +54,7 @@ class RewardFeeSplitTest(JusterBaseTestCase):
             'lastUpdate': self.current_time,
             'rate': 3_500_000
         }
-        self.storage = self.check_start_measurement_callback_succeed(
+        self.storage = self.check_start_measurement_succeed(
             callback_values=callback_values,
             source=self.a,
             sender=self.oracle_address)

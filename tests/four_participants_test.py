@@ -121,7 +121,6 @@ class FourParticipantsDeterminedTest(JusterBaseTestCase):
 
         # Running measurement:
         self.current_time = RUN_TIME + 26*ONE_HOUR
-        self.storage = self.check_start_measurement_succeed(sender=self.a)
 
         # Emulating callback:
         callback_values = {
@@ -129,7 +128,7 @@ class FourParticipantsDeterminedTest(JusterBaseTestCase):
             'lastUpdate': self.current_time - 1*ONE_HOUR,
             'rate': 6_000_000
         }
-        self.storage = self.check_start_measurement_callback_succeed(
+        self.storage = self.check_start_measurement_succeed(
             callback_values=callback_values,
             source=self.a,
             sender=self.oracle_address)

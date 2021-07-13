@@ -103,7 +103,6 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
         bets_close = self.default_event_params['betsCloseTime']
         period = self.default_event_params['measurePeriod']
         self.current_time = bets_close
-        self.storage = self.check_start_measurement_succeed(sender=self.a)
 
         # Emulating callback:
         callback_values = {
@@ -111,7 +110,8 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
             'lastUpdate': self.current_time,
             'rate': 6_000_000
         }
-        self.storage = self.check_start_measurement_callback_succeed(
+
+        self.storage = self.check_start_measurement_succeed(
             callback_values=callback_values,
             source=self.a,
             sender=self.oracle_address)
@@ -159,11 +159,13 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
         self.assertTrue(msg in str(cm.exception))
 
         # test trying to call measurement after close is failed:
-        self.check_start_measurement_callback_fails_with(
-            callback_values=callback_values,
-            source=self.a,
-            sender=self.oracle_address,
-            msg_contains="Measurement period already started")
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.storage = self.check_start_measurement_succeed(
+                callback_values=callback_values,
+                source=self.a,
+                sender=self.oracle_address)
+        msg = 'Measurement period already started'
+        self.assertTrue(msg in str(cm.exception))
 
         # B withdraws all:
         self.storage = self.check_withdraw_succeed(self.a, 0)

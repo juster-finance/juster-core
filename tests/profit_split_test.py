@@ -28,7 +28,6 @@ class ProfitSplitTest(JusterBaseTestCase):
 
         # Running measurement:
         self.current_time = bets_close_time
-        self.storage = self.check_start_measurement_succeed(sender=self.a)
 
         # Emulating callback:
         callback_values = {
@@ -36,7 +35,7 @@ class ProfitSplitTest(JusterBaseTestCase):
             'lastUpdate': self.current_time,
             'rate': 6_000_000
         }
-        self.storage = self.check_start_measurement_callback_succeed(
+        self.storage = self.check_start_measurement_succeed(
             callback_values=callback_values,
             source=self.a,
             sender=self.oracle_address)

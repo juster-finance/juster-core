@@ -274,8 +274,9 @@ class JusterBaseTestCase(TestCase):
         return result_storage
 
 
-    def check_start_measurement_succeed(self, sender):
-        """ Checking that state is correct after start measurement call """
+    def check_start_measurement_succeed(self, callback_values, source, sender):
+        """ Checking that state is correct after start measurement
+            and callback call """
 
         # Running transaction:
         result = self.contract.startMeasurement(self.id).interpret(
@@ -291,23 +292,9 @@ class JusterBaseTestCase(TestCase):
         currency_pair = operation['parameters']['value']['args'][0]['string']
         self.assertEqual(currency_pair, self.currency_pair)
 
-        event = result.storage['events'][self.id]
-        self.assertTrue(event['measureOracleStartTime'] is None)
-
-        self.check_storage_integrity(result.storage)
-        return result.storage
-
-
-    def check_start_measurement_callback_succeed(
-            self, callback_values, source, sender):
-        """ Check that emulated callback from oracle is successfull """
-
-        # Pre-transaction storage check:
-        self.assertEqual(self.storage['measurementStartCallId'], self.id)
-
-        # Running transaction:
+        # Running callback transaction:
         result = self.contract.startMeasurementCallback(callback_values).interpret(
-            storage=self.storage, sender=sender,
+            storage=result.storage, sender=sender,
             now=self.current_time, source=source)
 
         init_event = self.storage['events'][self.id]
@@ -318,6 +305,7 @@ class JusterBaseTestCase(TestCase):
             event['measureOracleStartTime'],
             callback_values['lastUpdate'])
 
+        # Checking reward transaction:
         if init_event['measureStartFee'] == 0:
             self.assertEqual(len(result.operations), 0)
 

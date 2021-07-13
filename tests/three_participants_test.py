@@ -159,10 +159,8 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
             sender=self.a,
             msg_contains='Unknown sender')
 
-        self.storage = self.check_start_measurement_succeed(sender=self.a)
-
         # Emulating callback:
-        self.storage = self.check_start_measurement_callback_succeed(
+        self.storage = self.check_start_measurement_succeed(
             callback_values=start_callback_values,
             source=self.a,
             sender=self.oracle_address)
