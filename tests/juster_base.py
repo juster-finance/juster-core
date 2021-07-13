@@ -274,16 +274,6 @@ class JusterBaseTestCase(TestCase):
         return result_storage
 
 
-    def check_new_event_fails_with(
-        self, event_params, amount, msg_contains=''):
-
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            res = self.contract.newEvent(event_params).interpret(
-                storage=self.storage, now=self.current_time, amount=amount)
-
-        self.assertTrue(msg_contains in str(cm.exception))
-
-
     def check_start_measurement_succeed(self, sender):
         """ Checking that state is correct after start measurement call """
 

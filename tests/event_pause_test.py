@@ -30,10 +30,12 @@ class EventPauseTest(JusterBaseTestCase):
         self.assertTrue(self.storage['config']['isEventCreationPaused'])
 
         # Creating event with pause is not succeed:
-        self.check_new_event_fails_with(
-            event_params=self.default_event_params,
-            amount=self.measure_start_fee + self.expiration_fee,
-            msg_contains="Event creation is paused")
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_new_event_succeed(
+                event_params=self.default_event_params,
+                amount=self.measure_start_fee + self.expiration_fee)
+        msg = 'Event creation is paused'
+        self.assertTrue(msg in str(cm.exception))
 
         # Unsetting pause:
         self.storage = self.check_update_config_succeed(

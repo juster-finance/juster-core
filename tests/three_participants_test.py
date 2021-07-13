@@ -56,10 +56,12 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
 
         # Trying to create event without providing correct fees:
         amount = self.measure_start_fee + self.expiration_fee
-        self.check_new_event_fails_with(
-            event_params=self.default_event_params,
-            amount=int(amount // 2),
-            msg_contains='measureStartFee and expirationFee should be provided')
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_new_event_succeed(
+                event_params=self.default_event_params,
+                amount=int(amount // 2))
+        msg = 'measureStartFee and expirationFee should be provided'
+        self.assertTrue(msg in str(cm.exception))
 
         # Creating event:
         amount = self.measure_start_fee + self.expiration_fee
