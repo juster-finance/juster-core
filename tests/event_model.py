@@ -97,7 +97,7 @@ def calculate_diffs(ledgers, split_pool):
         for user in participants
     }
 
-    return filter_non_zero(diffs)
+    return diffs
 
 
 class EventModel:
@@ -210,8 +210,8 @@ class EventModel:
             self.total_shares == other.total_shares,
             self.fee == other.fee,
             self.winning_pool == other.winning_pool,
-            self.shares == other.shares,
-            self.diffs == other.diffs
+            filter_non_zero(self.shares) == filter_non_zero(other.shares),
+            filter_non_zero(self.diffs) == filter_non_zero(other.diffs)
         ])
 
 
