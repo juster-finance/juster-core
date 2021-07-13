@@ -42,7 +42,6 @@ class ProfitSplitTest(JusterBaseTestCase):
 
         # Closing event:
         self.current_time = bets_close_time + measure_period
-        self.storage = self.check_close_succeed(sender=self.b)
 
         # Emulating calback with price is increased 25%:
         callback_values = {
@@ -50,7 +49,7 @@ class ProfitSplitTest(JusterBaseTestCase):
             'lastUpdate': self.current_time,
             'rate': 7_500_000
         }
-        self.storage = self.check_close_callback_succeed(
+        self.storage = self.check_close_succeed(
             callback_values=callback_values,
             source=self.b,
             sender=self.oracle_address)

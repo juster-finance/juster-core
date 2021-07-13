@@ -135,7 +135,6 @@ class FourParticipantsDeterminedTest(JusterBaseTestCase):
 
         # Closing event:
         self.current_time = RUN_TIME + 38*ONE_HOUR
-        self.storage = self.check_close_succeed(sender=self.b)
 
         # Emulating calback with price is increased 25%:
         callback_values = {
@@ -143,7 +142,7 @@ class FourParticipantsDeterminedTest(JusterBaseTestCase):
             'lastUpdate': self.current_time - 1*ONE_HOUR,
             'rate': 7_500_000
         }
-        self.storage = self.check_close_callback_succeed(
+        self.storage = self.check_close_succeed(
             callback_values=callback_values,
             source=self.b,
             sender=self.oracle_address)

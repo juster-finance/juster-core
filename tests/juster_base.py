@@ -320,9 +320,9 @@ class JusterBaseTestCase(TestCase):
         return result.storage
 
 
-    def check_close_succeed(self, sender):
+    def check_close_succeed(self, callback_values, source, sender):
         """ Check that calling close, succesfully created opearaton
-            with call to oracle get """
+            with call to oracle get + checking that callback is successful too """
 
         result = self.contract.close(self.id).interpret(
             storage=self.storage, sender=sender, now=self.current_time)
@@ -335,16 +335,8 @@ class JusterBaseTestCase(TestCase):
         currency_pair = operation['parameters']['value']['args'][0]['string']
         self.assertEqual(currency_pair, self.currency_pair)
 
-        self.check_storage_integrity(result.storage)
-        return result.storage
-
-
-    def check_close_callback_succeed(
-            self, callback_values, source, sender):
-        """ Check that emulated close callback from oracle is successfull """
-
         result = self.contract.closeCallback(callback_values).interpret(
-            storage=self.storage, sender=self.oracle_address,
+            storage=result.storage, sender=self.oracle_address,
             now=self.current_time, source=source)
 
         init_event = self.storage['events'][self.id]

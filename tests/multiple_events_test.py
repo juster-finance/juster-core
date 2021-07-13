@@ -24,15 +24,13 @@ class MultipleEventsTest(JusterBaseTestCase):
     def _run_close(self):
         """ Run defaul close call and callback: """
 
-        self.storage = self.check_close_succeed(sender=self.a)
-
         # Emulating calback with price is increased 25%:
         callback_values = {
             'currencyPair': self.currency_pair,
             'lastUpdate': self.current_time - int(0.5*ONE_HOUR),
             'rate': 10_000_000
         }
-        self.storage = self.check_close_callback_succeed(
+        self.storage = self.check_close_succeed(
             callback_values=callback_values,
             source=self.a,
             sender=self.oracle_address)

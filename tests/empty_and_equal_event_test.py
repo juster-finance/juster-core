@@ -39,12 +39,11 @@ class EmptyEqualEventTest(JusterBaseTestCase):
 
         # Closing event:
         self.current_time = bets_close + period
-        self.storage = self.check_close_succeed(sender=self.a)
 
         # Emulating calback with price is increased 25%:
         callback_values.update({'lastUpdate': self.current_time})
 
-        self.storage = self.check_close_callback_succeed(
+        self.storage = self.check_close_succeed(
             callback_values=callback_values,
             source=self.a,
             sender=self.oracle_address)
