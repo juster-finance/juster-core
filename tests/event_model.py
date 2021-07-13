@@ -198,9 +198,6 @@ class EventModel:
             diffs=calculate_diffs(ledgers, split_pool)
         )
 
-        # TODO: missing betsAboveEq ledger count check
-        # TODO: missing betsBelow ledger count check
-        # TODO: missing betsAboveEq / betsBelow participant record change check
 
     def __eq__(self, other):
 

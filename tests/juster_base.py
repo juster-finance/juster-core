@@ -123,46 +123,20 @@ class JusterBaseTestCase(TestCase):
 
         # Making variables to compare two states:
         result = transaction.interpret(
-            storage=self.storage, sender=participant, now=self.current_time)
+            storage=self.storage,
+            sender=participant,
+            now=self.current_time)
 
-        init_storage = self.storage
-        result_storage = result.storage
+        # Checking that state changed as expected for two outcomes:
+        for outcome in ['aboveEq', 'below']:
+            init_model = EventModel.from_storage(self.storage, self.id, outcome)
+            init_model.provide_liquidity(
+                participant, amount, expected_above_eq, expected_below)
+            result_model = EventModel.from_storage(result.storage, self.id, outcome)
+            self.assertEqual(init_model, result_model)
 
-        # Checking that state changed as expected:
-        self.assertEqual(
-            (EventModel.from_storage(init_storage, self.id, self.winning_pool)
-                .provide_liquidity(participant, amount, expected_above_eq, expected_below)),
-            EventModel.from_storage(result_storage, self.id, self.winning_pool)
-        )
-
-        self.assertEqual(
-            len(result_storage['betsAboveEq']),
-            len(init_storage['betsAboveEq']))
-
-        self.assertEqual(
-            len(result_storage['betsBelow']),
-            len(init_storage['betsBelow']))
-
-        # If participant added liquidity before, it should not change
-        # ledger records count. If it is not - records should be incresed by 1
-
-        is_already_lp = (participant, self.id) in init_storage['providedLiquidityAboveEq']
-        added_count = 0 if is_already_lp else 1
-
-        self.assertEqual(
-            len(result_storage['providedLiquidityAboveEq']),
-            len(init_storage['providedLiquidityAboveEq']) + added_count)
-
-        self.assertEqual(
-            len(result_storage['providedLiquidityBelow']),
-            len(init_storage['providedLiquidityBelow']) + added_count)
-
-        self.assertEqual(
-            len(result_storage['liquidityShares']),
-            len(init_storage['liquidityShares']) + added_count)
-
-        self.check_storage_integrity(result_storage)
-        return result_storage
+        self.check_storage_integrity(result.storage)
+        return result.storage
 
 
     def check_provide_liquidity_fails_with(
@@ -187,7 +161,8 @@ class JusterBaseTestCase(TestCase):
         self.assertTrue(msg_contains in str(cm.exception))
 
 
-    def calc_elapsed_time(self, event):
+    def calc_elapsed_time(self):
+        event = self.storage['events'][self.id]
         return ((self.current_time - event['createdTime'])
             / (event['betsCloseTime'] - event['createdTime']))
 
@@ -202,34 +177,15 @@ class JusterBaseTestCase(TestCase):
         result = transaction.interpret(
             storage=self.storage, sender=participant, now=self.current_time)
 
-        # Making variables to compare two states:
-        init_storage = self.storage
-        result_storage = result.storage
+        # Checking that state changed as expected for two outcomes:
+        for outcome in ['aboveEq', 'below']:
+            init_model = EventModel.from_storage(self.storage, self.id, outcome)
+            init_model.bet(participant, amount, bet, self.calc_elapsed_time())
+            result_model = EventModel.from_storage(result.storage, self.id, outcome)
+            self.assertEqual(init_model, result_model)
 
-        init_event = init_storage['events'][self.id]
-        result_event = result_storage['events'][self.id]
-
-        elapsed_time = self.calc_elapsed_time(init_event)
-        # Checking that state changed as expected:
-        # TODO: this self.winning_pool is very ugly, feel very bad about this
-        self.assertEqual(
-            (EventModel.from_storage(init_storage, self.id, self.winning_pool)
-                .bet(participant, amount, bet, elapsed_time)),
-            EventModel.from_storage(result_storage, self.id, self.winning_pool)
-        )
-
-        # TODO: missing betsAboveEq ledger count check
-        # TODO: missing betsBelow ledger count check
-        # TODO: missing betsAboveEq / betsBelow participant record change check
-
-        # Checking sum in participant ledgers:
-        key = (participant, self.id)
-        diff = (result_storage['depositedBets'].get(key, 0)
-            - init_storage['depositedBets'].get(key, 0))
-        self.assertEqual(diff, amount)
-
-        self.check_storage_integrity(result_storage)
-        return result_storage
+        self.check_storage_integrity(result.storage)
+        return result.storage
 
 
     def check_bet_fails_with(
@@ -676,6 +632,3 @@ class JusterBaseTestCase(TestCase):
 
         # this self.storage will be used in all blocks:
         self.storage = self.init_storage.copy()
-
-        # TODO: this is bad:
-        self.winning_pool = 'aboveEq'
