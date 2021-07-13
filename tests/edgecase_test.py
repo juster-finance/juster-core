@@ -141,11 +141,13 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
         self.assertTrue(msg in str(cm.exception))
 
         # Test trying close twice: assert failed:
-        self.check_close_callback_fails_with(
-            callback_values=callback_values,
-            source=self.a,
-            sender=self.oracle_address,
-            msg_contains="Contract already closed. Can't close contract twice")
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_close_succeed(
+                callback_values=callback_values,
+                source=self.a,
+                sender=self.oracle_address)
+        msg = "Contract already closed. Can't close contract twice"
+        self.assertTrue(msg in str(cm.exception))
 
         # A tries to Bet after contract is closed and failed:
         with self.assertRaises(MichelsonRuntimeError) as cm:
@@ -171,11 +173,13 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
         self.storage = self.check_withdraw_succeed(self.b, 10)
 
         # Test that event was deleted and any interaction would lead to error:
-        self.check_close_callback_fails_with(
-            callback_values=callback_values,
-            source=self.a,
-            sender=self.oracle_address,
-            msg_contains="Event is not found")
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_close_succeed(
+                callback_values=callback_values,
+                source=self.a,
+                sender=self.oracle_address)
+        msg = "Event is not found"
+        self.assertTrue(msg in str(cm.exception))
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.check_bet_succeed(

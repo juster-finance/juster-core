@@ -367,20 +367,6 @@ class JusterBaseTestCase(TestCase):
         return result.storage
 
 
-    def check_close_callback_fails_with(
-            self, callback_values, source, sender, msg_contains=''):
-        """ Checking that closing fails with message msg_contains """
-
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            result = self.contract.close(self.id).interpret(
-                storage=self.storage, sender=source, now=self.current_time)
-
-            res = self.contract.closeCallback(callback_values).interpret(
-                storage=result.storage, sender=sender, now=self.current_time)
-
-        self.assertTrue(msg_contains in str(cm.exception))
-
-
     def check_update_config_succeed(self, lambda_code, sender):
         """ Checking that updateConfig call is succeed """
 

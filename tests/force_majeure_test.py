@@ -109,11 +109,13 @@ class ForceMajeureTest(JusterBaseTestCase):
         self.current_time = bets_close_time + measure_period + max_lag * 2
         callback_values.update({'lastUpdate': self.current_time - 1*ONE_HOUR})
 
-        self.check_close_callback_fails_with(
-            callback_values=callback_values,
-            source=self.a,
-            sender=self.oracle_address,
-            msg_contains='Close failed: oracle time exceed maxAllowedMeasureLag')
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_close_succeed(
+                callback_values=callback_values,
+                source=self.a,
+                sender=self.oracle_address)
+        msg = "Close failed: oracle time exceed maxAllowedMeasureLag"
+        self.assertTrue(msg in str(cm.exception))
 
         # Failed to close in time window, run TFM is succeed:
         self.storage = self.check_trigger_force_majeure_succeed(sender=self.a)

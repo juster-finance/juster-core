@@ -125,11 +125,13 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
         }
 
         # Checking that it is not possible to run close before measurement started:
-        self.check_close_callback_fails_with(
-            callback_values=start_callback_values,
-            source=self.a,
-            sender=self.oracle_address,
-            msg_contains="Can't close contract before measurement period started")
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_close_succeed(
+                callback_values=start_callback_values,
+                source=self.a,
+                sender=self.oracle_address)
+        msg = "Can't close contract before measurement period started"
+        self.assertTrue(msg in str(cm.exception))
 
         # Checking that measurement with wrong currency pair is failed:
         wrong_callback_currency = start_callback_values.copy()
