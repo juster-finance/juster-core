@@ -70,12 +70,12 @@ class FourParticipantsDeterminedTest(JusterBaseTestCase):
 
         # Creating event:
         amount = self.measure_start_fee + self.expiration_fee
-        self.storage = self.check_new_event_succeed(
+        self.storage = self.new_event(
             event_params=self.default_event_params,
             amount=amount)
 
         # Participant A: adding liquidity 50/50 just at start:
-        self.storage = self.check_provide_liquidity_succeed(
+        self.storage = self.provide_liquidity(
             participant=self.a,
             amount=50_000,
             expected_above_eq=1,
@@ -83,7 +83,7 @@ class FourParticipantsDeterminedTest(JusterBaseTestCase):
 
         # Participant B: bets aboveEq 50_000 after 1 hour:
         self.current_time = RUN_TIME + ONE_HOUR
-        self.storage = self.check_bet_succeed(
+        self.storage = self.bet(
             participant=self.b,
             amount=50_000,
             bet='aboveEq',
@@ -91,21 +91,21 @@ class FourParticipantsDeterminedTest(JusterBaseTestCase):
 
         # Participant A: adding more liquidity after 12 hours (1/2 of the bets period):
         self.current_time = RUN_TIME + 12*ONE_HOUR
-        self.storage = self.check_provide_liquidity_succeed(
+        self.storage = self.provide_liquidity(
             participant=self.a,
             amount=40_000,
             expected_above_eq=4,
             expected_below=1)
 
         # Participant D: adding more liquidity after 12 hours:
-        self.storage = self.check_provide_liquidity_succeed(
+        self.storage = self.provide_liquidity(
             participant=self.d,
             amount=360_000,
             expected_above_eq=4,
             expected_below=1)
 
         # Participant D: bets below 125_000 after 12 hours:
-        self.storage = self.check_bet_succeed(
+        self.storage = self.bet(
             participant=self.d,
             amount=125_000,
             bet='below',
@@ -113,7 +113,7 @@ class FourParticipantsDeterminedTest(JusterBaseTestCase):
 
         # Participant C: adding more liquidity at the very end:
         self.current_time = RUN_TIME + 24*ONE_HOUR
-        self.storage = self.check_provide_liquidity_succeed(
+        self.storage = self.provide_liquidity(
             participant=self.c,
             amount=50_000,
             expected_above_eq=1,
@@ -128,7 +128,7 @@ class FourParticipantsDeterminedTest(JusterBaseTestCase):
             'lastUpdate': self.current_time - 1*ONE_HOUR,
             'rate': 6_000_000
         }
-        self.storage = self.check_start_measurement_succeed(
+        self.storage = self.start_measurement(
             callback_values=callback_values,
             source=self.a,
             sender=self.oracle_address)
@@ -142,14 +142,14 @@ class FourParticipantsDeterminedTest(JusterBaseTestCase):
             'lastUpdate': self.current_time - 1*ONE_HOUR,
             'rate': 7_500_000
         }
-        self.storage = self.check_close_succeed(
+        self.storage = self.close(
             callback_values=callback_values,
             source=self.b,
             sender=self.oracle_address)
 
         # Withdrawals:
         self.current_time = RUN_TIME + 64*ONE_HOUR
-        self.storage = self.check_withdraw_succeed(self.b,  75_000)
-        self.storage = self.check_withdraw_succeed(self.a, 100_000)
-        self.storage = self.check_withdraw_succeed(self.c,  50_000)
-        self.storage = self.check_withdraw_succeed(self.d, 450_000)
+        self.storage = self.withdraw(self.b,  75_000)
+        self.storage = self.withdraw(self.a, 100_000)
+        self.storage = self.withdraw(self.c,  50_000)
+        self.storage = self.withdraw(self.d, 450_000)

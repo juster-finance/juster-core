@@ -13,23 +13,23 @@ class ForceMajeureTest(JusterBaseTestCase):
         self.id = self.storage['nextEventId']
 
         # Creating default event:
-        self.storage = self.check_new_event_succeed(
+        self.storage = self.new_event(
             event_params=self.default_event_params,
             amount=self.measure_start_fee + self.expiration_fee)
 
         # Check that trying to run TFM in betting time (at the beginning) is failed:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.check_trigger_force_majeure_succeed(sender=self.a)
+            self.trigger_force_majeure(sender=self.a)
 
         # Participant A: adding liquidity 1/1 just at start:
-        self.storage = self.check_provide_liquidity_succeed(
+        self.storage = self.provide_liquidity(
             participant=self.a,
             amount=1_000_000,
             expected_above_eq=1,
             expected_below=1)
 
         # Participant B: bets aboveEq for 1 tez:
-        self.storage = self.check_bet_succeed(
+        self.storage = self.bet(
             participant=self.b,
             amount=1_000_000,
             bet='aboveEq',
@@ -39,7 +39,7 @@ class ForceMajeureTest(JusterBaseTestCase):
         # (but inside window) is failed:
         self.current_time = self.default_event_params['betsCloseTime']
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.check_trigger_force_majeure_succeed(sender=self.a)
+            self.trigger_force_majeure(sender=self.a)
 
 
     def test_force_majeure_start_measurement_fail(self):
@@ -56,7 +56,7 @@ class ForceMajeureTest(JusterBaseTestCase):
         }
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.check_start_measurement_succeed(
+            self.start_measurement(
                 callback_values=callback_values,
                 source=self.a,
                 sender=self.oracle_address)
@@ -64,16 +64,16 @@ class ForceMajeureTest(JusterBaseTestCase):
         self.assertTrue(msg in str(cm.exception))
 
         # Failed to start measurement in time window, run TFM is succeed:
-        self.storage = self.check_trigger_force_majeure_succeed(sender=self.a)
+        self.storage = self.trigger_force_majeure(sender=self.a)
 
         # Trying to bet / LP after TFM should fail with Bets / Providing
         # liquidity after betCloseTime is not allowed. Because of this this
         # scenario is not tested here
 
         # check A withdraws the same value as he lp-ed:
-        self.storage = self.check_withdraw_succeed(self.a, 1_000_000)
+        self.storage = self.withdraw(self.a, 1_000_000)
         # B withdraws the same value as he betted:
-        self.storage = self.check_withdraw_succeed(self.b, 1_000_000)
+        self.storage = self.withdraw(self.b, 1_000_000)
 
 
     def test_force_majeure_close_fail(self):
@@ -93,7 +93,7 @@ class ForceMajeureTest(JusterBaseTestCase):
             'lastUpdate': self.current_time - int(0.5*ONE_HOUR),
             'rate': 8_000_000
         }
-        self.storage = self.check_start_measurement_succeed(
+        self.storage = self.start_measurement(
             callback_values=callback_values,
             source=self.a,
             sender=self.oracle_address)
@@ -101,12 +101,12 @@ class ForceMajeureTest(JusterBaseTestCase):
         # Trying to run force majeure during measure period is failed:
         self.current_time = bets_close_time + measure_period // 2
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.check_trigger_force_majeure_succeed(sender=self.a)
+            self.trigger_force_majeure(sender=self.a)
 
         # Trying to run force majeure during max lag window is failed:
         self.current_time = bets_close_time + measure_period + max_lag // 2
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.check_trigger_force_majeure_succeed(sender=self.a)
+            self.trigger_force_majeure(sender=self.a)
 
         # Trying to run close after time window is elapsed:
         max_lag = self.default_config['maxAllowedMeasureLag']
@@ -114,7 +114,7 @@ class ForceMajeureTest(JusterBaseTestCase):
         callback_values.update({'lastUpdate': self.current_time - 1*ONE_HOUR})
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.check_close_succeed(
+            self.close(
                 callback_values=callback_values,
                 source=self.a,
                 sender=self.oracle_address)
@@ -122,9 +122,9 @@ class ForceMajeureTest(JusterBaseTestCase):
         self.assertTrue(msg in str(cm.exception))
 
         # Failed to close in time window, run TFM is succeed:
-        self.storage = self.check_trigger_force_majeure_succeed(sender=self.a)
+        self.storage = self.trigger_force_majeure(sender=self.a)
 
         # check A withdraws the same value as he lp-ed:
-        self.storage = self.check_withdraw_succeed(self.a, 1_000_000)
+        self.storage = self.withdraw(self.a, 1_000_000)
         # B withdraws the same value as he betted:
-        self.storage = self.check_withdraw_succeed(self.b, 1_000_000)
+        self.storage = self.withdraw(self.b, 1_000_000)

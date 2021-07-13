@@ -25,7 +25,7 @@ class ManagerTest(JusterBaseTestCase):
         reset_config_code = open(join(dirname(__file__), RESET_CONFIG_LAMBDA_FN)).read()
 
         # Creating first event with default params:
-        self.storage = self.check_new_event_succeed(
+        self.storage = self.new_event(
             event_params=self.default_event_params,
             amount=self.measure_start_fee + self.expiration_fee)
 
@@ -33,14 +33,14 @@ class ManagerTest(JusterBaseTestCase):
         assert self.storage['config']['maxLiquidityPercent'] == 300_000
 
         # raise_liq_code lambda should raise maxLiquidityPercent to 310_000:
-        self.storage = self.check_update_config_succeed(raise_liq_code, self.manager)
+        self.storage = self.update_config(raise_liq_code, self.manager)
         assert self.storage['config']['maxLiquidityPercent'] == 310_000
 
         # Creating next event with default params:
         new_params = self.default_event_params.copy()
         new_params['liquidityPercent'] = 310_000
         self.id = self.storage['nextEventId']
-        self.storage = self.check_new_event_succeed(
+        self.storage = self.new_event(
             event_params=new_params,
             amount=self.measure_start_fee + self.expiration_fee)
 
@@ -48,14 +48,14 @@ class ManagerTest(JusterBaseTestCase):
 
         # Testing that updateConfig from address =/= manager is failed:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.check_update_config_succeed(raise_liq_code, self.c)
+            self.update_config(raise_liq_code, self.c)
 
         # Testing that second time lambda applied:
-        self.storage = self.check_update_config_succeed(raise_liq_code, self.manager)
+        self.storage = self.update_config(raise_liq_code, self.manager)
         assert self.storage['config']['maxLiquidityPercent'] == 320_000
 
         # Testing reset config lambda applied:
-        self.storage = self.check_update_config_succeed(reset_config_code, self.manager)
+        self.storage = self.update_config(reset_config_code, self.manager)
         assert self.storage['config']['maxLiquidityPercent'] == 300_000
 
 

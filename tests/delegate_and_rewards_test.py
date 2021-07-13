@@ -37,13 +37,13 @@ class DelegateAndBakingRewardsTest(JusterBaseTestCase):
 
         # Trying to withdraw with address different from manager:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.check_claim_baking_rewards_succeed(
+            self.claim_baking_rewards(
                 expected_reward=200_000,
                 sender=self.c)
         self.assertTrue('Not a contract manager' in str(cm.exception))
 
         # Withdrawing with manager:
-        self.storage = self.check_claim_baking_rewards_succeed(
+        self.storage = self.claim_baking_rewards(
             expected_reward=200_000, sender=self.manager)
 
         # Sending another 500_000 mutez to contract:
@@ -54,5 +54,5 @@ class DelegateAndBakingRewardsTest(JusterBaseTestCase):
         self.storage = result.storage
 
         # Withdrawing with manager again:
-        self.storage = self.check_claim_baking_rewards_succeed(
+        self.storage = self.claim_baking_rewards(
             expected_reward=500_000, sender=self.manager)

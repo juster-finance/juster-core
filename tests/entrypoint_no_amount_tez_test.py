@@ -12,7 +12,7 @@ class ForceMajeureTest(JusterBaseTestCase):
         self.id = self.storage['nextEventId']
 
         # Creating default event:
-        self.storage = self.check_new_event_succeed(
+        self.storage = self.new_event(
             event_params=self.default_event_params,
             amount=self.measure_start_fee + self.expiration_fee)
 
@@ -20,7 +20,7 @@ class ForceMajeureTest(JusterBaseTestCase):
         max_lag = self.default_config['maxAllowedMeasureLag']
         measure_period = self.default_event_params['measurePeriod']
 
-        self.storage = self.check_provide_liquidity_succeed(
+        self.storage = self.provide_liquidity(
             participant=self.a,
             amount=10,
             expected_above_eq=1,

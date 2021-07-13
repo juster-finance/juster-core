@@ -16,7 +16,7 @@ class EmptyEqualEventTest(JusterBaseTestCase):
 
         # Creating event:
         amount = self.measure_start_fee + self.expiration_fee
-        self.storage = self.check_new_event_succeed(
+        self.storage = self.new_event(
             event_params=self.default_event_params,
             amount=amount)
 
@@ -32,7 +32,7 @@ class EmptyEqualEventTest(JusterBaseTestCase):
             'lastUpdate': self.current_time,
             'rate': 6_000_000
         }
-        self.storage = self.check_start_measurement_succeed(
+        self.storage = self.start_measurement(
             callback_values=callback_values,
             source=self.a,
             sender=self.oracle_address)
@@ -43,7 +43,7 @@ class EmptyEqualEventTest(JusterBaseTestCase):
         # Emulating calback with price is increased 25%:
         callback_values.update({'lastUpdate': self.current_time})
 
-        self.storage = self.check_close_succeed(
+        self.storage = self.close(
             callback_values=callback_values,
             source=self.a,
             sender=self.oracle_address)

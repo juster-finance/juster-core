@@ -13,19 +13,19 @@ class SlippageTest(JusterBaseTestCase):
         self.id = self.storage['nextEventId']
 
         # Creating default event:
-        self.storage = self.check_new_event_succeed(
+        self.storage = self.new_event(
             event_params=self.default_event_params,
             amount=self.measure_start_fee + self.expiration_fee)
 
         # Participant A: adding liquidity 1tez in each pool:
-        self.storage = self.check_provide_liquidity_succeed(
+        self.storage = self.provide_liquidity(
             participant=self.a,
             amount=2_000_000,
             expected_above_eq=1,
             expected_below=1)
 
         # Participant B bets aboveEq with 1tez, expected minimal win 1_500_000 succeed:
-        self.storage = self.check_bet_succeed(
+        self.storage = self.bet(
             participant=self.b,
             amount=1_000_000,
             bet='aboveEq',
@@ -33,7 +33,7 @@ class SlippageTest(JusterBaseTestCase):
 
         # Participant B bets aboveEq with 1tez, expected minimal win 1_500_001 failed:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.check_bet_succeed(
+            self.bet(
                 participant=self.b,
                 amount=1_000_000,
                 bet='aboveEq',
@@ -50,12 +50,12 @@ class SlippageTest(JusterBaseTestCase):
         self.id = self.storage['nextEventId']
 
         # Creating default event:
-        self.storage = self.check_new_event_succeed(
+        self.storage = self.new_event(
             event_params=self.default_event_params,
             amount=self.measure_start_fee + self.expiration_fee)
 
         # Participant A: adding liquidity 2:1:
-        self.storage = self.check_provide_liquidity_succeed(
+        self.storage = self.provide_liquidity(
             participant=self.a,
             amount=3_000_000,
             expected_above_eq=2,
@@ -64,7 +64,7 @@ class SlippageTest(JusterBaseTestCase):
         # Participant B: adding liquidity 400:100 with slippage 100% succeed:
         slippage_100 = self.storage['ratioPrecision']
 
-        self.storage = self.check_provide_liquidity_succeed(
+        self.storage = self.provide_liquidity(
             participant=self.a,
             amount=3_000_000,
             expected_above_eq=400,
@@ -73,7 +73,7 @@ class SlippageTest(JusterBaseTestCase):
 
         # Participant B: adding liquidity 401:100 with slippage 100% fails:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.check_provide_liquidity_succeed(
+            self.provide_liquidity(
                 participant=self.a,
                 amount=3_000_000,
                 expected_above_eq=401,
@@ -83,7 +83,7 @@ class SlippageTest(JusterBaseTestCase):
         self.assertTrue(msg in str(cm.exception))
 
         # Participant B: adding liquidity 100:100 with slippage 100% succeed:
-        self.storage = self.check_provide_liquidity_succeed(
+        self.storage = self.provide_liquidity(
             participant=self.a,
             amount=3_000_000,
             expected_above_eq=100,
@@ -92,7 +92,7 @@ class SlippageTest(JusterBaseTestCase):
 
         # Participant B: adding liquidity 100:101 with slippage 100% fails:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.check_provide_liquidity_succeed(
+            self.provide_liquidity(
                 participant=self.a,
                 amount=3_000_000,
                 expected_above_eq=100,
@@ -104,7 +104,7 @@ class SlippageTest(JusterBaseTestCase):
         # Participant B: adding liquidity 300:100 with slippage 50% succeed:
         slippage_50 = slippage_100 // 2
 
-        self.storage = self.check_provide_liquidity_succeed(
+        self.storage = self.provide_liquidity(
             participant=self.a,
             amount=3_000_000,
             expected_above_eq=300,
@@ -113,7 +113,7 @@ class SlippageTest(JusterBaseTestCase):
 
         # Participant B: adding liquidity 301:100 with slippage 50% fails:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.check_provide_liquidity_succeed(
+            self.provide_liquidity(
                 participant=self.a,
                 amount=3_000_000,
                 expected_above_eq=301,

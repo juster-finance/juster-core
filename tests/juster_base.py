@@ -1,17 +1,9 @@
 """ This is base class that used in different tests.
     It uses pytezos intepret method and provides calls to all entrypoints that tested.
 
-    For each entrypoint call there are two methods:
-        - one for successful call that checks is state changed correctly
-            name: f'check_{entrypoint_call}_succeed'
-        - one for failwith call that checks that MichelsonRuntimeError is raised with some message
-            name: f'check_{entrypoint_call}_fails_with'
-
-    The one who checks for error have the same interface but with msg_contains param provided.
-
-    After each contract call, new state returned.
-
-    TODO: try to move all this interactions inside sandbox?
+    There are method for each entrypoint in contract that performs interpret call and
+        checking outcoming result. Start measurement and close calls combined with their
+        callbacks, because callback is internal transaction
 """
 
 from unittest import TestCase
@@ -109,7 +101,13 @@ class JusterBaseTestCase(TestCase):
         self.assertTrue(storage['nextEventId'] > 0)
 
 
-    def check_provide_liquidity_succeed(
+    def calc_elapsed_time(self):
+        event = self.storage['events'][self.id]
+        return ((self.current_time - event['createdTime'])
+            / (event['betsCloseTime'] - event['createdTime']))
+
+
+    def provide_liquidity(
             self, participant, amount, expected_above_eq, expected_below,
             max_slippage=100_000):
 
@@ -139,13 +137,7 @@ class JusterBaseTestCase(TestCase):
         return result.storage
 
 
-    def calc_elapsed_time(self):
-        event = self.storage['events'][self.id]
-        return ((self.current_time - event['createdTime'])
-            / (event['betsCloseTime'] - event['createdTime']))
-
-
-    def check_bet_succeed(
+    def bet(
             self, participant, amount, bet, minimal_win):
 
         # Running transaction:
@@ -216,7 +208,7 @@ class JusterBaseTestCase(TestCase):
             self.assertEqual(amounts.get(participant, 0), participant_amount)
 
 
-    def check_withdraw_succeed(self, participant, withdraw_amount, sender=None):
+    def withdraw(self, participant, withdraw_amount, sender=None):
 
         # If sender is not setted, assuming that participant is the sender:
         sender = sender or participant
@@ -243,7 +235,7 @@ class JusterBaseTestCase(TestCase):
         return storage
 
 
-    def check_new_event_succeed(self, event_params, amount):
+    def new_event(self, event_params, amount):
         """ Testing creating event with settings that should succeed """
 
         # Running transaction:
@@ -274,7 +266,7 @@ class JusterBaseTestCase(TestCase):
         return result_storage
 
 
-    def check_start_measurement_succeed(self, callback_values, source, sender):
+    def start_measurement(self, callback_values, source, sender):
         """ Checking that state is correct after start measurement
             and callback call """
 
@@ -320,7 +312,7 @@ class JusterBaseTestCase(TestCase):
         return result.storage
 
 
-    def check_close_succeed(self, callback_values, source, sender):
+    def close(self, callback_values, source, sender):
         """ Check that calling close, succesfully created opearaton
             with call to oracle get + checking that callback is successful too """
 
@@ -367,7 +359,7 @@ class JusterBaseTestCase(TestCase):
         return result.storage
 
 
-    def check_update_config_succeed(self, lambda_code, sender):
+    def update_config(self, lambda_code, sender):
         """ Checking that updateConfig call is succeed """
 
         result = self.contract.updateConfig(lambda_code).interpret(
@@ -376,7 +368,7 @@ class JusterBaseTestCase(TestCase):
         return result.storage
 
 
-    def check_trigger_force_majeure_succeed(self, sender):
+    def trigger_force_majeure(self, sender):
 
         event = self.storage['events'][self.id]
         was_closed = event['isClosed']
@@ -402,7 +394,7 @@ class JusterBaseTestCase(TestCase):
         return result.storage
 
 
-    def check_claim_baking_rewards_succeed(self, expected_reward, sender):
+    def claim_baking_rewards(self, expected_reward, sender):
 
         result = self.contract.claimBakingRewards().interpret(
             now=self.current_time,
@@ -417,7 +409,7 @@ class JusterBaseTestCase(TestCase):
         return result.storage
 
 
-    def check_claim_retained_profits_succeed(self, expected_profit, sender):
+    def claim_retained_profits(self, expected_profit, sender):
 
         result = self.contract.claimRetainedProfits().interpret(
             now=self.current_time,

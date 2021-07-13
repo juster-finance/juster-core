@@ -19,12 +19,12 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
             'expirationFee': self.expiration_fee,
         })
 
-        self.storage = self.check_new_event_succeed(
+        self.storage = self.new_event(
             event_params=self.default_event_params, amount=0)
 
         # A provides liquidity with 0 tez, assert failed:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.check_provide_liquidity_succeed(
+            self.provide_liquidity(
                 participant=self.a,
                 amount=0,
                 expected_above_eq=1,
@@ -33,7 +33,7 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
 
         # A tries to bet but there are no liquidity, assert failed:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.check_bet_succeed(
+            self.bet(
                 participant=self.a,
                 amount=1_000_000,
                 bet='aboveEq',
@@ -42,7 +42,7 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
         self.assertTrue(msg in str(cm.exception))
 
         # B provides 10mutez in liquidity with success:
-        self.storage = self.check_provide_liquidity_succeed(
+        self.storage = self.provide_liquidity(
             participant=self.b,
             amount=10,
             expected_above_eq=1,
@@ -50,7 +50,7 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
 
         # A provides liquidity with 0 expected aboveEq/below, assert failed:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.check_provide_liquidity_succeed(
+            self.provide_liquidity(
                 participant=self.a,
                 amount=1_000_000,
                 expected_above_eq=0,
@@ -61,7 +61,7 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
         # A tries to adding liquidity with rate that very different from internal rate
         # assert failwith:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.check_provide_liquidity_succeed(
+            self.provide_liquidity(
                 participant=self.a,
                 amount=1_000_000,
                 expected_above_eq=10,
@@ -71,7 +71,7 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
 
         # A provides liquidity with 0 expected aboveEq/below (again), assert failed:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.check_provide_liquidity_succeed(
+            self.provide_liquidity(
                 participant=self.a,
                 amount=1_000_000,
                 expected_above_eq=1,
@@ -81,7 +81,7 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
 
         # A tries to Bet with winRate a lot more than expected:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.check_bet_succeed(
+            self.bet(
                 participant=self.a,
                 amount=1,
                 bet='below',
@@ -91,7 +91,7 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
 
         # A tries to Bet 0 tez:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.check_bet_succeed(
+            self.bet(
                 participant=self.a,
                 amount=0,
                 bet='below',
@@ -111,7 +111,7 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
             'rate': 6_000_000
         }
 
-        self.storage = self.check_start_measurement_succeed(
+        self.storage = self.start_measurement(
             callback_values=callback_values,
             source=self.a,
             sender=self.oracle_address)
@@ -125,14 +125,14 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
             'lastUpdate': self.current_time,
             'rate': 7_500_000
         }
-        self.storage = self.check_close_succeed(
+        self.storage = self.close(
             callback_values=callback_values,
             source=self.a,
             sender=self.oracle_address)
 
         # A provides liquidity after event closed is not allowed:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.check_provide_liquidity_succeed(
+            self.provide_liquidity(
                 participant=self.a,
                 amount=10,
                 expected_above_eq=1,
@@ -142,7 +142,7 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
 
         # Test trying close twice: assert failed:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.check_close_succeed(
+            self.close(
                 callback_values=callback_values,
                 source=self.a,
                 sender=self.oracle_address)
@@ -151,7 +151,7 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
 
         # A tries to Bet after contract is closed and failed:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.check_bet_succeed(
+            self.bet(
                 participant=self.a,
                 amount=1,
                 bet='below',
@@ -161,7 +161,7 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
 
         # test trying to call measurement after close is failed:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.storage = self.check_start_measurement_succeed(
+            self.storage = self.start_measurement(
                 callback_values=callback_values,
                 source=self.a,
                 sender=self.oracle_address)
@@ -169,12 +169,12 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
         self.assertTrue(msg in str(cm.exception))
 
         # B withdraws all:
-        self.storage = self.check_withdraw_succeed(self.a, 0)
-        self.storage = self.check_withdraw_succeed(self.b, 10)
+        self.storage = self.withdraw(self.a, 0)
+        self.storage = self.withdraw(self.b, 10)
 
         # Test that event was deleted and any interaction would lead to error:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.check_close_succeed(
+            self.close(
                 callback_values=callback_values,
                 source=self.a,
                 sender=self.oracle_address)
@@ -182,7 +182,7 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
         self.assertTrue(msg in str(cm.exception))
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.check_bet_succeed(
+            self.bet(
                 participant=self.a,
                 amount=1,
                 bet='below',

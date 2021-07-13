@@ -21,12 +21,12 @@ class LiquidityFeeDynamicTest(JusterBaseTestCase):
         bets_duration = bets_close_time - self.current_time
 
         # Creating event:
-        self.storage = self.check_new_event_succeed(
+        self.storage = self.new_event(
             event_params=self.default_event_params,
             amount=self.measure_start_fee + self.expiration_fee)
 
         # Participant A: adding liquidity 1tez in both pools:
-        self.storage = self.check_provide_liquidity_succeed(
+        self.storage = self.provide_liquidity(
             participant=self.a,
             amount=1_000_000,
             expected_above_eq=1,
@@ -50,7 +50,7 @@ class LiquidityFeeDynamicTest(JusterBaseTestCase):
 
             random_elapsed_time = randint(0, 100) * bets_duration // 100
             self.current_time = RUN_TIME + random_elapsed_time
-            result_storage = self.check_bet_succeed(
+            result_storage = self.bet(
                 participant=self.b,
                 amount=1_000_000,
                 bet='aboveEq',
