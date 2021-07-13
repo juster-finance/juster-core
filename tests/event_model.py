@@ -15,12 +15,12 @@ class EventModel:
         self.shares = {}
 
 
-    def provide_liquidity(self, user, amount, a=None, b=None):
+    def provide_liquidity(self, user, amount, a=0, b=0):
 
         # NOTE: here I do not perform checking that provided ratio is valid
-        # NOTE: here I do not check that pools is more > 0
-        a = a or self.pool_a
-        b = b or self.pool_b
+        # NOTE: provided a & b only make sense if there are empty pools
+        a = self.pool_a if self.pool_a > 0 else a
+        b = self.pool_b if self.pool_b > 0 else b
 
         provided_split = self.juster.calc_provide_liquidity_split(
             amount, a, b, self.total_shares)
@@ -29,6 +29,8 @@ class EventModel:
         self.pool_a += provided_split['provided_a']
         self.pool_b += provided_split['provided_b']
         self.total_shares += provided_split['shares']
+
+        return self
 
 
     def bet(self, user, amount, pool, time):
@@ -51,6 +53,8 @@ class EventModel:
             self.distribute_between_providers(amount)
 
         # TODO: save event diffs history?
+        return self
+
 
     def distribute_between_providers(self, amount):
         """ distributes profit/loss between liquidity providers """
@@ -63,6 +67,34 @@ class EventModel:
     def __repr__(self):
         return (f'<Event>\n{self.pool_a=}\n{self.pool_b=}\n{self.total_shares=}\n{self.fee=}'
             + f'\n{self.winning_pool=}\n{self.diffs=}\n{self.shares=}')
+
+
+    @classmethod
+    def from_storage(cls, storage, event_id, winning_pool):
+        """ Creates exemplar of this class using contract storage data """
+
+        event = storage['events'][event_id]
+        fee_nat = event['liquidityPercent']
+        fee = fee_nat / storage['liquidityPrecision']
+
+        return EventModel(
+            fee=fee,
+            winning_pool=winning_pool,
+            a=event['poolAboveEq'],
+            b=event['poolBelow'],
+            total_shares=event['totalLiquidityShares']
+        )
+
+
+    def __eq__(self, other):
+        # TODO: check shares and diffs the same
+        return all([
+            self.pool_a == other.pool_a,
+            self.pool_b == other.pool_b,
+            self.total_shares == other.total_shares,
+            self.fee == other.fee,
+            self.winning_pool == other.winning_pool,
+        ])
 
 
 def event_model_tests():
@@ -118,6 +150,11 @@ def event_model_tests():
     assert event.diffs['user'] == 450_000
     assert event.pool_a == 550_000
     assert event.pool_b == 2_000_000
+
+
+    # TODO: test from_storage
+    # TODO: test __eq__ with two same objects
+    # TODO: test __eq__ with two different objects
 
 
 event_model_tests()

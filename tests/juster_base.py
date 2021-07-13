@@ -19,6 +19,7 @@ import time
 from os.path import dirname, join
 from pytezos import ContractInterface, pytezos, MichelsonRuntimeError
 from model import JusterModel
+from event_model import EventModel
 from test_data import generate_storage, ONE_HOUR, ONE_DAY
 
 CONTRACT_FN = '../build/tz/juster.tz'
@@ -128,24 +129,12 @@ class JusterBaseTestCase(TestCase):
         init_storage = self.storage
         result_storage = result.storage
 
-        init_event = init_storage['events'][self.id]
-        result_event = result_storage['events'][self.id]
-
         # Checking that state changed as expected:
-        lp_result = self.model.calc_provide_liquidity_split(
-            provided_amount=amount,
-            pool_a=init_event['poolAboveEq'] or expected_above_eq,
-            pool_b=init_event['poolBelow'] or expected_below,
-            total_shares=init_event['totalLiquidityShares']
+        self.assertEqual(
+            (EventModel.from_storage(init_storage, self.id, self.winning_pool)
+                .provide_liquidity(participant, amount, expected_above_eq, expected_below)),
+            EventModel.from_storage(result_storage, self.id, self.winning_pool)
         )
-
-        difference_above_eq = (
-            result_event['poolAboveEq'] - init_event['poolAboveEq'])
-        difference_below = (
-            result_event['poolBelow'] - init_event['poolBelow'])
-
-        self.assertEqual(difference_above_eq, lp_result['provided_a'])
-        self.assertEqual(difference_below, lp_result['provided_b'])
 
         self.assertEqual(
             len(result_storage['betsAboveEq']),
@@ -172,10 +161,6 @@ class JusterBaseTestCase(TestCase):
         self.assertEqual(
             len(result_storage['liquidityShares']),
             len(init_storage['liquidityShares']) + added_count)
-
-        self.assertEqual(
-            result_event['totalLiquidityShares'],
-            init_event['totalLiquidityShares'] + lp_result['shares'])
 
         self.check_storage_integrity(result_storage)
         return result_storage
@@ -706,4 +691,5 @@ class JusterBaseTestCase(TestCase):
         self.storage = self.init_storage.copy()
 
         self.model = JusterModel()
-
+        # TODO: this is bad:
+        self.winning_pool = 'aboveEq'
