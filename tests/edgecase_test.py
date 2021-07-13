@@ -23,12 +23,13 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
             event_params=self.default_event_params, amount=0)
 
         # A provides liquidity with 0 tez, assert failed:
-        self.check_provide_liquidity_fails_with(
-            participant=self.a,
-            amount=0,
-            expected_above_eq=1,
-            expected_below=1,
-            msg_contains='Zero liquidity provided')
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_provide_liquidity_succeed(
+                participant=self.a,
+                amount=0,
+                expected_above_eq=1,
+                expected_below=1)
+        self.assertTrue('Zero liquidity provided' in str(cm.exception))
 
         # A tries to bet but there are no liquidity, assert failed:
         self.check_bet_fails_with(
@@ -46,29 +47,35 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
             expected_below=1)
 
         # A provides liquidity with 0 expected aboveEq/below, assert failed:
-        self.check_provide_liquidity_fails_with(
-            participant=self.a,
-            amount=1_000_000,
-            expected_above_eq=0,
-            expected_below=1,
-            msg_contains='Expected ratio in pool should be more than zero')
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_provide_liquidity_succeed(
+                participant=self.a,
+                amount=1_000_000,
+                expected_above_eq=0,
+                expected_below=1)
+        msg = 'Expected ratio in pool should be more than zero'
+        self.assertTrue(msg in str(cm.exception))
 
         # A tries to adding liquidity with rate that very different from internal rate
         # assert failwith:
-        self.check_provide_liquidity_fails_with(
-            participant=self.a,
-            amount=1_000_000,
-            expected_above_eq=10,
-            expected_below=1,
-            msg_contains='Expected ratio very differs from current pool ratio')
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_provide_liquidity_succeed(
+                participant=self.a,
+                amount=1_000_000,
+                expected_above_eq=10,
+                expected_below=1)
+        msg = 'Expected ratio very differs from current pool ratio'
+        self.assertTrue(msg in str(cm.exception))
 
         # A provides liquidity with 0 expected aboveEq/below (again), assert failed:
-        self.check_provide_liquidity_fails_with(
-            participant=self.a,
-            amount=1_000_000,
-            expected_above_eq=1,
-            expected_below=0,
-            msg_contains='Expected ratio in pool should be more than zero')
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_provide_liquidity_succeed(
+                participant=self.a,
+                amount=1_000_000,
+                expected_above_eq=1,
+                expected_below=0)
+        msg = 'Expected ratio in pool should be more than zero'
+        self.assertTrue(msg in str(cm.exception))
 
         # A tries to Bet with winRate a lot more than expected:
         self.check_bet_fails_with(
@@ -119,12 +126,14 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
             sender=self.oracle_address)
 
         # A provides liquidity after event closed is not allowed:
-        self.check_provide_liquidity_fails_with(
-            participant=self.a,
-            amount=10,
-            expected_above_eq=1,
-            expected_below=1,
-            msg_contains='Providing Liquidity after betCloseTime is not allowed')
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_provide_liquidity_succeed(
+                participant=self.a,
+                amount=10,
+                expected_above_eq=1,
+                expected_below=1)
+        msg = 'Providing Liquidity after betCloseTime is not allowed'
+        self.assertTrue(msg in str(cm.exception))
 
         # Test trying close twice: assert failed:
         self.check_close_callback_fails_with(

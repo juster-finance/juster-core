@@ -139,28 +139,6 @@ class JusterBaseTestCase(TestCase):
         return result.storage
 
 
-    def check_provide_liquidity_fails_with(
-        self, participant, amount, expected_above_eq, expected_below,
-        max_slippage=100_000, msg_contains=''):
-
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            # Running transaction:
-            transaction = self.contract.provideLiquidity(
-                eventId=self.id,
-                expectedRatioBelow=expected_below,
-                expectedRatioAboveEq=expected_above_eq,
-                maxSlippage=max_slippage
-            ).with_amount(amount)
-
-            # Making variables to compare two states:
-            res = transaction.interpret(
-                storage=self.storage,
-                sender=participant,
-                now=self.current_time)
-
-        self.assertTrue(msg_contains in str(cm.exception))
-
-
     def calc_elapsed_time(self):
         event = self.storage['events'][self.id]
         return ((self.current_time - event['createdTime'])

@@ -172,12 +172,14 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
             msg_contains='Bets after betCloseTime is not allowed')
 
         # Check that providing liquidity in measurement period is failed:
-        self.check_provide_liquidity_fails_with(
-            participant=self.c,
-            amount=100_000,
-            expected_above_eq=1,
-            expected_below=1,
-            msg_contains='Providing Liquidity after betCloseTime is not allowed')
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_provide_liquidity_succeed(
+                participant=self.c,
+                amount=100_000,
+                expected_above_eq=1,
+                expected_below=1)
+        msg = 'Providing Liquidity after betCloseTime is not allowed'
+        self.assertTrue(msg in str(cm.exception))
 
         # Check that that calling measurement after it was already succesfully
         # called before is fails:

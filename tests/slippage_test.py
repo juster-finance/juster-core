@@ -69,13 +69,15 @@ class SlippageTest(JusterBaseTestCase):
             max_slippage=slippage_100)
 
         # Participant B: adding liquidity 401:100 with slippage 100% fails:
-        self.check_provide_liquidity_fails_with(
-            participant=self.a,
-            amount=3_000_000,
-            expected_above_eq=401,
-            expected_below=100,
-            max_slippage=slippage_100,
-            msg_contains='Expected ratio very differs from current pool ratio')
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_provide_liquidity_succeed(
+                participant=self.a,
+                amount=3_000_000,
+                expected_above_eq=401,
+                expected_below=100,
+                max_slippage=slippage_100)
+        msg = 'Expected ratio very differs from current pool ratio'
+        self.assertTrue(msg in str(cm.exception))
 
         # Participant B: adding liquidity 100:100 with slippage 100% succeed:
         self.storage = self.check_provide_liquidity_succeed(
@@ -86,13 +88,15 @@ class SlippageTest(JusterBaseTestCase):
             max_slippage=slippage_100)
 
         # Participant B: adding liquidity 100:101 with slippage 100% fails:
-        self.check_provide_liquidity_fails_with(
-            participant=self.a,
-            amount=3_000_000,
-            expected_above_eq=100,
-            expected_below=101,
-            max_slippage=slippage_100,
-            msg_contains='Expected ratio very differs from current pool ratio')
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_provide_liquidity_succeed(
+                participant=self.a,
+                amount=3_000_000,
+                expected_above_eq=100,
+                expected_below=101,
+                max_slippage=slippage_100)
+        msg = 'Expected ratio very differs from current pool ratio'
+        self.assertTrue(msg in str(cm.exception))
 
         # Participant B: adding liquidity 300:100 with slippage 50% succeed:
         slippage_50 = slippage_100 // 2
@@ -105,11 +109,13 @@ class SlippageTest(JusterBaseTestCase):
             max_slippage=slippage_50)
 
         # Participant B: adding liquidity 301:100 with slippage 50% fails:
-        self.check_provide_liquidity_fails_with(
-            participant=self.a,
-            amount=3_000_000,
-            expected_above_eq=301,
-            expected_below=100,
-            max_slippage=slippage_50,
-            msg_contains='Expected ratio very differs from current pool ratio')
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_provide_liquidity_succeed(
+                participant=self.a,
+                amount=3_000_000,
+                expected_above_eq=301,
+                expected_below=100,
+                max_slippage=slippage_50)
+        msg = 'Expected ratio very differs from current pool ratio'
+        self.assertTrue(msg in str(cm.exception))
 
