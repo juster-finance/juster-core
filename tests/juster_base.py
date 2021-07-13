@@ -320,25 +320,6 @@ class JusterBaseTestCase(TestCase):
         return result.storage
 
 
-    def check_start_measurement_callback_fails_with(
-            self, callback_values, source, sender, msg_contains=''):
-        """ Making a call to startMeasurement and returned callback
-            to startMeasurementCallback with provided params.
-            Checks that there was MichelsonRuntimeError
-            If msg_contains is provided: checking that this msg_contains
-            is inside string form of cathced exception
-        """
-
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            result = self.contract.startMeasurement(self.id).interpret(
-                storage=self.storage, sender=source, now=self.current_time)
-
-            res = self.contract.startMeasurementCallback(callback_values).interpret(
-                storage=result.storage, sender=sender, now=self.current_time)
-
-        self.assertTrue(msg_contains in str(cm.exception))
-
-
     def check_close_succeed(self, sender):
         """ Check that calling close, succesfully created opearaton
             with call to oracle get """

@@ -134,30 +134,39 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
         # Checking that measurement with wrong currency pair is failed:
         wrong_callback_currency = start_callback_values.copy()
         wrong_callback_currency.update({'currencyPair': 'WRONG_PAIR'})
-        self.check_start_measurement_callback_fails_with(
-            callback_values=wrong_callback_currency,
-            source=self.a,
-            sender=self.oracle_address,
-            msg_contains='Unexpected currency pair'
-        )
+
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_start_measurement_succeed(
+                callback_values=wrong_callback_currency,
+                source=self.a,
+                sender=self.oracle_address,
+            )
+        msg = 'Unexpected currency pair'
+        self.assertTrue(msg in str(cm.exception))
 
         # Check that measurement during bets time is failed:
         callback_in_betstime = start_callback_values.copy()
         callback_in_betstime.update({'lastUpdate': RUN_TIME + 12*ONE_HOUR})
-        self.check_start_measurement_callback_fails_with(
-            callback_values=callback_in_betstime,
-            source=self.a,
-            sender=self.oracle_address,
-            msg_contains="Can't start measurement untill oracle time"
-        )
+
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_start_measurement_succeed(
+                callback_values=callback_in_betstime,
+                source=self.a,
+                sender=self.oracle_address,
+            )
+        msg = "Can't start measurement untill oracle time"
+        self.assertTrue(msg in str(cm.exception))
 
         # Checking that measurement from wrong address is failed,
         # sender is participant instead of oracle:
-        self.check_start_measurement_callback_fails_with(
-            callback_values=start_callback_values,
-            source=self.a,
-            sender=self.a,
-            msg_contains='Unknown sender')
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_start_measurement_succeed(
+                callback_values=start_callback_values,
+                source=self.a,
+                sender=self.a,
+            )
+        msg = 'Unknown sender'
+        self.assertTrue(msg in str(cm.exception))
 
         # Emulating callback:
         self.storage = self.check_start_measurement_succeed(
@@ -187,12 +196,14 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
 
         # Check that that calling measurement after it was already succesfully
         # called before is fails:
-        self.check_start_measurement_callback_fails_with(
-            callback_values=start_callback_values,
-            source=self.a,
-            sender=self.oracle_address,
-            msg_contains='Measurement period already started'
-        )
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_start_measurement_succeed(
+                callback_values=start_callback_values,
+                source=self.a,
+                sender=self.oracle_address,
+            )
+        msg = "Measurement period already started"
+        self.assertTrue(msg in str(cm.exception))
 
         # Checking that withdrawal before contract is closed is not allowed:
         with self.assertRaises(MichelsonRuntimeError) as cm:

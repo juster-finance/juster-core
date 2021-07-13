@@ -53,11 +53,13 @@ class ForceMajeureTest(JusterBaseTestCase):
             'rate': 6_000_000
         }
 
-        self.check_start_measurement_callback_fails_with(
-            callback_values=callback_values,
-            source=self.a,
-            sender=self.oracle_address,
-            msg_contains='Measurement failed: oracle time exceed maxAllowedMeasureLag')
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_start_measurement_succeed(
+                callback_values=callback_values,
+                source=self.a,
+                sender=self.oracle_address)
+        msg = 'Measurement failed: oracle time exceed maxAllowedMeasureLag'
+        self.assertTrue(msg in str(cm.exception))
 
         # Failed to start measurement in time window, run TFM is succeed:
         self.storage = self.check_trigger_force_majeure_succeed(sender=self.a)
