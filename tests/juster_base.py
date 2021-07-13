@@ -18,7 +18,6 @@ from unittest import TestCase
 import time
 from os.path import dirname, join
 from pytezos import ContractInterface, pytezos, MichelsonRuntimeError
-from model import JusterModel
 from event_model import EventModel
 from test_data import generate_storage, ONE_HOUR, ONE_DAY
 
@@ -130,7 +129,6 @@ class JusterBaseTestCase(TestCase):
         result_storage = result.storage
 
         # Checking that state changed as expected:
-        # TODO: this self.winning_pool is very ugly, feel very bad about this
         self.assertEqual(
             (EventModel.from_storage(init_storage, self.id, self.winning_pool)
                 .provide_liquidity(participant, amount, expected_above_eq, expected_below)),
@@ -213,6 +211,7 @@ class JusterBaseTestCase(TestCase):
 
         elapsed_time = self.calc_elapsed_time(init_event)
         # Checking that state changed as expected:
+        # TODO: this self.winning_pool is very ugly, feel very bad about this
         self.assertEqual(
             (EventModel.from_storage(init_storage, self.id, self.winning_pool)
                 .bet(participant, amount, bet, elapsed_time)),
@@ -678,6 +677,5 @@ class JusterBaseTestCase(TestCase):
         # this self.storage will be used in all blocks:
         self.storage = self.init_storage.copy()
 
-        self.model = JusterModel()
         # TODO: this is bad:
         self.winning_pool = 'aboveEq'

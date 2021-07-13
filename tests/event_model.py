@@ -1,11 +1,23 @@
-from juster_base import JusterModel
+def calc_liquidity_bonus_multiplier(
+        current_time, start_time, close_time):
+    """ Returns multiplier that applied to reduce bets """
+
+    return (current_time - start_time) / (close_time - start_time)
 
 
-# TODO: try to use this model in tests instead of Juster, all Juster methods can be included in this class
+def calc_bet_return(top, bottom, amount, fee=0):
+    """ Calculates the amount that would be returned if participant wins
+        Not included the bet amount itself, only added value
+    """
+
+    ratio = top / (bottom + amount)
+    return int(amount * ratio * (1-fee))
+    
 
 class EventModel:
+    share_precision = 100_000_000
+
     def __init__(self, fee=0, winning_pool='aboveEq', a=0, b=0, total_shares=0):
-        self.juster = JusterModel()
         self.pool_a = a
         self.pool_b = b
         self.total_shares = total_shares
@@ -15,32 +27,39 @@ class EventModel:
         self.shares = {}
 
 
-    def provide_liquidity(self, user, amount, a=0, b=0):
+    def provide_liquidity(self, user, amount, pool_a=0, pool_b=0):
 
         # NOTE: here I do not perform checking that provided ratio is valid
         # NOTE: provided a & b only make sense if there are empty pools
-        a = self.pool_a if self.pool_a > 0 else a
-        b = self.pool_b if self.pool_b > 0 else b
+        pool_a = self.pool_a if self.pool_a > 0 else pool_a
+        pool_b = self.pool_b if self.pool_b > 0 else pool_b
 
-        provided_split = self.juster.calc_provide_liquidity_split(
-            amount, a, b, self.total_shares)
+        assert pool_a > 0
+        assert pool_b > 0
 
-        self.shares[user] = self.shares.get(user, 0) + provided_split['shares']
-        self.pool_a += provided_split['provided_a']
-        self.pool_b += provided_split['provided_b']
-        self.total_shares += provided_split['shares']
+        max_pool = max(pool_a, pool_b)
+        shares = int(self.total_shares * amount / max_pool)
+        shares = shares if self.total_shares > 0 else self.share_precision
+
+        provided_a = int(amount * pool_a / max_pool)
+        provided_b = int(amount * pool_b / max_pool)
+
+        self.shares[user] = self.shares.get(user, 0) + shares
+        self.pool_a += provided_a
+        self.pool_b += provided_b
+        self.total_shares += shares
 
         return self
 
 
     def bet(self, user, amount, pool, time):
 
-        multiplier = self.juster.calc_liquidity_bonus_multiplier(time, 0, 1)
+        multiplier = calc_liquidity_bonus_multiplier(time, 0, 1)
         is_above = pool == 'aboveEq'
 
         top = self.pool_b if is_above else self.pool_a
         bottom = self.pool_a if is_above else self.pool_b
-        bet_profit = self.juster.calc_bet_return(top, bottom, amount, self.fee*multiplier)
+        bet_profit = calc_bet_return(top, bottom, amount, self.fee*multiplier)
 
         self.pool_a += amount if is_above else -bet_profit
         self.pool_b += -bet_profit if is_above else amount
@@ -85,6 +104,9 @@ class EventModel:
             total_shares=event['totalLiquidityShares']
         )
 
+        # TODO: missing betsAboveEq ledger count check
+        # TODO: missing betsBelow ledger count check
+        # TODO: missing betsAboveEq / betsBelow participant record change check
 
     def __eq__(self, other):
         # TODO: check shares and diffs the same
