@@ -36,10 +36,11 @@ class DelegateAndBakingRewardsTest(JusterBaseTestCase):
         self.storage = result.storage
 
         # Trying to withdraw with address different from manager:
-        self.check_claim_baking_rewards_fails_with(
-            expected_reward=200_000,
-            sender=self.c,
-            msg_contains='Not a contract manager')
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_claim_baking_rewards_succeed(
+                expected_reward=200_000,
+                sender=self.c)
+        self.assertTrue('Not a contract manager' in str(cm.exception))
 
         # Withdrawing with manager:
         self.storage = self.check_claim_baking_rewards_succeed(

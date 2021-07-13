@@ -230,7 +230,8 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
             sender=self.oracle_address)
 
         # Trying to trigger Force Majeure is failed because event is closed:
-        self.check_trigger_force_majeure_fails_with(sender=self.a)
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_trigger_force_majeure_succeed(sender=self.a)
 
         # Withdrawals:
         self.assertEqual(self.storage['events'][self.id]['participants'], 3)

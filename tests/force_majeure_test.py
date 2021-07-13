@@ -18,7 +18,8 @@ class ForceMajeureTest(JusterBaseTestCase):
             amount=self.measure_start_fee + self.expiration_fee)
 
         # Check that trying to run TFM in betting time (at the beginning) is failed:
-        self.check_trigger_force_majeure_fails_with(sender=self.a)
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_trigger_force_majeure_succeed(sender=self.a)
 
         # Participant A: adding liquidity 1/1 just at start:
         self.storage = self.check_provide_liquidity_succeed(
@@ -37,7 +38,8 @@ class ForceMajeureTest(JusterBaseTestCase):
         # Check that trying to run TFM after betting time
         # (but inside window) is failed:
         self.current_time = self.default_event_params['betsCloseTime']
-        self.check_trigger_force_majeure_fails_with(sender=self.a)
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_trigger_force_majeure_succeed(sender=self.a)
 
 
     def test_force_majeure_start_measurement_fail(self):
@@ -98,11 +100,13 @@ class ForceMajeureTest(JusterBaseTestCase):
 
         # Trying to run force majeure during measure period is failed:
         self.current_time = bets_close_time + measure_period // 2
-        self.check_trigger_force_majeure_fails_with(sender=self.a)
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_trigger_force_majeure_succeed(sender=self.a)
 
         # Trying to run force majeure during max lag window is failed:
         self.current_time = bets_close_time + measure_period + max_lag // 2
-        self.check_trigger_force_majeure_fails_with(sender=self.a)
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_trigger_force_majeure_succeed(sender=self.a)
 
         # Trying to run close after time window is elapsed:
         max_lag = self.default_config['maxAllowedMeasureLag']

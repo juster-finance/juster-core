@@ -85,10 +85,11 @@ class ProfitSplitTest(JusterBaseTestCase):
         # Trying claim profits with not manager assert fails:
         contract_profit = int(50_000 * 0.5)
         self.assertEqual(self.storage['retainedProfits'], contract_profit)
-        self.check_claim_retained_profits_fails_with(
-            expected_profit=contract_profit,
-            sender=self.c,
-            msg_contains="Not a contract manager")
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_claim_retained_profits_succeed(
+                expected_profit=contract_profit,
+                sender=self.c)
+        self.assertTrue('Not a contract manager' in str(cm.exception))
 
         # Claiming profits with manager succeed:
         self.check_claim_retained_profits_succeed(

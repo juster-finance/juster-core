@@ -376,16 +376,6 @@ class JusterBaseTestCase(TestCase):
         return result.storage
 
 
-    def check_update_config_fails_with(self, lambda_code, sender, msg_contains=''):
-        """ Checking that updateConfig fails with error msg_contains """
-
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            result = self.contract.updateConfig(lambda_code).interpret(
-                storage=self.storage, sender=sender, now=self.current_time)
-
-        self.assertTrue(msg_contains in str(cm.exception))
-
-
     def check_trigger_force_majeure_succeed(self, sender):
 
         event = self.storage['events'][self.id]
@@ -412,15 +402,6 @@ class JusterBaseTestCase(TestCase):
         return result.storage
 
 
-    def check_trigger_force_majeure_fails_with(self, sender, msg_contains=''):
-
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            result = self.contract.triggerForceMajeure(self.id).interpret(
-                storage=self.storage, sender=sender, now=self.current_time)
-
-        self.assertTrue(msg_contains in str(cm.exception))
-
-
     def check_claim_baking_rewards_succeed(self, expected_reward, sender):
 
         result = self.contract.claimBakingRewards().interpret(
@@ -436,18 +417,6 @@ class JusterBaseTestCase(TestCase):
         return result.storage
 
 
-    def check_claim_baking_rewards_fails_with(
-        self, expected_reward, sender, msg_contains=''):
-
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            result = self.contract.claimBakingRewards().interpret(
-                now=self.current_time,
-                storage=self.storage,
-                sender=sender)
-
-        self.assertTrue(msg_contains in str(cm.exception))
-
-
     def check_claim_retained_profits_succeed(self, expected_profit, sender):
 
         result = self.contract.claimRetainedProfits().interpret(
@@ -461,18 +430,6 @@ class JusterBaseTestCase(TestCase):
         self.assertAmountEqual(operation, expected_profit)
 
         return result.storage
-
-
-    def check_claim_retained_profits_fails_with(
-        self, expected_profit, sender, msg_contains=''):
-
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            result = self.contract.claimRetainedProfits().interpret(
-                now=self.current_time,
-                storage=self.storage,
-                sender=sender)
-
-        self.assertTrue(msg_contains in str(cm.exception))
 
 
     def setUp(self):
