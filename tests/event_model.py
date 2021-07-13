@@ -14,17 +14,105 @@ def calc_bet_return(top, bottom, amount, fee=0):
     return int(amount * ratio * (1-fee))
     
 
+def select_event(ledger, event_id):
+    """ Selects only those records that are belongs to the
+        event_id, key is tuple: (participant_address, event_id) """
+
+    return {
+        key[0]: value for key, value in ledger.items()
+        if key[1] == event_id
+    }
+
+
+def select_event_ledgers(storage, event_id):
+    """ Returns ledgers for given event_id from contract storage """
+
+    ledger_names = [
+        'betsAboveEq',
+        'betsBelow',
+        'providedLiquidityAboveEq',
+        'providedLiquidityBelow',
+        'liquidityShares',
+        'depositedBets'
+    ]
+
+    return {
+        ledger_name: select_event(storage[ledger_name], event_id)
+        for ledger_name in ledger_names
+    }
+
+
+def rename_ledgers(ledgers, winning_pool):
+    """ Renames ledgers based on the given outcome """
+
+    if winning_pool == 'aboveEq':
+        ledgers['winLedger'] = ledgers.pop('betsAboveEq')
+        ledgers['splitLedger'] = ledgers.pop('providedLiquidityBelow')
+
+    elif winning_pool == 'below':
+        ledgers['winLedger'] = ledgers.pop('betsBelow')
+        ledgers['splitLedger'] = ledgers.pop('providedLiquidityAboveEq')
+
+    else:
+        raise Exception('wrong winning pool')
+
+    return ledgers
+
+
+def calculate_diff(user, ledgers, split_pool):
+    """ Calculate profit/loss for given user and ledgers """
+
+    win_amount = ledgers['winLedger'].get(user, 0)
+    deposited_bets = ledgers['depositedBets'].get(user, 0)
+    split_liquidity = ledgers['splitLedger'].get(user, 0)
+    share = ledgers['liquidityShares'].get(user, 0)
+    total_shares = sum(ledgers['liquidityShares'].values())
+
+    bets_diff = win_amount - deposited_bets
+
+    split_share = (0 if total_shares == 0 else
+        split_pool * share / total_shares)
+
+    liquidity_diff = split_share - split_liquidity
+
+    return bets_diff + liquidity_diff
+
+
+def filter_non_zero(dct):
+    return {k: v for k, v in dct.items() if v != 0}
+
+
+def calculate_diffs(ledgers, split_pool):
+    """ Calculates profit/loss for all participants
+        - ledgers: all event ledgers with win/split names
+        - split_pool: the loosed pool amount in event
+    """
+
+    participants = set(
+        participant for ledger in ledgers.values()
+        for participant in ledger)
+
+    diffs = {
+        user: calculate_diff(user, ledgers, split_pool)
+        for user in participants
+    }
+
+    return filter_non_zero(diffs)
+
+
 class EventModel:
     share_precision = 100_000_000
 
-    def __init__(self, fee=0, winning_pool='aboveEq', a=0, b=0, total_shares=0):
+    def __init__(self, fee=0, winning_pool='aboveEq', a=0, b=0,
+        total_shares=0, shares=None, diffs=None):
+
         self.pool_a = a
         self.pool_b = b
         self.total_shares = total_shares
         self.fee = fee
         self.winning_pool = winning_pool
-        self.diffs = {}
-        self.shares = {}
+        self.diffs = diffs or {}
+        self.shares = shares or {}
 
 
     def provide_liquidity(self, user, amount, pool_a=0, pool_b=0):
@@ -95,13 +183,19 @@ class EventModel:
         event = storage['events'][event_id]
         fee_nat = event['liquidityPercent']
         fee = fee_nat / storage['liquidityPrecision']
+        ledgers = select_event_ledgers(storage, event_id)
+        ledgers = rename_ledgers(ledgers, winning_pool)
+        split_pool = (event['poolBelow']
+            if winning_pool == 'aboveEq' else event['poolAboveEq'])
 
         return EventModel(
             fee=fee,
             winning_pool=winning_pool,
             a=event['poolAboveEq'],
             b=event['poolBelow'],
-            total_shares=event['totalLiquidityShares']
+            total_shares=event['totalLiquidityShares'],
+            shares=ledgers['liquidityShares'],
+            diffs=calculate_diffs(ledgers, split_pool)
         )
 
         # TODO: missing betsAboveEq ledger count check
@@ -109,13 +203,15 @@ class EventModel:
         # TODO: missing betsAboveEq / betsBelow participant record change check
 
     def __eq__(self, other):
-        # TODO: check shares and diffs the same
+
         return all([
             self.pool_a == other.pool_a,
             self.pool_b == other.pool_b,
             self.total_shares == other.total_shares,
             self.fee == other.fee,
             self.winning_pool == other.winning_pool,
+            self.shares == other.shares,
+            self.diffs == other.diffs
         ])
 
 
