@@ -166,28 +166,6 @@ class JusterBaseTestCase(TestCase):
         return result.storage
 
 
-    def check_bet_fails_with(
-            self, participant, amount, bet, minimal_win, msg_contains=''):
-        """ Makes a call to bet entrypoint and checks that there was MichelsonRuntimeError
-            If msg_contains is provided: checking that this msg_contains
-            is inside string form of cathced exception
-        """
-
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            transaction = self.contract.bet(
-                eventId=self.id,
-                bet=bet,
-                minimalWinAmount=minimal_win
-            ).with_amount(amount)
-
-            res = transaction.interpret(
-                storage=self.storage,
-                sender=participant,
-                now=self.current_time)
-
-        self.assertTrue(msg_contains in str(cm.exception))
-
-
     def _check_withdrawals_sums(
             self, withdraw_amount, result, participant, sender):
 

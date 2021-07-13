@@ -32,12 +32,15 @@ class SlippageTest(JusterBaseTestCase):
             minimal_win=1_500_000)
 
         # Participant B bets aboveEq with 1tez, expected minimal win 1_500_001 failed:
-        self.check_bet_fails_with(
-            participant=self.b,
-            amount=1_000_000,
-            bet='aboveEq',
-            minimal_win=1_500_001,
-            msg_contains='Wrong minimalWinAmount')
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_bet_succeed(
+                participant=self.b,
+                amount=1_000_000,
+                bet='aboveEq',
+                minimal_win=1_500_001)
+        msg = 'Wrong minimalWinAmount'
+        self.assertTrue(msg in str(cm.exception))
+
 
 
     def test_slippage(self):

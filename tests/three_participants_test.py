@@ -77,12 +77,14 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
         self.assertEqual(self.storage['events'][self.id]['participants'], 1)
 
         # Testing that with current ratio 1:1, bet with 10:1 ratio fails:
-        self.check_bet_fails_with(
-            participant=self.a,
-            amount=100_000,
-            bet='aboveEq',
-            minimal_win=1_000_000,
-            msg_contains='Wrong minimalWinAmount')
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_bet_succeed(
+                participant=self.a,
+                amount=100_000,
+                bet='aboveEq',
+                minimal_win=1_000_000)
+        msg = 'Wrong minimalWinAmount'
+        self.assertTrue(msg in str(cm.exception))
 
         # Participant B: bets aboveEq 50_000 after 1 hour:
         self.current_time = RUN_TIME + ONE_HOUR
@@ -164,12 +166,14 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
             sender=self.oracle_address)
 
         # Check that betting in measurement period is failed:
-        self.check_bet_fails_with(
-            participant=self.a,
-            amount=100_000,
-            bet='below',
-            minimal_win=100_000,
-            msg_contains='Bets after betCloseTime is not allowed')
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.check_bet_succeed(
+                participant=self.a,
+                amount=100_000,
+                bet='below',
+                minimal_win=100_000)
+        msg = 'Bets after betCloseTime is not allowed'
+        self.assertTrue(msg in str(cm.exception))
 
         # Check that providing liquidity in measurement period is failed:
         with self.assertRaises(MichelsonRuntimeError) as cm:
