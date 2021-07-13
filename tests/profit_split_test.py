@@ -15,7 +15,7 @@ class ProfitSplitTest(JusterBaseTestCase):
 
         # Creating event:
         amount = self.measure_start_fee + self.expiration_fee
-        self.storage = self.new_event(
+        self.new_event(
             event_params=self.default_event_params,
             amount=amount)
 
@@ -35,7 +35,7 @@ class ProfitSplitTest(JusterBaseTestCase):
             'lastUpdate': self.current_time,
             'rate': 6_000_000
         }
-        self.storage = self.start_measurement(
+        self.start_measurement(
             callback_values=callback_values,
             source=self.a,
             sender=self.oracle_address)
@@ -49,7 +49,7 @@ class ProfitSplitTest(JusterBaseTestCase):
             'lastUpdate': self.current_time,
             'rate': 7_500_000
         }
-        self.storage = self.close(
+        self.close(
             callback_values=callback_values,
             source=self.b,
             sender=self.oracle_address)
@@ -61,14 +61,14 @@ class ProfitSplitTest(JusterBaseTestCase):
         self._create_event()
 
         # Participant A: adding liquidity 50/50 just at start:
-        self.storage = self.provide_liquidity(
+        self.provide_liquidity(
             participant=self.a,
             amount=50_000,
             expected_above_eq=1,
             expected_below=1)
 
         # Participant B: bets below 50_000:
-        self.storage = self.bet(
+        self.bet(
             participant=self.b,
             amount=50_000,
             bet='below',
@@ -79,8 +79,8 @@ class ProfitSplitTest(JusterBaseTestCase):
         net_profit = int(50_000 * 0.5)
 
         # Withdrawals:
-        self.storage = self.withdraw(self.a, 50_000 + net_profit)
-        self.storage = self.withdraw(self.b, 0)
+        self.withdraw(self.a, 50_000 + net_profit)
+        self.withdraw(self.b, 0)
 
         # Trying claim profits with not manager assert fails:
         contract_profit = int(50_000 * 0.5)
@@ -103,14 +103,14 @@ class ProfitSplitTest(JusterBaseTestCase):
         self._create_event()
 
         # Participant A: adding liquidity 50/50 just at start:
-        self.storage = self.provide_liquidity(
+        self.provide_liquidity(
             participant=self.a,
             amount=50_000,
             expected_above_eq=1,
             expected_below=1)
 
         # Participant B: bets aboveEq 50_000:
-        self.storage = self.bet(
+        self.bet(
             participant=self.b,
             amount=50_000,
             bet='aboveEq',
@@ -121,8 +121,8 @@ class ProfitSplitTest(JusterBaseTestCase):
         losses = 25_000
 
         # Withdrawals:
-        self.storage = self.withdraw(self.a, 50_000 - losses)
-        self.storage = self.withdraw(self.b, 75_000)
+        self.withdraw(self.a, 50_000 - losses)
+        self.withdraw(self.b, 75_000)
 
         self.assertEqual(self.storage['retainedProfits'], 0)
 
@@ -137,14 +137,14 @@ class ProfitSplitTest(JusterBaseTestCase):
 
         # Participant A: adding liquidity 50/50 just at start:
         # 500 tez is less than current supply but almost
-        self.storage = self.provide_liquidity(
+        self.provide_liquidity(
             participant=self.a,
             amount=500*million*tez,
             expected_above_eq=1,
             expected_below=1)
 
         # Participant B: bets below 500 mln tez (and loses):
-        self.storage = self.bet(
+        self.bet(
             participant=self.b,
             amount=500*million*tez,
             bet='below',
@@ -152,7 +152,7 @@ class ProfitSplitTest(JusterBaseTestCase):
 
         # current ratio 25:100
         # Participant D: adding liquidity with same share as A (and loose some):
-        self.storage = self.provide_liquidity(
+        self.provide_liquidity(
             participant=self.d,
             amount=1_000*million*tez,
             expected_above_eq=1,
@@ -160,7 +160,7 @@ class ProfitSplitTest(JusterBaseTestCase):
 
         # current ratio 50:200
         # Participant C: bets aboveEq 300 mln (and wins 750 mln):
-        self.storage = self.bet(
+        self.bet(
             participant=self.c,
             amount=300*million*tez,
             bet='aboveEq',
@@ -181,13 +181,13 @@ class ProfitSplitTest(JusterBaseTestCase):
         d_net_loss = int(c_wins * a_share)
 
         # Withdrawals:
-        self.storage = self.withdraw(
+        self.withdraw(
             self.a, 500*million*tez + a_net_profit)
-        self.storage = self.withdraw(
+        self.withdraw(
             self.b, 0)
-        self.storage = self.withdraw(
+        self.withdraw(
             self.c, 300*million*tez + c_wins)
-        self.storage = self.withdraw(
+        self.withdraw(
             self.d, 1_000*million*tez - d_net_loss)
 
         # Claiming profits with manager succeed:
@@ -207,14 +207,14 @@ class ProfitSplitTest(JusterBaseTestCase):
         self._create_event()
 
         # Participant A: adding liquidity 50/50 just at start:
-        self.storage = self.provide_liquidity(
+        self.provide_liquidity(
             participant=self.a,
             amount=50_000,
             expected_above_eq=1,
             expected_below=1)
 
         # Participant B: bets below 50_000:
-        self.storage = self.bet(
+        self.bet(
             participant=self.b,
             amount=50_000,
             bet='below',

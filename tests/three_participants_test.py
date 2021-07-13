@@ -65,13 +65,13 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
 
         # Creating event:
         amount = self.measure_start_fee + self.expiration_fee
-        self.storage = self.new_event(
+        self.new_event(
             event_params=self.default_event_params,
             amount=amount)
         self.assertEqual(self.storage['events'][self.id]['participants'], 0)
 
         # Participant A: adding liquidity 50/50 just at start:
-        self.storage = self.provide_liquidity(
+        self.provide_liquidity(
             participant=self.a,
             amount=50_000,
             expected_above_eq=1,
@@ -90,7 +90,7 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
 
         # Participant B: bets aboveEq 50_000 after 1 hour:
         self.current_time = RUN_TIME + ONE_HOUR
-        self.storage = self.bet(
+        self.bet(
             participant=self.b,
             amount=50_000,
             bet='aboveEq',
@@ -100,7 +100,7 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
         # Participant A: adding more liquidity after 12 hours
         # (1/2 of the bets period):
         self.current_time = RUN_TIME + 12*ONE_HOUR
-        self.storage = self.provide_liquidity(
+        self.provide_liquidity(
             participant=self.a,
             amount=40_000,
             expected_above_eq=4,
@@ -109,7 +109,7 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
 
         # Participant C: adding more liquidity at the very end:
         self.current_time = RUN_TIME + 24*ONE_HOUR
-        self.storage = self.provide_liquidity(
+        self.provide_liquidity(
             participant=self.c,
             amount=80_000,
             expected_above_eq=4,
@@ -171,7 +171,7 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
         self.assertTrue(msg in str(cm.exception))
 
         # Emulating callback:
-        self.storage = self.start_measurement(
+        self.start_measurement(
             callback_values=start_callback_values,
             source=self.a,
             sender=self.oracle_address)
@@ -224,7 +224,7 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
             'lastUpdate': self.current_time - 1*ONE_HOUR,
             'rate': 7_500_000
         }
-        self.storage = self.close(
+        self.close(
             callback_values=close_callback_values,
             source=self.b,
             sender=self.oracle_address)
@@ -237,17 +237,17 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
         self.assertEqual(self.storage['events'][self.id]['participants'], 3)
         self.current_time = RUN_TIME + 64*ONE_HOUR
 
-        self.storage = self.withdraw(self.a, 65_000)
+        self.withdraw(self.a, 65_000)
         self.assertEqual(self.storage['events'][self.id]['participants'], 2)
 
         # Withdrawing twice is allowed, but it should not change anything:
-        self.storage = self.withdraw(self.a, 0, sender=self.c)
+        self.withdraw(self.a, 0, sender=self.c)
         self.assertEqual(self.storage['events'][self.id]['participants'], 2)
 
         # Another withdrawals:
-        self.storage = self.withdraw(self.b, 75_000)
+        self.withdraw(self.b, 75_000)
         self.assertEqual(self.storage['events'][self.id]['participants'], 1)
 
         # This is last participant, checking that event is removed:
-        self.storage = self.withdraw(self.c, 80_000)
+        self.withdraw(self.c, 80_000)
         self.assertFalse(self.id in self.storage['events'])

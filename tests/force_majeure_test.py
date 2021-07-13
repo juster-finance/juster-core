@@ -13,7 +13,7 @@ class ForceMajeureTest(JusterBaseTestCase):
         self.id = self.storage['nextEventId']
 
         # Creating default event:
-        self.storage = self.new_event(
+        self.new_event(
             event_params=self.default_event_params,
             amount=self.measure_start_fee + self.expiration_fee)
 
@@ -22,14 +22,14 @@ class ForceMajeureTest(JusterBaseTestCase):
             self.trigger_force_majeure(sender=self.a)
 
         # Participant A: adding liquidity 1/1 just at start:
-        self.storage = self.provide_liquidity(
+        self.provide_liquidity(
             participant=self.a,
             amount=1_000_000,
             expected_above_eq=1,
             expected_below=1)
 
         # Participant B: bets aboveEq for 1 tez:
-        self.storage = self.bet(
+        self.bet(
             participant=self.b,
             amount=1_000_000,
             bet='aboveEq',
@@ -64,16 +64,16 @@ class ForceMajeureTest(JusterBaseTestCase):
         self.assertTrue(msg in str(cm.exception))
 
         # Failed to start measurement in time window, run TFM is succeed:
-        self.storage = self.trigger_force_majeure(sender=self.a)
+        self.trigger_force_majeure(sender=self.a)
 
         # Trying to bet / LP after TFM should fail with Bets / Providing
         # liquidity after betCloseTime is not allowed. Because of this this
         # scenario is not tested here
 
         # check A withdraws the same value as he lp-ed:
-        self.storage = self.withdraw(self.a, 1_000_000)
+        self.withdraw(self.a, 1_000_000)
         # B withdraws the same value as he betted:
-        self.storage = self.withdraw(self.b, 1_000_000)
+        self.withdraw(self.b, 1_000_000)
 
 
     def test_force_majeure_close_fail(self):
@@ -93,7 +93,7 @@ class ForceMajeureTest(JusterBaseTestCase):
             'lastUpdate': self.current_time - int(0.5*ONE_HOUR),
             'rate': 8_000_000
         }
-        self.storage = self.start_measurement(
+        self.start_measurement(
             callback_values=callback_values,
             source=self.a,
             sender=self.oracle_address)
@@ -122,9 +122,9 @@ class ForceMajeureTest(JusterBaseTestCase):
         self.assertTrue(msg in str(cm.exception))
 
         # Failed to close in time window, run TFM is succeed:
-        self.storage = self.trigger_force_majeure(sender=self.a)
+        self.trigger_force_majeure(sender=self.a)
 
         # check A withdraws the same value as he lp-ed:
-        self.storage = self.withdraw(self.a, 1_000_000)
+        self.withdraw(self.a, 1_000_000)
         # B withdraws the same value as he betted:
-        self.storage = self.withdraw(self.b, 1_000_000)
+        self.withdraw(self.b, 1_000_000)

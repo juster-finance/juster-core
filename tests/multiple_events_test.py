@@ -15,7 +15,7 @@ class MultipleEventsTest(JusterBaseTestCase):
             'lastUpdate': self.current_time - int(0.5*ONE_HOUR),
             'rate': 8_000_000
         }
-        self.storage = self.start_measurement(
+        self.start_measurement(
             callback_values=callback_values,
             source=self.a,
             sender=self.oracle_address)
@@ -30,7 +30,7 @@ class MultipleEventsTest(JusterBaseTestCase):
             'lastUpdate': self.current_time - int(0.5*ONE_HOUR),
             'rate': 10_000_000
         }
-        self.storage = self.close(
+        self.close(
             callback_values=callback_values,
             source=self.a,
             sender=self.oracle_address)
@@ -41,13 +41,13 @@ class MultipleEventsTest(JusterBaseTestCase):
         self.id = self.storage['nextEventId']
 
         # Creating event 0:
-        self.storage = self.new_event(
+        self.new_event(
             event_params=self.default_event_params,
             amount=self.measure_start_fee + self.expiration_fee)
 
         # B provides liquidity [x3 1 tez]:
         for _ in range(3):
-            self.storage = self.provide_liquidity(
+            self.provide_liquidity(
                 participant=self.b,
                 amount=1_000_000,
                 expected_above_eq=1,
@@ -55,12 +55,12 @@ class MultipleEventsTest(JusterBaseTestCase):
 
         # Creating event 1:
         self.id = self.storage['nextEventId']
-        self.storage = self.new_event(
+        self.new_event(
             event_params=self.default_event_params,
             amount=self.measure_start_fee + self.expiration_fee)
 
         # B provides liquidity [x1 3 tez]:
-        self.storage = self.provide_liquidity(
+        self.provide_liquidity(
             participant=self.b,
             amount=3_000_000,
             expected_above_eq=1,
@@ -86,18 +86,18 @@ class MultipleEventsTest(JusterBaseTestCase):
             self.current_time = bets_close_time + measure_period + max_lag // 2
             self._run_close()
 
-            self.storage = self.withdraw(self.b, 3_000_000)
+            self.withdraw(self.b, 3_000_000)
 
 
         # Creating event 2:
         self.current_time = RUN_TIME
         self.id = self.storage['nextEventId']
-        self.storage = self.new_event(
+        self.new_event(
             event_params=self.default_event_params,
             amount=self.measure_start_fee + self.expiration_fee)
 
         # A provides liquidity with 3:1 rate:
-        self.storage = self.provide_liquidity(
+        self.provide_liquidity(
             participant=self.a,
             amount=3_000_000,
             expected_above_eq=3,
@@ -105,7 +105,7 @@ class MultipleEventsTest(JusterBaseTestCase):
 
         # B bets three times for 1 tez:
         for _ in range(3):
-            self.storage = self.bet(
+            self.bet(
                 participant=self.b,
                 amount=1_000_000,
                 bet='aboveEq',
@@ -113,19 +113,19 @@ class MultipleEventsTest(JusterBaseTestCase):
 
         # Creating event 3:
         self.id = self.storage['nextEventId']
-        self.storage = self.new_event(
+        self.new_event(
             event_params=self.default_event_params,
             amount=self.measure_start_fee + self.expiration_fee)
 
         # A provides liquidity with 3:1 rate:
-        self.storage = self.provide_liquidity(
+        self.provide_liquidity(
             participant=self.a,
             amount=3_000_000,
             expected_above_eq=3,
             expected_below=1)
 
         # B bets one time for 3 tez:
-        self.storage = self.bet(
+        self.bet(
             participant=self.b,
             amount=3_000_000,
             bet='aboveEq',
@@ -147,6 +147,6 @@ class MultipleEventsTest(JusterBaseTestCase):
             self.current_time = bets_close_time + measure_period + max_lag // 2
             self._run_close()
 
-            self.storage = self.withdraw(self.a, 2_500_000)
-            self.storage = self.withdraw(self.b, 3_500_000)
+            self.withdraw(self.a, 2_500_000)
+            self.withdraw(self.b, 3_500_000)
 

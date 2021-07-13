@@ -43,7 +43,7 @@ class DelegateAndBakingRewardsTest(JusterBaseTestCase):
         self.assertTrue('Not a contract manager' in str(cm.exception))
 
         # Withdrawing with manager:
-        self.storage = self.claim_baking_rewards(
+        self.claim_baking_rewards(
             expected_reward=200_000, sender=self.manager)
 
         # Sending another 500_000 mutez to contract:
@@ -54,5 +54,5 @@ class DelegateAndBakingRewardsTest(JusterBaseTestCase):
         self.storage = result.storage
 
         # Withdrawing with manager again:
-        self.storage = self.claim_baking_rewards(
+        self.claim_baking_rewards(
             expected_reward=500_000, sender=self.manager)

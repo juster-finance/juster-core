@@ -19,7 +19,7 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
             'expirationFee': self.expiration_fee,
         })
 
-        self.storage = self.new_event(
+        self.new_event(
             event_params=self.default_event_params, amount=0)
 
         # A provides liquidity with 0 tez, assert failed:
@@ -42,7 +42,7 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
         self.assertTrue(msg in str(cm.exception))
 
         # B provides 10mutez in liquidity with success:
-        self.storage = self.provide_liquidity(
+        self.provide_liquidity(
             participant=self.b,
             amount=10,
             expected_above_eq=1,
@@ -111,7 +111,7 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
             'rate': 6_000_000
         }
 
-        self.storage = self.start_measurement(
+        self.start_measurement(
             callback_values=callback_values,
             source=self.a,
             sender=self.oracle_address)
@@ -125,7 +125,7 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
             'lastUpdate': self.current_time,
             'rate': 7_500_000
         }
-        self.storage = self.close(
+        self.close(
             callback_values=callback_values,
             source=self.a,
             sender=self.oracle_address)
@@ -161,7 +161,7 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
 
         # test trying to call measurement after close is failed:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.storage = self.start_measurement(
+            self.start_measurement(
                 callback_values=callback_values,
                 source=self.a,
                 sender=self.oracle_address)
@@ -169,8 +169,8 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
         self.assertTrue(msg in str(cm.exception))
 
         # B withdraws all:
-        self.storage = self.withdraw(self.a, 0)
-        self.storage = self.withdraw(self.b, 10)
+        self.withdraw(self.a, 0)
+        self.withdraw(self.b, 10)
 
         # Test that event was deleted and any interaction would lead to error:
         with self.assertRaises(MichelsonRuntimeError) as cm:

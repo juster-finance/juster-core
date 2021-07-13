@@ -13,19 +13,19 @@ class SlippageTest(JusterBaseTestCase):
         self.id = self.storage['nextEventId']
 
         # Creating default event:
-        self.storage = self.new_event(
+        self.new_event(
             event_params=self.default_event_params,
             amount=self.measure_start_fee + self.expiration_fee)
 
         # Participant A: adding liquidity 1tez in each pool:
-        self.storage = self.provide_liquidity(
+        self.provide_liquidity(
             participant=self.a,
             amount=2_000_000,
             expected_above_eq=1,
             expected_below=1)
 
         # Participant B bets aboveEq with 1tez, expected minimal win 1_500_000 succeed:
-        self.storage = self.bet(
+        self.bet(
             participant=self.b,
             amount=1_000_000,
             bet='aboveEq',
@@ -50,12 +50,12 @@ class SlippageTest(JusterBaseTestCase):
         self.id = self.storage['nextEventId']
 
         # Creating default event:
-        self.storage = self.new_event(
+        self.new_event(
             event_params=self.default_event_params,
             amount=self.measure_start_fee + self.expiration_fee)
 
         # Participant A: adding liquidity 2:1:
-        self.storage = self.provide_liquidity(
+        self.provide_liquidity(
             participant=self.a,
             amount=3_000_000,
             expected_above_eq=2,
@@ -64,7 +64,7 @@ class SlippageTest(JusterBaseTestCase):
         # Participant B: adding liquidity 400:100 with slippage 100% succeed:
         slippage_100 = self.storage['ratioPrecision']
 
-        self.storage = self.provide_liquidity(
+        self.provide_liquidity(
             participant=self.a,
             amount=3_000_000,
             expected_above_eq=400,
@@ -83,7 +83,7 @@ class SlippageTest(JusterBaseTestCase):
         self.assertTrue(msg in str(cm.exception))
 
         # Participant B: adding liquidity 100:100 with slippage 100% succeed:
-        self.storage = self.provide_liquidity(
+        self.provide_liquidity(
             participant=self.a,
             amount=3_000_000,
             expected_above_eq=100,
@@ -104,7 +104,7 @@ class SlippageTest(JusterBaseTestCase):
         # Participant B: adding liquidity 300:100 with slippage 50% succeed:
         slippage_50 = slippage_100 // 2
 
-        self.storage = self.provide_liquidity(
+        self.provide_liquidity(
             participant=self.a,
             amount=3_000_000,
             expected_above_eq=300,

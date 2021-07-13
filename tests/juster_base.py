@@ -134,7 +134,7 @@ class JusterBaseTestCase(TestCase):
             self.assertEqual(init_model, result_model)
 
         self.check_storage_integrity(result.storage)
-        return result.storage
+        self.storage = result.storage
 
 
     def bet(
@@ -155,7 +155,7 @@ class JusterBaseTestCase(TestCase):
             self.assertEqual(init_model, result_model)
 
         self.check_storage_integrity(result.storage)
-        return result.storage
+        self.storage = result.storage
 
 
     def _check_withdrawals_sums(
@@ -232,7 +232,7 @@ class JusterBaseTestCase(TestCase):
         self.assertFalse(key in storage['depositedBets'])
 
         self.check_storage_integrity(storage)
-        return storage
+        self.storage = storage
 
 
     def new_event(self, event_params, amount):
@@ -263,7 +263,7 @@ class JusterBaseTestCase(TestCase):
         self.assertDictEqual(proper_event, selected_event_keys)
 
         self.check_storage_integrity(result_storage)
-        return result_storage
+        self.storage = result_storage
 
 
     def start_measurement(self, callback_values, source, sender):
@@ -309,7 +309,7 @@ class JusterBaseTestCase(TestCase):
             self.assertAmountEqual(operation, self.measure_start_fee)
 
         self.check_storage_integrity(result.storage)
-        return result.storage
+        self.storage = result.storage
 
 
     def close(self, callback_values, source, sender):
@@ -356,7 +356,7 @@ class JusterBaseTestCase(TestCase):
             self.assertAmountEqual(operation, self.expiration_fee)
 
         self.check_storage_integrity(result.storage)
-        return result.storage
+        self.storage = result.storage
 
 
     def update_config(self, lambda_code, sender):
@@ -365,7 +365,7 @@ class JusterBaseTestCase(TestCase):
         result = self.contract.updateConfig(lambda_code).interpret(
             storage=self.storage, sender=sender, now=self.current_time)
 
-        return result.storage
+        self.storage = result.storage
 
 
     def trigger_force_majeure(self, sender):
@@ -391,7 +391,7 @@ class JusterBaseTestCase(TestCase):
 
             self.assertAmountEqual(operation, amount)
 
-        return result.storage
+        self.storage = result.storage
 
 
     def claim_baking_rewards(self, expected_reward, sender):
@@ -406,7 +406,7 @@ class JusterBaseTestCase(TestCase):
         self.assertEqual(operation['destination'], self.manager)
         self.assertAmountEqual(operation, expected_reward)
 
-        return result.storage
+        self.storage = result.storage
 
 
     def claim_retained_profits(self, expected_profit, sender):
@@ -421,7 +421,7 @@ class JusterBaseTestCase(TestCase):
         self.assertEqual(operation['destination'], self.manager)
         self.assertAmountEqual(operation, expected_profit)
 
-        return result.storage
+        self.storage = result.storage
 
 
     def setUp(self):

@@ -24,7 +24,7 @@ class EventPauseTest(JusterBaseTestCase):
             amount=self.measure_start_fee + self.expiration_fee)
 
         # Setting pause:
-        self.storage = self.update_config(
+        self.update_config(
             trigger_pause, self.manager)
 
         self.assertTrue(self.storage['config']['isEventCreationPaused'])
@@ -38,7 +38,7 @@ class EventPauseTest(JusterBaseTestCase):
         self.assertTrue(msg in str(cm.exception))
 
         # Unsetting pause:
-        self.storage = self.update_config(
+        self.update_config(
             trigger_pause, self.manager)
 
         self.assertFalse(self.storage['config']['isEventCreationPaused'])
