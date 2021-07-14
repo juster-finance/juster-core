@@ -112,8 +112,8 @@ class EventModel:
         self.total_shares = total_shares
         self.fee = fee
         self.winning_pool = winning_pool
-        self.diffs = diffs or {}
-        self.shares = shares or {}
+        self.diffs = (diffs or {}).copy()
+        self.shares = (shares or {}).copy()
 
 
     def provide_liquidity(self, user, amount, pool_a=0, pool_b=0):
