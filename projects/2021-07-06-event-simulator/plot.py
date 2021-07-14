@@ -3,14 +3,16 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 
-def make_histogram(series, bins=30, range=(0.85, 1.15)):
+def make_histogram(series, bins=30, range=None):
+    if range is None:
+        range = (series.min(), series.max())
     bins = np.histogram(series, bins=bins, range=range, density=True)
     return pd.Series(bins[0], index=bins[1][:-1])
 
 
 def plot_hist(series, ax):
     ax.axvline(x=1, color='#666666', linestyle='--', linewidth=1)
-    ax = make_histogram(series).plot(ax=ax)
+    ax = make_histogram(series, range=(0.85, 1.15)).plot(ax=ax)
     return ax
 
 

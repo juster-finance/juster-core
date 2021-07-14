@@ -32,6 +32,7 @@ def generate_params(market_dynamics, target_dynamics):
 
     # this params affect liquidity size / bet size:
     providers_exp_scale = 100_000_000
+    providers_min = 10_000_000
     bet_value_exp_scale = 10_000_000
 
     # absolute percent error of provider are saved to be used in further analysis:
@@ -42,7 +43,7 @@ def generate_params(market_dynamics, target_dynamics):
         ticks = 1000,
 
         # chance that one of the users will bet during the tick:
-        bet_chance = choice([0.001, 0.01, 0.1, 0.5]),
+        bet_chance = uniform(0.001, 0.200),
 
         # amount of unique users in event:
         # NOTE: users count does not affect chances
@@ -53,12 +54,13 @@ def generate_params(market_dynamics, target_dynamics):
 
         target_dynamics = target_dynamics,
 
-        fee = choice([0, 0.005, 0.01, 0.03, 0.05]),
+        # TODO: replace with uniform dist and then use bins?
+        fee = choice([0, 0.001, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05]),
 
-        primary_provider_amount = exponential(providers_exp_scale),
+        primary_provider_amount = providers_min + exponential(providers_exp_scale),
         primary_provider_expected_a = provider_expected_a,
         primary_provider_expected_a_ape = provider_expected_a_ape,
-        following_provider_amount = exponential(providers_exp_scale),
+        following_provider_amount = providers_min + exponential(providers_exp_scale),
 
         # np.random.exponential param used to generate random value for bets
         bet_value_exp_scale = bet_value_exp_scale,
