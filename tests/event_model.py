@@ -109,6 +109,10 @@ class EventModel:
     def __init__(self, fee=0, winning_pool='aboveEq', pool_a=0, pool_b=0,
         total_shares=0, shares=None, diffs=None):
 
+        assert pool_a >= 0
+        assert pool_b >= 0
+        assert total_shares >= 0
+
         self.pool_a = pool_a
         self.pool_b = pool_b
         self.total_shares = total_shares
@@ -117,8 +121,12 @@ class EventModel:
         self.diffs = (diffs or {}).copy()
         self.shares = (shares or {}).copy()
 
+        assert all(v > 0 for v in self.shares.values())
+
 
     def provide_liquidity(self, user, amount, pool_a=0, pool_b=0):
+
+        assert amount >= 0
 
         # NOTE: here I do not perform checking that provided ratio is valid
         # NOTE: provided a & b only make sense if there are empty pools
@@ -144,7 +152,16 @@ class EventModel:
 
 
     def bet(self, user, amount, pool, time):
+        """ Changes event state adding bet from user to the given pool using
+            time param to calculate fees
+            - user: user identificator (string for example)
+            - amount: bet value
+            - pool: either aboveEq or below pool
+            - time: value between 0 and 1 when bet was placed where
+                0 is event started and 1 is bet close time
+        """
 
+        assert amount >= 0
         multiplier = calc_liquidity_bonus_multiplier(time, 0, 1)
         is_above = pool == 'aboveEq'
 
