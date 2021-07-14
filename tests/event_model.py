@@ -75,7 +75,7 @@ def calculate_diff(user, ledgers, split_pool):
 
     liquidity_diff = split_share - split_liquidity
 
-    return bets_diff + liquidity_diff
+    return int(bets_diff + liquidity_diff)
 
 
 def filter_non_zero(dct):
