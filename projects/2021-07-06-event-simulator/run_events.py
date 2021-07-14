@@ -37,7 +37,7 @@ def run_random_event(**run_event_params):
         pool_b=(1 - p.primary_provider_expected_a)
     )
 
-    following_provider_entry_tick = randint(0, p.ticks)
+    following_provider_entry_tick = randint(0, p.ticks-1)
 
     for tick in range(p.ticks):
         if p.bet_chance > random():
