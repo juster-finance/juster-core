@@ -174,9 +174,10 @@ class EventModel:
             self.diffs[provider] = self.diffs.get(provider, 0) + fraction*amount
 
 
-    def __repr__(self):
+    def to_dict(self):
+        """ Returns all storage values in dict form """
 
-        dict_repr = dict(
+        return dict(
             pool_a=self.pool_a,
             pool_b=self.pool_b,
             total_shares=self.total_shares,
@@ -186,7 +187,12 @@ class EventModel:
             shares=self.shares
         )
 
-        return (f'<Event>\n{json.dumps(dict_repr, indent=4)}')
+
+    def __repr__(self):
+        """ This can lead to some problems if keys of the shares/diffs is not
+            serializable, but otherwise it works fine """
+
+        return (f'<Event>\n{json.dumps(self.to_dict(), indent=4)}')
 
 
     @classmethod
