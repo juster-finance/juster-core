@@ -41,8 +41,8 @@ EXAMPLE_STORAGE = {
 EXAMPLE_EVENT_ARGS = {
     'fee': 0,
     'winning_pool': 'aboveEq',
-    'a': 220_000,
-    'b': 55_000,
+    'pool_a': 220_000,
+    'pool_b': 55_000,
     'total_shares': 220_000_000,
     'shares': {
         'tz1RS9GoEXakf9iyBmSaheLMcakFRtzBXpWE': 80_000_000,
@@ -58,28 +58,49 @@ EXAMPLE_EVENT_ARGS = {
 
 class EventModelTest(TestCase):
     def test_bet_pool_a_win(self):
-        event = EventModel(fee=0.03, winning_pool='aboveEq', a=1_000_000, b=1_000_000)
+        event = EventModel(
+            fee=0.03,
+            winning_pool='aboveEq',
+            pool_a=1_000_000,
+            pool_b=1_000_000
+        )
         event.bet('user', 1_000_000, 'aboveEq', 0)
         self.assertTrue(event.diffs['user'] == 500_000)
         self.assertTrue(event.pool_a == 2_000_000)
         self.assertTrue(event.pool_b == 500_000)
 
     def test_bet_pool_b_win(self):
-        event = EventModel(fee=0, winning_pool='below', a=4_000_000, b=1_000_000)
+        event = EventModel(
+            fee=0,
+            winning_pool='below',
+            pool_a=4_000_000,
+            pool_b=1_000_000
+        )
         event.bet('user', 1_000_000, 'below', 1)
         self.assertTrue(event.diffs['user'] == 2_000_000)
         self.assertTrue(event.pool_a == 2_000_000)
         self.assertTrue(event.pool_b == 2_000_000)
 
     def test_bet_pool_b_lose(self):
-        event = EventModel(fee=0, winning_pool='aboveEq', a=2_000_000, b=1_000_000)
+        event = EventModel(
+            fee=0,
+            winning_pool='aboveEq',
+            pool_a=2_000_000,
+            pool_b=1_000_000
+        )
         event.bet('user', 1_000_000, 'below', 1)
         self.assertTrue(event.diffs['user'] == -1_000_000)
         self.assertTrue(event.pool_a == 1_000_000)
         self.assertTrue(event.pool_b == 2_000_000)
 
     def test_provide_liquidity(self):
-        event = EventModel(fee=0, winning_pool='aboveEq', a=1_000_000, b=1_000_000, total_shares=100)
+        event = EventModel(
+            fee=0,
+            winning_pool='aboveEq',
+            pool_a=1_000_000,
+            pool_b=1_000_000,
+            total_shares=100
+        )
         event.provide_liquidity('provider', 1_000_000)
         self.assertTrue(event.shares['provider'] == 100)
         self.assertTrue(event.total_shares == 200)
@@ -93,7 +114,11 @@ class EventModelTest(TestCase):
         self.assertTrue(event.diffs['provider'] == 1_000_000)
 
     def test_first_provide_liquidity(self):
-        event = EventModel(fee=0, winning_pool='aboveEq', total_shares=100)
+        event = EventModel(
+            fee=0,
+            winning_pool='aboveEq',
+            total_shares=100
+        )
         event.provide_liquidity('provider', 4_000_000, 4, 1)
         self.assertTrue(event.pool_a == 4_000_000)
         self.assertTrue(event.pool_b == 1_000_000)
@@ -102,7 +127,12 @@ class EventModelTest(TestCase):
         self.assertTrue(event.diffs['provider'] == 0)
 
     def test_bet_with_fee(self):
-        event = EventModel(fee=0.2, winning_pool='aboveEq', a=1_000_000, b=1_000_000)
+        event = EventModel(
+            fee=0.2,
+            winning_pool='aboveEq',
+            pool_a=1_000_000,
+            pool_b=1_000_000
+        )
         event.bet('user', 1_000_000, 'aboveEq', 0.5)
         self.assertTrue(event.diffs['user'] == 450_000)
         self.assertTrue(event.pool_a == 2_000_000)

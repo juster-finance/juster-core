@@ -103,12 +103,11 @@ def calculate_diffs(ledgers, split_pool):
 class EventModel:
     share_precision = 100_000_000
 
-    def __init__(self, fee=0, winning_pool='aboveEq', a=0, b=0,
+    def __init__(self, fee=0, winning_pool='aboveEq', pool_a=0, pool_b=0,
         total_shares=0, shares=None, diffs=None):
-        # TODO: rename a -> pool_a, b -> pool_b
 
-        self.pool_a = a
-        self.pool_b = b
+        self.pool_a = pool_a
+        self.pool_b = pool_b
         self.total_shares = total_shares
         self.fee = fee
         self.winning_pool = winning_pool
@@ -192,8 +191,8 @@ class EventModel:
         return EventModel(
             fee=fee,
             winning_pool=winning_pool,
-            a=event['poolAboveEq'],
-            b=event['poolBelow'],
+            pool_a=event['poolAboveEq'],
+            pool_b=event['poolBelow'],
             total_shares=event['totalLiquidityShares'],
             shares=ledgers['liquidityShares'],
             diffs=calculate_diffs(ledgers, split_pool)
