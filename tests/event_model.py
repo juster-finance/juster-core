@@ -1,3 +1,6 @@
+import json
+
+
 def calc_liquidity_bonus_multiplier(
         current_time, start_time, close_time):
     """ Returns multiplier that applied to reduce bets """
@@ -172,8 +175,18 @@ class EventModel:
 
 
     def __repr__(self):
-        return (f'<Event>\n{self.pool_a=}\n{self.pool_b=}\n{self.total_shares=}\n{self.fee=}'
-            + f'\n{self.winning_pool=}\n{self.diffs=}\n{self.shares=}')
+
+        dict_repr = dict(
+            pool_a=self.pool_a,
+            pool_b=self.pool_b,
+            total_shares=self.total_shares,
+            fee=self.fee,
+            winning_pool=self.winning_pool,
+            diffs=self.diffs,
+            shares=self.shares
+        )
+
+        return (f'<Event>\n{json.dumps(dict_repr, indent=4)}')
 
 
     @classmethod
