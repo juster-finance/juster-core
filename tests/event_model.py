@@ -188,7 +188,7 @@ class EventModel:
 
         for provider, shares in self.shares.items():
             fraction = self.shares.get(provider, 0) / self.total_shares
-            self.diffs[provider] = self.diffs.get(provider, 0) + fraction*amount
+            self.diffs[provider] = self.diffs.get(provider, 0) + int(fraction*amount)
 
 
     def to_dict(self):
@@ -210,6 +210,19 @@ class EventModel:
             serializable, but otherwise it works fine """
 
         return (f'<Event>\n{json.dumps(self.to_dict(), indent=4)}')
+
+
+    def copy(self):
+        """ Returns copy of the same event """
+        return EventModel(
+            fee=self.fee,
+            winning_pool=self.winning_pool,
+            pool_a=self.pool_a,
+            pool_b=self.pool_b,
+            total_shares=self.total_shares,
+            shares=self.shares.copy(),
+            diffs=self.diffs.copy()
+        )
 
 
     @classmethod
