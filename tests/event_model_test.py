@@ -1,5 +1,6 @@
 from unittest import TestCase
 from event_model import EventModel
+from random import random
 
 
 # storage from three_participants_test at the moment after event is closed:
@@ -180,3 +181,20 @@ class EventModelTest(TestCase):
         mod_event = event.copy().bet('user', 0, 'aboveEq', 0.5)
 
         self.assertEqual(event, mod_event)
+
+
+    def test_pool_views(self):
+
+        iterations = 100
+
+        for _ in range(100):
+
+            event = EventModel(pool_a=random(), pool_b=random())
+            self.assertAlmostEqual(
+                event.pool_a_ratio() * event.pool_b_ratio(),
+                1)
+
+            self.assertAlmostEqual(
+                event.pool_a_expected() + event.pool_b_expected(),
+                1)
+

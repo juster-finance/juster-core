@@ -225,6 +225,36 @@ class EventModel:
         )
 
 
+    # There are different ways to measure ratio / expected return:
+    # - pool_X_expected is normalized value of the X pool share
+    # - pool_X_ratio is the X pool divided by the opposite pool
+    # - there are also pool_X_return: it is pool_X_ratio + 1 and this is
+    #       return of the bet if X pool wins
+
+    def pool_a_expected(self):
+        """ Returns normalized pool_a expectance """
+
+        return self.pool_a / (self.pool_a + self.pool_b)
+
+
+    def pool_b_expected(self):
+        """ Returns normalized pool_a expectance """
+
+        return self.pool_b / (self.pool_a + self.pool_b)
+
+
+    def pool_a_ratio(self):
+        """ Returns the ratio for pool_a """
+
+        return self.pool_a / self.pool_b
+
+
+    def pool_b_ratio(self):
+        """ Returns the ratio for pool_b """
+
+        return self.pool_b / self.pool_a
+
+
     @classmethod
     def from_storage(cls, storage, event_id, winning_pool):
         """ Creates exemplar of this class using contract storage data """
