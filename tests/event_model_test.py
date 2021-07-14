@@ -110,7 +110,6 @@ class EventModelTest(TestCase):
 
 
     def test_from_storage_and_equal(self):
-
         created_event = EventModel.from_storage(
             storage=EXAMPLE_STORAGE,
             event_id=0,
@@ -121,7 +120,16 @@ class EventModelTest(TestCase):
         self.assertEqual(created_event, target_event)
 
 
-    def test_not_equal(self):
-        pass
-        # TODO: test __eq__ with two different objects
+    def test_equal_not_equal(self):
+        first_event = EventModel(**EXAMPLE_EVENT_ARGS)
+        second_event = EventModel(**EXAMPLE_EVENT_ARGS)
+        self.assertEqual(first_event, second_event)
+
+        second_event.provide_liquidity(
+            user='tz1RS9GoEXakf9iyBmSaheLMcakFRtzBXpWE',
+            amount=100_000
+        )
+
+        self.assertNotEqual(first_event, second_event)
+
 
