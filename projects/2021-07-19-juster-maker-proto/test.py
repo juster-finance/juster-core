@@ -4,6 +4,7 @@ from event_emitter import EventCreationEmitter
 from bulk_sender import BulkSender
 from unittest.mock import MagicMock, Mock, patch
 from asyncio import Queue
+import time
 
 
 DEFAULT_EVENT_PARAMS = params = {
@@ -28,7 +29,8 @@ class EventEmitterTest(TestCase):
             period=1,
             contract=contract,
             operations_queue=operations_queue,
-            event_params=DEFAULT_EVENT_PARAMS)
+            event_params=DEFAULT_EVENT_PARAMS,
+            next_at=time.time())
 
         loop.run_until_complete(event_emitter.execute())
         contract.newEvent.assert_called()
