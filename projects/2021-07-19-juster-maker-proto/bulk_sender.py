@@ -29,8 +29,8 @@ class BulkSender(LoopExecutor):
         try:
             # TODO: logging instead of printing, add .json_payload() info and hahses
             print(f'making bulk of {len(operations)} operations')
-            result = self.client.bulk(*operations).autofill().sign()
-            print(f'signed, result hash: {result.hash()}')
+            result = self.client.bulk(*operations).autofill().sign().inject()
+            print(f'signed, result: {result}')
             # TODO: add inject()
             return result
 
@@ -38,8 +38,16 @@ class BulkSender(LoopExecutor):
             print(f'catched {type(e)} in sign: {str(e)}')
             # TODO: here I need to classify error and if it was RPC error: return
             # operations back to the queue, if not: raise this e
-            import pdb; pdb.set_trace()
-            raise e
+            # raise e
+
+            # TODO: change this list to RPCError, MichelsonError and other possible errors that
+            # required to cancel transaction and return operation to the queue
+            if type(e) in [Exception]:
+                # Returning operations to the queue:
+                for operation in operations:
+                    await self.operations_queue.put(operation)
+
+            # import pdb; pdb.set_trace()
 
 
     async def is_ready_to_sign(self, sleep_time=90):

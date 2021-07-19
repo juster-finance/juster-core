@@ -2,8 +2,7 @@ import asyncio
 from unittest import TestCase
 from event_emitter import EventCreationEmitter
 from bulk_sender import BulkSender
-from unittest.mock import MagicMock
-from unittest.mock import patch
+from unittest.mock import MagicMock, Mock, patch
 from asyncio import Queue
 
 
@@ -41,25 +40,35 @@ class EventEmitterTest(TestCase):
 
 
 class BulkSenderTest(TestCase):
+    def setUp(self):
+        self.loop = asyncio.get_event_loop()
+        self.operations_queue = Queue(10)
+
 
     @patch('pytezos.PyTezosClient')
     def test_transaction_is_send(self, client):
-        loop = asyncio.get_event_loop()
-        operations_queue = Queue(10)
-        bs = BulkSender(period=1, client=client, operations_queue=operations_queue)
 
-        loop.run_until_complete(operations_queue.put('some transaction'))
-        self.assertEqual(operations_queue.qsize(), 1)
-
-        result = loop.run_until_complete(bs.execute())
-
+        bs = BulkSender(period=1, client=client, operations_queue=self.operations_queue)
+        self.loop.run_until_complete(self.operations_queue.put('some transaction'))
+        self.assertEqual(self.operations_queue.qsize(), 1)
+        self.loop.run_until_complete(bs.execute())
         client.bulk.assert_called()
-        self.assertEqual(operations_queue.qsize(), 0)
+        self.assertEqual(self.operations_queue.qsize(), 0)
+
+
+    @patch('pytezos.PyTezosClient')
+    def test_failed_transaction_returned_to_the_queue(self, client):
+
+        bs = BulkSender(period=1, client=client, operations_queue=self.operations_queue)
+        self.loop.run_until_complete(self.operations_queue.put('some transaction'))
+        client.bulk = Mock(side_effect=Exception('TODO: change me to RPC error'))
+        self.assertEqual(self.operations_queue.qsize(), 1)
+        self.loop.run_until_complete(bs.execute())
+        client.bulk.assert_called()
+        self.assertEqual(self.operations_queue.qsize(), 1)
+
 
     ''' TODO:
-    def test_failed_transaction_returned_to_the_queue(self):
-        pass
-
     def test_failed_transaction_runned_again(self):
         pass
     '''
