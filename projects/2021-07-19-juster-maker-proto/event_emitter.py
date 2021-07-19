@@ -22,6 +22,16 @@ class EventCreationEmitter(LoopExecutor):
 
 
     async def create_event(self):
+
+        # waiting if first_at time is set:
+        if self.event_params.get('first_at'):
+            time_before_first = self.event_params['first_at'] - time.time()
+            if time_before_first > 0:
+                await_time = int(time_before_first*0.9)
+                print(f'time has not come, waiting a little: {await_time} secs')
+                await asyncio.sleep(await_time)
+
+        # creating event:
         event_params = {
             'currencyPair': self.event_params['currency_pair'],
             'targetDynamics': self.event_params['target_dynamics'],

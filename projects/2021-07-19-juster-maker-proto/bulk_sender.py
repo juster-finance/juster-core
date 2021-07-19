@@ -31,7 +31,6 @@ class BulkSender(LoopExecutor):
             print(f'making bulk of {len(operations)} operations')
             result = self.client.bulk(*operations).autofill().sign().inject()
             print(f'signed, result: {result}')
-            # TODO: add inject()
             return result
 
         except Exception as e:

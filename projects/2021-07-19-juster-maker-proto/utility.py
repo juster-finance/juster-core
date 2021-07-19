@@ -1,3 +1,6 @@
+from datetime import datetime
+
+
 async def repeat_until_succeed(
         func, allowed_exceptions=None, max_attempts=10, wait_after_fail=10):
     """ Runs func for multiple times if it was failed with any of the allowed
@@ -16,3 +19,9 @@ async def repeat_until_succeed(
             else:
                 raise e
 
+
+def date_to_timestamp(date, time_format='%Y-%m-%d %H:%M:%S'):
+    """ Converts date to timestamp using by default
+        '%Y-%m-%d %H:%M:%S' format """
+
+    return datetime.strptime(date, time_format).timestamp()
