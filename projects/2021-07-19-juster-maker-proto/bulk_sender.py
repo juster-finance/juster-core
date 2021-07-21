@@ -31,6 +31,10 @@ class BulkSender(LoopExecutor):
             print(f'making bulk of {len(operations)} operations')
             result = self.client.bulk(*operations).autofill().sign().inject()
             print(f'signed, result: {result}')
+            
+            # TODO: need to check that event really successfully created
+            # (maybe RPC call or something like this?)
+            # maybe callback here to check how it was created?
             return result
 
         except Exception as e:

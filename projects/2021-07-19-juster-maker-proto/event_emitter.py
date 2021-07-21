@@ -41,6 +41,7 @@ class EventCreationEmitter(LoopExecutor):
             'liquidityPercent': self.event_params['liquidity_percent'],
         }
 
+        # TODO: should I move this fees from event_params into event emitter params?
         fees = self.event_params['expiration_fee'] + self.event_params['measure_start_fee']
         transaction = self.contract.newEvent(event_params).with_amount(fees).as_transaction()
         await self.operations_queue.put(transaction)
