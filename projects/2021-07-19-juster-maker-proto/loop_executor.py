@@ -2,6 +2,7 @@ import asyncio
 from abc import abstractmethod
 
 
+# TODO: rename LoopWorker?
 class LoopExecutor:
     """ Executes self.execute each period seconds """
 

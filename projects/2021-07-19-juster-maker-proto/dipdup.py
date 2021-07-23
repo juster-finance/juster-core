@@ -9,82 +9,77 @@ class JusterDipDupClient:
 
 
     def __init__(self):
+
+        self.last_line_event_query_text = self.read_query('queries/last_line_event.graphql')
+        self.all_events_query_text = self.read_query('queries/all_events.graphql')
+
         self.endpoint = HTTPEndpoint(self.endpoint_uri)
+
+
+    def read_query(self, filename):
+        with open(filename, 'r') as f:
+            return f.read()
+
+
+    def deserialize_event(self, event):
+        event['created_time'] = parse(event['created_time'])
+        event['bets_close_time'] = parse(event['bets_close_time'])
+        return event
 
     
     def query_all_events(self):
-        query = '''
-            query QueryAllEvents {
-              juster_event(order_by: {bets_close_time: desc}) {
-                created_time
-                bets_close_time
-                id
-                currency_pair {
-                  symbol
-                }
-                measure_period
-                target_dynamics
-              }
-            }
-        '''
 
+        query = sel.all_events_query_text
         data = self.endpoint(query)
-        return data
+        events = data['data']['juster_event']
+
+        events = [self.deserialize_event(event) for event in events]
+        return events
 
 
-    def query_last_events(self, currency_pair, target_dynamics, measure_period):
+    def query_last_line_event(self, currency_pair, target_dynamics, measure_period, creators):
         """ Requests last event in line with given params """
-    
-        query = '''
-            query MyQuery($target_dynamics: numeric = "1", $currency_pair: String = "BTC-USD", $measure_period: bigint = "3600") {
-              juster_event(order_by: {bets_close_time: desc}, where: {currency_pair: {symbol: {_eq: $currency_pair}}, measure_period: {_eq: $measure_period}, target_dynamics: {_eq: $target_dynamics}}) {
-                bets_close_time
-                id
-                currency_pair {
-                  symbol
-                }
-                measure_period
-                target_dynamics
-                created_time
-                status
-                liquidity_percent
-              }
-            }
-        '''
+
+        query = self.last_line_event_query_text
 
         variables = dict(
             currency_pair=currency_pair,
             target_dynamics=target_dynamics,
-            measure_period=measure_period
+            measure_period=measure_period,
+            creators=creators
         )
+
         data = self.endpoint(query, variables)
-        return data
+        events = data['data']['juster_event']
+
+        if len(events):
+            return self.deserialize_event(events[0])
+
+        # TODO: what to do if there are no event found?
 
 
 # TODO: decide where should this function exist:
 # (maybe split in parts and add to dd?)
-def get_last_bets_close_timestamp(dd, event_params, hour_timestamp=0):
+def get_last_bets_close_timestamp(dd, event_params, creators, hour_timestamp=0):
     """ Makes query about the last event with similar to event_params
         to the dipdup endpoint and converts result to datetime
 
         This date is useful to understand when next event should be emitted
     """
 
-    data = dd.query_last_events(
+    last_event = dd.query_last_line_event(
         event_params['currency_pair'],
         event_params['target_dynamics'],
-        event_params['measure_period'])
+        event_params['measure_period'],
+        creators
+    )
 
     # TODO: need to query creator address too, this is good to check if this address
     # within whitelist of our event creation system
 
-    last_events = data['data']['juster_event']
-
-    if len(last_events):
-        last_date_created = parse(last_events[0]['bets_close_time'])
-        timestamp = int(last_date_created.timestamp())
-
-        return timestamp
+    if last_event:
+        last_date_created = int(last_event['bets_close_time'].timestamp())
+        return last_date_created
 
     else:
         # TODO: make this into logs

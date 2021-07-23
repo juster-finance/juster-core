@@ -40,7 +40,7 @@ class EventCreationEmitter(LoopExecutor):
         assert event_params['liquidity_percent'] >= 0.0
 
 
-    def _make_event_transaction(self):
+    async def _make_event_transaction(self):
 
         # creating event:
         event_params = {
@@ -75,7 +75,7 @@ class EventCreationEmitter(LoopExecutor):
         is_late = late_time > self.event_params['bets_period'] / 2
 
         if not is_late:
-            self._make_event_transaction()
+            await self._make_event_transaction()
 
         # anyway if it is late or if new event created, changing next_at timestamp:
         self.next_at = self.next_at + self.event_params['bets_period']
