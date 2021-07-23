@@ -61,19 +61,33 @@ class JusterDipDupClient:
         return data
 
 
-    def get_last_created_date(self, event_params):
-        """ Makes query about the last event with similar to event_params
-            to the dipdup endpoint and converts result to datetime """
+# TODO: decide where should this function exist:
+# (maybe split in parts and add to dd?)
+def get_last_bets_close_timestamp(dd, event_params, hour_timestamp=0):
+    """ Makes query about the last event with similar to event_params
+        to the dipdup endpoint and converts result to datetime
 
-        data = self.query_last_events(
-            event_params['currency_pair'],
-            event_params['target_dynamics'],
-            event_params['measure_period'])
+        This date is useful to understand when next event should be emitted
+    """
 
-        # TODO: need to query creator address too, this is good to check if this address
-        # within whitelist of our event creation system
+    data = dd.query_last_events(
+        event_params['currency_pair'],
+        event_params['target_dynamics'],
+        event_params['measure_period'])
 
-        last_events = data['data']['juster_event']
-        # TODO: check if there are any events found
+    # TODO: need to query creator address too, this is good to check if this address
+    # within whitelist of our event creation system
+
+    last_events = data['data']['juster_event']
+
+    if len(last_events):
         last_date_created = parse(last_events[0]['bets_close_time'])
-        return last_date_created
+        timestamp = int(last_date_created.timestamp())
+
+        return timestamp
+
+    else:
+        # TODO: make this into logs
+        print(f'last bets close timestamp is not found: {event_params}, '
+              + f'using default timestamp = {hour_timestamp}')
+        return hour_timestamp

@@ -45,12 +45,16 @@ class BulkSender(LoopExecutor):
 
             # TODO: change this list to RPCError, MichelsonError and other possible errors that
             # required to cancel transaction and return operation to the queue
-            if type(e) in [Exception]:
+            # if type(e) in [Exception]:
                 # Returning operations to the queue:
-                for operation in operations:
-                    await self.operations_queue.put(operation)
+
+            for operation in operations:
+                await self.operations_queue.put(operation)
 
             # import pdb; pdb.set_trace()
+            
+            # catched:
+            # -- requests.exceptions.ConnectionError
 
 
     async def is_ready_to_sign(self, sleep_time=90):
