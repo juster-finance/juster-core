@@ -29,7 +29,7 @@ class JusterDipDupClient:
     
     def query_all_events(self):
 
-        query = sel.all_events_query_text
+        query = self.all_events_query_text
         data = self.endpoint(query)
         events = data['data']['juster_event']
 
