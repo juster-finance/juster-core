@@ -46,7 +46,7 @@ class JusterDipDupClient:
             currency_pair=currency_pair,
             target_dynamics=target_dynamics,
             measure_period=measure_period,
-            creators=creators
+            # creators=creators
         )
 
         data = self.endpoint(query, variables)
@@ -56,33 +56,3 @@ class JusterDipDupClient:
             return self.deserialize_event(events[0])
 
         # TODO: what to do if there are no event found?
-
-
-# TODO: decide where should this function exist:
-# (maybe split in parts and add to dd?)
-def get_last_bets_close_timestamp(dd, event_params, creators, hour_timestamp=0):
-    """ Makes query about the last event with similar to event_params
-        to the dipdup endpoint and converts result to datetime
-
-        This date is useful to understand when next event should be emitted
-    """
-
-    last_event = dd.query_last_line_event(
-        event_params['currency_pair'],
-        event_params['target_dynamics'],
-        event_params['measure_period'],
-        creators
-    )
-
-    # TODO: need to query creator address too, this is good to check if this address
-    # within whitelist of our event creation system
-
-    if last_event:
-        last_date_created = int(last_event['bets_close_time'].timestamp())
-        return last_date_created
-
-    else:
-        # TODO: make this into logs
-        print(f'last bets close timestamp is not found: {event_params}, '
-              + f'using default timestamp = {hour_timestamp}')
-        return hour_timestamp

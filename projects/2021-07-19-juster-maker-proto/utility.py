@@ -1,4 +1,5 @@
 from datetime import datetime
+import time
 
 
 async def repeat_until_succeed(
@@ -25,3 +26,16 @@ def date_to_timestamp(date, time_format='%Y-%m-%d %H:%M:%S'):
         '%Y-%m-%d %H:%M:%S' format """
 
     return datetime.strptime(date, time_format).timestamp()
+
+
+def timestamp_to_date(timestamp, time_format='%Y-%m-%d %H:%M:%S'):
+    """ Converts timestamp to date using by default
+        '%Y-%m-%d %H:%M:%S' format """
+
+    return datetime.fromtimestamp(timestamp).strftime(time_format)
+
+
+def make_next_hour_timestamp():
+    """ Returns timestamp of the approaching hour """
+
+    return int((time.time() // 3600 + 1) * 3600)
