@@ -1,5 +1,17 @@
 """ CLI tool that running Juster Maker """
 
+import logging
+
+# Logging config (should be on top of the script, otherwise it is overwriten somewhere):
+# TODO: I want to move it to config, but it is not working, maybe there are another ways to do that
+# TODO: maybe creating logger and then configure logger will do it
+logging.basicConfig(
+    filename='juster-maker.log',
+    encoding='utf-8',
+    level=logging.INFO,
+    format='%(asctime)s %(name)s %(levelname)s %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 
 from pytezos import pytezos
 import asyncio
@@ -40,6 +52,8 @@ class JusterMaker:
 
     def __init__(self):
 
+        self.logger = logging.getLogger(__name__)
+        self.logger.info('juster maker initialized')
         self.clients = [
             pytezos.using(key=KEY, shell=SHELL_URI)
             # TODO: multiple clients support with multiple KEYs provided
@@ -118,7 +132,6 @@ def generate_event_lines():
 
 
 async def run_maker():
-    print(f'running maker:')
     maker = JusterMaker()
     maker.create_executors()
     await maker.run()

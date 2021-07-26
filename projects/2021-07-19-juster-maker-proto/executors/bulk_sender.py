@@ -1,3 +1,4 @@
+import logging
 from executors.loop_executor import LoopExecutor
 from utility import repeat_until_succeed
 
@@ -12,6 +13,7 @@ class BulkSender(LoopExecutor):
 
         self.client = client
         self.operations_queue = operations_queue
+        self.logger = logging.getLogger(__name__)
 
 
     async def sign(self, max_operations=10):
@@ -27,18 +29,13 @@ class BulkSender(LoopExecutor):
             return
 
         try:
-            # TODO: logging instead of printing, add .json_payload() info and hahses
-            print(f'making bulk of {len(operations)} operations')
+            self.logger.info(f'making bulk of {len(operations)} operations')
             result = self.client.bulk(*operations).autofill().sign().inject()
-            print(f'signed, result: {result}')
-            
-            # TODO: need to check that event really successfully created
-            # (maybe RPC call or something like this?)
-            # maybe callback here to check how it was created?
+            self.logger.info(f'signed, result: {result}')
             return result
 
         except Exception as e:
-            print(f'catched {type(e)} in sign: {str(e)}')
+            self.logger.error(f'catched {type(e)} in sign: {str(e)}')
             # TODO: here I need to classify error and if it was RPC error: return
             # operations back to the queue, if not: raise this e
             # raise e
@@ -51,8 +48,6 @@ class BulkSender(LoopExecutor):
             for operation in operations:
                 await self.operations_queue.put(operation)
 
-            # import pdb; pdb.set_trace()
-            
             # catched:
             # -- requests.exceptions.ConnectionError
 

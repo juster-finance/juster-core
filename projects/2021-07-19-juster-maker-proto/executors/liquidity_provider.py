@@ -1,3 +1,4 @@
+import logging
 from executors.loop_executor import LoopExecutor
 import asyncio
 import time
@@ -26,6 +27,7 @@ class LineLiquidityProvider(LoopExecutor):
         self.event_params = event_params
         self.dd_client = dd_client
         self.creators = creators
+        self.logger = logging.getLogger(__name__)
 
 
     async def _make_provide_liquidity_transaction(self, event_id, amount, a, b):
@@ -41,8 +43,7 @@ class LineLiquidityProvider(LoopExecutor):
         transaction = self.contract.provideLiquidity(provide_params).with_amount(amount).as_transaction()
         await self.operations_queue.put(transaction)
 
-        # TODO: make logging instead of prints:
-        print(f'provided liquidity to {event_id=}, {a=}, {b=}, {amount=}')
+        self.logger.info(f'provided liquidity to {event_id=}, {a=}, {b=}, {amount=}')
 
 
     async def provide_liquidity(self):
@@ -58,7 +59,7 @@ class LineLiquidityProvider(LoopExecutor):
         # checking that event is still opened:
         if last_event['bets_close_time'].timestamp() < time.time():
             # TODO: again logging with name setup:
-            print(f'LineLiquidityProvider: betting is finished, skipping')
+            self.logger.info(f'LineLiquidityProvider: betting is finished, skipping')
             return
 
         pools_value = last_event['pool_above_eq'] + last_event['pool_below']

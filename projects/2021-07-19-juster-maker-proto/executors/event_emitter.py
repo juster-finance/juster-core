@@ -1,3 +1,4 @@
+import logging
 from executors.loop_executor import LoopExecutor
 import time
 import asyncio
@@ -29,6 +30,7 @@ class EventCreationEmitter(LoopExecutor):
         self._verify_event_params(event_params)
         self.event_params = event_params
         self.next_at = next_at
+        self.logger = logging.getLogger(__name__)
 
 
     def _verify_event_params(self, event_params):
@@ -55,8 +57,7 @@ class EventCreationEmitter(LoopExecutor):
         transaction = self.contract.newEvent(event_params).with_amount(fees).as_transaction()
         await self.operations_queue.put(transaction)
 
-        # TODO: make logging instead of prints:
-        print(f'created newEvent transaction with parameters: {event_params}')
+        self.logger.info(f'created newEvent transaction with parameters: {event_params}')
 
 
     async def create_event(self):
@@ -78,7 +79,7 @@ class EventCreationEmitter(LoopExecutor):
 
         # anyway if it is late or if new event created, changing next_at timestamp:
         self.next_at = self.next_at + self.event_params['bets_period']
-        print(f'next event at: {self.next_at}')
+        self.logger.info(f'next event at: {self.next_at}')
 
 
     async def execute(self):

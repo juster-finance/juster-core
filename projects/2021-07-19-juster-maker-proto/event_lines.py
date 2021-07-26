@@ -1,3 +1,4 @@
+import logging
 import json
 from tqdm import tqdm
 from config import (
@@ -29,7 +30,7 @@ def get_last_bets_close_timestamp(dd, event_params):
 
     else:
         hour_timestamp = make_next_hour_timestamp()
-        print(f'last bets close timestamp is not found: {event_params}, '
+        self.logger.info(f'last bets close timestamp is not found: {event_params}, '
               + f'using next hour timestamp = {hour_timestamp}')
         return hour_timestamp
 
@@ -45,6 +46,7 @@ class EventLines:
 
 
     def __init__(self, event_params=None):
+        self.logger = logging.getLogger(__name__)
         self.event_params = event_params or []
 
 
@@ -62,9 +64,7 @@ class EventLines:
             for params in self.dynamic_params
         ]
 
-        # TODO: better move to log:
-        print(f'generated {len(self.event_params)} event lines')
-
+        self.logger.info(f'generated {len(self.event_params)} event lines')
         return self.event_params
 
 

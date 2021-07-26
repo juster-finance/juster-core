@@ -13,6 +13,7 @@ class LoopExecutor:
 
     def run(self):
         self.task = self.loop.create_task(self.loop_task())
+        return self.task
 
 
     @abstractmethod
