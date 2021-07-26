@@ -2,6 +2,8 @@
 
 from sgqlc.endpoint.http import HTTPEndpoint
 from dateutil.parser import parse
+from utility import timestamp_to_date
+import time
 
 
 class JusterDipDupClient:
@@ -10,8 +12,12 @@ class JusterDipDupClient:
 
     def __init__(self):
 
-        self.last_line_event_query_text = self.read_query('queries/last_line_event.graphql')
-        self.all_events_query_text = self.read_query('queries/all_events.graphql')
+        self.last_line_event_query_text = self.read_query(
+            'queries/last_line_event.graphql')
+        self.all_events_query_text = self.read_query(
+            'queries/all_events.graphql')
+        self.withdrawable_events_query_text = self.read_query(
+            'queries/withdrawable_events.graphql')
 
         self.endpoint = HTTPEndpoint(self.endpoint_uri)
 
@@ -22,8 +28,12 @@ class JusterDipDupClient:
 
 
     def deserialize_event(self, event):
-        event['created_time'] = parse(event['created_time'])
-        event['bets_close_time'] = parse(event['bets_close_time'])
+        if 'created_time' in event:
+            event['created_time'] = parse(event['created_time'])
+
+        if 'bets_close_time' in event:
+            event['bets_close_time'] = parse(event['bets_close_time'])
+
         return event
 
     
@@ -56,3 +66,17 @@ class JusterDipDupClient:
             return self.deserialize_event(events[0])
 
         # TODO: what to do if there are no event found?
+
+    def query_withdrawable_events(self, closed_before):
+        """ Requests list of events that have unwithdrawn positions and
+            where time after close > rewardFeeSplitAfter (24h by default)
+        """
+
+        query = self.withdrawable_events_query_text
+        variables = dict(closed_before=closed_before)
+
+        data = self.endpoint(query, variables)
+        events = data['data']['juster_event']
+
+        if len(events):
+            return [self.deserialize_event(event) for event in events]
