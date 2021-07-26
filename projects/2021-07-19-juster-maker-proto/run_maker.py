@@ -22,7 +22,8 @@ import time
 from executors import (
     BulkSender,
     EventCreationEmitter,
-    LineLiquidityProvider
+    LineLiquidityProvider,
+    WithdrawCaller
 )
 
 from config import (
@@ -106,10 +107,19 @@ class JusterMaker:
             for client in self.clients
         ]
 
+        withdraw_callers = [
+            WithdrawCaller(
+                period=60,
+                contract=self.contract,
+                operations_queue=self.operations_queue,
+                dd_client=self.dd_client)
+        ]
+
         self.executors = [
             *event_creation_executors,
             *line_liquidity_executors,
-            *bulk_senders
+            *bulk_senders,
+            *withdraw_callers
         ]
 
 
