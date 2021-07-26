@@ -1,8 +1,8 @@
+""" Base class used to execute some method in the loop """
 import asyncio
 from abc import abstractmethod
 
 
-# TODO: rename LoopWorker?
 class LoopExecutor:
     """ Executes self.execute each period seconds """
 
