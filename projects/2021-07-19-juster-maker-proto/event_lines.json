@@ -1,0 +1,245 @@
+[
+    {
+        "currency_pair": "XTZ-USD",
+        "target_dynamics": 1.0,
+        "bets_period": 3600,
+        "measure_period": 3600,
+        "liquidity_percent": 0.01,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    },
+    {
+        "currency_pair": "XTZ-USD",
+        "target_dynamics": 0.99,
+        "bets_period": 3600,
+        "measure_period": 3600,
+        "liquidity_percent": 0.02,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    },
+    {
+        "currency_pair": "XTZ-USD",
+        "target_dynamics": 1.01,
+        "bets_period": 3600,
+        "measure_period": 3600,
+        "liquidity_percent": 0.02,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    },
+    {
+        "currency_pair": "XTZ-USD",
+        "target_dynamics": 1.0,
+        "bets_period": 21600,
+        "measure_period": 21600,
+        "liquidity_percent": 0.01,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    },
+    {
+        "currency_pair": "XTZ-USD",
+        "target_dynamics": 0.99,
+        "bets_period": 21600,
+        "measure_period": 21600,
+        "liquidity_percent": 0.02,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    },
+    {
+        "currency_pair": "XTZ-USD",
+        "target_dynamics": 1.01,
+        "bets_period": 21600,
+        "measure_period": 21600,
+        "liquidity_percent": 0.02,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    },
+    {
+        "currency_pair": "XTZ-USD",
+        "target_dynamics": 1.0,
+        "bets_period": 86400,
+        "measure_period": 86400,
+        "liquidity_percent": 0.01,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    },
+    {
+        "currency_pair": "XTZ-USD",
+        "target_dynamics": 0.99,
+        "bets_period": 86400,
+        "measure_period": 86400,
+        "liquidity_percent": 0.02,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    },
+    {
+        "currency_pair": "XTZ-USD",
+        "target_dynamics": 1.01,
+        "bets_period": 86400,
+        "measure_period": 86400,
+        "liquidity_percent": 0.02,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    },
+    {
+        "currency_pair": "BTC-USD",
+        "target_dynamics": 1.0,
+        "bets_period": 3600,
+        "measure_period": 3600,
+        "liquidity_percent": 0.01,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    },
+    {
+        "currency_pair": "BTC-USD",
+        "target_dynamics": 0.99,
+        "bets_period": 3600,
+        "measure_period": 3600,
+        "liquidity_percent": 0.02,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    },
+    {
+        "currency_pair": "BTC-USD",
+        "target_dynamics": 1.01,
+        "bets_period": 3600,
+        "measure_period": 3600,
+        "liquidity_percent": 0.02,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    },
+    {
+        "currency_pair": "BTC-USD",
+        "target_dynamics": 1.0,
+        "bets_period": 21600,
+        "measure_period": 21600,
+        "liquidity_percent": 0.01,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    },
+    {
+        "currency_pair": "BTC-USD",
+        "target_dynamics": 0.99,
+        "bets_period": 21600,
+        "measure_period": 21600,
+        "liquidity_percent": 0.02,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    },
+    {
+        "currency_pair": "BTC-USD",
+        "target_dynamics": 1.01,
+        "bets_period": 21600,
+        "measure_period": 21600,
+        "liquidity_percent": 0.02,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    },
+    {
+        "currency_pair": "BTC-USD",
+        "target_dynamics": 1.0,
+        "bets_period": 86400,
+        "measure_period": 86400,
+        "liquidity_percent": 0.01,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    },
+    {
+        "currency_pair": "BTC-USD",
+        "target_dynamics": 0.99,
+        "bets_period": 86400,
+        "measure_period": 86400,
+        "liquidity_percent": 0.02,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    },
+    {
+        "currency_pair": "BTC-USD",
+        "target_dynamics": 1.01,
+        "bets_period": 86400,
+        "measure_period": 86400,
+        "liquidity_percent": 0.02,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    },
+    {
+        "currency_pair": "ETH-USD",
+        "target_dynamics": 1.0,
+        "bets_period": 3600,
+        "measure_period": 3600,
+        "liquidity_percent": 0.01,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    },
+    {
+        "currency_pair": "ETH-USD",
+        "target_dynamics": 0.99,
+        "bets_period": 3600,
+        "measure_period": 3600,
+        "liquidity_percent": 0.02,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    },
+    {
+        "currency_pair": "ETH-USD",
+        "target_dynamics": 1.01,
+        "bets_period": 3600,
+        "measure_period": 3600,
+        "liquidity_percent": 0.02,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    },
+    {
+        "currency_pair": "ETH-USD",
+        "target_dynamics": 1.0,
+        "bets_period": 21600,
+        "measure_period": 21600,
+        "liquidity_percent": 0.01,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    },
+    {
+        "currency_pair": "ETH-USD",
+        "target_dynamics": 0.99,
+        "bets_period": 21600,
+        "measure_period": 21600,
+        "liquidity_percent": 0.02,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    },
+    {
+        "currency_pair": "ETH-USD",
+        "target_dynamics": 1.01,
+        "bets_period": 21600,
+        "measure_period": 21600,
+        "liquidity_percent": 0.02,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    },
+    {
+        "currency_pair": "ETH-USD",
+        "target_dynamics": 1.0,
+        "bets_period": 86400,
+        "measure_period": 86400,
+        "liquidity_percent": 0.01,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    },
+    {
+        "currency_pair": "ETH-USD",
+        "target_dynamics": 0.99,
+        "bets_period": 86400,
+        "measure_period": 86400,
+        "liquidity_percent": 0.02,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    },
+    {
+        "currency_pair": "ETH-USD",
+        "target_dynamics": 1.01,
+        "bets_period": 86400,
+        "measure_period": 86400,
+        "liquidity_percent": 0.02,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000
+    }
+]
