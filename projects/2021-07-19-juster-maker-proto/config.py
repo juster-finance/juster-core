@@ -5,7 +5,7 @@ SHELL_URI = 'https://florencenet.smartpy.io'
 JUSTER_ADDRESS = 'KT1CepDBrMg73d7LHm773KAsunjAjgLYituP'
 
 # Key used in pytezos:
-KEY = '../2021-05-27-tests-modelling/test-keys/tz1iQE8ijR5xVPffBUPFubwB9XQJuyD9qsoJ.json'
+KEY = '../test-keys/tz1fvzdyC7s4mMhBrmG38kasaZjE9PHPgFEu.json'
 
 TRANSACTIONS_QUEUE_SIZE = 50
 
