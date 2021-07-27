@@ -3,6 +3,7 @@ from executors.loop_executor import LoopExecutor
 import time
 import asyncio
 from utility import timestamp_to_date
+from pytezos.michelson.micheline import MichelsonRuntimeError
 
 
 class WithdrawCaller(LoopExecutor):
@@ -39,6 +40,23 @@ class WithdrawCaller(LoopExecutor):
         }
 
         transaction = self.contract.withdraw(withdrawing_params).as_transaction()
+        # testing that transaction would succeed:
+        # TODO: is this temporal solution? or maybe I should move it into separate method?
+        # if int(event_id) == 785:
+        #     import pdb; pdb.set_trace()
+        try:
+            # self.contract.withdraw(withdrawing_params).interpret(
+            #     storage=self.contract.storage())
+            self.contract.storage['events'][event_id]()
+        # except MichelsonRuntimeError as e:
+        except KeyError as e:
+            # assert 'Event is not found' in str(e)
+            self.logger.error(f'Catched error in transaction emulation test:')
+            self.logger.error(f'Event ID: {event_id}')
+            self.logger.error(f'Address: {address}')
+            self.logger.error(f'WARNING: ignoring this transaction')
+            return
+
         await self.operations_queue.put(transaction)
 
         self.logger.info(f'added withdraw transaction with params: {withdrawing_params}')
