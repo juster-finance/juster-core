@@ -3,10 +3,12 @@ build/contracts/
 package-lock.json
 yarn.lock
 faucet.json
-projects/*
 **/.ipynb_checkpoints/*
 **/__pycache__/*
 2021-*.txt
 pytezos-tests/*.ipynb
 NAMES.MD
+**/test-keys/*
+*.log
+*.gzip
 
