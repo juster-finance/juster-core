@@ -11,7 +11,8 @@ TRANSACTIONS_QUEUE_SIZE = 50
 
 # Whitelist of the addresses that are used to manage Event Lines:
 CREATORS = [
-    'tz1iQE8ijR5xVPffBUPFubwB9XQJuyD9qsoJ'
+    'tz1iQE8ijR5xVPffBUPFubwB9XQJuyD9qsoJ',
+    'tz1fvzdyC7s4mMhBrmG38kasaZjE9PHPgFEu'
 ]
 
 """ Event line params are generated using CURRENCY_PAIRS and DYNAMIC_PAIRS

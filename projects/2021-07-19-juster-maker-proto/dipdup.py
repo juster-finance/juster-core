@@ -56,7 +56,7 @@ class JusterDipDupClient:
             currency_pair=currency_pair,
             target_dynamics=target_dynamics,
             measure_period=measure_period,
-            # creators=creators
+            creators=creators
         )
 
         data = self.endpoint(query, variables)
