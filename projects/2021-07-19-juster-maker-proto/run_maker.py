@@ -23,7 +23,8 @@ from executors import (
     BulkSender,
     EventCreationEmitter,
     LineLiquidityProvider,
-    WithdrawCaller
+    WithdrawCaller,
+    ForceMajeureCaller
 )
 
 from config import (
@@ -115,11 +116,20 @@ class JusterMaker:
                 dd_client=self.dd_client)
         ]
 
+        force_majeure_callers = [
+            ForceMajeureCaller(
+                period=60,
+                contract=self.contract,
+                operations_queue=self.operations_queue,
+                dd_client=self.dd_client)
+        ]
+
         self.executors = [
             *event_creation_executors,
             *line_liquidity_executors,
             *bulk_senders,
-            *withdraw_callers
+            *withdraw_callers,
+            *force_majeure_callers
         ]
 
 
