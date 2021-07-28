@@ -20,6 +20,8 @@ class BulkSender(LoopExecutor):
         # TODO: check if ready to sign
         # ? await self.is_ready_to_sign()
 
+        # TODO: check balance is enough?
+
         operations = []
         while (not self.operations_queue.empty()
                and (len(operations) < max_operations)):
