@@ -1,0 +1,12 @@
+query QueryOpenEventTimes {
+  juster_event(where: {
+    positions: {withdrawn: {_eq: false}},
+    closed_oracle_time: {_is_null: true}}
+  ) {
+    id
+    closed_oracle_time
+    measure_oracle_start_time
+    bets_close_time
+    measure_period
+  }
+}

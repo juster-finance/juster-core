@@ -7,6 +7,7 @@ import time
 
 
 class JusterDipDupClient:
+    # TODO: move to config
     endpoint_uri = 'https://api.dipdup.net/juster/graphql'
 
 
@@ -18,8 +19,15 @@ class JusterDipDupClient:
             'queries/all_events.graphql')
         self.withdrawable_events_query_text = self.read_query(
             'queries/withdrawable_events.graphql')
+        self.open_event_times_query_text = self.read_query(
+            'queries/open_event_times.graphql')
 
         self.endpoint = HTTPEndpoint(self.endpoint_uri)
+        # TODO: any query to endpoint can fail with:
+        # http.client.RemoteDisconnected: Remote end closed connection without response
+        # need to find a way where to catch this errors and process them!
+        # ALSO: urllib.error.URLError: <urlopen error [Errno -2] Name or service not known>
+        # (this raises when connection is lost)
 
 
     def read_query(self, filename):
@@ -76,6 +84,25 @@ class JusterDipDupClient:
         variables = dict(closed_before=closed_before)
 
         data = self.endpoint(query, variables)
+        events = data['data']['juster_event']
+
+        if len(events):
+            return [self.deserialize_event(event) for event in events]
+
+
+    def query_open_event_times(self):
+
+        query = self.open_event_times_query_text
+        # TODO: add filter status in [NEW, STARTED]
+        # so when they would be marked as isForceMajeure it would
+        # not appear again in this request?
+
+        # TODO: there are potential problem if there would be
+        # too many opened events (>100). Then this request may return
+        # only valid unclosed events. Maybe need to do some sorting
+        # by event_id ASC for example
+
+        data = self.endpoint(query)
         events = data['data']['juster_event']
 
         if len(events):
