@@ -15,11 +15,8 @@ class WithdrawCaller(LoopExecutor):
         """ ...
             - contract: is pytezos object with Juster contract loaded and
                 some key provided
-            - event_params: params of the event
-                - currency_pair: 
-                - target_dynamics: should be float 1.0 - no dynamics
-                - measure_period: in seconds
-                - liquidity_percent: should be float, 0.01 is one percent
+            - operations_queue: TODO:
+            - dd_client: TODO:
         """
 
         # TODO: starts_from = 'datetime unixtime', every=seconds instead of period
