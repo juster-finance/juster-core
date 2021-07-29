@@ -168,8 +168,13 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
         msg = 'Measurement period already started'
         self.assertTrue(msg in str(cm.exception))
 
+        # A is not participated so withdraw should fail:
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.withdraw(self.a, 0)
+        msg = 'Participant not found'
+        self.assertTrue(msg in str(cm.exception))
+
         # B withdraws all:
-        self.withdraw(self.a, 0)
         self.withdraw(self.b, 10)
 
         # Test that event was deleted and any interaction would lead to error:
