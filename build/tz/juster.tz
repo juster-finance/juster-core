@@ -3677,7 +3677,7 @@
                               DIG 4 ;
                               CAR ;
                               PAIR }
-                            { DIG 3 } ;
+                            { PUSH string "Participant not found" ; FAILWITH } ;
                          DIG 3 ;
                          DIG 2 ;
                          DUP ;
