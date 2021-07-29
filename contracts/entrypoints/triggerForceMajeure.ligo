@@ -25,6 +25,11 @@ block {
     checkNoAmountIncluded(unit);
 
     const event : eventType = getEvent(store, eventId);
+
+    (* Checking that Force Majeure is not runned before *)
+    if event.isForceMajeure then failwith("Already in Force Majeure state")
+    else skip;
+
     (* fees agregates all unpaid fees for oracle calls: *)
     var operations : list(operation) := nil;
 
@@ -53,6 +58,8 @@ block {
         (* Closing event with ForceMajeure flag setted True: *)
         event.isForceMajeure := True;
         event.isClosed := True;
+        event.measureStartFee := 0tez;
+        event.expirationFee := 0tez;
         store.events[eventId] := event;
     }
     else failwith("None of the Force Majeure scenarios are occurred");
