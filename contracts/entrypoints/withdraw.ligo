@@ -182,7 +182,7 @@ block {
     (* Decreasing participants count: *)
     if isParticipant(store, key)
     then event.participants := abs(event.participants - 1n)
-    else skip;
+    else failwith("Participant not found");
 
     store := removeKeyFromAllLedgers(store, key);
 
