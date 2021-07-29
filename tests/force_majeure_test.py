@@ -128,3 +128,26 @@ class ForceMajeureTest(JusterBaseTestCase):
         self.withdraw(self.a, 1_000_000)
         # B withdraws the same value as he betted:
         self.withdraw(self.b, 1_000_000)
+
+
+    def test_trying_to_run_force_majeure_twice(self):
+
+        self._prepare_to_force_majeure()
+        max_lag = self.default_config['maxAllowedMeasureLag']
+        self.current_time = self.default_event_params['betsCloseTime'] + max_lag*2
+
+        # Failed to start measurement in time window, run TFM is succeed:
+        self.trigger_force_majeure(sender=self.a)
+
+        # Running the same force majeure second time, should fail:
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.trigger_force_majeure(sender=self.a)
+        msg = 'Already in Force Majeure state'
+        self.assertTrue(msg in str(cm.exception))
+
+        # check A withdraws the same value as he lp-ed:
+        self.withdraw(self.a, 1_000_000)
+        # B withdraws the same value as he betted:
+        self.withdraw(self.b, 1_000_000)
+
+
