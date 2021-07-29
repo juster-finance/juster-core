@@ -240,10 +240,6 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
         self.withdraw(self.a, 65_000)
         self.assertEqual(self.storage['events'][self.id]['participants'], 2)
 
-        # Withdrawing twice is allowed, but it should not change anything:
-        self.withdraw(self.a, 0, sender=self.c)
-        self.assertEqual(self.storage['events'][self.id]['participants'], 2)
-
         # Another withdrawals:
         self.withdraw(self.b, 75_000)
         self.assertEqual(self.storage['events'][self.id]['participants'], 1)
