@@ -24,7 +24,8 @@ from executors import (
     EventCreationEmitter,
     LineLiquidityProvider,
     WithdrawCaller,
-    ForceMajeureCaller
+    ForceMajeureCaller,
+    CanceledCaller
 )
 
 from config import (
@@ -124,12 +125,27 @@ class JusterMaker:
                 dd_client=self.dd_client)
         ]
 
+        # TODO: need to organize this Maker - Caller communications
+        # - there are a lot of the same params that transfered for each caller
+        #   (maybe they can be loaded from config)
+        #   (or maybe this method can be organized in loop?)
+        # - need to sync all __init__ for different Callers
+
+        canceled_callers = [
+            CanceledCaller(
+                period=60,
+                contract=self.contract,
+                operations_queue=self.operations_queue,
+                dd_client=self.dd_client)
+        ]
+
         self.executors = [
             *event_creation_executors,
             *line_liquidity_executors,
             *bulk_senders,
             *withdraw_callers,
-            *force_majeure_callers
+            *force_majeure_callers,
+            *canceled_callers
         ]
 
 
