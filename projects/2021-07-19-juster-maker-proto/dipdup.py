@@ -4,25 +4,26 @@ from sgqlc.endpoint.http import HTTPEndpoint
 from dateutil.parser import parse
 from utility import timestamp_to_date
 import time
+from config import DIPDUP_ENDPOINT_URI
 
 
 class JusterDipDupClient:
-    # TODO: move to config
-    endpoint_uri = 'https://api.dipdup.net/juster/graphql'
-
 
     def __init__(self):
 
+        # TODO: replace with loop with fn === dict names in self.queries[]
         self.last_line_event_query_text = self.read_query(
             'queries/last_line_event.graphql')
         self.all_events_query_text = self.read_query(
             'queries/all_events.graphql')
         self.withdrawable_events_query_text = self.read_query(
             'queries/withdrawable_events.graphql')
+        # TODO: I don't like this "open_event_times" name!
+        # maybe opened_events_force_majeure_check ?
         self.open_event_times_query_text = self.read_query(
             'queries/open_event_times.graphql')
 
-        self.endpoint = HTTPEndpoint(self.endpoint_uri)
+        self.endpoint = HTTPEndpoint(DIPDUP_ENDPOINT_URI)
         # TODO: any query to endpoint can fail with:
         # http.client.RemoteDisconnected: Remote end closed connection without response
         # need to find a way where to catch this errors and process them!
@@ -55,7 +56,8 @@ class JusterDipDupClient:
         return events
 
 
-    def query_last_line_event(self, currency_pair, target_dynamics, measure_period, creators):
+    def query_last_line_event(
+            self, currency_pair, target_dynamics, measure_period, creators):
         """ Requests last event in line with given params """
 
         query = self.last_line_event_query_text
@@ -74,6 +76,7 @@ class JusterDipDupClient:
             return self.deserialize_event(events[0])
 
         # TODO: what to do if there are no event found?
+
 
     def query_withdrawable_events(self, closed_before):
         """ Requests list of events that have unwithdrawn positions and

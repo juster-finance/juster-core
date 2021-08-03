@@ -3,6 +3,7 @@ SHELL_URI = 'https://florencenet.smartpy.io'
 # alternative: 'https://florencenet-tezos.giganode.io'
 
 JUSTER_ADDRESS = 'KT1CepDBrMg73d7LHm773KAsunjAjgLYituP'
+DIPDUP_ENDPOINT_URI = 'https://api.dipdup.net/juster/graphql'
 
 # Key used in pytezos:
 KEY = '../test-keys/tz1fvzdyC7s4mMhBrmG38kasaZjE9PHPgFEu.json'
