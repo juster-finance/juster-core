@@ -9,7 +9,8 @@ from config import (
 from utility import make_next_hour_timestamp
 
 
-# TODO: I have feeling that somwthing is wrong with this func, maybe it should be inside JusterDipDupClient?
+# TODO: I have feeling that somwthing is wrong with this func, maybe it should
+# be inside JusterDipDupClient?
 def get_last_bets_close_timestamp(dd, event_params):
     """ Makes query about the last event with similar to event_params
         to the dipdup endpoint and converts result to datetime
@@ -26,12 +27,15 @@ def get_last_bets_close_timestamp(dd, event_params):
 
     if last_event:
         last_date_created = int(last_event['bets_close_time'].timestamp())
+        # TODO: it is possible that dipdup data have not indexed emitted events
+        # if it was called right after last event was created. Is there is
+        # a solution?
         return last_date_created
 
     else:
         hour_timestamp = make_next_hour_timestamp()
-        self.logger.info(f'last bets close timestamp is not found: {event_params}, '
-              + f'using next hour timestamp = {hour_timestamp}')
+        self.logger.info(f'last bets close timestamp is not found: '
+              + f'{event_params}, using next hour timestamp = {hour_timestamp}')
         return hour_timestamp
 
 
@@ -90,6 +94,7 @@ class EventLines:
             params.update({
                 'next_at': get_last_bets_close_timestamp(dd, params)
             })
+
 
     def get(self):
         return self.event_params
