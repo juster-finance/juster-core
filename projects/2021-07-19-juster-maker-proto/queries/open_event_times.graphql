@@ -1,7 +1,9 @@
 query QueryOpenEventTimes {
   juster_event(where: {
     positions: {withdrawn: {_eq: false}},
-    closed_oracle_time: {_is_null: true}}
+    closed_oracle_time: {_is_null: true},
+    status: {_neq: "CANCELED"}
+  }
   ) {
     id
     closed_oracle_time
