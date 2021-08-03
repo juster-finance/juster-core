@@ -22,6 +22,8 @@ class JusterDipDupClient:
         # maybe opened_events_force_majeure_check ?
         self.open_event_times_query_text = self.read_query(
             'queries/open_event_times.graphql')
+        self.canceled_to_withdraw = self.read_query(
+            'queries/canceled_to_withdraw.graphql')
 
         self.endpoint = HTTPEndpoint(DIPDUP_ENDPOINT_URI)
         # TODO: any query to endpoint can fail with:
@@ -94,6 +96,7 @@ class JusterDipDupClient:
 
 
     def query_open_event_times(self):
+        """ TODO: rename me and add description """
 
         query = self.open_event_times_query_text
         # TODO: add filter status in [NEW, STARTED]
@@ -105,6 +108,19 @@ class JusterDipDupClient:
         # only valid unclosed events. Maybe need to do some sorting
         # by event_id ASC for example
 
+        data = self.endpoint(query)
+        events = data['data']['juster_event']
+
+        if len(events):
+            return [self.deserialize_event(event) for event in events]
+
+
+    def query_canceled_to_withdraw(self):
+        """ Requests list of events that have unwithdrawn positions and
+            where status is CANCELED (force majeure)
+        """
+
+        query = self.canceled_to_withdraw
         data = self.endpoint(query)
         events = data['data']['juster_event']
 

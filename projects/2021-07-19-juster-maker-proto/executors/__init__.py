@@ -3,4 +3,5 @@ from executors.event_emitter import EventCreationEmitter
 from executors.liquidity_provider import LineLiquidityProvider
 from executors.withdraw_caller import WithdrawCaller
 from executors.force_majeure_caller import ForceMajeureCaller
+from executors.canceled_caller import CanceledCaller
 

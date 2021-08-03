@@ -1,0 +1,18 @@
+query QueryWithdrawableForceMajeure {
+  juster_event(
+    where: {
+      positions: {withdrawn: {_eq: false}},
+      closed_oracle_time: {_is_null: true},
+      status: {_eq: "CANCELED"}
+    }
+  ) {
+    id
+    positions(where: {withdrawn: {_eq: false}}) {
+      user {
+        address
+      }
+    }
+    closed_oracle_time
+  }
+}
+
