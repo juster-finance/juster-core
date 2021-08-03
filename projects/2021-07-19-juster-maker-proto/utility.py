@@ -39,3 +39,4 @@ def make_next_hour_timestamp():
     """ Returns timestamp of the approaching hour """
 
     return int((time.time() // 3600 + 1) * 3600)
+

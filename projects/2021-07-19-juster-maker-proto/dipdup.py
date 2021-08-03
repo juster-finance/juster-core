@@ -44,7 +44,7 @@ class JusterDipDupClient:
 
         return event
 
-    
+
     def query_all_events(self):
 
         query = self.all_events_query_text
@@ -107,3 +107,4 @@ class JusterDipDupClient:
 
         if len(events):
             return [self.deserialize_event(event) for event in events]
+

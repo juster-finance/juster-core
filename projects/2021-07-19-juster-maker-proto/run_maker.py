@@ -82,7 +82,7 @@ class JusterMaker:
                 # TODO: maybe instead of transfering next_at, transfer dd_client
                 # and find last event params using dd_client inside EventCreationEmitter
                 # constructor?
-                
+
                 ### TODO: maybe use dd_client in EventEmitter too?
             )
             for params in self.event_lines.get()
@@ -159,3 +159,4 @@ async def run_maker():
 
 if __name__ == '__main__':
     asyncio.run(run_maker())
+

@@ -40,3 +40,4 @@ DYNAMIC_PARAMS = [
     dict(period=86400, target_dynamics=0.99, liquidity_percent=0.02),
     dict(period=86400, target_dynamics=1.01, liquidity_percent=0.02),
 ]
+
