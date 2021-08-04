@@ -40,14 +40,19 @@ class EventCreationEmitter(EventLoopExecutor):
 
     def get_last_event_info(self):
         """ Returns actual data about last event in the line using dipdup query
+            If there are no event with requested line params, returns None
         """
 
-        return self.dd_client.query_last_line_event(
-            self.event_params['currency_pair'],
-            self.event_params['target_dynamics'],
-            self.event_params['measure_period'],
-            CREATORS
+        last_events = self.dd_client.make_query(
+            query_name='last_line_event',
+            currency_pair=self.event_params['currency_pair'],
+            target_dynamics=self.event_params['target_dynamics'],
+            measure_period=self.event_params['measure_period'],
+            creators=CREATORS
         )
+
+        if len(last_events):
+            return last_events[0]
 
 
     def get_next_close_timestamp(self):

@@ -5,32 +5,41 @@ from dateutil.parser import parse
 from utility import timestamp_to_date
 import time
 from config import DIPDUP_ENDPOINT_URI
+from os.path import join
+
+
+QUERIES_DIR = 'queries'
+QUERIES = [
+    'all_events',
+    'canceled_to_withdraw',
+    'last_line_event',
+    # TODO: I don't like this "open_event_times" name!
+    # maybe opened_events_force_majeure_check ?
+    'open_event_times',
+    'withdrawable_events'
+]
 
 
 class JusterDipDupClient:
 
     def __init__(self):
 
-        # TODO: replace with loop with fn === dict names in self.queries[]
-        self.last_line_event_query_text = self.read_query(
-            'queries/last_line_event.graphql')
-        self.all_events_query_text = self.read_query(
-            'queries/all_events.graphql')
-        self.withdrawable_events_query_text = self.read_query(
-            'queries/withdrawable_events.graphql')
-        # TODO: I don't like this "open_event_times" name!
-        # maybe opened_events_force_majeure_check ?
-        self.open_event_times_query_text = self.read_query(
-            'queries/open_event_times.graphql')
-        self.canceled_to_withdraw = self.read_query(
-            'queries/canceled_to_withdraw.graphql')
-
+        self.queries = self.load_queries()
         self.endpoint = HTTPEndpoint(DIPDUP_ENDPOINT_URI)
         # TODO: any query to endpoint can fail with:
         # http.client.RemoteDisconnected: Remote end closed connection without response
         # need to find a way where to catch this errors and process them!
         # ALSO: urllib.error.URLError: <urlopen error [Errno -2] Name or service not known>
         # (this raises when connection is lost)
+
+
+    def load_queries(self):
+        """ Loads all queries from queries directory into dictionary """
+
+        queries = {
+            name: self.read_query(f'{join(QUERIES_DIR, name)}.graphql')
+            for name in QUERIES}
+        return queries
 
 
     def read_query(self, filename):
@@ -48,36 +57,16 @@ class JusterDipDupClient:
         return event
 
 
-    def query_all_events(self):
+    def make_query(self, query_name, **variables):
+        """ Performs query to dipdup using `query_name`.graphql query from
+            queries directory and variables passed as named arguments """
 
-        query = self.all_events_query_text
-        data = self.endpoint(query)
-        events = data['data']['juster_event']
-
-        events = [self.deserialize_event(event) for event in events]
-        return events
-
-
-    def query_last_line_event(
-            self, currency_pair, target_dynamics, measure_period, creators):
-        """ Requests last event in line with given params """
-
-        query = self.last_line_event_query_text
-
-        variables = dict(
-            currency_pair=currency_pair,
-            target_dynamics=target_dynamics,
-            measure_period=measure_period,
-            creators=creators
-        )
+        query = self.queries[query_name]
 
         data = self.endpoint(query, variables)
         events = data['data']['juster_event']
 
-        if len(events):
-            return self.deserialize_event(events[0])
-
-        # TODO: what to do if there are no event found?
+        return [self.deserialize_event(event) for event in events]
 
 
     def query_withdrawable_events(self, closed_before):
@@ -85,28 +74,19 @@ class JusterDipDupClient:
             where time after close > rewardFeeSplitAfter (24h by default)
         """
 
-        query = self.withdrawable_events_query_text
-        variables = dict(closed_before=closed_before)
-
-        data = self.endpoint(query, variables)
-        events = data['data']['juster_event']
-
-        return [self.deserialize_event(event) for event in events]
+        return self.make_query(
+            'withdrawable_events',
+            closed_before=closed_before)
 
 
     def query_open_event_times(self):
         """ TODO: rename me and add description """
-
-        query = self.open_event_times_query_text
         # TODO: there are potential problem if there would be
         # too many opened events (>100). Then this request may return
         # only valid unclosed events. Maybe need to do some sorting
         # by event_id ASC for example
 
-        data = self.endpoint(query)
-        events = data['data']['juster_event']
-
-        return [self.deserialize_event(event) for event in events]
+        return self.make_query('open_event_times')
 
 
     def query_canceled_to_withdraw(self):
@@ -114,9 +94,5 @@ class JusterDipDupClient:
             where status is CANCELED (force majeure)
         """
 
-        query = self.canceled_to_withdraw
-        data = self.endpoint(query)
-        events = data['data']['juster_event']
-
-        return [self.deserialize_event(event) for event in events]
+        return self.make_query('canceled_to_withdraw')
 
