@@ -69,16 +69,6 @@ class JusterDipDupClient:
         return [self.deserialize_event(event) for event in events]
 
 
-    def query_open_event_times(self):
-        """ TODO: rename me and add description """
-        # TODO: there are potential problem if there would be
-        # too many opened events (>100). Then this request may return
-        # only valid unclosed events. Maybe need to do some sorting
-        # by event_id ASC for example
-
-        return self.make_query('open_event_times')
-
-
     def query_canceled_to_withdraw(self):
         """ Requests list of events that have unwithdrawn positions and
             where status is CANCELED (force majeure)
