@@ -112,7 +112,6 @@ class JusterMaker:
 
         force_majeure_callers = [
             ForceMajeureCaller(
-                period=60,
                 contract=self.contract,
                 operations_queue=self.operations_queue,
                 dd_client=self.dd_client)

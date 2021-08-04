@@ -58,3 +58,6 @@ LIQUIDITY_MAX_SLIPPAGE = int(100_000_000 * 0.10)
 # The amount of liquidity provided for each event:
 PROVIDE_LIQUIDITY_AMOUNT = 1_000_000
 
+# Max allowed time in seconds to be late in call startMeasurement / close:
+MAX_ALLOWED_MEASURE_LAG = 4*60*60
+

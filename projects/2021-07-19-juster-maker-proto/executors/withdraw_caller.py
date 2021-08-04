@@ -38,6 +38,15 @@ class WithdrawCaller(EventLoopExecutor):
             f'added withdraw transaction with params: {withdrawing_params}')
 
 
+    async def _make_transaction_for_events(self, events):
+        """ Creates withdraw transaction for each event in events """
+
+        for event in events:
+            for position in event['positions']:
+                address = position['user']['address']
+                await self._make_withdraw_transaction(event['id'], address)
+
+
     async def emmit_withdraw_transactions(self):
 
         # Calculating threshold closed date that activates reward split fee:
@@ -48,10 +57,7 @@ class WithdrawCaller(EventLoopExecutor):
 
         self.logger.info(f'updated withdrawable events list, {len(events)}')
 
-        for event in events:
-            for position in event['positions']:
-                address = position['user']['address']
-                await self._make_withdraw_transaction(event['id'], address)
+        await self._make_transaction_for_events(events)
 
         # Waiting while all emitted transactions executed and dipdup updates:
         # TODO: it can took a lot of time, it is better to have some callback
