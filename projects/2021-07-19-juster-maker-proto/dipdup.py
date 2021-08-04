@@ -91,8 +91,7 @@ class JusterDipDupClient:
         data = self.endpoint(query, variables)
         events = data['data']['juster_event']
 
-        if len(events):
-            return [self.deserialize_event(event) for event in events]
+        return [self.deserialize_event(event) for event in events]
 
 
     def query_open_event_times(self):
@@ -107,8 +106,7 @@ class JusterDipDupClient:
         data = self.endpoint(query)
         events = data['data']['juster_event']
 
-        if len(events):
-            return [self.deserialize_event(event) for event in events]
+        return [self.deserialize_event(event) for event in events]
 
 
     def query_canceled_to_withdraw(self):
@@ -120,6 +118,5 @@ class JusterDipDupClient:
         data = self.endpoint(query)
         events = data['data']['juster_event']
 
-        if len(events):
-            return [self.deserialize_event(event) for event in events]
+        return [self.deserialize_event(event) for event in events]
 

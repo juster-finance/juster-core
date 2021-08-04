@@ -42,8 +42,13 @@ DYNAMIC_PARAMS = [
     dict(period=86400, target_dynamics=1.01, liquidity_percent=0.02),
 ]
 
+# Period in seconds used to control update speed of the executors
 EXECUTOR_UPDATE_PERIOD = 30
 
+# Precision constants from contract:
 DYNAMICS_PRECISION = 1_000_000
 LIQUIDITY_PRECISION = 1_000_000
+
+# After this period, withdraw caller would receive split:
+REWARD_SPLIT_FEE_AFTER = 24*60*60
 

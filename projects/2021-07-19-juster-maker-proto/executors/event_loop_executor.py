@@ -30,3 +30,18 @@ class EventLoopExecutor(LoopExecutor):
         self.logger = logging.getLogger(__name__)
         self.dd_client = dd_client
 
+
+    def is_event_exist(self, event_id):
+        """ Return True if given event_id exist in self.contract """
+
+        # Testing that event exist:
+        try:
+            self.contract.storage['events'][event_id]()
+        except KeyError as e:
+            self.logger.error(f'Catched error in transaction emulation test:')
+            self.logger.error(f'Event ID: {event_id} is not found')
+            self.logger.error(f'WARNING: ignoring this transaction')
+            return False
+
+        return True
+

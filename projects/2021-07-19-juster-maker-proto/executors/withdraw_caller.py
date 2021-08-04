@@ -1,85 +1,65 @@
 import logging
-from executors.loop_executor import LoopExecutor
+from executors import EventLoopExecutor
 import time
 import asyncio
 from utility import timestamp_to_date
 from pytezos.michelson.micheline import MichelsonRuntimeError
+from config import REWARD_SPLIT_FEE_AFTER
 
 
-class WithdrawCaller(LoopExecutor):
-
-    REWARD_SPLIT_FEE_AFTER = 24*60*60
-
-
-    def __init__(self, period, contract, operations_queue, dd_client):
-        """ ...
-            - contract: is pytezos object with Juster contract loaded and
-                some key provided
-            - operations_queue: TODO:
-            - dd_client: TODO:
-        """
-
-        # TODO: starts_from = 'datetime unixtime', every=seconds instead of period
-        # TODO: rename period to update_period
-        super().__init__(period)
-
-        self.contract = contract
-        self.operations_queue = operations_queue
-        self.logger = logging.getLogger(__name__)
-        self.dd_client = dd_client
-
+class WithdrawCaller(EventLoopExecutor):
+    """ Executor that checks is there are any positions that can be withdrawn
+        and if it is: prepares transaction to withdraw
+        Works only with CLOSED events
+    """
 
     async def _make_withdraw_transaction(self, event_id, address):
+        """ Prepares withdraw transaction for event with given event_id and
+            participant with given address """
 
         withdrawing_params = {
             'eventId': event_id,
             'participantAddress': address
         }
 
-        transaction = self.contract.withdraw(withdrawing_params).as_transaction()
-        # testing that transaction would succeed:
-        # TODO: is this temporal solution? or maybe I should move it into separate method?
-        # if int(event_id) == 785:
-        #     import pdb; pdb.set_trace()
-        try:
-            # self.contract.withdraw(withdrawing_params).interpret(
-            #     storage=self.contract.storage())
-            self.contract.storage['events'][event_id]()
-        # except MichelsonRuntimeError as e:
-        except KeyError as e:
-            # assert 'Event is not found' in str(e)
-            self.logger.error(f'Catched error in transaction emulation test:')
-            self.logger.error(f'Event ID: {event_id}')
-            self.logger.error(f'Address: {address}')
-            self.logger.error(f'WARNING: ignoring this transaction')
+        operation = self.contract.withdraw(withdrawing_params)
+        transaction = operation.as_transaction()
+
+        # TODO: is this temporal solution?
+        # There are some error with 7, 12 and 1708 events, where dipdup
+        # have info about positions in this events and there no events in
+        # contract (looks like force majeure issue)
+        if not self.is_event_exist(event_id):
             return
 
         await self.operations_queue.put(transaction)
 
-        self.logger.info(f'added withdraw transaction with params: {withdrawing_params}')
+        self.logger.info(
+            f'added withdraw transaction with params: {withdrawing_params}')
 
 
     async def emmit_withdraw_transactions(self):
 
         # Calculating threshold closed date that activates reward split fee:
-        closed_before = timestamp_to_date(time.time() - self.REWARD_SPLIT_FEE_AFTER)
+        closed_before = timestamp_to_date(time.time() - REWARD_SPLIT_FEE_AFTER)
 
         # Requesting events:
-        withdrawable_events = self.dd_client.query_withdrawable_events(closed_before)
+        events = self.dd_client.query_withdrawable_events(closed_before)
 
-        if withdrawable_events is not None:
-            self.logger.info(f'updated withdrawable events list, {len(withdrawable_events)}')
+        self.logger.info(f'updated withdrawable events list, {len(events)}')
 
-            for event in withdrawable_events:
-                for position in event['positions']:
-                    address = position['user']['address']
-                    await self._make_withdraw_transaction(event['id'], address)
+        for event in events:
+            for position in event['positions']:
+                address = position['user']['address']
+                await self._make_withdraw_transaction(event['id'], address)
 
-            # Waiting while all emitted transactions executed and dipdup updates:
-            # TODO: it can took a lot of time, it is better to have some callback
-            # or have another way to understand when transactions are completed:
+        # Waiting while all emitted transactions executed and dipdup updates:
+        # TODO: it can took a lot of time, it is better to have some callback
+        # or have another way to understand when transactions are completed:
 
-            await asyncio.sleep(600)
+        # TODO: is it possible to make dipdup subscription and await for it
+        # to trigger instead of sleep?
+        await asyncio.sleep(600)
 
 
     async def execute(self):
