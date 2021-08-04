@@ -66,18 +66,20 @@ class WithdrawCaller(LoopExecutor):
 
         # Requesting events:
         withdrawable_events = self.dd_client.query_withdrawable_events(closed_before)
-        self.logger.info(f'updated withdrawable events list, {len(withdrawable_events)}')
 
-        for event in withdrawable_events:
-            for position in event['positions']:
-                address = position['user']['address']
-                await self._make_withdraw_transaction(event['id'], address)
+        if len(withdrawable_events):
+            self.logger.info(f'updated withdrawable events list, {len(withdrawable_events)}')
 
-        # Waiting while all emitted transactions executed and dipdup updates:
-        # TODO: it can took a lot of time, it is better to have some callback
-        # or have another way to understand when transactions are completed:
+            for event in withdrawable_events:
+                for position in event['positions']:
+                    address = position['user']['address']
+                    await self._make_withdraw_transaction(event['id'], address)
 
-        await asyncio.sleep(600)
+            # Waiting while all emitted transactions executed and dipdup updates:
+            # TODO: it can took a lot of time, it is better to have some callback
+            # or have another way to understand when transactions are completed:
+
+            await asyncio.sleep(600)
 
 
     async def execute(self):
