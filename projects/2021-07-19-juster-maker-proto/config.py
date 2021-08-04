@@ -1,3 +1,15 @@
+import logging
+
+
+# Configuring logger:
+logging.basicConfig(
+    filename='juster-maker.log',
+    encoding='utf-8',
+    level=logging.INFO,
+    format='%(asctime)s %(name)s %(levelname)s %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+
 SHELL_URI = 'https://florencenet.smartpy.io'
 # alternative: 'https://api.tez.ie/rpc/florencenet'
 # alternative: 'https://florencenet-tezos.giganode.io'
