@@ -67,24 +67,16 @@ class JusterMaker:
         self.dd_client = JusterDipDupClient()
         self.operations_queue = Queue(TRANSACTIONS_QUEUE_SIZE)
 
-        self.event_lines.update_timestamps(self.dd_client)
-
 
     def create_executors(self):
 
         # for each event_params EventCreationEmitter is created:
         event_creation_executors = [
             EventCreationEmitter(
-                period=20,
                 contract=self.contract,
                 operations_queue=self.operations_queue,
+                dd_client=self.dd_client,
                 event_params=params,
-                next_at=params['next_at']
-                # TODO: maybe instead of transfering next_at, transfer dd_client
-                # and find last event params using dd_client inside EventCreationEmitter
-                # constructor?
-
-                ### TODO: maybe use dd_client in EventEmitter too?
             )
             for params in self.event_lines.get()
         ]

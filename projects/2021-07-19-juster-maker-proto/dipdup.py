@@ -99,10 +99,6 @@ class JusterDipDupClient:
         """ TODO: rename me and add description """
 
         query = self.open_event_times_query_text
-        # TODO: add filter status in [NEW, STARTED]
-        # so when they would be marked as isForceMajeure it would
-        # not appear again in this request?
-
         # TODO: there are potential problem if there would be
         # too many opened events (>100). Then this request may return
         # only valid unclosed events. Maybe need to do some sorting

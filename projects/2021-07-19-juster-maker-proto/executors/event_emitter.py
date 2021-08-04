@@ -1,36 +1,69 @@
 import logging
-from executors.loop_executor import LoopExecutor
+from executors import EventLoopExecutor
 import time
 import asyncio
+from config import (
+    DYNAMICS_PRECISION,
+    LIQUIDITY_PRECISION,
+    CREATORS
+)
+from utility import make_next_hour_timestamp
 
 
-class EventCreationEmitter(LoopExecutor):
+# TODO: rename to EventCreationCaller
+class EventCreationEmitter(EventLoopExecutor):
 
-    DYNAMICS_PRECISION = 1_000_000
-    LIQUIDITY_PRECISION = 1_000_000
-
-
-    def __init__(self, period, contract, operations_queue, event_params, next_at):
-        """ ...
-            - contract: is pytezos object with Juster contract loaded and
-                some key provided
-            - event_params: params of the event
-                - currency_pair: 
-                - target_dynamics: should be float 1.0 - no dynamics
-                - measure_period: in seconds
-                - liquidity_percent: should be float, 0.01 is one percent
+    def __init__(
+            self,
+            contract,
+            operations_queue,
+            dd_client,
+            event_params
+        ):
+        """ Creates new EventCreationCaller,
+        - contract: juster contract, pytezos instance
+        - operations_queue: queue object where transactions should go
+        - dd_client: JusterDipDupClient instance
+        - period: time in seconds used to sleep before executor re runned
+        - event_params: params of the event
+            - currency_pair: string with currency used in event
+            - target_dynamics: should be float 1.0 - no dynamics
+            - measure_period: in seconds
+            - liquidity_percent: should be float, 0.01 is one percent
         """
 
-        # TODO: starts_from = 'datetime unixtime', every=seconds instead of period
-        # TODO: rename period to update_period
-        super().__init__(period)
+        super().__init__(contract, operations_queue, dd_client)
 
-        self.contract = contract
-        self.operations_queue = operations_queue
         self._verify_event_params(event_params)
         self.event_params = event_params
-        self.next_at = next_at
-        self.logger = logging.getLogger(__name__)
+        self.next_at = self.get_next_close_timestamp()
+
+
+    def get_next_close_timestamp(self):
+        """ Requests last event close timestamp using DipDupClient
+            this timestamp used to schedule this event
+        """
+
+        last_event = self.dd_client.query_last_line_event(
+            self.event_params['currency_pair'],
+            self.event_params['target_dynamics'],
+            self.event_params['measure_period'],
+            CREATORS
+        )
+
+        if last_event:
+            last_date_created = int(last_event['bets_close_time'].timestamp())
+            # TODO: it is possible that dipdup data have not indexed emitted
+            # events if it was called right after last event was created. Is
+            # there is any solution?
+            return last_date_created
+
+        else:
+            hour_timestamp = make_next_hour_timestamp()
+            self.logger.info(f'last bets close timestamp is not found: '
+                  + f'{self.event_params}, using next hour'
+                  + f'timestamp = {hour_timestamp}')
+            return hour_timestamp
 
 
     def _verify_event_params(self, event_params):
@@ -43,21 +76,32 @@ class EventCreationEmitter(LoopExecutor):
 
     async def _make_event_transaction(self):
 
+        target_dynamics = int(
+            self.event_params['target_dynamics'] * DYNAMICS_PRECISION)
+
+        liquidity_percent = int(
+            self.event_params['liquidity_percent'] * LIQUIDITY_PRECISION)
+
         # creating event:
         event_params = {
             'currencyPair': self.event_params['currency_pair'],
-            'targetDynamics': int(self.event_params['target_dynamics'] * self.DYNAMICS_PRECISION),
+            'targetDynamics': target_dynamics,
             'betsCloseTime': self.next_at + self.event_params['bets_period'],
             'measurePeriod': self.event_params['measure_period'],
-            'liquidityPercent': int(self.event_params['liquidity_percent'] * self.LIQUIDITY_PRECISION),
+            'liquidityPercent': liquidity_percent,
         }
 
-        # TODO: should I move this fees from event_params into event emitter params?
-        fees = self.event_params['expiration_fee'] + self.event_params['measure_start_fee']
-        transaction = self.contract.newEvent(event_params).with_amount(fees).as_transaction()
+        fees = (
+            self.event_params['expiration_fee']
+            + self.event_params['measure_start_fee']
+        )
+
+        operation = self.contract.newEvent(event_params).with_amount(fees)
+        transaction = operation.as_transaction()
         await self.operations_queue.put(transaction)
 
-        self.logger.info(f'created newEvent transaction with parameters: {event_params}')
+        self.logger.info(
+            f'created newEvent transaction with parameters: {event_params}')
 
 
     async def create_event(self):
@@ -77,12 +121,14 @@ class EventCreationEmitter(LoopExecutor):
         if not is_late:
             await self._make_event_transaction()
 
-        # anyway if it is late or if new event created, changing next_at timestamp:
+        # anyway if it is late or if new event created,
+        # changing next_at timestamp:
         self.next_at = self.next_at + self.event_params['bets_period']
         self.logger.info(f'next event at: {self.next_at}')
 
 
     async def execute(self):
-        # TODO: do I need here repeat_until_succeed?
+        # TODO: how can I catch all type of errors and rerun this?
+        # TODO: maybe add here repeat_until_succeed?
         return await self.create_event()
 

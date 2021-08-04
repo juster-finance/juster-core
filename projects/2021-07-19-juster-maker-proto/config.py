@@ -42,3 +42,8 @@ DYNAMIC_PARAMS = [
     dict(period=86400, target_dynamics=1.01, liquidity_percent=0.02),
 ]
 
+EXECUTOR_UPDATE_PERIOD = 30
+
+DYNAMICS_PRECISION = 1_000_000
+LIQUIDITY_PRECISION = 1_000_000
+

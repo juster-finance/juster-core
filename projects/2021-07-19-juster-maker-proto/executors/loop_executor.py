@@ -7,6 +7,10 @@ class LoopExecutor:
     """ Executes self.execute each period seconds """
 
     def __init__(self, period):
+        """ Creates new LoopExecutor
+        - period: time in seconds used to sleep before executor re runned
+        """
+
         self.period = period
         self.loop = asyncio.get_event_loop()
 
