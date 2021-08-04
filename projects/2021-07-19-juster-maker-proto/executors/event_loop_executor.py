@@ -1,6 +1,5 @@
 from executors import LoopExecutor
 from config import EXECUTOR_UPDATE_PERIOD
-import logging
 
 
 class EventLoopExecutor(LoopExecutor):
@@ -27,7 +26,6 @@ class EventLoopExecutor(LoopExecutor):
 
         self.contract = contract
         self.operations_queue = operations_queue
-        self.logger = logging.getLogger(self.__class__.__name__)
         self.dd_client = dd_client
 
 

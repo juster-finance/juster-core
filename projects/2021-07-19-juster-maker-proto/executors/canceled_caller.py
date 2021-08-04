@@ -1,4 +1,3 @@
-import logging
 from executors import WithdrawCaller
 import time
 import asyncio

@@ -95,7 +95,6 @@ class JusterMaker:
         # for each client key one BulkSender is created:
         bulk_senders = [
             BulkSender(
-                period=60,
                 client=client,
                 operations_queue=self.operations_queue)
             for client in self.clients
@@ -104,7 +103,6 @@ class JusterMaker:
         # one WithdrawCaller, ForceMajeureCaller and CanceledCaller created:
         withdraw_callers = [
             WithdrawCaller(
-                period=60,
                 contract=self.contract,
                 operations_queue=self.operations_queue,
                 dd_client=self.dd_client)
@@ -125,7 +123,6 @@ class JusterMaker:
 
         canceled_callers = [
             CanceledCaller(
-                period=60,
                 contract=self.contract,
                 operations_queue=self.operations_queue,
                 dd_client=self.dd_client)

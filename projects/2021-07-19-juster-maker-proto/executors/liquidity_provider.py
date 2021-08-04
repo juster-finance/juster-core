@@ -1,4 +1,3 @@
-import logging
 from executors import EventCreationEmitter
 import asyncio
 import time

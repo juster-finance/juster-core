@@ -1,5 +1,4 @@
-import logging
-from executors.loop_executor import LoopExecutor
+from executors import LoopExecutor
 from utility import repeat_until_succeed
 
 
@@ -8,12 +7,10 @@ class BulkSender(LoopExecutor):
         signs and sends the transaction
     """
 
-    def __init__(self, period, client, operations_queue):
-        super().__init__(period)
-
+    def __init__(self, client, operations_queue):
+        super().__init__()
         self.client = client
         self.operations_queue = operations_queue
-        self.logger = logging.getLogger(__name__)
 
 
     async def sign(self, max_operations=10):
@@ -38,20 +35,19 @@ class BulkSender(LoopExecutor):
 
         except Exception as e:
             self.logger.error(f'catched {type(e)} in sign: {str(e)}')
-            # TODO: here I need to classify error and if it was RPC error: return
-            # operations back to the queue, if not: raise this e
-            # raise e
+            # TODO: here I need to classify error and if it was RPC error:
+            # return operations back to the queue, if not: raise this e
 
-            # TODO: change this list to RPCError, MichelsonError and other possible errors that
-            # required to cancel transaction and return operation to the queue
-            # if type(e) in [Exception]:
-                # Returning operations to the queue:
+            # TODO: change this list to RPCError, MichelsonError and other
+            # possible errors that required to cancel transaction and return
+            # operation to the queue
 
             for operation in operations:
                 await self.operations_queue.put(operation)
 
             # catched:
             # -- requests.exceptions.ConnectionError
+            # TODO: analyze logs and find all this catched errors
 
 
     async def is_ready_to_sign(self, sleep_time=90):
