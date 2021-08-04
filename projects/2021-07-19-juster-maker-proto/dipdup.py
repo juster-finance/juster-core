@@ -57,6 +57,7 @@ class JusterDipDupClient:
         return event
 
 
+    # TODO: rename make_event_query (?): if there would be another requests
     def make_query(self, query_name, **variables):
         """ Performs query to dipdup using `query_name`.graphql query from
             queries directory and variables passed as named arguments """
@@ -67,12 +68,4 @@ class JusterDipDupClient:
         events = data['data']['juster_event']
 
         return [self.deserialize_event(event) for event in events]
-
-
-    def query_canceled_to_withdraw(self):
-        """ Requests list of events that have unwithdrawn positions and
-            where status is CANCELED (force majeure)
-        """
-
-        return self.make_query('canceled_to_withdraw')
 
