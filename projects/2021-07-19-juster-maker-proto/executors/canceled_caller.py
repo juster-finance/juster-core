@@ -59,7 +59,7 @@ class CanceledCaller(LoopExecutor):
         # Requesting events:
         withdrawable_events = self.dd_client.query_canceled_to_withdraw()
 
-        if len(withdrawable_events):
+        if withdrawable_events is not None:
             self.logger.info(f'updated canceled to withdraw events list, {len(withdrawable_events)}')
 
             for event in withdrawable_events:

@@ -67,7 +67,7 @@ class WithdrawCaller(LoopExecutor):
         # Requesting events:
         withdrawable_events = self.dd_client.query_withdrawable_events(closed_before)
 
-        if len(withdrawable_events):
+        if withdrawable_events is not None:
             self.logger.info(f'updated withdrawable events list, {len(withdrawable_events)}')
 
             for event in withdrawable_events:
