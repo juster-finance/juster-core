@@ -27,7 +27,7 @@ class EventLoopExecutor(LoopExecutor):
 
         self.contract = contract
         self.operations_queue = operations_queue
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.dd_client = dd_client
 
 

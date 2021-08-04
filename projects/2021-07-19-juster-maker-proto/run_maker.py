@@ -70,7 +70,7 @@ class JusterMaker:
 
     def create_executors(self):
 
-        # for each event_params EventCreationEmitter is created:
+        # for each event line one EventCreationEmitter is created:
         event_creation_executors = [
             EventCreationEmitter(
                 contract=self.contract,
@@ -81,18 +81,18 @@ class JusterMaker:
             for params in self.event_lines.get()
         ]
 
+        # for each event line one LineLiquidityProvider is created:
         line_liquidity_executors = [
             LineLiquidityProvider(
-                period=120,
                 contract=self.contract,
                 operations_queue=self.operations_queue,
-                event_params=params,
                 dd_client=self.dd_client,
-                creators=CREATORS
+                event_params=params,
             )
             for params in self.event_lines.get()
         ]
 
+        # for each client key one BulkSender is created:
         bulk_senders = [
             BulkSender(
                 period=60,
@@ -101,6 +101,7 @@ class JusterMaker:
             for client in self.clients
         ]
 
+        # one WithdrawCaller, ForceMajeureCaller and CanceledCaller created:
         withdraw_callers = [
             WithdrawCaller(
                 period=60,

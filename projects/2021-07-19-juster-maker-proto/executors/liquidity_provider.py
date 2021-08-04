@@ -1,34 +1,16 @@
 import logging
-from executors.loop_executor import LoopExecutor
+from executors import EventCreationEmitter
 import asyncio
 import time
+from config import LIQUIDITY_MAX_SLIPPAGE, PROVIDE_LIQUIDITY_AMOUNT
 
 
-class LineLiquidityProvider(LoopExecutor):
+class LineLiquidityProvider(EventCreationEmitter):
     """ Listens to the dipdup for curated events and provides liquidity
         For each event line one LineLiquidityProvider should be runned
+        Liquidity Provider is very similar to EventCreationEmitter, this is why
+        they share some code
     """
-
-    def __init__(self, period, contract, operations_queue, event_params, dd_client, creators):
-        """ ...
-            - contract: is pytezos object with Juster contract loaded and
-                some key provided
-            - event_params: params of the event
-                - currency_pair: 
-                - target_dynamics: should be float 1.0 - no dynamics
-                - measure_period: in seconds
-                - liquidity_percent: should be float, 0.01 is one percent
-        """
-
-        super().__init__(period)
-
-        self.contract = contract
-        self.operations_queue = operations_queue
-        self.event_params = event_params
-        self.dd_client = dd_client
-        self.creators = creators
-        self.logger = logging.getLogger(__name__)
-
 
     async def _make_provide_liquidity_transaction(self, event_id, amount, a, b):
 
@@ -36,30 +18,26 @@ class LineLiquidityProvider(LoopExecutor):
             'eventId': event_id,
             'expectedRatioAboveEq': a,
             'expectedRatioBelow': b,
-            # TODO: set slippage 10%
-            'maxSlippage': 1_000_000
+            'maxSlippage': LIQUIDITY_MAX_SLIPPAGE
         }
 
-        transaction = self.contract.provideLiquidity(provide_params).with_amount(amount).as_transaction()
+        op = self.contract.provideLiquidity(provide_params).with_amount(amount)
+        transaction = op.as_transaction()
         await self.operations_queue.put(transaction)
 
-        self.logger.info(f'provided liquidity to {event_id=}, {a=}, {b=}, {amount=}')
+        self.logger.info(
+            f'provided liquidity to {event_id=}, {a=}, {b=}, {amount=}')
 
 
     async def provide_liquidity(self):
 
         # getting info about last event in line:
-        last_event = self.dd_client.query_last_line_event(
-            self.event_params['currency_pair'],
-            self.event_params['target_dynamics'],
-            self.event_params['measure_period'],
-            self.creators
-        )
+        last_event = self.get_last_event_info()
 
         # checking that event is still opened:
         if last_event['bets_close_time'].timestamp() < time.time():
-            # TODO: again logging with name setup:
-            self.logger.info(f'LineLiquidityProvider: betting is finished, skipping')
+            self.logger.info(
+                f'LineLiquidityProvider: betting is finished, skipping')
             return
 
         pools_value = last_event['pool_above_eq'] + last_event['pool_below']
@@ -67,22 +45,20 @@ class LineLiquidityProvider(LoopExecutor):
         if pools_value < minimal_value:
             # TODO: evaluate a/b
             event_id = last_event['id']
-            amount = 1_000_000
+            amount = PROVIDE_LIQUIDITY_AMOUNT
             a = 1
             b = 1
 
-            await self._make_provide_liquidity_transaction(event_id, amount, a, b)
+            await self._make_provide_liquidity_transaction(
+                event_id, amount, a, b)
             # making transaction to fill pool:
 
-            # wait untill this transaction is succeed (check each 30 secs last_event and that it updated)
-            # -- or maybe check that juster_deposit emitted?
+            # It is very possible that time from transaction creation to signing
+            # and bulking exceed 120 seconds that setted in period. Because of
+            # this it is required to block this provide_liquidity for some time.
+            # The easiest working way: make it sleep 10 mins
 
-            # It is very possible that time from transaction creation to signing and bulking
-            # exceed 120 seconds that setted in period. Because of this it is required to block
-            # this provide_liquidity for some time. The easiest working way: make it sleep 10 mins
-
-            # TODO: But I don't like this sleep, maybe there are better way to hold while transaction
-            # is prepared?
+            # TODO: is it possible to await for some dipdup subscription call?
             await asyncio.sleep(600)
 
 

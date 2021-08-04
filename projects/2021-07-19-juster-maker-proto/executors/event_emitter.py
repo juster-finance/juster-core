@@ -39,17 +39,24 @@ class EventCreationEmitter(EventLoopExecutor):
         self.next_at = self.get_next_close_timestamp()
 
 
-    def get_next_close_timestamp(self):
-        """ Requests last event close timestamp using DipDupClient
-            this timestamp used to schedule this event
+    def get_last_event_info(self):
+        """ Returns actual data about last event in the line using dipdup query
         """
 
-        last_event = self.dd_client.query_last_line_event(
+        return self.dd_client.query_last_line_event(
             self.event_params['currency_pair'],
             self.event_params['target_dynamics'],
             self.event_params['measure_period'],
             CREATORS
         )
+
+
+    def get_next_close_timestamp(self):
+        """ Requests last event close timestamp using DipDupClient
+            this timestamp used to schedule this event
+        """
+
+        last_event = self.get_last_event_info()
 
         if last_event:
             last_date_created = int(last_event['bets_close_time'].timestamp())

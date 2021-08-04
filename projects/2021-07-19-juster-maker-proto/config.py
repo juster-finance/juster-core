@@ -52,3 +52,9 @@ LIQUIDITY_PRECISION = 1_000_000
 # After this period, withdraw caller would receive split:
 REWARD_SPLIT_FEE_AFTER = 24*60*60
 
+# Max slippage used in provide liquidity (10kk is 10%):
+LIQUIDITY_MAX_SLIPPAGE = int(100_000_000 * 0.10)
+
+# The amount of liquidity provided for each event:
+PROVIDE_LIQUIDITY_AMOUNT = 1_000_000
+
