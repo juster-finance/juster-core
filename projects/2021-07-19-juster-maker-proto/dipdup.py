@@ -69,16 +69,6 @@ class JusterDipDupClient:
         return [self.deserialize_event(event) for event in events]
 
 
-    def query_withdrawable_events(self, closed_before):
-        """ Requests list of events that have unwithdrawn positions and
-            where time after close > rewardFeeSplitAfter (24h by default)
-        """
-
-        return self.make_query(
-            'withdrawable_events',
-            closed_before=closed_before)
-
-
     def query_open_event_times(self):
         """ TODO: rename me and add description """
         # TODO: there are potential problem if there would be

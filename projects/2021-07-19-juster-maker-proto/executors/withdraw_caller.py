@@ -46,13 +46,23 @@ class WithdrawCaller(EventLoopExecutor):
                 await self._make_withdraw_transaction(event['id'], address)
 
 
+    def query_withdrawable_events(self, closed_before):
+        """ Requests list of events that have unwithdrawn positions and
+            where time after close > rewardFeeSplitAfter (24h by default)
+        """
+
+        return self.dd_client.make_query(
+            'withdrawable_events',
+            closed_before=closed_before)
+
+
     async def emmit_withdraw_transactions(self):
 
         # Calculating threshold closed date that activates reward split fee:
         closed_before = timestamp_to_date(time.time() - REWARD_SPLIT_FEE_AFTER)
 
         # Requesting events:
-        events = self.dd_client.query_withdrawable_events(closed_before)
+        events = self.query_withdrawable_events(closed_before)
 
         self.logger.info(f'updated withdrawable events list, {len(events)}')
 
