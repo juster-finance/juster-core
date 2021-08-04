@@ -87,27 +87,17 @@ class JusterMaker:
         ]
 
         # one WithdrawCaller, ForceMajeureCaller and CanceledCaller created:
-        withdraw_callers = [
+        support_callers = [
             WithdrawCaller(
                 contract=self.contract,
                 operations_queue=self.operations_queue,
-                dd_client=self.dd_client)
-        ]
+                dd_client=self.dd_client),
 
-        force_majeure_callers = [
             ForceMajeureCaller(
                 contract=self.contract,
                 operations_queue=self.operations_queue,
-                dd_client=self.dd_client)
-        ]
+                dd_client=self.dd_client),
 
-        # TODO: need to organize this Maker - Caller communications
-        # - there are a lot of the same params that transfered for each caller
-        #   (maybe they can be loaded from config)
-        #   (or maybe this method can be organized in loop?)
-        # - need to sync all __init__ for different Callers
-
-        canceled_callers = [
             CanceledCaller(
                 contract=self.contract,
                 operations_queue=self.operations_queue,
@@ -118,9 +108,7 @@ class JusterMaker:
             *event_creation_executors,
             *line_liquidity_executors,
             *bulk_senders,
-            *withdraw_callers,
-            *force_majeure_callers,
-            *canceled_callers
+            *support_callers
         ]
 
 
