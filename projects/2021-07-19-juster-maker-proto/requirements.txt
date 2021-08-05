@@ -31,6 +31,7 @@ eth-utils==1.10.0
 fastecdsa==1.7.5
 graphql-core==3.1.5
 idna==3.2
+iniconfig==1.1.1
 ipykernel==5.5.5
 ipython==7.25.0
 ipython-genutils==0.2.0
@@ -72,10 +73,12 @@ pendulum==2.1.2
 pexpect==4.8.0
 pickleshare==0.7.5
 Pillow==8.3.1
+pluggy==0.13.1
 ply==3.11
 prometheus-client==0.11.0
 prompt-toolkit==3.0.19
 ptyprocess==0.7.0
+py==1.10.0
 py-ecc==5.2.0
 pyblake2==1.1.2
 pycparser==2.20
@@ -84,6 +87,7 @@ pyparsing==2.4.7
 pyrsistent==0.18.0
 pysha3==1.0.2
 pysodium==0.7.7
+pytest==6.2.4
 pytezos==3.2.6
 python-dateutil==2.8.2
 pytimeparse==1.1.8
@@ -109,6 +113,7 @@ termcolor==1.1.0
 terminado==0.10.1
 testcontainers==3.4.1
 testpath==0.5.0
+toml==0.10.2
 toolz==0.11.1
 tornado==6.1
 tqdm==4.61.2
