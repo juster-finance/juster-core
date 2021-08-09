@@ -20,8 +20,6 @@ DIPDUP_ENDPOINT_URI = 'https://api.dipdup.net/juster/graphql'
 # Key used in pytezos:
 KEY = '../test-keys/tz1fvzdyC7s4mMhBrmG38kasaZjE9PHPgFEu.json'
 
-TRANSACTIONS_QUEUE_SIZE = 50
-
 # Whitelist of the addresses that are used to manage Event Lines:
 CREATORS = [
     'tz1iQE8ijR5xVPffBUPFubwB9XQJuyD9qsoJ',
@@ -56,4 +54,11 @@ WAIT_AFTER_FAIL = 10
 # Amount of attempts to retry operation in repeat_until_succeed before raising
 # exception:
 MAX_RETRY_ATTEMPTS = 10
+
+# Maximum operations that added to one bulk. Good to keep it as multiples of
+# Event lines count:
+MAX_OPERATIONS_IN_BULK = 9
+
+# Maximum operations in queue:
+TRANSACTIONS_QUEUE_SIZE = 9
 

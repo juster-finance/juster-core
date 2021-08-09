@@ -13,7 +13,10 @@ class BulkSender(LoopExecutor):
         self.operations_queue = operations_queue
 
 
-    async def sign(self, max_operations=10):
+    async def sign(self, max_operations=None):
+
+        max_operations = max_operations or self.config.MAX_OPERATIONS_IN_BULK
+
         # TODO: check if ready to sign
         # ? await self.is_ready_to_sign()
 
