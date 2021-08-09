@@ -55,8 +55,11 @@ class JusterMaker:
 
 
     def create_executors(self):
+        """ Creates list of the LoopExecutor objects. One event creator and
+            liquidity provider for each event line. One bulk sender for each
+            client key. And one for each support callers.
+        """
 
-        # for each event line one EventCreationEmitter is created:
         event_creation_executors = [
             EventCreationEmitter(
                 contract=self.contract,
@@ -67,7 +70,6 @@ class JusterMaker:
             for params in self.event_lines.get()
         ]
 
-        # for each event line one LineLiquidityProvider is created:
         line_liquidity_executors = [
             LineLiquidityProvider(
                 contract=self.contract,
@@ -78,7 +80,6 @@ class JusterMaker:
             for params in self.event_lines.get()
         ]
 
-        # for each client key one BulkSender is created:
         bulk_senders = [
             BulkSender(
                 client=client,
@@ -86,7 +87,6 @@ class JusterMaker:
             for client in self.clients
         ]
 
-        # one WithdrawCaller, ForceMajeureCaller and CanceledCaller created:
         support_callers = [
             WithdrawCaller(
                 contract=self.contract,
