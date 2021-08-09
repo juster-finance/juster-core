@@ -43,3 +43,26 @@ class EventLoopExecutor(LoopExecutor):
 
         return True
 
+
+    def check_transaction(self, transaction):
+        """ Checks that transactions is possible to be signed """
+
+        try:
+            transaction.autofill().sign()
+        # TODO: need to limit exception types to RPC errors
+        except Exception as e:
+            self.logger.error(f'''
+                Catched error while checking transaction {transaction}
+                Error: {type(e)}, {str(e)}
+                WARNING: Transaction is dropped
+            ''')
+
+
+    async def put_transaction(self, transaction):
+        """ Check that transaction is correct and adds it to the queue """
+
+        self.check_transaction(transaction)
+        await self.operations_queue.put(transaction)
+
+        self.logger.info(f'added transaction with params: {transaction}')
+

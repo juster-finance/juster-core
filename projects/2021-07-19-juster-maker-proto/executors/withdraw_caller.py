@@ -31,7 +31,7 @@ class WithdrawCaller(EventLoopExecutor):
         if not self.is_event_exist(event_id):
             return
 
-        await self.operations_queue.put(transaction)
+        await self.put_transaction(transaction)
 
         self.logger.info(
             f'added withdraw transaction with params: {withdrawing_params}')
