@@ -50,6 +50,10 @@ class EventLoopExecutor(LoopExecutor):
         try:
             transaction.autofill().sign()
         # TODO: need to limit exception types to RPC errors
+        # pytezos.rpc.node.RpcError
+        # if there are 'proto.009-PsFLoren.contract.counter_in_the_past' in
+        #    the error text, need to return transaction to the queue
+
         except Exception as e:
             self.logger.error(f'''
                 Catched error while checking transaction {transaction}

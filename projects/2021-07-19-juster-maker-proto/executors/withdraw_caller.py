@@ -33,9 +33,6 @@ class WithdrawCaller(EventLoopExecutor):
 
         await self.put_transaction(transaction)
 
-        self.logger.info(
-            f'added withdraw transaction with params: {withdrawing_params}')
-
 
     async def _make_transaction_for_events(self, events):
         """ Creates withdraw transaction for each event in events """

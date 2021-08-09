@@ -111,9 +111,6 @@ class EventCreationEmitter(EventLoopExecutor):
         transaction = operation.as_transaction()
         await self.put_transaction(transaction)
 
-        self.logger.info(
-            f'created newEvent transaction with parameters: {event_params}')
-
 
     async def create_event(self):
 

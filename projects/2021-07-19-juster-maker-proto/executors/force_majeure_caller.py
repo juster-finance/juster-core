@@ -42,9 +42,6 @@ class ForceMajeureCaller(EventLoopExecutor):
         transaction = operation.as_transaction()
         await self.put_transaction(transaction)
 
-        self.logger.info(
-            f'added force majeure transaction for {event_id} event_id')
-
 
     async def query_open_event_times(self):
         """ TODO: rename me and add description """

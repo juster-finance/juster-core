@@ -24,9 +24,6 @@ class LineLiquidityProvider(EventCreationEmitter):
         transaction = op.as_transaction()
         await self.put_transaction(transaction)
 
-        self.logger.info(
-            f'provided liquidity to {event_id=}, {a=}, {b=}, {amount=}')
-
 
     async def provide_liquidity(self):
 
