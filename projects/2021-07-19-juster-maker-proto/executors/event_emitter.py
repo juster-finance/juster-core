@@ -58,11 +58,11 @@ class EventCreationEmitter(EventLoopExecutor):
         last_event = await self.get_last_event_info()
 
         if last_event:
-            last_date_created = int(last_event['bets_close_time'].timestamp())
+            last_bets_close = int(last_event['bets_close_time'].timestamp())
             # TODO: it is possible that dipdup data have not indexed emitted
             # events if it was called right after last event was created. Is
             # there is any solution?
-            return last_date_created
+            return last_bets_close
 
         else:
             hour_timestamp = make_next_hour_timestamp()
