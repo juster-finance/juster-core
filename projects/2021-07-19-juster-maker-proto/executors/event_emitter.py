@@ -35,15 +35,15 @@ class EventCreationEmitter(EventLoopExecutor):
 
         self._verify_event_params(event_params)
         self.event_params = event_params
-        self.next_at = self.get_next_close_timestamp()
+        self.next_at = None
 
 
-    def get_last_event_info(self):
+    async def get_last_event_info(self):
         """ Returns actual data about last event in the line using dipdup query
             If there are no event with requested line params, returns None
         """
 
-        last_events = self.dd_client.make_query(
+        last_events = await self.dd_client.make_query(
             query_name='last_line_event',
             currency_pair=self.event_params['currency_pair'],
             target_dynamics=self.event_params['target_dynamics'],
@@ -55,12 +55,12 @@ class EventCreationEmitter(EventLoopExecutor):
             return last_events[0]
 
 
-    def get_next_close_timestamp(self):
+    async def get_next_close_timestamp(self):
         """ Requests last event close timestamp using DipDupClient
             this timestamp used to schedule this event
         """
 
-        last_event = self.get_last_event_info()
+        last_event = await self.get_last_event_info()
 
         if last_event:
             last_date_created = int(last_event['bets_close_time'].timestamp())
@@ -116,6 +116,10 @@ class EventCreationEmitter(EventLoopExecutor):
 
 
     async def create_event(self):
+
+        # Updating info about next event time
+        if self.next_at is None:
+            self.next_at = await self.get_next_close_timestamp()
 
         # checking that this is time to create event:
         time_before_next = self.next_at - time.time()

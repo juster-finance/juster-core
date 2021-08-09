@@ -64,5 +64,6 @@ class EventLoopExecutor(LoopExecutor):
         self.check_transaction(transaction)
         await self.operations_queue.put(transaction)
 
-        self.logger.info(f'added transaction with params: {transaction}')
+        self.logger.info(
+            f'added transaction with content: {transaction.contents}')
 

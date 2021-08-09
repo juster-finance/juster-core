@@ -2,10 +2,12 @@
 
 from sgqlc.endpoint.http import HTTPEndpoint
 from dateutil.parser import parse
-from utility import timestamp_to_date
+from utility import timestamp_to_date, repeat_until_succeed
 import time
 from config import DIPDUP_ENDPOINT_URI
 from os.path import join
+from urllib.error import URLError
+from http.client import RemoteDisconnected
 
 
 QUERIES_DIR = 'queries'
@@ -26,11 +28,6 @@ class JusterDipDupClient:
 
         self.queries = self.load_queries()
         self.endpoint = HTTPEndpoint(DIPDUP_ENDPOINT_URI)
-        # TODO: any query to endpoint can fail with:
-        # http.client.RemoteDisconnected: Remote end closed connection without response
-        # need to find a way where to catch this errors and process them!
-        # ALSO: urllib.error.URLError: <urlopen error [Errno -2] Name or service not known>
-        # (this raises when connection is lost)
 
 
     def load_queries(self):
@@ -58,13 +55,22 @@ class JusterDipDupClient:
 
 
     # TODO: rename make_event_query (?): if there would be another requests
-    def make_query(self, query_name, **variables):
+    async def make_query(self, query_name, **variables):
         """ Performs query to dipdup using `query_name`.graphql query from
             queries directory and variables passed as named arguments """
 
+        # TODO: find a way to throttle calls (limit to 1 per second for ex)
         query = self.queries[query_name]
 
-        data = self.endpoint(query, variables)
+        async def request():
+            return self.endpoint(query, variables)
+
+        # Running query and ignoring internet connection errors:
+        data = await repeat_until_succeed(
+            func=request,
+            allowed_exceptions=[URLError, RemoteDisconnected]
+        )
+
         events = data['data']['juster_event']
 
         return [self.deserialize_event(event) for event in events]

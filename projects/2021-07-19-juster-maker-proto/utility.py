@@ -1,5 +1,10 @@
+import asyncio
 from datetime import datetime
 import time
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 async def repeat_until_succeed(
@@ -15,7 +20,7 @@ async def repeat_until_succeed(
 
         except Exception as e:
             if type(e) in allowed_exceptions:
-                print(f'Ignoring error {type(e)}, {str(e)}')
+                logger.error(f'Ignoring error {type(e)}, {str(e)}')
                 await asyncio.sleep(wait_after_fail)
             else:
                 raise e

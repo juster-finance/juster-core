@@ -31,7 +31,7 @@ class LineLiquidityProvider(EventCreationEmitter):
     async def provide_liquidity(self):
 
         # getting info about last event in line:
-        last_event = self.get_last_event_info()
+        last_event = await self.get_last_event_info()
 
         # checking that event is still opened:
         if last_event['bets_close_time'].timestamp() < time.time():
