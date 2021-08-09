@@ -19,8 +19,12 @@ async def repeat_until_succeed(
             return await func()
 
         except Exception as e:
-            if type(e) in allowed_exceptions:
-                logger.error(f'Ignoring error {type(e)}, {str(e)}')
+            is_allowed = type(e) in allowed_exceptions
+            is_last_call = attempt == max_attempts - 1
+
+            if is_allowed and not is_last_call:
+                logger.error(
+                    f'Ignoring error, attempt: {attempt} {type(e)}, {str(e)}')
                 await asyncio.sleep(wait_after_fail)
             else:
                 raise e
