@@ -8,6 +8,7 @@ from dipdup import JusterDipDupClient
 from unittest.mock import MagicMock, Mock, patch
 from asyncio import Queue
 from datetime import datetime
+import tests.config as config
 
 
 # TODO: should it be easier to have separate object with default constructor?
@@ -34,20 +35,28 @@ class EventEmitterTest(TestCase):
         # return value from JusterDipDupClient.make_quert is the list
         # of the events:
         dd_response = [DEFAULT_EVENT_PARAMS.copy()]
+
+        ''' # this way global JusterDipDupClient is changed:
+        JusterDipDupClient.make_query = MagicMock(
+            return_value=[DEFAULT_EVENT_PARAMS.copy()])
+        '''
+
         with patch.object(
                 JusterDipDupClient,
                 'make_query',
                 return_value=dd_response) as mock_method:
 
-            dd_client = JusterDipDupClient()
+            dd_client = JusterDipDupClient(config)
             # creating event_emitter using patched dipdup client and pytezos
             event_emitter = EventCreationEmitter(
+                config=config,
                 contract=contract,
                 operations_queue=operations_queue,
                 event_params=DEFAULT_EVENT_PARAMS.copy(),
                 dd_client=dd_client)
 
-        loop.run_until_complete(event_emitter.execute())
+            loop.run_until_complete(event_emitter.execute())
+
         contract.newEvent.assert_called()
         self.assertEqual(operations_queue.qsize(), 1)
 
@@ -65,8 +74,15 @@ class BulkSenderTest(TestCase):
     @patch('pytezos.PyTezosClient')
     def test_transaction_is_send(self, client):
 
-        bs = BulkSender(client=client, operations_queue=self.operations_queue)
-        self.loop.run_until_complete(self.operations_queue.put('some transaction'))
+        bs = BulkSender(
+            config=config,
+            client=client,
+            operations_queue=self.operations_queue
+        )
+
+        self.loop.run_until_complete(
+            self.operations_queue.put('some transaction'))
+
         self.assertEqual(self.operations_queue.qsize(), 1)
         self.loop.run_until_complete(bs.execute())
         client.bulk.assert_called()
@@ -76,9 +92,18 @@ class BulkSenderTest(TestCase):
     @patch('pytezos.PyTezosClient')
     def test_failed_transaction_returned_to_the_queue(self, client):
 
-        bs = BulkSender(client=client, operations_queue=self.operations_queue)
-        self.loop.run_until_complete(self.operations_queue.put('some transaction'))
-        client.bulk = Mock(side_effect=Exception('TODO: change me to RPC error'))
+        bs = BulkSender(
+            config=config,
+            client=client,
+            operations_queue=self.operations_queue
+        )
+
+        self.loop.run_until_complete(
+            self.operations_queue.put('some transaction'))
+
+        client.bulk = Mock(
+            side_effect=Exception('TODO: change me to RPC error'))
+
         self.assertEqual(self.operations_queue.qsize(), 1)
         self.loop.run_until_complete(bs.execute())
         client.bulk.assert_called()
@@ -89,4 +114,29 @@ class BulkSenderTest(TestCase):
     def test_failed_transaction_runned_again(self):
         pass
     '''
+
+
+# TODO: split in separate files
+from dipdup import JusterDipDupClient
+from unittest.mock import MagicMock, Mock, patch
+from unittest import TestCase
+from sgqlc.endpoint.http import HTTPEndpoint
+from urllib.error import URLError
+from http.client import RemoteDisconnected
+
+
+class DipDupClientTest(TestCase):
+    def setUp(self):
+        self.loop = asyncio.get_event_loop()
+
+
+    def test_should_make_multiple_attempts_with_URLError(self):
+        mock_endpoint = MagicMock(side_effect=URLError('TODO: add reason here'))
+        dd_client = JusterDipDupClient(config)
+        dd_client.endpoint = mock_endpoint
+
+        with self.assertRaises(URLError) as cm:
+            self.loop.run_until_complete(dd_client.make_query('all_events'))
+
+        self.assertEqual(mock_endpoint.call_count, config.MAX_RETRY_ATTEMPTS)
 
