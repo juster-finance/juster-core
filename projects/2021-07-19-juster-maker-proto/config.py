@@ -50,3 +50,10 @@ PROVIDE_LIQUIDITY_AMOUNT = 1_000_000
 # Max allowed time in seconds to be late in call startMeasurement / close:
 MAX_ALLOWED_MEASURE_LAG = 4*60*60
 
+# Time that used to wait after repeat_until_succeed wrapper failed:
+WAIT_AFTER_FAIL = 10
+
+# Amount of attempts to retry operation in repeat_until_succeed before raising
+# exception:
+MAX_RETRY_ATTEMPTS = 10
+
