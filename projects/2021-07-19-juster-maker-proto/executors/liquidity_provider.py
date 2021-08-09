@@ -22,7 +22,7 @@ class LineLiquidityProvider(EventCreationEmitter):
 
         op = self.contract.provideLiquidity(provide_params).with_amount(amount)
         transaction = op.as_transaction()
-        await self.operations_queue.put(transaction)
+        await self.put_transaction(transaction)
 
         self.logger.info(
             f'provided liquidity to {event_id=}, {a=}, {b=}, {amount=}')

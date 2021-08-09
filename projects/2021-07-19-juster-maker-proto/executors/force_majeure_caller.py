@@ -40,7 +40,7 @@ class ForceMajeureCaller(EventLoopExecutor):
 
         operation = self.contract.triggerForceMajeure(event_id)
         transaction = operation.as_transaction()
-        await self.operations_queue.put(transaction)
+        await self.put_transaction(transaction)
 
         self.logger.info(
             f'added force majeure transaction for {event_id} event_id')

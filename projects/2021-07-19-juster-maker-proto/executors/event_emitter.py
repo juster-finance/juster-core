@@ -109,7 +109,7 @@ class EventCreationEmitter(EventLoopExecutor):
 
         operation = self.contract.newEvent(event_params).with_amount(fees)
         transaction = operation.as_transaction()
-        await self.operations_queue.put(transaction)
+        await self.put_transaction(transaction)
 
         self.logger.info(
             f'created newEvent transaction with parameters: {event_params}')
