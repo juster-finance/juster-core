@@ -54,11 +54,10 @@ class EventLoopExecutor(LoopExecutor):
         #    the error text, need to return transaction to the queue
 
         except Exception as e:
-            self.logger.error(f'''
-                Catched error while checking transaction {transaction}
-                Error: {type(e)}, {str(e)}
-                WARNING: Transaction is dropped
-            ''')
+            self.logger.error(
+                f'Catched error while checking transaction {transaction.contents}')
+            self.logger.error(f'-- ERROR: {type(e)}, {str(e)}')
+            self.logger.error('-- WARNING: Transaction is dropped')
 
 
     async def put_transaction(self, transaction):
