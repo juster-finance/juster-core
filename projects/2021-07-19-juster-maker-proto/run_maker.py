@@ -12,11 +12,11 @@ def generate_event_lines():
 
     event_lines = EventLines()
     event_lines.generate_new()
-    event_lines.save(EVENT_LINES_PARAMS_FN)
+    event_lines.save(config.EVENT_LINES_PARAMS_FN)
 
 
 async def run_maker():
-    maker = JusterMaker()
+    maker = JusterMaker(config)
     maker.create_executors()
     await maker.run()
 

@@ -1,11 +1,5 @@
 from executors import EventLoopExecutor
 import time
-import asyncio
-from config import (
-    DYNAMICS_PRECISION,
-    LIQUIDITY_PRECISION,
-    CREATORS
-)
 from utility import make_next_hour_timestamp
 
 
@@ -14,6 +8,7 @@ class EventCreationEmitter(EventLoopExecutor):
 
     def __init__(
             self,
+            config,
             contract,
             operations_queue,
             dd_client,
@@ -31,7 +26,7 @@ class EventCreationEmitter(EventLoopExecutor):
             - liquidity_percent: should be float, 0.01 is one percent
         """
 
-        super().__init__(contract, operations_queue, dd_client)
+        super().__init__(config, contract, operations_queue, dd_client)
 
         self._verify_event_params(event_params)
         self.event_params = event_params
@@ -48,7 +43,7 @@ class EventCreationEmitter(EventLoopExecutor):
             currency_pair=self.event_params['currency_pair'],
             target_dynamics=self.event_params['target_dynamics'],
             measure_period=self.event_params['measure_period'],
-            creators=CREATORS
+            creators=self.config.CREATORS
         )
 
         if len(last_events):
@@ -87,11 +82,11 @@ class EventCreationEmitter(EventLoopExecutor):
 
     async def _make_event_transaction(self):
 
-        target_dynamics = int(
-            self.event_params['target_dynamics'] * DYNAMICS_PRECISION)
+        prec = self.config.DYNAMICS_PRECISION
+        target_dynamics = int(self.event_params['target_dynamics'] * prec)
 
-        liquidity_percent = int(
-            self.event_params['liquidity_percent'] * LIQUIDITY_PRECISION)
+        prec = self.config.LIQUIDITY_PRECISION
+        liquidity_percent = int(self.event_params['liquidity_percent'] * prec)
 
         # creating event:
         event_params = {

@@ -1,5 +1,4 @@
 from executors import LoopExecutor
-from config import EXECUTOR_UPDATE_PERIOD
 
 
 class EventLoopExecutor(LoopExecutor):
@@ -9,20 +8,20 @@ class EventLoopExecutor(LoopExecutor):
 
     def __init__(
             self,
+            config,
             contract,
             operations_queue,
             dd_client,
-            period=EXECUTOR_UPDATE_PERIOD
         ):
         """ Creates new EventLoopExecutor,
+        - config: configuration object
         - contract: juster contract, pytezos instance
         - operations_queue: queue object where transactions should go
         - dd_client: JusterDipDupClient instance
         - period: time in seconds used to sleep before executor re runned
         """
 
-        # TODO: rename period to update_period
-        super().__init__(period)
+        super().__init__(config)
 
         self.contract = contract
         self.operations_queue = operations_queue

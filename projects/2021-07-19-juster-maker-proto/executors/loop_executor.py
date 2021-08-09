@@ -2,21 +2,21 @@
 import logging
 import asyncio
 from abc import abstractmethod
-from config import EXECUTOR_UPDATE_PERIOD
 
 
 class LoopExecutor:
     """ Executes self.execute each period seconds """
 
-    def __init__(self, period=EXECUTOR_UPDATE_PERIOD):
+    def __init__(self, config):
         """ Creates new LoopExecutor
-        - period: time in seconds used to sleep before executor re runned
+        - config: configuration object with EXECUTOR_UPDATE_PERIOD set up
         """
 
-        self.period = period
+        self.config = config
+        self.period = config.EXECUTOR_UPDATE_PERIOD
         self.loop = asyncio.get_event_loop()
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.logger.info(f'created with period {period}')
+        self.logger.info(f'created with period {self.period}')
 
 
     def run(self):

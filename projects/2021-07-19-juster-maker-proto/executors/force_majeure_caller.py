@@ -4,7 +4,6 @@ import asyncio
 from dateutil.parser import parse
 from pytezos.michelson.micheline import MichelsonRuntimeError
 from dateutil.parser import parse
-from config import MAX_ALLOWED_MEASURE_LAG
 
 
 def detect_failed_start(event, trigger_timestamp):
@@ -56,7 +55,7 @@ class ForceMajeureCaller(EventLoopExecutor):
     async def trigger_force_majeures(self):
 
         events = await self.query_open_event_times()
-        trigger_timestamp = time.time() - MAX_ALLOWED_MEASURE_LAG
+        trigger_timestamp = time.time() - self.config.MAX_ALLOWED_MEASURE_LAG
 
         def detect_failed(event):
             return (

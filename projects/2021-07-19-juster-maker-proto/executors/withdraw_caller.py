@@ -3,7 +3,6 @@ import time
 import asyncio
 from utility import timestamp_to_date
 from pytezos.michelson.micheline import MichelsonRuntimeError
-from config import REWARD_SPLIT_FEE_AFTER
 
 
 class WithdrawCaller(EventLoopExecutor):
@@ -56,7 +55,8 @@ class WithdrawCaller(EventLoopExecutor):
     async def emmit_withdraw_transactions(self):
 
         # Calculating threshold closed date that activates reward split fee:
-        closed_before = timestamp_to_date(time.time() - REWARD_SPLIT_FEE_AFTER)
+        split_fee_after = self.config.REWARD_SPLIT_FEE_AFTER
+        closed_before = timestamp_to_date(time.time() - split_fee_after)
 
         # Requesting events:
         events = await self.query_withdrawable_events(closed_before)

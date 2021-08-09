@@ -1,7 +1,6 @@
 from executors import EventCreationEmitter
 import asyncio
 import time
-from config import LIQUIDITY_MAX_SLIPPAGE, PROVIDE_LIQUIDITY_AMOUNT
 
 
 class LineLiquidityProvider(EventCreationEmitter):
@@ -17,7 +16,7 @@ class LineLiquidityProvider(EventCreationEmitter):
             'eventId': event_id,
             'expectedRatioAboveEq': a,
             'expectedRatioBelow': b,
-            'maxSlippage': LIQUIDITY_MAX_SLIPPAGE
+            'maxSlippage': self.config.LIQUIDITY_MAX_SLIPPAGE
         }
 
         op = self.contract.provideLiquidity(provide_params).with_amount(amount)
@@ -41,7 +40,7 @@ class LineLiquidityProvider(EventCreationEmitter):
         if pools_value < minimal_value:
             # TODO: evaluate a/b
             event_id = last_event['id']
-            amount = PROVIDE_LIQUIDITY_AMOUNT
+            amount = self.config.PROVIDE_LIQUIDITY_AMOUNT
             a = 1
             b = 1
 

@@ -4,12 +4,12 @@ from sgqlc.endpoint.http import HTTPEndpoint
 from dateutil.parser import parse
 from utility import timestamp_to_date, repeat_until_succeed
 import time
-from config import DIPDUP_ENDPOINT_URI
 from os.path import join
 from urllib.error import URLError
 from http.client import RemoteDisconnected
 
 
+# TODO: move this params to config or not?
 QUERIES_DIR = 'queries'
 QUERIES = [
     'all_events',
@@ -24,10 +24,10 @@ QUERIES = [
 
 class JusterDipDupClient:
 
-    def __init__(self):
+    def __init__(self, config):
 
         self.queries = self.load_queries()
-        self.endpoint = HTTPEndpoint(DIPDUP_ENDPOINT_URI)
+        self.endpoint = HTTPEndpoint(config.DIPDUP_ENDPOINT_URI)
 
 
     def load_queries(self):

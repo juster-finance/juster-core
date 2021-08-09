@@ -7,8 +7,8 @@ class BulkSender(LoopExecutor):
         signs and sends the transaction
     """
 
-    def __init__(self, client, operations_queue):
-        super().__init__()
+    def __init__(self, config, client, operations_queue):
+        super().__init__(config)
         self.client = client
         self.operations_queue = operations_queue
 

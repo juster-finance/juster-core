@@ -14,15 +14,6 @@ from executors import (
     CanceledCaller
 )
 
-from config import (
-    SHELL_URI,
-    JUSTER_ADDRESS,
-    KEY,
-    TRANSACTIONS_QUEUE_SIZE,
-    CREATORS,
-    EVENT_LINES_PARAMS_FN
-)
-
 from utility import (
     date_to_timestamp,
     timestamp_to_date,
@@ -39,19 +30,20 @@ class JusterMaker:
         Orchestrated multiple loop executors
     """
 
-    def __init__(self):
+    def __init__(self, config):
 
+        self.config = config
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.info('juster maker initialized')
         self.clients = [
-            pytezos.using(key=KEY, shell=SHELL_URI)
+            pytezos.using(key=config.KEY, shell=config.SHELL_URI)
             # TODO: multiple clients support with multiple KEYs provided
         ]
 
-        self.contract = self.clients[0].contract(JUSTER_ADDRESS)
-        self.event_lines = EventLines.load(EVENT_LINES_PARAMS_FN)
-        self.dd_client = JusterDipDupClient()
-        self.operations_queue = Queue(TRANSACTIONS_QUEUE_SIZE)
+        self.contract = self.clients[0].contract(config.JUSTER_ADDRESS)
+        self.event_lines = EventLines.load(config.EVENT_LINES_PARAMS_FN)
+        self.dd_client = JusterDipDupClient(config)
+        self.operations_queue = Queue(config.TRANSACTIONS_QUEUE_SIZE)
 
 
     def create_executors(self):
@@ -62,6 +54,7 @@ class JusterMaker:
 
         event_creation_executors = [
             EventCreationEmitter(
+                config=self.config,
                 contract=self.contract,
                 operations_queue=self.operations_queue,
                 dd_client=self.dd_client,
@@ -72,6 +65,7 @@ class JusterMaker:
 
         line_liquidity_executors = [
             LineLiquidityProvider(
+                config=self.config,
                 contract=self.contract,
                 operations_queue=self.operations_queue,
                 dd_client=self.dd_client,
@@ -82,6 +76,7 @@ class JusterMaker:
 
         bulk_senders = [
             BulkSender(
+                config=self.config,
                 client=client,
                 operations_queue=self.operations_queue)
             for client in self.clients
@@ -89,16 +84,19 @@ class JusterMaker:
 
         support_callers = [
             WithdrawCaller(
+                config=self.config,
                 contract=self.contract,
                 operations_queue=self.operations_queue,
                 dd_client=self.dd_client),
 
             ForceMajeureCaller(
+                config=self.config,
                 contract=self.contract,
                 operations_queue=self.operations_queue,
                 dd_client=self.dd_client),
 
             CanceledCaller(
+                config=self.config,
                 contract=self.contract,
                 operations_queue=self.operations_queue,
                 dd_client=self.dd_client)
