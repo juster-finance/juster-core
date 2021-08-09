@@ -26,6 +26,7 @@ class JusterDipDupClient:
 
     def __init__(self, config):
 
+        self.config = config
         self.queries = self.load_queries()
         self.endpoint = HTTPEndpoint(config.DIPDUP_ENDPOINT_URI)
 
@@ -68,7 +69,9 @@ class JusterDipDupClient:
         # Running query and ignoring internet connection errors:
         data = await repeat_until_succeed(
             func=request,
-            allowed_exceptions=[URLError, RemoteDisconnected]
+            allowed_exceptions=[URLError, RemoteDisconnected],
+            max_attempts=self.config.MAX_RETRY_ATTEMPTS,
+            wait_after_fail=self.config.WAIT_AFTER_FAIL
         )
 
         events = data['data']['juster_event']
