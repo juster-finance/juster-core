@@ -50,6 +50,11 @@ class BulkSender(LoopExecutor):
 
             # catched:
             # -- requests.exceptions.ConnectionError
+            # -- pytezos.rpc.errors.MichelsonError
+            #       error str contains: proto.009-PsFLoren.michelson_v1.script_rejected
+            # -- pytezos.rpc.node.RpcError
+            # -- OSError
+            #       error str contains: Could not find a suitable TLS CA certificate
             # TODO: analyze logs and find all this catched errors
 
 
