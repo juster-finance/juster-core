@@ -26,36 +26,30 @@ DEFAULT_EVENT_PARAMS = params = {
 
 class EventEmitterTest(TestCase):
 
+    def setUp(self):
+        # patching dipdup to use prepared data instead of making real call:
+        # return value from JusterDipDupClient.make_quert is the list
+        # of the events:
+        self.dd_client_patcher = patch(
+            'dipdup.JusterDipDupClient.make_query',
+            return_value=[DEFAULT_EVENT_PARAMS.copy()])
+        self.dd_client_patcher.start()
+
+
     @patch('pytezos.ContractInterface')
     def test_event_is_created(self, contract):
         loop = asyncio.get_event_loop()
         operations_queue = Queue(10)
+        dd_client = JusterDipDupClient(config)
 
-        # patching dipdup to use prepared data instead of making real call:
-        # return value from JusterDipDupClient.make_quert is the list
-        # of the events:
-        dd_response = [DEFAULT_EVENT_PARAMS.copy()]
+        event_emitter = EventCreationEmitter(
+            config=config,
+            contract=contract,
+            operations_queue=operations_queue,
+            event_params=DEFAULT_EVENT_PARAMS.copy(),
+            dd_client=dd_client)
 
-        ''' # this way global JusterDipDupClient is changed:
-        JusterDipDupClient.make_query = MagicMock(
-            return_value=[DEFAULT_EVENT_PARAMS.copy()])
-        '''
-
-        with patch.object(
-                JusterDipDupClient,
-                'make_query',
-                return_value=dd_response) as mock_method:
-
-            dd_client = JusterDipDupClient(config)
-            # creating event_emitter using patched dipdup client and pytezos
-            event_emitter = EventCreationEmitter(
-                config=config,
-                contract=contract,
-                operations_queue=operations_queue,
-                event_params=DEFAULT_EVENT_PARAMS.copy(),
-                dd_client=dd_client)
-
-            loop.run_until_complete(event_emitter.execute())
+        loop.run_until_complete(event_emitter.execute())
 
         contract.newEvent.assert_called()
         self.assertEqual(operations_queue.qsize(), 1)
@@ -64,14 +58,17 @@ class EventEmitterTest(TestCase):
     # TODO: Test that event created with correct params
     # TODO: Test that second event is created after period time have passed
 
+    def tearDown(self):
+        self.dd_client_patcher.stop()
 
+
+@patch('pytezos.PyTezosClient')
 class BulkSenderTest(TestCase):
     def setUp(self):
         self.loop = asyncio.get_event_loop()
         self.operations_queue = Queue(10)
 
 
-    @patch('pytezos.PyTezosClient')
     def test_transaction_is_send(self, client):
 
         bs = BulkSender(
@@ -89,7 +86,6 @@ class BulkSenderTest(TestCase):
         self.assertEqual(self.operations_queue.qsize(), 0)
 
 
-    @patch('pytezos.PyTezosClient')
     def test_failed_transaction_returned_to_the_queue(self, client):
 
         bs = BulkSender(
