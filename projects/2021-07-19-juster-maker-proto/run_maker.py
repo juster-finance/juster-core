@@ -16,8 +16,7 @@ def generate_event_lines():
 
 
 async def run_maker():
-    maker = JusterMaker(config)
-    maker.create_executors()
+    maker = JusterMaker.from_config(config)
     await maker.run()
 
 

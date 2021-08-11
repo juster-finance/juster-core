@@ -30,23 +30,54 @@ class JusterMaker:
         Orchestrated multiple loop executors
     """
 
-    def __init__(self, config):
+    def __init__(
+            self,
+            config,
+            clients,
+            contract,
+            event_lines,
+            dd_client,
+            executors):
+
+        self.logger = logging.getLogger(self.__class__.__name__)
 
         self.config = config
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self.clients = clients
+        self.event_lines = event_lines
+        self.dd_client = dd_client
+        self.executors = executors
+
+        operations_queue = Queue(config.TRANSACTIONS_QUEUE_SIZE)
         self.logger.info('juster maker initialized')
-        self.clients = [
+
+
+    @classmethod
+    def from_config(cls, config):
+        """ Creates Juster Maker using only config attribute """
+
+        clients = [
             pytezos.using(key=config.KEY, shell=config.SHELL_URI)
             # TODO: multiple clients support with multiple KEYs provided
         ]
 
-        self.contract = self.clients[0].contract(config.JUSTER_ADDRESS)
-        self.event_lines = EventLines.load(config.EVENT_LINES_PARAMS_FN)
-        self.dd_client = JusterDipDupClient(config)
-        self.operations_queue = Queue(config.TRANSACTIONS_QUEUE_SIZE)
+        contract = self.clients[0].contract(config.JUSTER_ADDRESS)
+        event_lines = EventLines.load(config.EVENT_LINES_PARAMS_FN)
+        dd_client = JusterDipDupClient(config)
+
+        executors = self._create_executors()
+        # TODO: should it create executors here?
+        # -- one of the option is to transfer executors in attribute too
+
+        return cls(
+            config=config,
+            clients=clients,
+            contract=contract,
+            event_lines=event_lines,
+            dd_client=dd_client,
+            executors=executors)
 
 
-    def create_executors(self):
+    def _create_executors(self):
         """ Creates list of the LoopExecutor objects. One event creator and
             liquidity provider for each event line. One bulk sender for each
             client key. And one for each support callers.
