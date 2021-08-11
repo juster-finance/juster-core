@@ -51,7 +51,7 @@ class EventLines:
 
     @classmethod
     def load(cls, filename):
-        with open('event_lines.json', 'r') as f:
+        with open(filename, 'r') as f:
             event_params = json.loads(f.read())
 
         new_event_lines = cls(event_params)
@@ -59,7 +59,7 @@ class EventLines:
 
 
     def save(self, filename):
-        with open('event_lines.json', 'w') as f:
+        with open(filename, 'w') as f:
             f.write(json.dumps(self.event_params, indent=4))
 
 
