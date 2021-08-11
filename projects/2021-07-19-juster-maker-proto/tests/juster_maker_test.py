@@ -11,16 +11,7 @@ class JusterMakerTest(TestCase):
     def test_should_run_executor(self):
 
         mock_executor = AsyncMock()
-
-        maker = JusterMaker(
-            config=config,
-            clients=[Mock()],
-            contract=Mock(),
-            event_lines=Mock(),
-            dd_client=Mock(),
-            executors=[mock_executor])
-
+        maker = JusterMaker(executors=[mock_executor])
         asyncio.run(maker.run())
-
         mock_executor.run.assert_awaited_once()
 
