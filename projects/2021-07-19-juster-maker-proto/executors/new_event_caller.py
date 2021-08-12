@@ -1,10 +1,10 @@
-from executors import EventLoopExecutor
+from executors import EventExecutor
 import time
 from utility import make_next_hour_timestamp
 
 
 # TODO: rename to EventCreationCaller
-class NewEventCaller(EventLoopExecutor):
+class NewEventCaller(EventExecutor):
 
     def __init__(
             self,

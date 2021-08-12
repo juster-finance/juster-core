@@ -1,4 +1,4 @@
-from executors import EventLoopExecutor
+from executors import EventExecutor
 import time
 import asyncio
 from dateutil.parser import parse
@@ -33,7 +33,7 @@ def detect_failed_close(event, trigger_timestamp):
     return have_no_finished_time and should_be_closed
 
 
-class ForceMajeureCaller(EventLoopExecutor):
+class ForceMajeureCaller(EventExecutor):
 
     async def _make_trigger_force_majeure_transaction(self, event_id):
 

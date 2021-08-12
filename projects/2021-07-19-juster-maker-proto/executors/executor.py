@@ -4,11 +4,11 @@ import asyncio
 from abc import abstractmethod
 
 
-class LoopExecutor:
+class Executor:
     """ Executes self.execute each period seconds """
 
     def __init__(self, config):
-        """ Creates new LoopExecutor
+        """ Creates new Executor
         - config: configuration object with EXECUTOR_UPDATE_PERIOD set up
         """
 

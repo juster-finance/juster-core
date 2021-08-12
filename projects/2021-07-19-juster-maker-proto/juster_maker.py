@@ -30,7 +30,7 @@ from dipdup import JusterDipDupClient
 # and maybe it can be combined with EventLines generator
 def create_executors(
         config, clients, contract, operations_queue, dd_client, event_lines):
-    """ Creates list of the LoopExecutor objects. One event creator and
+    """ Creates list of the Executor objects. One event creator and
         liquidity provider for each event line. One bulk sender for each
         client key. And one for each support callers.
     """

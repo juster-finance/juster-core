@@ -1,5 +1,5 @@
-from executors.loop_executor import LoopExecutor
-from executors.event_loop_executor import EventLoopExecutor
+from executors.executor import Executor
+from executors.event_executor import EventExecutor
 from executors.bulk_sender import BulkSender
 from executors.new_event_caller import NewEventCaller
 from executors.provide_liquidity_caller import ProvideLiquidityCaller

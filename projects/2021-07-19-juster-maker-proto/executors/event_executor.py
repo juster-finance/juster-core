@@ -1,7 +1,7 @@
-from executors import LoopExecutor
+from executors import Executor
 
 
-class EventLoopExecutor(LoopExecutor):
+class EventExecutor(Executor):
     """ Executes self.execute each period seconds for given events using data
         from dipdup and communication with contract using pytezos, creates
         transactions that pushed into operations queue """
@@ -13,7 +13,7 @@ class EventLoopExecutor(LoopExecutor):
             operations_queue,
             dd_client,
         ):
-        """ Creates new EventLoopExecutor,
+        """ Creates new EventExecutor,
         - config: configuration object
         - contract: juster contract, pytezos instance
         - operations_queue: queue object where transactions should go

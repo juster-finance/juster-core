@@ -1,8 +1,8 @@
-from executors import LoopExecutor
+from executors import Executor
 from utility import repeat_until_succeed
 
 
-class BulkSender(LoopExecutor):
+class BulkSender(Executor):
     """ Listens to the queue and packs all new operations to the bulk,
         signs and sends the transaction
     """
