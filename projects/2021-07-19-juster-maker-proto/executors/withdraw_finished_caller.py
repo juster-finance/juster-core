@@ -5,7 +5,7 @@ from utility import timestamp_to_date
 from pytezos.michelson.micheline import MichelsonRuntimeError
 
 
-class WithdrawCaller(EventLoopExecutor):
+class WithdrawFinishedCaller(EventLoopExecutor):
     """ Executor that checks is there are any positions that can be withdrawn
         and if it is: prepares transaction to withdraw
         Works only with CLOSED events

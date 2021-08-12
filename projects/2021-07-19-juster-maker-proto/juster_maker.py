@@ -7,11 +7,11 @@ import time
 
 from executors import (
     BulkSender,
-    EventCreationEmitter,
-    LineLiquidityProvider,
-    WithdrawCaller,
+    NewEventCaller,
+    ProvideLiquidityCaller,
+    WithdrawFinishedCaller,
     ForceMajeureCaller,
-    CanceledCaller
+    WithdrawCanceledCaller
 )
 
 from utility import (
@@ -36,7 +36,7 @@ def create_executors(
     """
 
     event_creation_executors = [
-        EventCreationEmitter(
+        NewEventCaller(
             config=config,
             contract=contract,
             operations_queue=operations_queue,
@@ -47,7 +47,7 @@ def create_executors(
     ]
 
     line_liquidity_executors = [
-        LineLiquidityProvider(
+        ProvideLiquidityCaller(
             config=config,
             contract=contract,
             operations_queue=operations_queue,
@@ -66,7 +66,7 @@ def create_executors(
     ]
 
     support_callers = [
-        WithdrawCaller(
+        WithdrawFinishedCaller(
             config=config,
             contract=contract,
             operations_queue=operations_queue,
@@ -78,7 +78,7 @@ def create_executors(
             operations_queue=operations_queue,
             dd_client=dd_client),
 
-        CanceledCaller(
+        WithdrawCanceledCaller(
             config=config,
             contract=contract,
             operations_queue=operations_queue,

@@ -4,12 +4,12 @@ import asyncio
 from asyncio import Queue
 
 import tests.config as config
-from executors import EventCreationEmitter
+from executors import NewEventCaller
 from dipdup import JusterDipDupClient
 from tests.data import DEFAULT_EVENT_PARAMS
 
 
-class EventEmitterTest(TestCase):
+class NewEventCallerTest(TestCase):
 
     def setUp(self):
         # patching dipdup to use prepared data instead of making real call:
@@ -27,7 +27,7 @@ class EventEmitterTest(TestCase):
         operations_queue = Queue(10)
         dd_client = JusterDipDupClient(config)
 
-        event_emitter = EventCreationEmitter(
+        event_emitter = NewEventCaller(
             config=config,
             contract=contract,
             operations_queue=operations_queue,

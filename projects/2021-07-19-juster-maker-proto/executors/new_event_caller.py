@@ -4,7 +4,7 @@ from utility import make_next_hour_timestamp
 
 
 # TODO: rename to EventCreationCaller
-class EventCreationEmitter(EventLoopExecutor):
+class NewEventCaller(EventLoopExecutor):
 
     def __init__(
             self,

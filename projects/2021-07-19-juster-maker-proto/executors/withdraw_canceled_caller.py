@@ -1,11 +1,11 @@
-from executors import WithdrawCaller
+from executors import WithdrawFinishedCaller
 import time
 import asyncio
 from utility import timestamp_to_date
 from pytezos.michelson.micheline import MichelsonRuntimeError
 
 
-class CanceledCaller(WithdrawCaller):
+class WithdrawCanceledCaller(WithdrawFinishedCaller):
 
 
     async def query_canceled_to_withdraw(self):

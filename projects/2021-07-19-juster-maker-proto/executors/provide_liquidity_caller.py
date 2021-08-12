@@ -1,12 +1,12 @@
-from executors import EventCreationEmitter
+from executors import NewEventCaller
 import asyncio
 import time
 
 
-class LineLiquidityProvider(EventCreationEmitter):
+class ProvideLiquidityCaller(NewEventCaller):
     """ Listens to the dipdup for curated events and provides liquidity
-        For each event line one LineLiquidityProvider should be runned
-        Liquidity Provider is very similar to EventCreationEmitter, this is why
+        For each event line one ProvideLiquidityCaller should be runned
+        Liquidity Provider is very similar to NewEventCaller, this is why
         they share some code
     """
 
@@ -31,8 +31,7 @@ class LineLiquidityProvider(EventCreationEmitter):
 
         # checking that event is still opened:
         if last_event['bets_close_time'].timestamp() < time.time():
-            self.logger.info(
-                f'LineLiquidityProvider: betting is finished, skipping')
+            self.logger.info(f'betting is finished, skipping')
             return
 
         pools_value = last_event['pool_above_eq'] + last_event['pool_below']
