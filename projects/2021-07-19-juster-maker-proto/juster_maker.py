@@ -25,6 +25,9 @@ from dipdup import JusterDipDupClient
 
 
 # TODO: moving this to separate function looks very wrong. Need to think twice
+# TODO: maybe it is better to make ConfigExecutorCreator or smth like this and
+# split this func into separate methods?
+# and maybe it can be combined with EventLines generator
 def create_executors(
         config, clients, contract, operations_queue, dd_client, event_lines):
     """ Creates list of the LoopExecutor objects. One event creator and
@@ -119,8 +122,16 @@ class JusterMaker:
         dd_client = JusterDipDupClient(config)
         operations_queue = Queue(config.TRANSACTIONS_QUEUE_SIZE)
 
+        # TODO: something wrong here (just have this feeling):
+        # maybe transfer config only and create all this vars inside
+        # create_executors?
         executors = create_executors(
-            config, clients, contract, operations_queue, dd_client, event_lines)
+            config,
+            clients,
+            contract,
+            operations_queue,
+            dd_client,
+            event_lines)
 
         return cls(executors=executors)
 
