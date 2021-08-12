@@ -14,13 +14,13 @@ async def repeat_until_succeed(
 
     allowed_exceptions = allowed_exceptions or []
 
-    for attempt in range(max_attempts):
+    for attempt in range(1, max_attempts+1):
         try:
             return await func()
 
         except Exception as e:
             is_allowed = type(e) in allowed_exceptions
-            is_last_call = attempt == max_attempts - 1
+            is_last_call = attempt == max_attempts
 
             if is_allowed and not is_last_call:
                 logger.error(
