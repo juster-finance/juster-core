@@ -23,7 +23,9 @@ class NewEventCallerTest(TestCase):
 
     @patch('pytezos.ContractInterface')
     def test_event_is_created(self, contract):
-        loop = asyncio.get_event_loop()
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
         operations_queue = Queue(10)
         dd_client = JusterDipDupClient(config)
 
