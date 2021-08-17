@@ -4,13 +4,13 @@ from sgqlc.endpoint.http import HTTPEndpoint
 from dateutil.parser import parse
 from utility import timestamp_to_date, repeat_until_succeed
 import time
-from os.path import join
+from os.path import join, dirname
 from urllib.error import URLError
 from http.client import RemoteDisconnected
 
 
 # TODO: move this params to config or not?
-QUERIES_DIR = 'queries'
+QUERIES_DIR = join(dirname(__file__), 'queries')
 QUERIES = [
     'all_events',
     'canceled_to_withdraw',
