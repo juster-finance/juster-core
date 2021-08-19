@@ -62,11 +62,16 @@ type action is
 | Update_operators of updateOperatorsParams
 
 
-type storage is unit
+type storage is record [
+    balances : big_map(requestType, nat);
+    operators : big_map(requestType, nat);
+]
 
 
 function transfer(const params : transferParams; var store : storage) : list(operation) * storage is
-((nil : list(operation)), store)
+block {
+    skip;
+} with ((nil : list(operation)), store)
 
 
 function balanceOf(const params : balanceOfParams; var store : storage) : list(operation) * storage is
