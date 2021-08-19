@@ -9,7 +9,9 @@
         (list %update_operators
            (or (pair %add_operator (address %owner) (pair (address %operator) (nat %token_id)))
                (pair %remove_operator (address %owner) (pair (address %operator) (nat %token_id)))))) ;
-  storage unit ;
+  storage
+    (pair (big_map %balances (pair (address %owner) (nat %token_id)) nat)
+          (big_map %operators (pair (address %owner) (nat %token_id)) nat)) ;
   code { UNPAIR ;
          IF_LEFT
            { IF_LEFT { DROP ; NIL operation ; PAIR } { DROP ; NIL operation ; PAIR } }
