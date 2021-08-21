@@ -66,3 +66,35 @@ class TokenTest(TestCase):
     # TODO: test should transfer params succeeded for two different from_
     # TODO: test should transfer params succeeded for two different token_id
 
+
+    def test_should_return_callback_when_called_balance_of(self):
+        storage = self.generate_token_storage({self.a: 100})
+
+        # TODO: self.generate_request ?
+        request = {
+            'owner': self.a,
+            'token_id': 0
+        }
+
+        balance_of_params = {
+            'requests': [request],
+            'callback': f'KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn%someCallback'
+        }
+
+        result = self.token.balance_of(balance_of_params).interpret(
+            sender=self.a,
+            storage=storage
+        )
+
+        target = [{
+            'request': request,
+            'balance': 100
+        }]
+
+        self.assertEqual(len(result.operations), 1)
+        operation = result.operations[0]
+        # self.assertDictEqual(operation.parameters, target)
+
+    # TODO: what should happen if no token for user? return 0 (check tzip)
+    # TODO: test multiple requests in one transaction
+
