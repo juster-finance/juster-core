@@ -57,9 +57,7 @@ class TokenTest(TestCase):
         )
 
         target = self.generate_token_storage({self.a: 90, self.b: 10})
-        import pdb; pdb.set_trace()
         self.assertDictEqual(result.storage, target)
-        self.assertEqual(len(result.operations), 1)
 
 
     # TODO: test should transfer params succeeded for two different to_
