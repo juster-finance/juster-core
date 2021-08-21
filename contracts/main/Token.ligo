@@ -82,6 +82,7 @@ function transfer(
     var store : storage) : list(operation) * storage is
 
 block {
+    // TODO: remove block for outer loop
     for singleTransfer in list params block {
         for tx in list singleTransfer.txs block {
 
@@ -106,8 +107,24 @@ block {
 } with ((nil : list(operation)), store)
 
 
-function balanceOf(const params : balanceOfParams; var store : storage) : list(operation) * storage is
-((nil : list(operation)), store)
+function balanceOf(
+    const params : balanceOfParams;
+    var store : storage) : list(operation) * storage is
+
+block {
+    var balances : list(balanceRequest) := nil;
+
+    // TODO: remove block?
+    for key in list params.requests block {
+        const balanceData = record[
+            request = key;
+            balance = getBalance(store, key)
+        ];
+        balances := balanceData # balances;
+    };
+
+    const balanceOfOperation = Tezos.transaction(balances, 0mutez, params.callback);
+} with (list[balanceOfOperation], store)
 
 
 function updateOperators(const params : updateOperatorsParams; var store : storage) : list(operation) * storage is
