@@ -93,8 +93,10 @@ class TokenTest(TestCase):
 
         self.assertEqual(len(result.operations), 1)
         operation = result.operations[0]
-        # self.assertDictEqual(operation.parameters, target)
+        # TODO: convert operation from micheline and check that it is the same as target:
+        # self.assertDictEqual(operation['parameters'], target)
 
     # TODO: what should happen if no token for user? return 0 (check tzip)
     # TODO: test multiple requests in one transaction
+    # TODO: test order matters
 
