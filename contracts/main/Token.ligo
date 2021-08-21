@@ -32,6 +32,7 @@ type singleTransferParams is
 type transferParams is list(singleTransferParams)
 
 
+(* TODO: rename to: keyType? idType? *)
 type requestType is
     [@layout:comb]
     record [
@@ -68,9 +69,40 @@ type storage is record [
 ]
 
 
-function transfer(const params : transferParams; var store : storage) : list(operation) * storage is
+function getBalance(const store : storage; const key : requestType) : nat is
+// TODO: should operators check here or not?
+case Big_map.find_opt(key, store.balances) of
+| Some(tokenBalance) -> tokenBalance
+| None -> 0n
+end;
+
+
+function transfer(
+    const params : transferParams;
+    var store : storage) : list(operation) * storage is
+
 block {
-    skip;
+    for singleTransfer in list params block {
+        for tx in list singleTransfer.txs block {
+
+            const keyTo : requestType = record[
+                owner=tx.to_;
+                token_id=tx.token_id
+            ];
+
+            const keyFrom : requestType = record[
+                owner=singleTransfer.from_;
+                token_id=tx.token_id
+            ];
+
+            // TODO: spec should have value in from_
+            // TODO: spec should have value in from_ or should be operator in from_
+            const balanceFrom = getBalance(store, keyFrom);
+
+            store.balances[keyFrom] := abs(balanceFrom - tx.amount);
+            store.balances[keyTo] := getBalance(store, keyTo) + tx.amount;
+        }
+    }
 } with ((nil : list(operation)), store)
 
 
