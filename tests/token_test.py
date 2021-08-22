@@ -105,6 +105,8 @@ class TokenTest(TestCase):
 
 
     def test_should_add_operator(self):
+        # TODO: self.generate_operator? self.generate_operators?
+        operators = {(self.a, self.b, 0): Unit}
         storage = self.generate_token_storage({self.a: 100})
 
         update_operators_params = [{
@@ -120,10 +122,31 @@ class TokenTest(TestCase):
             storage=storage
         )
 
-        operators = {(self.a, self.b, 0): Unit}
-
         target = self.generate_token_storage({self.a: 100}, operators)
         self.assertEqual(result.storage, target)
 
-    # TODO: test should remove operator
+
+    def test_should_remove_operator(self):
+        # TODO: self.generate_operator? self.generate_operators?
+        operators = {(self.a, self.b, 0): Unit}
+        storage = self.generate_token_storage({self.a: 100}, operators)
+
+        update_operators_params = [{
+            'remove_operator': {
+                'owner': self.a,
+                'operator': self.b,
+                'token_id': 0
+            }
+        }]
+
+        result = self.token.update_operators(update_operators_params).interpret(
+            sender=self.a,
+            storage=storage
+        )
+
+        # when key removed from big_map, pytezos show it with None value
+        removed_operators = {(self.a, self.b, 0): None}
+        target = self.generate_token_storage({self.a: 100}, removed_operators)
+
+        self.assertEqual(result.storage, target)
 
