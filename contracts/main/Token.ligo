@@ -10,8 +10,7 @@ type updateAction is
 | Add_operator of operatorParam
 | Remove_operator of operatorParam
 
-type updateOperatorParams is updateAction
-type updateOperatorsParams is list(updateOperatorParams)
+type updateOperatorsParams is list(updateAction)
 
 
 type transactionType is
@@ -32,7 +31,7 @@ type singleTransferParams is
 type transferParams is list(singleTransferParams)
 
 
-(* TODO: rename to: keyType? idType? *)
+(* TODO: rename to: keyType? idType? keyParam? *)
 type requestType is
     [@layout:comb]
     record [
@@ -65,7 +64,7 @@ type action is
 
 type storage is record [
     balances : big_map(requestType, nat);
-    operators : big_map(requestType, nat);
+    operators : big_map(operatorParam, unit);
 ]
 
 
@@ -127,13 +126,40 @@ block {
 } with (list[balanceOfOperation], store)
 
 
-function updateOperators(const params : updateOperatorsParams; var store : storage) : list(operation) * storage is
-((nil : list(operation)), store)
+(*
+function keyFromOperator(const operator : operatorParam) : requestType is
+record[
+    owner=operator.owner;
+    token_id=operator.token_id
+];
+*)
 
 
-function main(const params : action; const store : storage) : list(operation) * storage is
+function updateOperators(
+    // TODO: consider rename to updateOparatorsActions
+    const params : updateOperatorsParams;
+    var store : storage) : list(operation) * storage is
+block {
+
+    for action in list params block {
+        store.operators := case action of
+        | Add_operator(param) ->
+            Big_map.update(param, Some(Unit), store.operators)
+        | Remove_operator(param) ->
+            Big_map.update(param, (None : option(unit)), store.operators)
+        end;
+    }
+
+} with ((nil : list(operation)), store)
+
+
+function main(
+    const params : action;
+    const store : storage) : list(operation) * storage is
+
 case params of
 | Transfer(params) -> transfer(params, store)
 | Balance_of(params) -> balanceOf(params, store)
 | Update_operators(params) -> updateOperators(params, store)
 end
+
