@@ -11,9 +11,11 @@
                (pair %remove_operator (address %owner) (pair (address %operator) (nat %token_id)))))) ;
   storage
     (pair (big_map %balances (pair (address %owner) (nat %token_id)) nat)
-          (big_map %operators (pair (address %owner) (nat %token_id)) nat)) ;
+          (big_map %operators
+             (pair (address %owner) (pair (address %operator) (nat %token_id)))
+             unit)) ;
   code { LAMBDA
-           (pair (pair (big_map (pair address nat) nat) (big_map (pair address nat) nat))
+           (pair (pair (big_map (pair address nat) nat) (big_map (pair address (pair address nat)) unit))
                  (pair address nat))
            nat
            { UNPAIR ; CAR ; SWAP ; GET ; IF_NONE { PUSH nat 0 } {} } ;
@@ -123,5 +125,14 @@
                  DROP ;
                  NIL operation ;
                  PAIR } }
-           { DIG 2 ; DROP 2 ; NIL operation ; PAIR } } }
+           { DIG 2 ;
+             DROP ;
+             ITER { IF_LEFT
+                      { SWAP ; DUP ; DUG 2 ; CDR ; PUSH unit Unit ; SOME ; DIG 2 ; UPDATE }
+                      { SWAP ; DUP ; DUG 2 ; CDR ; NONE unit ; DIG 2 ; UPDATE } ;
+                    SWAP ;
+                    CAR ;
+                    PAIR } ;
+             NIL operation ;
+             PAIR } } }
 
