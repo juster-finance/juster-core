@@ -9,15 +9,17 @@ TOKEN_FN = '../build/tz/token.tz'
 class TokenTest(TestCase):
 
 
-    def generate_token_storage(self, balances):
+    def generate_token_storage(self, balances, operators=None):
         """ Creates token storage initialization using giving balances """
 
         token_id = 0
+        operators = operators or {}
+
         return {
             'balances': {
                 (user, token_id): value for user, value in balances.items()
             },
-            'operators': {}
+            'operators': operators
         }
 
 
@@ -99,4 +101,26 @@ class TokenTest(TestCase):
     # TODO: what should happen if no token for user? return 0 (check tzip)
     # TODO: test multiple requests in one transaction
     # TODO: test order matters
+
+
+    def test_should_add_operator(self):
+        storage = self.generate_token_storage({self.a: 100})
+
+        update_operators_params = [{
+            'add_operator': {
+                'owner': self.a,
+                'operator': self.b,
+                'token_id': 0
+            }
+        }]
+
+        result = self.token.update_operators(update_operators_params).interpret(
+            sender=self.a,
+            storage=storage
+        )
+
+        target = self.generate_token_storage({self.a: 100}, {self.a: [self.b]})
+        self.assertEqual(result.storage, target)
+
+    # TODO: test should remove operator
 
