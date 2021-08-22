@@ -1,6 +1,7 @@
 from unittest import TestCase
 from os.path import join, dirname
 from pytezos import ContractInterface, pytezos, MichelsonRuntimeError
+from pytezos.michelson.types.core import Unit
 
 
 TOKEN_FN = '../build/tz/token.tz'
@@ -119,7 +120,9 @@ class TokenTest(TestCase):
             storage=storage
         )
 
-        target = self.generate_token_storage({self.a: 100}, {self.a: [self.b]})
+        operators = {(self.a, self.b, 0): Unit}
+
+        target = self.generate_token_storage({self.a: 100}, operators)
         self.assertEqual(result.storage, target)
 
     # TODO: test should remove operator
