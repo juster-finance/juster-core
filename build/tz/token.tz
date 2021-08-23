@@ -10,15 +10,17 @@
            (or (pair %add_operator (address %owner) (pair (address %operator) (nat %token_id)))
                (pair %remove_operator (address %owner) (pair (address %operator) (nat %token_id)))))) ;
   storage
-    (pair (big_map %balances (pair (address %owner) (nat %token_id)) nat)
-          (big_map %operators
-             (pair (address %owner) (pair (address %operator) (nat %token_id)))
-             unit)) ;
+    (pair (pair (big_map %balances (pair (address %owner) (nat %token_id)) nat)
+                (big_map %operators
+                   (pair (address %owner) (pair (address %operator) (nat %token_id)))
+                   unit))
+          (big_map %token_metadata nat (pair (nat %token_id) (map %token_info string bytes)))) ;
   code { LAMBDA
-           (pair (pair (big_map (pair address nat) nat) (big_map (pair address (pair address nat)) unit))
+           (pair (pair (pair (big_map (pair address nat) nat) (big_map (pair address (pair address nat)) unit))
+                       (big_map nat (pair nat (map string bytes))))
                  (pair address nat))
            nat
-           { UNPAIR ; CAR ; SWAP ; GET ; IF_NONE { PUSH nat 0 } {} } ;
+           { UNPAIR ; CAR ; CAR ; SWAP ; GET ; IF_NONE { PUSH nat 0 } {} } ;
          SWAP ;
          UNPAIR ;
          IF_LEFT
@@ -83,19 +85,24 @@
                                EXEC ;
                                DUP 5 ;
                                CDR ;
-                               DIG 5 ;
-                               CAR ;
                                DUP 6 ;
+                               CAR ;
+                               CDR ;
+                               DIG 6 ;
+                               CAR ;
+                               CAR ;
+                               DUP 7 ;
                                CDR ;
                                CDR ;
-                               DIG 3 ;
+                               DIG 4 ;
                                SUB ;
                                ABS ;
-                               DIG 3 ;
+                               DIG 4 ;
                                SWAP ;
                                SOME ;
                                SWAP ;
                                UPDATE ;
+                               PAIR ;
                                PAIR ;
                                DUP ;
                                CDR ;
@@ -103,21 +110,26 @@
                                DUP ;
                                DUG 2 ;
                                CAR ;
-                               DIG 4 ;
+                               CDR ;
+                               DUP 3 ;
+                               CAR ;
+                               CAR ;
+                               DIG 5 ;
                                CDR ;
                                CDR ;
-                               DUP 5 ;
-                               DIG 4 ;
+                               DUP 6 ;
+                               DIG 5 ;
                                PAIR ;
-                               DUP 7 ;
+                               DUP 8 ;
                                SWAP ;
                                EXEC ;
                                ADD ;
-                               DIG 3 ;
+                               DIG 4 ;
                                SWAP ;
                                SOME ;
                                SWAP ;
                                UPDATE ;
+                               PAIR ;
                                PAIR } ;
                         SWAP ;
                         DROP } ;
@@ -127,11 +139,21 @@
                  PAIR } }
            { DIG 2 ;
              DROP ;
-             ITER { IF_LEFT
-                      { SWAP ; DUP ; DUG 2 ; CDR ; PUSH unit Unit ; SOME ; DIG 2 ; UPDATE }
-                      { SWAP ; DUP ; DUG 2 ; CDR ; NONE unit ; DIG 2 ; UPDATE } ;
-                    SWAP ;
+             ITER { SWAP ;
+                    PAIR ;
+                    DUP ;
                     CAR ;
+                    DUP ;
+                    CDR ;
+                    DIG 2 ;
+                    CDR ;
+                    IF_LEFT
+                      { DUP 3 ; CAR ; CDR ; PUSH unit Unit ; SOME ; DIG 2 ; UPDATE }
+                      { DUP 3 ; CAR ; CDR ; NONE unit ; DIG 2 ; UPDATE } ;
+                    DIG 2 ;
+                    CAR ;
+                    CAR ;
+                    PAIR ;
                     PAIR } ;
              NIL operation ;
              PAIR } } }
