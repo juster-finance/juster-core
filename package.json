@@ -1,10 +1,7 @@
 {
-  "name": "fortune-crystal",
+  "name": "juster-core",
   "version": "0.1.0",
-  "description": "Fortune Crystal DeFi Hackatone",
-  "devDependencies": {
-    "ganache-cli": "6.12.0-tezos.0"
-  },
+  "description": "Juster Contract",
   "scripts": {
     "start-sandbox": "ganache-cli --flavor tezos --seed alice"
   },
@@ -15,6 +12,6 @@
     "truffle"
   ],
   "dependencies": {
-    "@taquito/taquito": "^8.0.4-beta.0"
+    "@taquito/taquito": "^10.1.0"
   }
 }
