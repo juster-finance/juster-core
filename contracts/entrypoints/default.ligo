@@ -1,5 +1,5 @@
 function default(
-    const param : unit;
+    const _param : unit;
     var store : storage) : (list (operation) * storage) is
 block {
 

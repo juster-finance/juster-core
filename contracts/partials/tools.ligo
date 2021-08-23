@@ -128,7 +128,7 @@ block {
 
 
 (* Checking that there are no amount included in operation: *)
-function checkNoAmountIncluded(const p : unit) : unit is
+function checkNoAmountIncluded(const _p : unit) : unit is
 block {
     if Tezos.amount > 0tez then
         failwith("Including tez using this entrypoint call is not allowed")
@@ -138,14 +138,14 @@ block {
 
 function isHaveValueTez(const k : ledgerKey; const l : ledgerType) : bool is
     case Big_map.find_opt(k, l) of
-    | Some(value) -> True
+    | Some(_value) -> True
     | None -> False
     end
 
 
 function isHaveValueNat(const k : ledgerKey; const l : ledgerNatType) : bool is
     case Big_map.find_opt(k, l) of
-    | Some(value) -> True
+    | Some(_value) -> True
     | None -> False
     end
 

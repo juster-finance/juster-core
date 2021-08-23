@@ -1,14 +1,12 @@
-type callbackReturnedValue is record [
+type callbackReturnedValue is [@layout:comb] record [
     currencyPair : string;
     lastUpdate : timestamp;
     rate : nat
 ]
 
-type callbackReturnedValueMichelson is michelson_pair_right_comb(callbackReturnedValue)
+type callbackEntrypoint is contract(callbackReturnedValue)
 
-type callbackEntrypoint is contract(callbackReturnedValueMichelson)
-
-type oracleParam is string * contract(callbackReturnedValueMichelson)
+type oracleParam is string * contract(callbackReturnedValue)
 
 type eventIdType is option(nat)
 
@@ -164,9 +162,9 @@ type action is
 | ProvideLiquidity of provideLiquidityParams
 | Bet of betParams
 | StartMeasurement of nat
-| StartMeasurementCallback of callbackReturnedValueMichelson
+| StartMeasurementCallback of callbackReturnedValue
 | Close of nat
-| CloseCallback of callbackReturnedValueMichelson
+| CloseCallback of callbackReturnedValue
 | Withdraw of withdrawParams
 | UpdateConfig of updateConfigParam
 | TriggerForceMajeure of nat

@@ -24,7 +24,7 @@ block {
 
     checkNoAmountIncluded(unit);
 
-    const event : eventType = getEvent(store, eventId);
+    var event : eventType := getEvent(store, eventId);
 
     (* Checking that Force Majeure is not runned before *)
     if event.isForceMajeure then failwith("Already in Force Majeure state")
@@ -35,13 +35,13 @@ block {
 
     (* Force Majeure case 1: start measurement lag is too long: *)
     const isStartMeasurementFailed : bool = case event.measureOracleStartTime of
-    | Some(time) -> False
+    | Some(_time) -> False
     | None -> isStartFailed(event)
     end;
 
     (* Force Majeure case 2: close lag is too long: *)
     const isCloseFailed : bool = case event.closedOracleTime of
-    | Some(time) -> False
+    | Some(_time) -> False
     | None -> isCloseFailed(event)
     end;
 
@@ -60,8 +60,10 @@ block {
         event.isClosed := True;
         event.measureStartFee := 0tez;
         event.expirationFee := 0tez;
-        store.events[eventId] := event;
     }
     else failwith("None of the Force Majeure scenarios are occurred");
 
+    store.events[eventId] := event;
+
 } with (operations, store)
+

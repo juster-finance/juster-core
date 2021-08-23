@@ -1,5 +1,5 @@
 function closeCallback(
-    const params : callbackReturnedValueMichelson;
+    const param : callbackReturnedValue;
     var store : storage) : (list(operation) * storage) is
 block {
 
@@ -10,8 +10,7 @@ block {
     | None -> (failwith("closeCallId is empty") : nat)
     end;
 
-    const param : callbackReturnedValue = Layout.convert_from_right_comb(params);
-    const event : eventType = getEvent(store, eventId);
+    var event : eventType := getEvent(store, eventId);
 
     (* Check that callback runs from right address
         and with right currency pair: *)
@@ -36,7 +35,7 @@ block {
     else skip;
 
     case event.closedOracleTime of
-    | Some(p) -> failwith("Contract already closed. Can't close contract twice")
+    | Some(_p) -> failwith("Contract already closed. Can't close contract twice")
     | None -> skip
     end;
 

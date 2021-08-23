@@ -6,7 +6,7 @@ block {
     checkNoAmountIncluded(unit);
 
     case store.measurementStartCallId of
-    | Some(measurementStartCallId) ->
+    | Some(_measurementStartCallId) ->
         failwith("Another call to oracle in process (should not be here)")
     | None -> skip
     end;

@@ -26,7 +26,7 @@ block {
     const precision : nat = store.ratioPrecision;
 
     const eventId : nat = params.eventId;
-    const event : eventType = getEvent(store, eventId);
+    var event : eventType := getEvent(store, eventId);
     const totalBets : tez = event.poolAboveEq + event.poolBelow;
     const key : ledgerKey = (Tezos.sender, eventId);
     const providedAmount : nat = tezToNat(Tezos.amount);

@@ -4,7 +4,7 @@
 const oneHour : nat = 60n*60n;
 const oneDay : nat = oneHour*24n;
 
-function lambda (const config : configType) : configType is
+function lambda (const _config : configType) : configType is
 record[
     measureStartFee = 200_000mutez;
     expirationFee = 100_000mutez;
@@ -21,3 +21,4 @@ record[
     providerProfitFee = 100_000n;  // 10%
     isEventCreationPaused = False;
 ]
+

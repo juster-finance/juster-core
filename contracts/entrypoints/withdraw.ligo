@@ -107,7 +107,6 @@ function makeWithdrawOperations(
     const store : storage;
     const params : withdrawParams;
     const event : eventType;
-    const key : ledgerKey;
     const payout : tez) : list(operation) is
 block {
 
@@ -156,7 +155,7 @@ block {
 
     checkNoAmountIncluded(unit);
 
-    const event : eventType = getEvent(store, params.eventId);
+    var event : eventType := getEvent(store, params.eventId);
     const key : ledgerKey = (params.participantAddress, params.eventId);
 
     if event.isClosed then skip
@@ -176,7 +175,7 @@ block {
         const payout : payoutInfo = calculatePayout(store, event, key);
         store.retainedProfits := store.retainedProfits + natToTez(payout.fee);
         const payoutValue : tez = natToTez(payout.bet + payout.provider);
-        operations := makeWithdrawOperations(store, params, event, key, payoutValue);
+        operations := makeWithdrawOperations(store, params, event, payoutValue);
     };
 
     (* Decreasing participants count: *)

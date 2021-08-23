@@ -1,18 +1,16 @@
 function startMeasurementCallback(
-    const params : callbackReturnedValueMichelson;
+    const param : callbackReturnedValue;
     var store : storage) : (list(operation) * storage) is
 block {
 
     checkNoAmountIncluded(unit);
 
-    const param : callbackReturnedValue = Layout.convert_from_right_comb(params);
-
     const eventId : nat = case store.measurementStartCallId of
-    | Some(measurementStartCallId) -> measurementStartCallId
+    | Some(_measurementStartCallId) -> _measurementStartCallId
     | None -> (failwith("measurementStartCallId is empty") : nat)
     end;
 
-    const event : eventType = getEvent(store, eventId);
+    var event : eventType := getEvent(store, eventId);
 
     (* Check that callback runs from right address and with right
         currency pair: *)
@@ -22,7 +20,7 @@ block {
     then failwith("Unexpected currency pair") else skip;
 
     case event.measureOracleStartTime of
-    | Some(time) -> failwith("Measurement period already started")
+    | Some(_time) -> failwith("Measurement period already started")
     | None -> skip
     end;
 

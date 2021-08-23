@@ -9,7 +9,7 @@ block {
         otherwise it looks like another callback is runned but no answer
         is received yet (is it even possible, btw?) *)
     case store.closeCallId of
-    | Some(closeCallId) ->
+    | Some(_closeCallId) ->
         failwith("Another call to oracle in process (should not be here)")
     | None -> skip
     end;

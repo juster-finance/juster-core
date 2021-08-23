@@ -29,7 +29,7 @@ function bet(
 block {
 
     const eventId : nat = params.eventId;
-    const event : eventType = getEvent(store, eventId);
+    var event : eventType := getEvent(store, eventId);
 
     (* Checking that there are liquidity in both pools (>0) *)
     if (event.poolAboveEq = 0tez) or (event.poolBelow = 0tez) then
