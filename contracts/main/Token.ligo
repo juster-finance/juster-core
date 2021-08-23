@@ -62,9 +62,18 @@ type action is
 | Update_operators of updateOperatorsParams
 
 
+type tokenInfoType is map(string, bytes);
+type metadataValues is
+    [@layout:comb]
+    record[
+        token_id : nat;
+        token_info : tokenInfoType
+]
+
 type storage is record [
     balances : big_map(requestType, nat);
     operators : big_map(operatorParam, unit);
+    token_metadata : big_map(nat, metadataValues);
 ]
 
 

@@ -20,7 +20,8 @@ class TokenTest(TestCase):
             'balances': {
                 (user, token_id): value for user, value in balances.items()
             },
-            'operators': operators
+            'operators': operators,
+            'token_metadata': {}
         }
 
 
