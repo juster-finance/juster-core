@@ -19,7 +19,7 @@ const config = {
   isEventCreationPaused: false,
 };
 
-const initialStorage = {  
+const initialStorage = {
   events: new MichelsonMap(),
   betsAboveEq: new MichelsonMap(),
   betsBelow: new MichelsonMap(),
