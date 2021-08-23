@@ -6,14 +6,14 @@ const config = {
   measureStartFee: 100000,
   expirationFee: 100000,
   rewardCallFee: 100000,
-  oracleAddress: 'KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn',
+  oracleAddress: 'KT1MwuujtBodVQFm1Jk1KTGNc49wygqoLvpe',
   minMeasurePeriod: 60*5,  // 5 mins
   maxMeasurePeriod: 60*60*24*31,  // 31 days
   minPeriodToBetsClose: 60*5,
   maxPeriodToBetsClose: 60*60*24*31,
   minLiquidityPercent: 0,
   maxLiquidityPercent: 300000,
-  maxAllowedMeasureLag: 60*60*4,
+  maxAllowedMeasureLag: 60*20,  // max 20 minutes late for event measurements
   rewardFeeSplitAfter: 60*60*24,  // one day
   providerProfitFee: 100000,  // 10%
   isEventCreationPaused: false,
@@ -46,3 +46,4 @@ const initialStorage = {
 module.exports = deployer => {
   deployer.deploy(Juster, initialStorage);
 };
+
