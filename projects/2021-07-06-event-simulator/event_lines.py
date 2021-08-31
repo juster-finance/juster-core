@@ -1,5 +1,7 @@
 import logging
 import json
+from coinbase_api import CoinbaseAPI
+from dynamics import calc_rate_by_freq_and_target
 
 
 # Currency pairs that are used to create events:
@@ -25,23 +27,59 @@ class EventLines:
         dict(period=86400, target_dynamics=1.01, liquidity_percent=0.02),
     ]
 
+    expiration_fee = 100_000
+    measure_start_fee = 100_000
 
-    def __init__(self, event_params=None):
+
+    def __init__(self, coinbase_api, event_params=None):
         self.logger = logging.getLogger(__name__)
         self.event_params = event_params or []
+        self.api = coinbase_api
+        self.update_coinbase_data()
+
+
+    def update_coinbase_data(self):
+
+        required_periods = {param['period'] for param in self.dynamic_params}
+
+        self.coinbase_data = {
+            pair: {
+                period: self.api.get_history_prices(pair=pair, granularity=period)
+                for period in required_periods
+            } for pair in CURRENCY_PAIRS
+        }
+
+
+    def make_params(
+        self, period, target_dynamics, liquidity_percent, currency_pair):
+
+        df = self.coinbase_data[currency_pair][period]
+
+        pool_a_ratio = calc_rate_by_freq_and_target(
+            df, freq=f'{period}S', target_dynamics=target_dynamics)
+        pool_b_ratio = 1 - pool_a_ratio
+
+        return {
+                'currency_pair': currency_pair,
+                'target_dynamics': target_dynamics,
+                'bets_period': period,
+                'measure_period': period,
+                'liquidity_percent': liquidity_percent,
+                'expiration_fee': self.expiration_fee,
+                'measure_start_fee': self.measure_start_fee,
+                'pool_a_ratio': pool_a_ratio,
+                'pool_b_ratio': pool_b_ratio
+            }
 
 
     def generate_new(self):
         self.event_params = [
-            {
-                'currency_pair': currency_pair,
-                'target_dynamics': params['target_dynamics'],
-                'bets_period': params['period'],
-                'measure_period': params['period'],
-                'liquidity_percent': params['liquidity_percent'],
-                'expiration_fee': 100_000,
-                'measure_start_fee': 100_000
-            } for currency_pair in CURRENCY_PAIRS
+            self.make_params(
+                period=params['period'],
+                target_dynamics=params['target_dynamics'],
+                liquidity_percent=params['liquidity_percent'],
+                currency_pair=currency_pair,
+            ) for currency_pair in CURRENCY_PAIRS
             for params in self.dynamic_params
         ]
 
