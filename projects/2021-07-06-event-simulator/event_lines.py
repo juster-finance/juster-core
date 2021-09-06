@@ -7,6 +7,9 @@ from dynamics import calc_rate_by_freq_and_target
 # Currency pairs that are used to create events:
 CURRENCY_PAIRS = ['XTZ-USD', 'BTC-USD', 'ETH-USD']
 
+# Precision used to calculate ratio in pools (converting float to int):
+RATIO_PRECISION = 1_000_000
+
 
 class EventLines:
     """ EventLines manage what kind of event types should be runned in
@@ -55,9 +58,11 @@ class EventLines:
 
         df = self.coinbase_data[currency_pair][period]
 
-        pool_a_ratio = calc_rate_by_freq_and_target(
+        pool_a_ratio_float = calc_rate_by_freq_and_target(
             df, freq=f'{period}S', target_dynamics=target_dynamics)
-        pool_b_ratio = 1 - pool_a_ratio
+
+        pool_a_ratio = int(pool_a_ratio_float * RATIO_PRECISION)
+        pool_b_ratio = RATIO_PRECISION - pool_a_ratio
 
         return {
                 'currency_pair': currency_pair,
