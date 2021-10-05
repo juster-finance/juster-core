@@ -151,6 +151,19 @@ class EventModel:
         return self
 
 
+    def calc_bet_profit(self, amount, pool, time):
+        """ Calculates bet profit for a given amount placed in a given pool
+            at a given time with current event pools """
+
+        multiplier = calc_liquidity_bonus_multiplier(time, 0, 1)
+        is_above = pool == 'aboveEq'
+
+        top = self.pool_b if is_above else self.pool_a
+        bottom = self.pool_a if is_above else self.pool_b
+        bet_profit = calc_bet_return(top, bottom, amount, self.fee*multiplier)
+        return bet_profit
+
+
     def bet(self, user, amount, pool, time):
         """ Changes event state adding bet from user to the given pool using
             time param to calculate fees
@@ -162,12 +175,8 @@ class EventModel:
         """
 
         assert amount >= 0
-        multiplier = calc_liquidity_bonus_multiplier(time, 0, 1)
+        bet_profit = self.calc_bet_profit(amount, pool, time)
         is_above = pool == 'aboveEq'
-
-        top = self.pool_b if is_above else self.pool_a
-        bottom = self.pool_a if is_above else self.pool_b
-        bet_profit = calc_bet_return(top, bottom, amount, self.fee*multiplier)
 
         self.pool_a += amount if is_above else -bet_profit
         self.pool_b += -bet_profit if is_above else amount
