@@ -124,7 +124,11 @@ class EventModel:
         assert all(v > 0 for v in self.shares.values())
 
 
-    def provide_liquidity(self, user, amount, pool_a=0, pool_b=0):
+    def calc_provided_shares(self, amount, pool_a=0, pool_b=0):
+        """ Calculates amount of shares that will receive provider if he adds
+            amount with current pools ratio (or given pool_a and pool_b if current
+            this is first liquidity provided)
+        """
 
         assert amount >= 0
 
@@ -142,6 +146,13 @@ class EventModel:
 
         provided_a = int(amount * pool_a / max_pool)
         provided_b = int(amount * pool_b / max_pool)
+
+        return provided_a, provided_b, shares
+
+
+    def provide_liquidity(self, user, amount, pool_a=0, pool_b=0):
+
+        provided_a, provided_b, shares = self.calc_provided_shares(amount, pool_a, pool_b)
 
         self.shares[user] = self.shares.get(user, 0) + shares
         self.pool_a += provided_a
