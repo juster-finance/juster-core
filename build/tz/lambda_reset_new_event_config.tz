@@ -6,7 +6,7 @@
     PUSH mutez 200000 ;
     PAIR ;
     PUSH nat 100000 ;
-    PUSH address "KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn" ;
+    PUSH address "KT1MwuujtBodVQFm1Jk1KTGNc49wygqoLvpe" ;
     PAIR ;
     PUSH nat 5 ;
     PUSH nat 60 ;
@@ -29,9 +29,7 @@
     PAIR ;
     PAIR ;
     PUSH nat 300000 ;
-    PUSH nat 4 ;
-    DIG 4 ;
-    MUL ;
+    DIG 3 ;
     PAIR ;
     PUSH bool False ;
     PUSH mutez 100000 ;
