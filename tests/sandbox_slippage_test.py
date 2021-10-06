@@ -6,36 +6,40 @@ class SandboxSlippageTestCase(SandboxedJusterTestCase):
 
     def test_slippage(self):
         self._create_simple_event(self.manager)
-
-        self.manager.contract(self.juster.address).provideLiquidity(
-            eventId=0,
-            expectedRatioBelow=1,
-            expectedRatioAboveEq=1,
-            maxSlippage=1000
-        ).with_amount(1_000_000).inject()
-
+        self._provide_liquidity(
+            event_id=0,
+            user=self.manager,
+            expected_below=1,
+            expected_above_eq=1,
+            max_slippage=1000,
+            amount=1_000_000
+        )
         self.bake_block()
 
         # B bets in aboveEq:
-        bet_res = self.b.contract(self.juster.address).bet(
-            eventId=0,
-            bet='aboveEq',
-            minimalWinAmount=1_500_000
-        ).with_amount(1_000_000).inject()
+        bet_res = self._bet(
+            event_id=0,
+            user=self.b,
+            side='aboveEq',
+            minimal_win_amount=1_500_000,
+            amount=1_000_000
+        )
 
         # A provides liquidity after b made bet in the same block:
-        pl_res = self.a.contract(self.juster.address).provideLiquidity(
-            eventId=0,
-            expectedRatioBelow=1,
-            expectedRatioAboveEq=1,
-            maxSlippage=1000
-        ).with_amount(1_000_000).inject()
+        pl_res = self._provide_liquidity(
+            event_id=0,
+            user=self.manager,
+            expected_below=1,
+            expected_above_eq=1,
+            max_slippage=1000,
+            amount=1_000_000
+        )
 
         self.bake_block()
-        bet_res = self._find_call_result_by_hash(self.a, bet_res['hash'])
+        bet_res = self._find_call_result_by_hash(self.a, bet_res.hash())
 
         with self.assertRaises(MichelsonError) as cm:
-            pl_res = self._find_call_result_by_hash(self.a, pl_res['hash'])
+            pl_res = self._find_call_result_by_hash(self.a, pl_res.hash())
 
         self.assertTrue(
             'Expected ratio very differs from current pool ratio'

@@ -107,12 +107,64 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
         result = self._find_call_result_by_hash(client, opg['hash'])
 
 
-    def _provide_liquidity(self):
-        pass
+    def _provide_liquidity(
+            self,
+            event_id=0,
+            user=None,
+            amount=1_000_000,
+            expected_below=None,
+            expected_above_eq=None,
+            max_slippage=1_000_000
+        ):
+
+        # TODO: get current ratio from contract
+        expected_below = expected_below or expected_below
+        expected_above_eq = expected_above_eq or expected_above_eq
+
+        user = user or self.manager
+
+        # TODO: make random amount
+        # TODO: maybe it is better to make this not random but just _provide_liqudidity(random_amount)
+        opg = user.contract(self.juster.address).provideLiquidity(
+            eventId=event_id,
+            expectedRatioBelow=expected_below,
+            expectedRatioAboveEq=expected_above_eq,
+            maxSlippage=max_slippage
+        ).with_amount(amount).send()
+
+        return opg
 
 
-    def _bet(self):
-        pass
+    def _bet(
+            self,
+            event_id=0,
+            user=None,
+            amount=1_000_000,
+            side='aboveEq',
+            minimal_win_amount=1_000_000
+        ):
+
+        user = user or self.manager
+        opg = user.contract(self.juster.address).bet(
+            eventId=event_id,
+            bet=side,
+            minimalWinAmount=minimal_win_amount
+        ).with_amount(amount).send()
+
+        return opg
+
+
+    def _withdraw(self, event_id=0, user=None, participant_address=None):
+
+        user = user or self.manager
+        participant_address = pkh(user)
+
+        opg = user.contract(self.juster.address).withdraw(
+            eventId=event_id,
+            participantAddress=participant_address
+        ).with_amount().send()
+
+        return opg
 
 
     def setUp(self):
