@@ -92,10 +92,10 @@ block {
     event.poolBelow := event.poolBelow + natToTez(providedB);
 
     (* Total liquidity by this LP: *)
-    store.providedLiquidityAboveEq[key] := 
+    store.providedLiquidityAboveEq[key] :=
         getLedgerAmount(key, store.providedLiquidityAboveEq) + natToTez(providedA);
 
-    store.providedLiquidityBelow[key] := 
+    store.providedLiquidityBelow[key] :=
         getLedgerAmount(key, store.providedLiquidityBelow) + natToTez(providedB);
 
     store.depositedLiquidity[key] :=
