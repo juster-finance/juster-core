@@ -6,7 +6,6 @@
 from pytezos.sandbox.node import SandboxedNodeTestCase
 from pytezos.sandbox.parameters import sandbox_addresses, sandbox_commitment
 from pytezos import ContractInterface, pytezos, MichelsonRuntimeError
-from pytezos.rpc.errors import MichelsonError
 from pytezos.contract.result import ContractCallResult
 import unittest
 from os.path import dirname, join
@@ -21,7 +20,7 @@ def pkh(key):
     return key.key.public_key_hash()
 
 
-class ContractInteractionsTestCase(SandboxedNodeTestCase):
+class SandboxedJusterTestCase(SandboxedNodeTestCase):
 
 
     def _load_contract(self, client, contract_address):
@@ -87,10 +86,12 @@ class ContractInteractionsTestCase(SandboxedNodeTestCase):
 
 
     def _create_simple_event(self, client):
+
+        self.blocks_till_close = 100
         event_params = {
             'currencyPair': 'XTZ-USD',
             'targetDynamics': 1_000_000,
-            'betsCloseTime': 5,  # 5 blocks till close
+            'betsCloseTime': self.blocks_till_close,
             'measurePeriod': 1,  # 1 block measure period
             'liquidityPercent': 0,
         }
@@ -106,46 +107,17 @@ class ContractInteractionsTestCase(SandboxedNodeTestCase):
         result = self._find_call_result_by_hash(client, opg['hash'])
 
 
+    def _provide_liquidity(self):
+        pass
+
+
+    def _bet(self):
+        pass
+
+
     def setUp(self):
         self._activate_accs()
         # TODO: deploy oracle mock?
         oracle_address = 'KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn'
         self._deploy_juster(self.manager, oracle_address)
 
-
-    def test_slippage(self):
-        self._create_simple_event(self.manager)
-
-        self.manager.contract(self.juster.address).provideLiquidity(
-            eventId=0,
-            expectedRatioBelow=1,
-            expectedRatioAboveEq=1,
-            maxSlippage=1000
-        ).with_amount(1_000_000).inject()
-
-        self.bake_block()
-
-        # B bets in aboveEq:
-        bet_res = self.b.contract(self.juster.address).bet(
-            eventId=0,
-            bet='aboveEq',
-            minimalWinAmount=1_500_000
-        ).with_amount(1_000_000).inject()
-
-        # A provides liquidity after b made bet in the same block:
-        pl_res = self.a.contract(self.juster.address).provideLiquidity(
-            eventId=0,
-            expectedRatioBelow=1,
-            expectedRatioAboveEq=1,
-            maxSlippage=1000
-        ).with_amount(1_000_000).inject()
-
-        self.bake_block()
-        bet_res = self._find_call_result_by_hash(self.a, bet_res['hash'])
-
-        with self.assertRaises(MichelsonError) as cm:
-            pl_res = self._find_call_result_by_hash(self.a, pl_res['hash'])
-
-        self.assertTrue(
-            'Expected ratio very differs from current pool ratio'
-            in str(cm.exception))
