@@ -29,6 +29,7 @@ def generate_storage(manager, oracle_address):
         'betsBelow': {},
         'providedLiquidityAboveEq': {},
         'providedLiquidityBelow': {},
+        'depositedLiquidity': {},
         'liquidityShares': {},
         'depositedBets': {},
         'nextEventId': 0,

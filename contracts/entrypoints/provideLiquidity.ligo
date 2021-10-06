@@ -98,6 +98,9 @@ block {
     store.providedLiquidityBelow[key] := 
         getLedgerAmount(key, store.providedLiquidityBelow) + natToTez(providedB);
 
+    store.depositedLiquidity[key] :=
+        getLedgerAmount(key, store.depositedLiquidity) + natToTez(providedAmount);
+
     store.liquidityShares[key] :=
         getNatLedgerAmount(key, store.liquidityShares) + newShares;
     event.totalLiquidityShares := totalShares + newShares;

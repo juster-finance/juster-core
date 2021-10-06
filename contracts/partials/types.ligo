@@ -190,6 +190,7 @@ type storage is record [
     providedLiquidityAboveEq : ledgerType;
     providedLiquidityBelow : ledgerType;
     liquidityShares : ledgerNatType;
+    depositedLiquidity : ledgerType;
 
     (* Keeping all provided bets for the Force Majeure, in case if
         they needed to be returned *)

@@ -31,6 +31,8 @@ block {
         getLedgerAmount(key, store.providedLiquidityAboveEq));
     const providedB : nat = tezToNat(
         getLedgerAmount(key, store.providedLiquidityBelow));
+    const deposited : nat = tezToNat(
+        getLedgerAmount(key, store.depositedLiquidity));
     const poolA : nat = tezToNat(event.poolAboveEq);
     const poolB : nat = tezToNat(event.poolBelow);
     const totalShares : nat = event.totalLiquidityShares;
@@ -51,8 +53,7 @@ block {
     if fee > abs(providerProfit) then failwith("Fee is more than 100%")
     else skip;
 
-    const provider : nat =
-        abs(maxNat(providedA, providedB) + providerProfit - fee);
+    const provider : nat = abs(deposited + providerProfit - fee);
 
 } with record[bet=bet; provider=provider; fee=fee];
 
@@ -60,18 +61,8 @@ block {
 function forceMajeureReturnPayout(
     const store: storage;
     const key : ledgerKey) : tez is
-block {
-
-    const providedA : nat = tezToNat(
-        getLedgerAmount(key, store.providedLiquidityAboveEq));
-    const providedB : nat = tezToNat(
-        getLedgerAmount(key, store.providedLiquidityBelow));
-    const providedMax : nat = maxNat(providedA, providedB);
-    const returnAmount : tez =
         getLedgerAmount(key, store.depositedBets)
-        + natToTez(providedMax)
-
-} with returnAmount
+        + getLedgerAmount(key, store.depositedLiquidity);
 
 
 function excludeFeeReward(

@@ -25,6 +25,7 @@ const initialStorage = {
   betsBelow: new MichelsonMap(),
   providedLiquidityAboveEq: new MichelsonMap(),
   providedLiquidityBelow: new MichelsonMap(),
+  depositedLiquidity: new MichelsonMap(),
   liquidityShares: new MichelsonMap(),
   depositedBets: new MichelsonMap(),
   nextEventId: 0,
