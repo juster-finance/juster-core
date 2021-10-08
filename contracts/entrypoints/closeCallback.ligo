@@ -21,7 +21,7 @@ block {
 
     const startedTime : timestamp = case event.measureOracleStartTime of
     | Some(time) -> time
-    | None -> (failwith("Can't close contract before measurement period started") : timestamp)
+    | None -> (failwith("Can't close event before measurement period started") : timestamp)
     end;
 
     const endTime : timestamp = startedTime + int(event.measurePeriod);
@@ -35,11 +35,11 @@ block {
     else skip;
 
     case event.closedOracleTime of
-    | Some(_p) -> failwith("Contract already closed. Can't close contract twice")
+    | Some(_p) -> failwith("Event already closed. Can't close event twice")
     | None -> skip
     end;
 
-    (* Closing contract: *)
+    (* Closing event: *)
     event.closedOracleTime := Some(param.lastUpdate);
     event.closedRate := Some(param.rate);
 

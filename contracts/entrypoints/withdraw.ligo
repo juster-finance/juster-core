@@ -155,7 +155,7 @@ block {
     const key : ledgerKey = (params.participantAddress, params.eventId);
 
     if event.isClosed then skip
-    else failwith("Withdraw is not allowed until contract is closed");
+    else failwith("Withdraw is not allowed until event is closed");
 
     var operations : list(operation) := nil;
 

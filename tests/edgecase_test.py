@@ -146,10 +146,10 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
                 callback_values=callback_values,
                 source=self.a,
                 sender=self.oracle_address)
-        msg = "Contract already closed. Can't close contract twice"
+        msg = "Event already closed. Can't close event twice"
         self.assertTrue(msg in str(cm.exception))
 
-        # A tries to Bet after contract is closed and failed:
+        # A tries to Bet after event is closed and failed:
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.bet(
                 participant=self.a,

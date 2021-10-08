@@ -11,7 +11,7 @@ function excludeLiquidity(
         if (elapsedTime < 0) then
             (* It is impossible to get here, but if somehow it happens,
                 it can be exploited so I made this failwith: *)
-            failwith("Bet adding before contract createdTime")
+            failwith("Bet adding before event createdTime")
         else skip;
 
         (* Liquidity percent is zero at the event start and goes to

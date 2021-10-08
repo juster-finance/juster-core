@@ -130,7 +130,7 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
                 callback_values=start_callback_values,
                 source=self.a,
                 sender=self.oracle_address)
-        msg = "Can't close contract before measurement period started"
+        msg = "Can't close event before measurement period started"
         self.assertTrue(msg in str(cm.exception))
 
         # Checking that measurement with wrong currency pair is failed:
@@ -207,12 +207,12 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
         msg = "Measurement period already started"
         self.assertTrue(msg in str(cm.exception))
 
-        # Checking that withdrawal before contract is closed is not allowed:
+        # Checking that withdrawal before event is closed is not allowed:
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.withdraw(
                 participant=self.a,
                 withdraw_amount=100_000)
-        msg = 'Withdraw is not allowed until contract is closed'
+        msg = 'Withdraw is not allowed until event is closed'
         self.assertTrue(msg in str(cm.exception))
 
         # Closing event:
