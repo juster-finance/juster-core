@@ -139,6 +139,7 @@ block {
         Big_map.remove(key, store.providedLiquidityBelow);
     store.liquidityShares := Big_map.remove(key, store.liquidityShares);
     store.depositedBets := Big_map.remove(key, store.depositedBets);
+    store.depositedLiquidity := Big_map.remove(key, store.depositedLiquidity);
 
 } with store
 
