@@ -237,6 +237,8 @@ class JusterBaseTestCase(TestCase):
 
     def new_event(self, event_params, amount):
         """ Testing creating event with settings that should succeed """
+        # TODO: looks like 90% of tests use default event_params and default amount
+        # maybe this would be good to process all defaults here
 
         # Running transaction:
         result = self.contract.newEvent(event_params).with_amount(amount).interpret(
