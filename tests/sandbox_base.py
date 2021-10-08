@@ -13,7 +13,8 @@ import json
 from test_data import generate_storage
 
 
-CONTRACT_FN = '../build/tz/juster.tz'
+JUSTER_FN = '../build/tz/juster.tz'
+ORACLE_MOCK_FN = '../build/tz/oracle_mock.tz'
 
 
 def pkh(key):
@@ -46,7 +47,7 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
     def _deploy_juster(self, client, oracle_address):
         """ Deploys Juster with default storage  """
 
-        filename = join(dirname(__file__), CONTRACT_FN)
+        filename = join(dirname(__file__), JUSTER_FN)
         contract = ContractInterface.from_file(filename)
         contract = contract.using(shell=self.get_node_url(), key=client.key)
 
@@ -55,13 +56,28 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
         storage['config'].update({
             'minMeasurePeriod': 1,  # 1 block
             'minPeriodToBetsClose': 1,  # 1 block
+            'maxAllowedMeasureLag': 10,  # 10 blocks
         })
 
         opg = contract.originate(initial_storage=storage)
-        result = opg.fill().sign().inject()
+        result = opg.send()
         self.bake_block()
 
-        self.juster = self._find_contract_by_hash(client, result['hash'])
+        self.juster = self._find_contract_by_hash(client, result.hash())
+
+
+    def _deploy_oracle_mock(self, client):
+        """ Deploys Mock Oracle that used to test Juster """
+
+        filename = join(dirname(__file__), ORACLE_MOCK_FN)
+        contract = ContractInterface.from_file(filename)
+        contract = contract.using(shell=self.get_node_url(), key=client.key)
+
+        opg = contract.originate(initial_storage=5000000)
+        result = opg.send()
+        self.bake_block()
+
+        self.oracle_mock = self._find_contract_by_hash(client, result.hash())
 
 
     def _find_call_result_by_hash(self, client, opg_hash):
@@ -85,13 +101,12 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
         self.manager.reveal()
 
 
-    def _create_simple_event(self, client):
+    def _create_simple_event(self, client, bets_time=10):
 
-        self.blocks_till_close = 100
         event_params = {
             'currencyPair': 'XTZ-USD',
             'targetDynamics': 1_000_000,
-            'betsCloseTime': self.blocks_till_close,
+            'betsCloseTime': self.manager.now() + bets_time,
             'measurePeriod': 1,  # 1 block measure period
             'liquidityPercent': 0,
         }
@@ -117,11 +132,12 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
             max_slippage=1_000_000
         ):
 
-        # TODO: get current ratio from contract
-        expected_below = expected_below or expected_below
-        expected_above_eq = expected_above_eq or expected_above_eq
-
         user = user or self.manager
+        contract = user.contract(self.juster.address)
+
+        event = contract.storage['events'][event_id]()
+        expected_below = expected_below or event['poolBelow']
+        expected_above_eq = expected_above_eq or event['poolAboveEq']
 
         # TODO: make random amount
         # TODO: maybe it is better to make this not random but just _provide_liqudidity(random_amount)
@@ -162,14 +178,21 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
         opg = user.contract(self.juster.address).withdraw(
             eventId=event_id,
             participantAddress=participant_address
-        ).with_amount().send()
+        ).send()
 
         return opg
 
 
+    def _run_measurements(self, event_id=0):
+        import pdb; pdb.set_trace()
+
+
+    def _run_force_majeure(self, event_id=0):
+        pass
+
+
     def setUp(self):
         self._activate_accs()
-        # TODO: deploy oracle mock?
-        oracle_address = 'KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn'
-        self._deploy_juster(self.manager, oracle_address)
+        self._deploy_oracle_mock(self.manager)
+        self._deploy_juster(self.manager, self.oracle_mock.address)
 
