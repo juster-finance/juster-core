@@ -1,0 +1,28 @@
+{ parameter
+    (or (pair %get
+           string
+           (contract (pair (string %currencyPair) (pair (timestamp %lastUpdate) (nat %rate)))))
+        (nat %update)) ;
+  storage nat ;
+  code { UNPAIR ;
+         IF_LEFT
+           { DUP ;
+             CAR ;
+             NOW ;
+             DUP 4 ;
+             SWAP ;
+             PAIR ;
+             SWAP ;
+             PAIR ;
+             SWAP ;
+             CDR ;
+             PUSH mutez 0 ;
+             DIG 2 ;
+             TRANSFER_TOKENS ;
+             SWAP ;
+             NIL operation ;
+             DIG 2 ;
+             CONS ;
+             PAIR }
+           { SWAP ; DROP ; NIL operation ; PAIR } } }
+
