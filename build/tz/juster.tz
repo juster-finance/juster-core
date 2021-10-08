@@ -615,7 +615,7 @@
                          DUG 2 ;
                          COMPARE ;
                          LT ;
-                         IF { PUSH string "Bet adding before contract createdTime" ; FAILWITH } {} ;
+                         IF { PUSH string "Bet adding before event createdTime" ; FAILWITH } {} ;
                          ABS ;
                          DIG 3 ;
                          CAR ;
@@ -1235,7 +1235,7 @@
                          CAR ;
                          CAR ;
                          IF_NONE
-                           { PUSH string "Can't close contract before measurement period started" ;
+                           { PUSH string "Can't close event before measurement period started" ;
                              FAILWITH }
                            {} ;
                          SWAP ;
@@ -1283,7 +1283,7 @@
                          IF_NONE
                            {}
                            { DROP ;
-                             PUSH string "Contract already closed. Can't close contract twice" ;
+                             PUSH string "Event already closed. Can't close event twice" ;
                              FAILWITH } ;
                          DUP ;
                          CDR ;
@@ -3171,7 +3171,7 @@
                          CAR ;
                          CAR ;
                          IF {}
-                            { PUSH string "Withdraw is not allowed until contract is closed" ; FAILWITH } ;
+                            { PUSH string "Withdraw is not allowed until event is closed" ; FAILWITH } ;
                          SWAP ;
                          DUP ;
                          DUG 2 ;
