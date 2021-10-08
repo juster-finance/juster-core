@@ -38,9 +38,13 @@ block {
     const totalShares : nat = event.totalLiquidityShares;
 
     (* Leveraged liquidity provided in the smallest pool should be excluded: *)
-    const providerProfit : int = if isBetsAboveEqWin
-        then share * poolB / totalShares - providedB
-        else share * poolA / totalShares - providedA;
+    var providerProfit : int := 0;
+
+    (* One of the edgecases if there was no liquidity provided and there are 0n shares: *)
+    if (totalShares = 0n) then skip else
+        providerProfit := if isBetsAboveEqWin
+            then share * poolB / totalShares - providedB
+            else share * poolA / totalShares - providedA;
 
     (* Cutting profits from provided liquidity: *)
     const profitFee : nat = store.config.providerProfitFee;
