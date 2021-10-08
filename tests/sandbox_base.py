@@ -139,8 +139,6 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
         expected_below = expected_below or event['poolBelow']
         expected_above_eq = expected_above_eq or event['poolAboveEq']
 
-        # TODO: make random amount
-        # TODO: maybe it is better to make this not random but just _provide_liqudidity(random_amount)
         opg = user.contract(self.juster.address).provideLiquidity(
             eventId=event_id,
             expectedRatioBelow=expected_below,
@@ -183,12 +181,22 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
         return opg
 
 
-    def _run_measurements(self, event_id=0):
-        import pdb; pdb.set_trace()
+    def _run_measurements(self, event_id=0, user=None):
+        user = user or self.manager
+        user.contract(self.juster.address).startMeasurement(event_id).send()
+        self.bake_block()
+
+        # TODO: get measurement time and wait K block?
+        user.contract(self.juster.address).close(event_id).send()
+        self.bake_block()
+
+        self.assertTrue(self.juster.storage['events'][event_id]()['isClosed'])
 
 
-    def _run_force_majeure(self, event_id=0):
-        pass
+    def _run_force_majeure(self, event_id=0, user=None):
+        user = user or self.manager
+        user.contract(self.juster.address).triggerForceMajeure(event_id).send()
+        self.bake_block()
 
 
     def setUp(self):
