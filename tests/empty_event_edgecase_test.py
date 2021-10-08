@@ -48,5 +48,8 @@ class EmptyEventEdgeCase(JusterBaseTestCase):
             sender=self.oracle_address)
 
         # A tries to withdraw:
-        self.withdraw(self.a, 0)
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.withdraw(self.a, 0)
+        msg = 'Participant not found'
+        self.assertTrue(msg in str(cm.exception))
 
