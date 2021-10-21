@@ -34,16 +34,20 @@ type claimInsuranceCaseParams is record [
     lineId : nat;
 ]
 
-type withdrawParams is record [
-    agreementId : nat;
-]
+type giveRewardParams is record [agreementId : nat];
+
+type removeLiquidityParams is record [
+    lineId : nat;
+    shares : nat
+];
 
 type action is
 | NewLine of newLineParams
 | ProvideLiquidity of provideLiquidityParams
+| RemoveLiquidity of removeLiquidityParams
 | Insure of insureParams
 | ClaimInsuranceCase of claimInsuranceCaseParams
-| Withdraw of withdrawParams
+| GiveReward of giveRewardParams
 
 (* lines is like macro events where users can have different agreements *)
 type lineType is record [
@@ -354,16 +358,24 @@ block {
 } with ((nil: list(operation)), s)
 
 
-function claimInsuranceCase(
-    const params : claimInsuranceCaseParams;
+function removeLiquidity(
+    const p : removeLiquidityParams;
     const s : storage) : return is
 block {
     skip;
 } with ((nil: list(operation)), s)
 
 
-function withdraw(
-    const params : withdrawParams;
+function giveReward(
+    const p : giveRewardParams;
+    const s : storage) : return is
+block {
+    skip;
+} with ((nil: list(operation)), s)
+
+
+function claimInsuranceCase(
+    const p : claimInsuranceCaseParams;
     const s : storage) : return is
 block {
     skip;
@@ -374,8 +386,9 @@ function main (const params : action; var s : storage) : return is
 case params of
 | NewLine(p) -> newLine(p, s)
 | ProvideLiquidity(p) -> provideLiquidity(p, s)
+| RemoveLiquidity(p) -> removeLiquidity(p, s)
 | Insure(p) -> insure(p, s)
 | ClaimInsuranceCase(p) -> claimInsuranceCase(p, s)
-| Withdraw(p) -> withdraw(p, s)
+| GiveReward(p) -> giveReward(p, s)
 end
 

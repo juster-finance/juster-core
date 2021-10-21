@@ -1,15 +1,15 @@
 { parameter
-    (or (or (or (nat %claimInsuranceCase)
-                (pair %insure
+    (or (or (or (nat %claimInsuranceCase) (nat %giveReward))
+            (or (pair %insure
                    (pair (nat %lineId) (mutez %minimalRewardAmount))
-                   (or %pool (unit %against) (unit %for))))
-            (or (pair %newLine
+                   (or %pool (unit %against) (unit %for)))
+                (pair %newLine
                    (pair (pair (string %currencyPair) (nat %duration)) (pair (nat %fee) (nat %initAgainst)))
-                   (pair (pair (nat %initFor) (nat %maxValue)) (nat %minValue)))
-                (pair %provideLiquidity
-                   (pair (nat %expectedAgainst) (nat %expectedFor))
-                   (pair (nat %lineId) (nat %maxSlippage)))))
-        (nat %withdraw)) ;
+                   (pair (pair (nat %initFor) (nat %maxValue)) (nat %minValue)))))
+        (or (pair %provideLiquidity
+               (pair (nat %expectedAgainst) (nat %expectedFor))
+               (pair (nat %lineId) (nat %maxSlippage)))
+            (pair %removeLiquidity (nat %lineId) (nat %shares)))) ;
   storage
     (pair (pair (pair (big_map %agreements
                          nat
@@ -412,11 +412,17 @@
          IF_LEFT
            { IF_LEFT
                { DIG 2 ;
+                 DIG 3 ;
                  DIG 4 ;
-                 DROP 2 ;
-                 IF_LEFT
-                   { DIG 2 ; DIG 3 ; DIG 4 ; DROP 4 ; NIL operation ; PAIR }
-                   { DUP ;
+                 DIG 5 ;
+                 DIG 6 ;
+                 DROP 5 ;
+                 IF_LEFT { DROP ; NIL operation ; PAIR } { DROP ; NIL operation ; PAIR } }
+               { IF_LEFT
+                   { DIG 2 ;
+                     DIG 4 ;
+                     DROP 2 ;
+                     DUP ;
                      CAR ;
                      CAR ;
                      DUP 3 ;
@@ -622,13 +628,11 @@
                      PAIR ;
                      PAIR ;
                      NIL operation ;
-                     PAIR } }
-               { DIG 5 ;
-                 DIG 6 ;
-                 DROP 2 ;
-                 IF_LEFT
+                     PAIR }
                    { DIG 3 ;
-                     DROP ;
+                     DIG 5 ;
+                     DIG 6 ;
+                     DROP 3 ;
                      SWAP ;
                      DUP ;
                      DUG 2 ;
@@ -753,46 +757,50 @@
                      CAR ;
                      PAIR ;
                      NIL operation ;
-                     PAIR }
-                   { SWAP ;
-                     DUP ;
-                     DUG 2 ;
-                     CDR ;
-                     CDR ;
-                     SWAP ;
-                     DUP ;
-                     DUG 2 ;
-                     CDR ;
-                     CDR ;
-                     DUP 3 ;
-                     CAR ;
-                     CAR ;
-                     PAIR ;
-                     DUP 3 ;
-                     CAR ;
-                     CDR ;
-                     DUP 4 ;
-                     CDR ;
-                     CAR ;
-                     DUP 6 ;
-                     PAIR ;
-                     DIG 7 ;
-                     SWAP ;
-                     EXEC ;
-                     PAIR ;
-                     PAIR ;
-                     PAIR ;
-                     DIG 4 ;
-                     SWAP ;
-                     EXEC ;
-                     SWAP ;
-                     CDR ;
-                     CAR ;
-                     DIG 2 ;
-                     PAIR ;
-                     PAIR ;
-                     EXEC ;
-                     NIL operation ;
                      PAIR } } }
-           { DIG 2 ; DIG 3 ; DIG 4 ; DIG 5 ; DIG 6 ; DROP 6 ; NIL operation ; PAIR } } }
+           { DIG 5 ;
+             DIG 6 ;
+             DROP 2 ;
+             IF_LEFT
+               { SWAP ;
+                 DUP ;
+                 DUG 2 ;
+                 CDR ;
+                 CDR ;
+                 SWAP ;
+                 DUP ;
+                 DUG 2 ;
+                 CDR ;
+                 CDR ;
+                 DUP 3 ;
+                 CAR ;
+                 CAR ;
+                 PAIR ;
+                 DUP 3 ;
+                 CAR ;
+                 CDR ;
+                 DUP 4 ;
+                 CDR ;
+                 CAR ;
+                 DUP 6 ;
+                 PAIR ;
+                 DIG 7 ;
+                 SWAP ;
+                 EXEC ;
+                 PAIR ;
+                 PAIR ;
+                 PAIR ;
+                 DIG 4 ;
+                 SWAP ;
+                 EXEC ;
+                 SWAP ;
+                 CDR ;
+                 CAR ;
+                 DIG 2 ;
+                 PAIR ;
+                 PAIR ;
+                 EXEC ;
+                 NIL operation ;
+                 PAIR }
+               { DIG 2 ; DIG 3 ; DIG 4 ; DROP 4 ; NIL operation ; PAIR } } } }
 
