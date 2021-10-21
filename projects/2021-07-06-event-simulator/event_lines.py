@@ -19,15 +19,15 @@ class EventLines:
     """
 
     dynamic_params = [
-        dict(period=3600,  target_dynamics=1.00, liquidity_percent=0.01),
-        dict(period=3600,  target_dynamics=0.99, liquidity_percent=0.02),
-        dict(period=3600,  target_dynamics=1.01, liquidity_percent=0.02),
+        # dict(period=3600,  target_dynamics=1.00, liquidity_percent=0.01),
+        # dict(period=3600,  target_dynamics=0.99, liquidity_percent=0.02),
+        # dict(period=3600,  target_dynamics=1.01, liquidity_percent=0.02),
         dict(period=21600, target_dynamics=1.00, liquidity_percent=0.01),
-        dict(period=21600, target_dynamics=0.99, liquidity_percent=0.02),
-        dict(period=21600, target_dynamics=1.01, liquidity_percent=0.02),
+        # dict(period=21600, target_dynamics=0.99, liquidity_percent=0.02),
+        # dict(period=21600, target_dynamics=1.01, liquidity_percent=0.02),
         dict(period=86400, target_dynamics=1.00, liquidity_percent=0.01),
-        dict(period=86400, target_dynamics=0.99, liquidity_percent=0.02),
-        dict(period=86400, target_dynamics=1.01, liquidity_percent=0.02),
+        # dict(period=86400, target_dynamics=0.99, liquidity_percent=0.02),
+        # dict(period=86400, target_dynamics=1.01, liquidity_percent=0.02),
     ]
 
     expiration_fee = 100_000
