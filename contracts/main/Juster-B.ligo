@@ -89,11 +89,40 @@ type storage is record [
 
 type return is list(operation) * storage
 
-function newLine(const params : newLineParams; const s : storage) : return is ((nil: list(operation)), s)
-function provideLiquidity(const params : provideLiquidityParams; const s : storage) : return is ((nil: list(operation)), s)
-function insure(const params : insureParams; const s : storage) : return is ((nil: list(operation)), s)
-function claimInsuranceCase(const params : claimInsuranceCaseParams; const s : storage) : return is ((nil: list(operation)), s)
-function withdraw(const params : withdrawParams; const s : storage) : return is ((nil: list(operation)), s)
+function newLine(
+    const params : newLineParams;
+    const s : storage) : return is
+block {
+    skip;
+} with ((nil: list(operation)), s)
+
+function provideLiquidity(
+    const params : provideLiquidityParams;
+    const s : storage) : return is
+block {
+    skip;
+} with ((nil: list(operation)), s)
+
+function insure(
+    const params : insureParams;
+    const s : storage) : return is
+block {
+    skip;
+} with ((nil: list(operation)), s)
+
+function claimInsuranceCase(
+    const params : claimInsuranceCaseParams;
+    const s : storage) : return is
+block {
+    skip;
+} with ((nil: list(operation)), s)
+
+function withdraw(
+    const params : withdrawParams;
+    const s : storage) : return is
+block {
+    skip;
+} with ((nil: list(operation)), s)
 
 function main (const params : action; var s : storage) : return is
 case params of
