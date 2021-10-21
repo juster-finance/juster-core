@@ -7,6 +7,9 @@ type newLineParams is record [
 
     initFor : nat;
     initAgainst : nat;
+
+    fee : nat;
+    duration : nat;
 ]
 
 type provideLiquidityParams is record [
@@ -23,10 +26,7 @@ type insureType is
 type insureParams is record [
     lineId : nat;
     pool : insureType;
-
-    (* Amount of standard timeslots that purchased in insurance *)
-    timeslots : nat;
-    minimalWinAmount : tez;
+    minimalRewardAmount : tez;
 ]
 
 (* this can be made within finish entrypoint *)
@@ -55,6 +55,8 @@ type lineType is record [
     currencyPair : string;
     minValue : nat;
     maxValue : nat;
+    fee : nat;
+    duration : nat;
 
     (* this flag is set to true when someone claims insurance case :: similar to isClosed *)
     isClaimed : bool;
@@ -65,11 +67,12 @@ type lineType is record [
 
 type agreementType is record [
     lineId : nat;
+    beneficiary : address;
 
     (* pool where funds placed for *)
     pool : insureType;
     endTime : timestamp;
-    winAmount : tez;
+    rewardAmount : tez;
 ]
 
 type liquidityType is record [
@@ -80,7 +83,7 @@ type liquidityType is record [
 ]
 
 type liquidityLedger is big_map(address*nat, liquidityType)
-type agreementsLedger is big_map(address*nat, agreementType)
+type agreementsLedger is big_map(nat, agreementType)
 type linesLedger is big_map(nat, lineType)
 
 type storage is record [
@@ -88,13 +91,11 @@ type storage is record [
     agreements : agreementsLedger;
     depositedLiquidity : liquidityLedger;
 
-    (* Basic timeslot in seconds, can be moved to newLine *)
-    standardTimeslot : nat;
-
     nextLineId : nat;
     nextAgreementId : nat;
 
     ratioPrecision : nat;
+    feePrecision : nat;
 ]
 
 type return is list(operation) * storage
@@ -121,6 +122,7 @@ block {
 
 (* NOTE: copypasted from JUSTER:tools.ligo *)
 function tezToNat(const t : tez) : nat is t / 1mutez;
+function natToTez(const t : nat) : tez is t * 1mutez;
 
 
 (* NOTE: copypasted from JUSTER:tools.ligo *)
@@ -129,6 +131,12 @@ block {
     var maxValue : nat := a;
     if (a < b) then maxValue := b else skip;
 } with maxValue
+
+
+function checkNotClaimed(const line : lineType) : unit is
+if line.isClaimed then
+    failwith("Insurance Case is claimed")
+else unit;
 
 
 function calculateNewLiquidity(
@@ -140,9 +148,7 @@ function calculateNewLiquidity(
 ) : liquidityType is
 block {
 
-    if line.isClaimed then
-        failwith("Providing Liquidity after Insurance Case Claimed is not possible")
-    else skip;
+    checkNotClaimed(line);
 
     (* Calculating expected ratio using provided ratios: *)
     const expectedRatio : nat = liquidityFor * precision / liquidityAgainst;
@@ -250,6 +256,8 @@ function newLine(
     var s : storage) : return is
 block {
 
+    if p.fee > s.feePrecision then failwith("Fee > 100%") else skip;
+
     (* NOTE: No measurement fee is required to provide to create newLine *)
     const line = record [
         poolFor = 0n;
@@ -259,6 +267,8 @@ block {
         minValue = p.minValue;
         maxValue = p.maxValue;
         isClaimed = False;
+        fee = p.fee;
+        duration = p.duration;
     ];
 
     s.lines[s.nextLineId] := line;
@@ -277,12 +287,72 @@ block {
 
 } with ((nil: list(operation)), s)
 
+
 function insure(
-    const params : insureParams;
-    const s : storage) : return is
+    const p : insureParams;
+    var s : storage) : return is
 block {
-    skip;
+
+    var line := getLine(s, p.lineId);
+    checkNotClaimed(line);
+    if Tezos.amount = 0tez then failwith("No xtz provided") else skip;
+
+    const key = (Tezos.sender, p.lineId);
+
+    (* poolTo is the pool where payment goes *)
+    var poolTo := case p.pool of
+    | For -> line.poolFor
+    | Against -> line.poolAgainst
+    end;
+
+    (* poolFrom is the pool where possible reward coming *)
+    var poolFrom := case p.pool of
+    | For -> line.poolAgainst
+    | Against -> line.poolFor
+    end;
+
+    const value = tezToNat(Tezos.amount);
+
+    (* adding liquidity to payment pool *)
+    poolTo := poolTo + value;
+
+    const winDelta = value * poolFrom / poolTo;
+    const winDeltaCut = winDelta * abs(s.feePrecision - line.fee) / s.feePrecision;
+
+    (* removing liquidity from another pool to keep ratio balanced: *)
+    (* NOTE: liquidity fee is included in the delta *)
+    (* NOTE: this is impossible to have winDeltaCut > poolFrom [but I check] *)
+    if winDeltaCut > poolFrom then failwith("Wrong winDeltaCut") else skip;
+    poolFrom := abs(poolFrom - winDeltaCut);
+
+    const rewardAmount = natToTez(value + winDeltaCut);
+    if rewardAmount < p.minimalRewardAmount
+    then failwith("Wrong minimalRewardAmount")
+    else skip;
+
+    (* Adding agreement to ledger: *)
+    s.agreements[s.nextAgreementId] := record [
+        beneficiary = Tezos.sender;
+        lineId = p.lineId;
+        pool = p.pool;
+        endTime = Tezos.now + int(line.duration);
+        rewardAmount = rewardAmount
+    ];
+
+    line.poolFor := case p.pool of
+    | For -> poolTo
+    | Against -> poolFrom
+    end;
+
+    line.poolAgainst := case p.pool of
+    | For -> poolFrom
+    | Against -> poolTo
+    end;
+
+    s.lines[p.lineId] := line;
+
 } with ((nil: list(operation)), s)
+
 
 function claimInsuranceCase(
     const params : claimInsuranceCaseParams;
@@ -291,12 +361,14 @@ block {
     skip;
 } with ((nil: list(operation)), s)
 
+
 function withdraw(
     const params : withdrawParams;
     const s : storage) : return is
 block {
     skip;
 } with ((nil: list(operation)), s)
+
 
 function main (const params : action; var s : storage) : return is
 case params of
