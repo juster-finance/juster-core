@@ -1,0 +1,33 @@
+{ parameter
+    (or (or (or (nat %claimInsuranceCase)
+                (pair %insure
+                   (pair (nat %lineId) (mutez %minimalWinAmount))
+                   (pair (or %pool (unit %against) (unit %for)) (nat %timeslots))))
+            (or (pair %newLine (pair (string %currencyPair) (nat %maxValue)) (nat %minValue))
+                (pair %provideLiquidity
+                   (pair (nat %expectedAgainst) (nat %expectedFor))
+                   (pair (nat %lineId) (nat %maxSlippage)))))
+        (nat %withdraw)) ;
+  storage
+    (pair (pair (pair (big_map %agreements
+                         nat
+                         (pair (pair (timestamp %endTime) (nat %lineId))
+                               (pair (or %pool (unit %against) (unit %for)) (mutez %winAmount))))
+                      (big_map %depositedLiquidity
+                         nat
+                         (pair (pair (nat %amountAgainst) (nat %amountFor))
+                               (pair (mutez %deposited) (nat %shares)))))
+                (pair (big_map %lines
+                         nat
+                         (pair (pair (pair (string %currencyPair) (bool %isClaimed))
+                                     (pair (nat %maxValue) (nat %minValue)))
+                               (pair (pair (nat %poolAgainst) (nat %poolFor)) (nat %totalShares))))
+                      (nat %nextAgreementId)))
+          (pair (nat %nextLineId) (nat %standardTimeslot))) ;
+  code { UNPAIR ;
+         IF_LEFT
+           { IF_LEFT
+               { IF_LEFT { DROP ; NIL operation ; PAIR } { DROP ; NIL operation ; PAIR } }
+               { IF_LEFT { DROP ; NIL operation ; PAIR } { DROP ; NIL operation ; PAIR } } }
+           { DROP ; NIL operation ; PAIR } } }
+

@@ -1,3 +1,4 @@
+docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.23.0 compile-contract contracts/main/Juster-B.ligo main > build/tz/juster_b.tz
 docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.23.0 compile-contract contracts/main/OracleMock.ligo main > build/tz/oracle_mock.tz
 docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.23.0 compile-contract contracts/main/Token.ligo main > build/tz/token.tz
 docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.23.0 compile-contract contracts/main/Juster.ligo main > build/tz/juster.tz
