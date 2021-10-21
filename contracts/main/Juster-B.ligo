@@ -91,9 +91,21 @@ type return is list(operation) * storage
 
 function newLine(
     const params : newLineParams;
-    const s : storage) : return is
+    var s : storage) : return is
 block {
-    skip;
+
+    s.lines[s.nextLineId] := record [
+        poolFor = 0n;
+        poolAgainst = 0n;
+        totalShares = 0n;
+        currencyPair = params.currencyPair;
+        minValue = params.minValue;
+        maxValue = params.maxValue;
+        isClaimed = False;
+    ];
+
+    s.nextLineId := s.nextLineId + 1n;
+
 } with ((nil: list(operation)), s)
 
 function provideLiquidity(
