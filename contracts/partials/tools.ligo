@@ -103,12 +103,8 @@ block {
 
 function prepareOperation(
     const addressTo : address;
-    const payout : tez) : operation is
-
-block {
-    const receiver : contract(unit) = getReceiver(addressTo);
-    const operation : operation = Tezos.transaction(unit, payout, receiver);
-} with operation
+    const payout : tez
+) : operation is Tezos.transaction(unit, payout, getReceiver(addressTo));
 
 
 (* Creates operation list with one operation if payout > 0tez, else returns
