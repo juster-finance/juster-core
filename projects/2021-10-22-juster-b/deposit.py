@@ -24,3 +24,4 @@ class Deposit:
             provided_against=self.provided_against + other.provided_against,
             shares=self.shares + other.shares
         )
+

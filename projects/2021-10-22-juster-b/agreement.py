@@ -1,12 +1,15 @@
 class Agreement:
-    def __init__(self, user, pool, reward):
+    def __init__(self, user, pool, amount, delta):
         self.user = user
         self.pool = pool
-        self.reward = reward
+        self.amount = amount
+        self.delta = delta
 
     def to_dict(self):
         return {
             'user': self.user,
             'pool': self.pool,
-            'reward': self.reward
+            'amount': self.amount,
+            'delta': self.delta
         }
+

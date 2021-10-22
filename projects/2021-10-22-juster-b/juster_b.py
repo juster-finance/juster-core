@@ -14,8 +14,9 @@ class JusterB:
             pool_against=pool_against,
             total_shares=amount,
             is_claimed=False,
-            agreements=[],
-            deposits={user: deposit}
+            agreements={},
+            deposits={user: deposit},
+            next_agreement_id=0
         )
 
     def __init__(
@@ -25,7 +26,8 @@ class JusterB:
             total_shares=0,
             is_claimed=False,
             agreements=None,
-            deposits=None
+            deposits=None,
+            next_agreement_id=0
         ):
         # TODO: add fee?
 
@@ -33,8 +35,9 @@ class JusterB:
         self.pool_against = pool_against
         self.total_shares = total_shares
         self.is_claimed = is_claimed
-        self.agreements = agreements or []
+        self.agreements = agreements or {}
         self.deposits = deposits or {}
+        self.next_agreement_id = next_agreement_id
 
     def get_deposit(self, user):
         return self.deposits.get(user, Deposit.empty())
@@ -59,20 +62,25 @@ class JusterB:
         pool_to = self.pool_for if pool == 'for' else self.pool_against
         pool_from = self.pool_against if pool == 'for' else self.pool_for
         delta = pool_from/(pool_to + amount) * amount
-        reward = amount + delta
+
         self.pool_for += amount if pool == 'for' else -delta
         self.pool_against += -delta if pool == 'for' else amount
-        self.agreements.append(Agreement(user, pool, reward))
+        agreement = Agreement(user, pool, amount, delta)
+        self.agreements[self.next_agreement_id] = agreement
+        self.next_agreement_id += 1
 
     def remove_liqudity(self, user, shares):
         # TODO: need to understand how to implement this
         pass
 
     def claim_insurance_case(self):
-        self.storage['is_claimed'] = True
+        self.is_claimed = True
 
     def give_reward(self, agreement_id):
-        pass
+        agreement = self.agreements.pop(agreement_id)
+        is_win = (agreement.pool == 'for') and self.is_claimed
+        if is_win:
+            agreement
 
     def to_dict(self):
         """ Returns all storage values in dict form """
@@ -82,7 +90,10 @@ class JusterB:
             pool_against=self.pool_against,
             total_shares=self.total_shares,
             is_claimed=self.is_claimed,
-            agreements=[agreement.to_dict() for agreement in self.agreements],
+            agreements={
+                index: agreement.to_dict()
+                for index, agreement in self.agreements.items()
+            },
             deposits={
                 user: deposit.to_dict()
                 for user, deposit in self.deposits.items()
@@ -91,3 +102,4 @@ class JusterB:
 
     def __repr__(self):
         return (f'<Line>\n{json.dumps(self.to_dict(), indent=4)}')
+
