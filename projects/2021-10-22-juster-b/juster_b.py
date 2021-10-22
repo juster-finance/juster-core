@@ -64,7 +64,7 @@ class JusterB:
         self.total_shares += deposit.shares
         self.balance_update(user, -deposit.deposited)
 
-    def provide_liqudity(self, user, amount):
+    def provide_liquidity(self, user, amount):
         max_pool = max(self.pools.values())
         new_deposit = Deposit(
             deposited=amount,
@@ -88,7 +88,9 @@ class JusterB:
         self.next_agreement_id += 1
         self.balance_update(user, -amount)
 
-    def remove_liqudity(self, user, shares):
+        return self.next_agreement_id - 1
+
+    def remove_liquidity(self, user, shares):
         deposit = self.get_deposit(user)
         fraction = shares / deposit.shares
         removed_deposit = deposit * fraction
