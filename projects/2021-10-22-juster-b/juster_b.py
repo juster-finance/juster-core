@@ -1,6 +1,7 @@
 import json
 from deposit import Deposit
 from agreement import Agreement
+from lock import Lock
 
 
 def reverse(pool):
@@ -21,7 +22,9 @@ class JusterB:
             agreements={},
             deposits={user: deposit},
             next_agreement_id=0,
-            balances={user: -amount}
+            balances={user: -amount},
+            locks={},
+            next_lock_id=0
         )
 
     def __init__(
@@ -33,7 +36,9 @@ class JusterB:
             agreements=None,
             deposits=None,
             next_agreement_id=0,
-            balances=None
+            balances=None,
+            locks=None,
+            next_lock_id=0
         ):
         # TODO: add fee?
 
@@ -48,6 +53,8 @@ class JusterB:
         self.deposits = deposits or {}
         self.balances = balances or {}
         self.next_agreement_id = next_agreement_id
+        self.locks = locks or {}
+        self.next_lock_id = next_lock_id
 
     def get_deposit(self, user):
         return self.deposits.get(user, Deposit.empty())
@@ -90,36 +97,39 @@ class JusterB:
 
         return self.next_agreement_id - 1
 
-    def remove_liquidity(self, user, shares):
+    def lock_liquidity(self, user, shares):
         deposit = self.get_deposit(user)
-        fraction = shares / deposit.shares
-        removed_deposit = deposit * fraction
+        lock_deposit = deposit * (shares / deposit.shares)
+        self.deposits[user] -= lock_deposit
 
-        # PROVIDER RETURN:
-        # deposit + profit = deposit + split_lose_pool - deposit_lose
-        # maybe this formula need to be changed ^^
-        # in whitepaper: provider returns win pool, splits lose pool and exclude loan
+        for_pool_cut = self.pools['for'] * shares / self.total_shares
+        against_pool_cut = self.pools['against'] * shares / self.total_shares
+        self.pools['for'] -= for_pool_cut
+        self.pools['against'] -= against_pool_cut
 
-        win_pool = self.get_win_pool()
-        lose_pool = reverse(win_pool)
+        self.total_shares -= shares
 
-        provider_return = (
-            + removed_deposit.deposited
-            - removed_deposit.pools[ lose_pool ]
-            + self.pools[ lose_pool ] * shares / self.total_shares
+        against_win_profit = for_pool_cut - lock_deposit.pools['for']
+        for_win_profit = against_pool_cut - lock_deposit.pools['against']
+
+        lock = Lock(
+            user=user,
+            win_for=lock_deposit.deposited + for_win_profit,
+            win_against=lock_deposit.deposited + against_win_profit,
+            # unlock_time=self.time + self.duration
         )
 
-        # TODO: maybe it required to lock provider shsares before he can remove liquidity
+        self.locks[self.next_lock_id] = lock
+        self.next_lock_id += 1
+        return self.next_lock_id - 1
 
-        # self._add_deposit(user, -removed_deposit)
+    def withdraw_lock(self, lock_id):
+        lock = self.locks.pop(lock_id)
 
-        shrink = 1 - shares / self.total_shares
-        self.total_shares -= shares
-        self.pools['for'] = self.pools['for']*shrink
-        self.pools['against'] = self.pools['against']*shrink
-        self.balance_update(user, provider_return)
-
-        self.deposits[user] = self.deposits[user] - removed_deposit
+        # TODO: who_win_at() add timestamp here and use lock.ulock_time
+        win_pool = self.get_win_pool()
+        lock_return = lock.win_for if win_pool == 'for' else lock.win_against
+        self.balance_update(lock.user, lock_return)
 
     def claim_insurance_case(self):
         self.is_claimed = True
@@ -158,19 +168,17 @@ class JusterB:
     def to_dict(self):
         """ Returns all storage values in dict form """
 
+        def values_to_dict(dct):
+            return {k: v.to_dict() for k, v in dct.items()}
+
         return dict(
             pool_for=self.pools['for'],
             pool_against=self.pools['against'],
             total_shares=self.total_shares,
             is_claimed=self.is_claimed,
-            agreements={
-                index: agreement.to_dict()
-                for index, agreement in self.agreements.items()
-            },
-            deposits={
-                user: deposit.to_dict()
-                for user, deposit in self.deposits.items()
-            },
+            agreements=values_to_dict(self.agreements),
+            deposits=values_to_dict(self.deposits),
+            locks=values_to_dict(self.locks),
             balances=self.balances
         )
 
