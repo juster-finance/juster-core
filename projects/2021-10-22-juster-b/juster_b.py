@@ -188,4 +188,6 @@ class JusterB:
     def assert_empty(self, tolerance=1e-8):
         assert sum(self.balances.values()) < 1e-8
         assert sum(self.pools.values()) < 1e-8
+        assert self.pools['for'] > -tolerance
+        assert self.pools['against'] > -tolerance
 
