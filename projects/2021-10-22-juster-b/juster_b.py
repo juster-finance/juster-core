@@ -55,10 +55,12 @@ class JusterB:
     def balance_update(self, user, change):
         self.balances[user] = self.balances.get(user, 0) + change
 
-    def add_deposit(self, user, deposit):
+    def _add_deposit(self, user, deposit):
+        # TODO: maybe recalculate for/against using shares?
+        # and then maybe it would be possible to use within remove_liquidity
         self.deposits[user] = self.get_deposit(user) + deposit
-        self.pools['for'] += deposit.provided_for
-        self.pools['against'] += deposit.provided_against
+        self.pools['for'] += deposit.pools['for']
+        self.pools['against'] += deposit.pools['against']
         self.total_shares += deposit.shares
         self.balance_update(user, -deposit.deposited)
 
@@ -70,7 +72,7 @@ class JusterB:
             provided_against=self.pools['against'] / max_pool * amount,
             shares=amount/max_pool*self.total_shares
         )
-        self.add_deposit(user, new_deposit)
+        self._add_deposit(user, new_deposit)
 
     def insure(self, user, amount, pool):
         pool_to = pool
@@ -87,8 +89,35 @@ class JusterB:
         self.balance_update(user, -amount)
 
     def remove_liqudity(self, user, shares):
-        # TODO: need to understand how to implement this
-        pass
+        deposit = self.get_deposit(user)
+        fraction = shares / deposit.shares
+        removed_deposit = deposit * fraction
+
+        # PROVIDER RETURN:
+        # deposit + profit = deposit + split_lose_pool - deposit_lose
+        # maybe this formula need to be changed ^^
+        # in whitepaper: provider returns win pool, splits lose pool and exclude loan
+
+        win_pool = self.get_win_pool()
+        lose_pool = reverse(win_pool)
+
+        provider_return = (
+            + removed_deposit.deposited
+            - removed_deposit.pools[ lose_pool ]
+            + self.pools[ lose_pool ] * shares / self.total_shares
+        )
+
+        # TODO: maybe it required to lock provider shsares before he can remove liquidity
+
+        # self._add_deposit(user, -removed_deposit)
+
+        shrink = 1 - shares / self.total_shares
+        self.total_shares -= shares
+        self.pools['for'] = self.pools['for']*shrink
+        self.pools['against'] = self.pools['against']*shrink
+        self.balance_update(user, provider_return)
+
+        self.deposits[user] = self.deposits[user] - removed_deposit
 
     def claim_insurance_case(self):
         self.is_claimed = True
@@ -98,12 +127,14 @@ class JusterB:
         return 'for' if self.pools['for'] > self.pools['against'] else 'against'
     '''
 
+    def get_win_pool(self):
+        return 'for' if self.is_claimed else 'against'
+
     def give_reward(self, agreement_id):
         agreement = self.agreements.pop(agreement_id)
         pool_to = agreement.pool
         pool_from = reverse(agreement.pool)
 
-        win_pool = 'for' if self.is_claimed else 'against'
         # max_pool = self.get_max_pool_name()
 
         # removing liquidity back:
@@ -111,7 +142,7 @@ class JusterB:
         self.pools[ pool_from ] += agreement.delta
         max_pool = max(self.pools.values())
 
-        if agreement.pool == win_pool:
+        if agreement.pool == self.get_win_pool():
             # win case: get reward and decrease pools by agreement.delta
             shrink = (max_pool - agreement.delta) / max_pool
             self.balance_update(agreement.user, agreement.amount + agreement.delta)
@@ -143,4 +174,8 @@ class JusterB:
 
     def __repr__(self):
         return (f'<Line>\n{json.dumps(self.to_dict(), indent=4)}')
+
+    def assert_empty(self, tolerance=1e-8):
+        assert sum(self.balances.values()) < 1e-8
+        assert sum(self.pools.values()) < 1e-8
 
