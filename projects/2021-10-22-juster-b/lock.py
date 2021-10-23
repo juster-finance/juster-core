@@ -1,13 +1,13 @@
 class Lock:
-    def __init__(self, user, win_for, win_against):
+    def __init__(self, user, shares, pools):
         self.user = user
-        self.win_for = win_for
-        self.win_against = win_against
+        self.shares = shares
+        self.pools = pools
 
     def to_dict(self):
         return {
             'user': self.user,
-            'win_for': self.win_for,
-            'win_against': self.win_against
+            'win_for': self.shares,
+            'win_against': self.pools
         }
 

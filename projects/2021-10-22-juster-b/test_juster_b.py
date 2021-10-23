@@ -85,3 +85,13 @@ def test_insurance_after_lock_affect_provider():
 
     assert jb.balances['A'] == -500
 
+
+def test_where_negative_pool_arised_when_give_reward_after_lock():
+    jb = JusterB.new_with_deposit('A', 1000, 1000)
+    insurance_one = jb.insure('B', 1000, 'for')
+    lock = jb.lock_liquidity('A', 1000)
+    jb.claim_insurance_case()
+    jb.give_reward(insurance_one)
+    jb.withdraw_lock(lock)
+    jb.assert_empty()
+

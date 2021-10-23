@@ -24,7 +24,8 @@ class JusterB:
             next_agreement_id=0,
             balances={user: -amount},
             locks={},
-            next_lock_id=0
+            next_lock_id=0,
+            lock_shares=0
         )
 
     def __init__(
@@ -38,7 +39,8 @@ class JusterB:
             next_agreement_id=0,
             balances=None,
             locks=None,
-            next_lock_id=0
+            next_lock_id=0,
+            lock_shares=0
         ):
         # TODO: add fee?
 
@@ -55,6 +57,7 @@ class JusterB:
         self.next_agreement_id = next_agreement_id
         self.locks = locks or {}
         self.next_lock_id = next_lock_id
+        self.lock_shares = lock_shares
 
     def get_deposit(self, user):
         return self.deposits.get(user, Deposit.empty())
@@ -98,38 +101,47 @@ class JusterB:
         return self.next_agreement_id - 1
 
     def lock_liquidity(self, user, shares):
-        deposit = self.get_deposit(user)
-        lock_deposit = deposit * (shares / deposit.shares)
-        self.deposits[user] -= lock_deposit
-
-        for_pool_cut = self.pools['for'] * shares / self.total_shares
-        against_pool_cut = self.pools['against'] * shares / self.total_shares
-        self.pools['for'] -= for_pool_cut
-        self.pools['against'] -= against_pool_cut
-
-        self.total_shares -= shares
-
-        against_win_profit = for_pool_cut - lock_deposit.pools['for']
-        for_win_profit = against_pool_cut - lock_deposit.pools['against']
-
+        # TODO: in contract it is required to check that shares < deposit.shares and save already locked amt
         lock = Lock(
             user=user,
-            win_for=lock_deposit.deposited + for_win_profit,
-            win_against=lock_deposit.deposited + against_win_profit,
+            shares=shares,
+            # win_for=lock_deposit.deposited + for_win_profit,
+            # win_against=lock_deposit.deposited + against_win_profit,
+            pools=self.pools
             # unlock_time=self.time + self.duration
         )
 
+        self.lock_shares += shares
+
+        # TODO: update lock_shares?
         self.locks[self.next_lock_id] = lock
         self.next_lock_id += 1
         return self.next_lock_id - 1
 
+
     def withdraw_lock(self, lock_id):
         lock = self.locks.pop(lock_id)
+        deposit = self.get_deposit(lock.user)
+        lock_deposit = deposit * (lock.shares / deposit.shares)
+        self.deposits[lock.user] -= lock_deposit
+
+        # TODO: maybe there I need to use current pools instead of lock pools?
+        for_pool_cut = lock.pools['for'] * lock.shares / self.total_shares
+        against_pool_cut = lock.pools['against'] * lock.shares / self.total_shares
+        self.pools['for'] -= for_pool_cut
+        self.pools['against'] -= against_pool_cut
+
+        self.total_shares -= lock.shares
+        self.lock_shares -= lock.shares
 
         # TODO: who_win_at() add timestamp here and use lock.ulock_time
         win_pool = self.get_win_pool()
-        lock_return = lock.win_for if win_pool == 'for' else lock.win_against
-        self.balance_update(lock.user, lock_return)
+
+        against_win_profit = for_pool_cut - lock_deposit.pools['for']
+        for_win_profit = against_pool_cut - lock_deposit.pools['against']
+        profit = for_win_profit if win_pool == 'for' else against_win_profit
+
+        self.balance_update(lock.user, lock_deposit.deposited + profit)
 
     def claim_insurance_case(self):
         self.is_claimed = True
@@ -164,6 +176,9 @@ class JusterB:
 
         self.pools['for'] = self.pools['for']*shrink
         self.pools['against'] = self.pools['against']*shrink
+
+        # assert self.pools['for'] >= 0
+        # assert self.pools['against'] >= 0
 
     def to_dict(self):
         """ Returns all storage values in dict form """
