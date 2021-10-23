@@ -201,8 +201,8 @@ class JusterB:
         return (f'<Line>\n{json.dumps(self.to_dict(), indent=4)}')
 
     def assert_empty(self, tolerance=1e-8):
-        assert sum(self.balances.values()) < 1e-8
-        assert sum(self.pools.values()) < 1e-8
+        assert abs(sum(self.balances.values())) < 1e-8
+        assert abs(sum(self.pools.values())) < 1e-8
         assert self.pools['for'] > -tolerance
         assert self.pools['against'] > -tolerance
 
