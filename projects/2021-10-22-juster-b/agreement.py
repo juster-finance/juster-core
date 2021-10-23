@@ -1,3 +1,6 @@
+import json
+
+
 class Agreement:
     def __init__(self, user, pool, amount, delta):
         self.user = user
@@ -12,4 +15,7 @@ class Agreement:
             'amount': self.amount,
             'delta': self.delta
         }
+
+    def __repr__(self):
+        return (f'<Agreement>\n{json.dumps(self.to_dict(), indent=4)}')
 

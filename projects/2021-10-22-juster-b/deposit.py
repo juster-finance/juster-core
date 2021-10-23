@@ -1,3 +1,6 @@
+import json
+
+
 class Deposit:
     def __init__(self, deposited=0, provided_for=0, provided_against=0, shares=0):
         self.deposited = deposited
@@ -42,4 +45,7 @@ class Deposit:
 
     def __sub__(self, other):
         return self.__add__(other*(-1))
+
+    def __repr__(self):
+        return (f'<Deposit>\n{json.dumps(self.to_dict(), indent=4)}')
 

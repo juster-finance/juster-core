@@ -95,3 +95,5 @@ def test_where_negative_pool_arised_when_give_reward_after_lock():
     jb.withdraw_lock(lock)
     jb.assert_empty()
 
+
+# def test_case_where_part_of_liquidity_withdrawn_and_then_

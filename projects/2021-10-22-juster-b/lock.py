@@ -1,13 +1,21 @@
+import json
+
+
 class Lock:
-    def __init__(self, user, shares, pools):
+    def __init__(self, user, shares, for_pool_cut, against_pool_cut):
         self.user = user
         self.shares = shares
-        self.pools = pools
+        self.for_pool_cut = for_pool_cut
+        self.against_pool_cut = against_pool_cut
 
     def to_dict(self):
         return {
             'user': self.user,
-            'win_for': self.shares,
-            'win_against': self.pools
+            'shares': self.shares,
+            'for_pool_cut': self.for_pool_cut,
+            'against_pool_cut': self.against_pool_cut
         }
+
+    def __repr__(self):
+        return (f'<Lock>\n{json.dumps(self.to_dict(), indent=4)}')
 

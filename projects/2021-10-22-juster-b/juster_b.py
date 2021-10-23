@@ -15,6 +15,7 @@ class JusterB:
         amount = max(pool_for, pool_against)
         deposit = Deposit(amount, pool_for, pool_against, amount)
         return cls(
+            # TODO: one pool var for both:
             pool_for=pool_for,
             pool_against=pool_against,
             total_shares=amount,
@@ -25,7 +26,8 @@ class JusterB:
             balances={user: -amount},
             locks={},
             next_lock_id=0,
-            lock_shares=0
+            # TODO: it is better to have Pool obkjt with his initialization:
+            locked_pools={'for': 0, 'against': 0}
         )
 
     def __init__(
@@ -40,7 +42,7 @@ class JusterB:
             balances=None,
             locks=None,
             next_lock_id=0,
-            lock_shares=0
+            locked_pools=None
         ):
         # TODO: add fee?
 
@@ -57,7 +59,7 @@ class JusterB:
         self.next_agreement_id = next_agreement_id
         self.locks = locks or {}
         self.next_lock_id = next_lock_id
-        self.lock_shares = lock_shares
+        self.locked_pools = locked_pools or {}
 
     def get_deposit(self, user):
         return self.deposits.get(user, Deposit.empty())
@@ -87,7 +89,11 @@ class JusterB:
     def insure(self, user, amount, pool):
         pool_to = pool
         pool_from = reverse(pool)
-        ratio = self.pools[ pool_from ] / (self.pools[ pool_to ] + amount)
+
+        available_from = self.pools[ pool_from ] - self.locked_pools[ pool_from ]
+        available_to = self.pools[ pool_to ] - self.locked_pools[ pool_to ]
+
+        ratio = available_from / (available_to + amount)
         delta = ratio * amount
 
         self.pools[ pool_to ] += amount
@@ -102,18 +108,25 @@ class JusterB:
 
     def lock_liquidity(self, user, shares):
         # TODO: in contract it is required to check that shares < deposit.shares and save already locked amt
+
+        # TODO: maybe there I need to use current pools instead of lock pools?
+        # - I need to have a test to differentiate
+        for_pool_cut = self.pools['for'] * shares / self.total_shares
+        against_pool_cut = self.pools['against'] * shares / self.total_shares
+
         lock = Lock(
             user=user,
             shares=shares,
-            # win_for=lock_deposit.deposited + for_win_profit,
-            # win_against=lock_deposit.deposited + against_win_profit,
-            pools=self.pools
+            # pools=self.pools,
+            # TODO: for_pool_cut / against_pool_cut is the pools too
+            for_pool_cut=for_pool_cut,
+            against_pool_cut=against_pool_cut
             # unlock_time=self.time + self.duration
         )
 
-        self.lock_shares += shares
+        self.locked_pools['for'] += for_pool_cut
+        self.locked_pools['against'] += against_pool_cut
 
-        # TODO: update lock_shares?
         self.locks[self.next_lock_id] = lock
         self.next_lock_id += 1
         return self.next_lock_id - 1
@@ -125,20 +138,18 @@ class JusterB:
         lock_deposit = deposit * (lock.shares / deposit.shares)
         self.deposits[lock.user] -= lock_deposit
 
-        # TODO: maybe there I need to use current pools instead of lock pools?
-        for_pool_cut = lock.pools['for'] * lock.shares / self.total_shares
-        against_pool_cut = lock.pools['against'] * lock.shares / self.total_shares
-        self.pools['for'] -= for_pool_cut
-        self.pools['against'] -= against_pool_cut
+        self.pools['for'] -= lock.for_pool_cut
+        self.pools['against'] -= lock.against_pool_cut
+        self.locked_pools['for'] -= lock.for_pool_cut
+        self.locked_pools['against'] -= lock.against_pool_cut
 
         self.total_shares -= lock.shares
-        self.lock_shares -= lock.shares
 
         # TODO: who_win_at() add timestamp here and use lock.ulock_time
         win_pool = self.get_win_pool()
 
-        against_win_profit = for_pool_cut - lock_deposit.pools['for']
-        for_win_profit = against_pool_cut - lock_deposit.pools['against']
+        against_win_profit = lock.for_pool_cut - lock_deposit.pools['for']
+        for_win_profit = lock.against_pool_cut - lock_deposit.pools['against']
         profit = for_win_profit if win_pool == 'for' else against_win_profit
 
         self.balance_update(lock.user, lock_deposit.deposited + profit)
