@@ -1,41 +1,39 @@
 import json
+from pools import Pools
 
 
 class Deposit:
-    def __init__(self, deposited=0, provided_for=0, provided_against=0, shares=0):
-        self.deposited = deposited
-        self.pools = {
-            'for': provided_for,
-            'against': provided_against
-        }
+    def __init__(self, amount=0, shares=0, pools=Pools.empty()):
+        self.amount = amount
         self.shares = shares
+
+        # making copy of the pools there would be impossible to create two
+        # objects with the same pools by the accident:
+        self.pools = pools.copy()
 
     @classmethod
     def empty(cls):
-        return cls(deposited=0, provided_for=0, provided_against=0, shares=0)
+        return cls(amount=0, shares=0, pools=Pools.empty())
 
     def to_dict(self):
         return {
-            'deposited': self.deposited,
-            'provided_for': self.pools['for'],
-            'provided_against': self.pools['against'],
-            'shares': self.shares
+            'amount': self.amount,
+            'shares': self.shares,
+            'pools': self.pools.to_dict(),
         }
 
     def __add__(self, other):
         return Deposit(
-            deposited=self.deposited + other.deposited,
-            provided_for=self.pools['for'] + other.pools['for'],
-            provided_against=self.pools['against'] + other.pools['against'],
-            shares=self.shares + other.shares
+            amount=self.amount + other.amount,
+            shares=self.shares + other.shares,
+            pools=self.pools + other.pools
         )
 
     def __mul__(self, other):
         return Deposit(
-            deposited=other*self.deposited,
-            provided_for=other*self.pools['for'],
-            provided_against=other*self.pools['against'],
-            shares=other*self.shares
+            amount=other*self.amount,
+            shares=other*self.shares,
+            pools=other*self.pools
         )
 
     __rmul__ = __mul__

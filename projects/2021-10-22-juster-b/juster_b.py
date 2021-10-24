@@ -2,6 +2,7 @@ import json
 from deposit import Deposit
 from agreement import Agreement
 from lock import Lock
+from pools import Pools
 
 
 def reverse(pool):
@@ -12,12 +13,12 @@ class JusterB:
 
     @classmethod
     def new_with_deposit(cls, user, pool_for, pool_against):
-        amount = max(pool_for, pool_against)
-        deposit = Deposit(amount, pool_for, pool_against, amount)
+        # TODO: pool_for, pool_against -> pools<Pools>
+        pools = Pools(pool_for, pool_against)
+        amount = pools.max()
+        deposit = Deposit(amount, amount, pools)
         return cls(
-            # TODO: one pool var for both:
-            pool_for=pool_for,
-            pool_against=pool_against,
+            pools=pools,
             total_shares=amount,
             is_claimed=False,
             agreements={},
@@ -26,14 +27,12 @@ class JusterB:
             balances={user: -amount},
             locks={},
             next_lock_id=0,
-            # TODO: it is better to have Pool obkjt with his initialization:
-            locked_pools={'for': 0, 'against': 0}
+            locked_pools=Pools.empty()
         )
 
     def __init__(
             self,
-            pool_for=0,
-            pool_against=0,
+            pools=Pools.empty(),
             total_shares=0,
             is_claimed=False,
             agreements=None,
@@ -42,15 +41,11 @@ class JusterB:
             balances=None,
             locks=None,
             next_lock_id=0,
-            locked_pools=None
+            locked_pools=Pools.empty()
         ):
         # TODO: add fee?
 
-        self.pools = {
-            'for': pool_for,
-            'against': pool_against
-        }
-
+        self.pools = pools
         self.total_shares = total_shares
         self.is_claimed = is_claimed
         self.agreements = agreements or {}
@@ -71,18 +66,15 @@ class JusterB:
         # TODO: maybe recalculate for/against using shares?
         # and then maybe it would be possible to use within remove_liquidity
         self.deposits[user] = self.get_deposit(user) + deposit
-        self.pools['for'] += deposit.pools['for']
-        self.pools['against'] += deposit.pools['against']
+        self.pools += deposit.pools
         self.total_shares += deposit.shares
-        self.balance_update(user, -deposit.deposited)
+        self.balance_update(user, -deposit.amount)
 
     def provide_liquidity(self, user, amount):
-        max_pool = max(self.pools.values())
         new_deposit = Deposit(
-            deposited=amount,
-            provided_for=self.pools['for'] / max_pool * amount,
-            provided_against=self.pools['against'] / max_pool * amount,
-            shares=amount/max_pool*self.total_shares
+            amount=amount,
+            pools=self.pools.norm() * amount,
+            shares=amount / self.pools.max() * self.total_shares
         )
         self._add_deposit(user, new_deposit)
 
@@ -90,14 +82,21 @@ class JusterB:
         pool_to = pool
         pool_from = reverse(pool)
 
-        available_from = self.pools[ pool_from ] - self.locked_pools[ pool_from ]
-        available_to = self.pools[ pool_to ] - self.locked_pools[ pool_to ]
+        # TODO: maybe it is better to have self.available_pools as self.pools?
+        available_pools = self.pools - self.locked_pools
+
+        available_from = available_pools.get(pool_from)
+        available_to = available_pools.get(pool_to)
+
+        # should not allow insure if there are 0 available liquidity:
+        assert available_from > 0
+        assert available_to > 0
 
         ratio = available_from / (available_to + amount)
         delta = ratio * amount
 
-        self.pools[ pool_to ] += amount
-        self.pools[ pool_from ] -= delta
+        self.pools.add(pool_to, amount)
+        self.pools.remove(pool_from, delta)
 
         agreement = Agreement(user, pool, amount, delta)
         self.agreements[self.next_agreement_id] = agreement
@@ -111,21 +110,15 @@ class JusterB:
 
         # TODO: maybe there I need to use current pools instead of lock pools?
         # - I need to have a test to differentiate
-        for_pool_cut = self.pools['for'] * shares / self.total_shares
-        against_pool_cut = self.pools['against'] * shares / self.total_shares
+        pools_cut = self.pools * shares / self.total_shares
+        self.locked_pools += pools_cut
 
         lock = Lock(
             user=user,
             shares=shares,
-            # pools=self.pools,
-            # TODO: for_pool_cut / against_pool_cut is the pools too
-            for_pool_cut=for_pool_cut,
-            against_pool_cut=against_pool_cut
+            pools_cut=pools_cut,
             # unlock_time=self.time + self.duration
         )
-
-        self.locked_pools['for'] += for_pool_cut
-        self.locked_pools['against'] += against_pool_cut
 
         self.locks[self.next_lock_id] = lock
         self.next_lock_id += 1
@@ -138,21 +131,21 @@ class JusterB:
         lock_deposit = deposit * (lock.shares / deposit.shares)
         self.deposits[lock.user] -= lock_deposit
 
-        self.pools['for'] -= lock.for_pool_cut
-        self.pools['against'] -= lock.against_pool_cut
-        self.locked_pools['for'] -= lock.for_pool_cut
-        self.locked_pools['against'] -= lock.against_pool_cut
-
+        # mixed approach: shares for pools and saved pools for revenues
+        self.pools -= self.pools * lock.shares / self.total_shares
+        self.locked_pools -= lock.pools_cut
+        # TODO: or is it better to have lock_shares? instead of lock pools?
         self.total_shares -= lock.shares
 
         # TODO: who_win_at() add timestamp here and use lock.ulock_time
         win_pool = self.get_win_pool()
 
-        against_win_profit = lock.for_pool_cut - lock_deposit.pools['for']
-        for_win_profit = lock.against_pool_cut - lock_deposit.pools['against']
-        profit = for_win_profit if win_pool == 'for' else against_win_profit
+        # Profit calculates as:
+        # [loosing pool shared cut] without [provided amount in lose pool]:
+        win_profit = lock.pools_cut - lock_deposit.pools
+        profit = win_profit.get(reverse(win_pool))
 
-        self.balance_update(lock.user, lock_deposit.deposited + profit)
+        self.balance_update(lock.user, lock_deposit.amount + profit)
 
     def claim_insurance_case(self):
         self.is_claimed = True
@@ -170,12 +163,15 @@ class JusterB:
         pool_to = agreement.pool
         pool_from = reverse(agreement.pool)
 
-        # max_pool = self.get_max_pool_name()
-
         # removing liquidity back:
-        self.pools[ pool_to ] -= agreement.amount
-        self.pools[ pool_from ] += agreement.delta
-        max_pool = max(self.pools.values())
+        self.pools.remove(pool_to, agreement.amount)
+        self.pools.add(pool_from, agreement.delta)
+
+        # TODO: need to have some method to return actual pools?
+        # TODO: maybe need to implement __add__ and __sub__ for pools?
+        actual_pools = self.pools - self.locked_pools
+        # TODO: assert actual_pools.assert_positive()
+        max_pool = actual_pools.max()
 
         if agreement.pool == self.get_win_pool():
             # win case: get reward and decrease pools by agreement.delta
@@ -185,11 +181,13 @@ class JusterB:
             # lose case: increases pools by agreement.delta
             shrink = (max_pool + agreement.amount) / max_pool
 
-        self.pools['for'] = self.pools['for']*shrink
-        self.pools['against'] = self.pools['against']*shrink
+        # TODO: need to update actual pools instead:
+        # TODO: maybe I should use actual pools instead of sum of the pools
+        self.pools = self.pools*shrink
+        # OR:
+        # self.pools = (self.pools - self.locked_pools)*shrink + self.locked_pools
 
-        # assert self.pools['for'] >= 0
-        # assert self.pools['against'] >= 0
+        # TODO: assert self.pools.assert_positive()
 
     def to_dict(self):
         """ Returns all storage values in dict form """
@@ -198,8 +196,7 @@ class JusterB:
             return {k: v.to_dict() for k, v in dct.items()}
 
         return dict(
-            pool_for=self.pools['for'],
-            pool_against=self.pools['against'],
+            actual_pools=(self.pools - self.locked_pools).to_dict(),
             total_shares=self.total_shares,
             is_claimed=self.is_claimed,
             agreements=values_to_dict(self.agreements),
@@ -213,7 +210,15 @@ class JusterB:
 
     def assert_empty(self, tolerance=1e-8):
         assert abs(sum(self.balances.values())) < 1e-8
-        assert abs(sum(self.pools.values())) < 1e-8
-        assert self.pools['for'] > -tolerance
-        assert self.pools['against'] > -tolerance
+        self.pools.assert_empty()
+
+    def assert_balances_equal(self, balances, tolerance=1e-8):
+        """ Checks all given balances dict that their values diffs less than
+            tolerance value from the same keys in self.balances """
+
+        diffs = {
+            key: abs(self.balances.get(key, 0) - balances.get(key, 0))
+            for key in balances
+        }
+        assert all(diff < tolerance for diff in diffs.values())
 

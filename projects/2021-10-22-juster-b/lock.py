@@ -2,18 +2,16 @@ import json
 
 
 class Lock:
-    def __init__(self, user, shares, for_pool_cut, against_pool_cut):
+    def __init__(self, user, shares, pools_cut):
         self.user = user
         self.shares = shares
-        self.for_pool_cut = for_pool_cut
-        self.against_pool_cut = against_pool_cut
+        self.pools_cut = pools_cut.copy()
 
     def to_dict(self):
         return {
             'user': self.user,
             'shares': self.shares,
-            'for_pool_cut': self.for_pool_cut,
-            'against_pool_cut': self.against_pool_cut
+            'pools_cut': self.pools_cut.to_dict()
         }
 
     def __repr__(self):
