@@ -27,7 +27,8 @@ class JusterB:
             balances={user: -amount},
             locks={},
             next_lock_id=0,
-            locked_pools=Pools.empty()
+            locked_pools=Pools.empty(),
+            locked_shares=0
         )
 
     def __init__(
@@ -41,7 +42,8 @@ class JusterB:
             balances=None,
             locks=None,
             next_lock_id=0,
-            locked_pools=Pools.empty()
+            locked_pools=Pools.empty(),
+            locked_shares=0
         ):
         # TODO: add fee?
 
@@ -55,6 +57,7 @@ class JusterB:
         self.locks = locks or {}
         self.next_lock_id = next_lock_id
         self.locked_pools = locked_pools or {}
+        self.locked_shares = locked_shares
 
     def get_deposit(self, user):
         return self.deposits.get(user, Deposit.empty())
@@ -112,6 +115,7 @@ class JusterB:
         # - I need to have a test to differentiate
         pools_cut = self.pools * shares / self.total_shares
         self.locked_pools += pools_cut
+        self.locked_shares += shares
 
         lock = Lock(
             user=user,
@@ -136,6 +140,7 @@ class JusterB:
         self.locked_pools -= lock.pools_cut
         # TODO: or is it better to have lock_shares? instead of lock pools?
         self.total_shares -= lock.shares
+        self.locked_shares -= lock.shares
 
         # TODO: who_win_at() add timestamp here and use lock.ulock_time
         win_pool = self.get_win_pool()
@@ -160,12 +165,25 @@ class JusterB:
 
     def give_reward(self, agreement_id):
         agreement = self.agreements.pop(agreement_id)
+
+        if agreement.pool == self.get_win_pool():
+            self.balance_update(agreement.user, agreement.amount + agreement.delta)
+
+        if self.total_shares == 0:
+            assert self.pools == Pools(0, 0)
+            return
+
         pool_to = agreement.pool
         pool_from = reverse(agreement.pool)
 
         # removing liquidity back:
-        self.pools.remove(pool_to, agreement.amount)
-        self.pools.add(pool_from, agreement.delta)
+        locked_liquidity = self.locked_shares / self.total_shares
+        active_liquidity = 1 - locked_liquidity
+
+        self.pools.remove(pool_to, agreement.amount * active_liquidity)
+        self.pools.add(pool_from, agreement.delta * active_liquidity)
+        self.locked_pools.remove(pool_to, agreement.amount * locked_liquidity)
+        self.locked_pools.add(pool_from, agreement.delta * locked_liquidity)
 
         # TODO: need to have some method to return actual pools?
         # TODO: maybe need to implement __add__ and __sub__ for pools?
@@ -176,7 +194,6 @@ class JusterB:
         if agreement.pool == self.get_win_pool():
             # win case: get reward and decrease pools by agreement.delta
             shrink = (max_pool - agreement.delta) / max_pool
-            self.balance_update(agreement.user, agreement.amount + agreement.delta)
         else:
             # lose case: increases pools by agreement.delta
             shrink = (max_pool + agreement.amount) / max_pool
