@@ -85,17 +85,7 @@ class JusterB:
         pool_to = pool
         pool_from = reverse(pool)
 
-        # TODO: maybe it is better to have self.available_pools as self.pools?
-        available_pools = self.pools - self.locked_pools
-
-        available_from = available_pools.get(pool_from)
-        available_to = available_pools.get(pool_to)
-
-        # should not allow insure if there are 0 available liquidity:
-        assert available_from > 0
-        assert available_to > 0
-
-        ratio = available_from / (available_to + amount)
+        ratio = self.pools.get(pool_from) / (self.pools.get(pool_to) + amount)
         delta = ratio * amount
 
         self.pools.add(pool_to, amount)
@@ -111,16 +101,10 @@ class JusterB:
     def lock_liquidity(self, user, shares):
         # TODO: in contract it is required to check that shares < deposit.shares and save already locked amt
 
-        # TODO: maybe there I need to use current pools instead of lock pools?
-        # - I need to have a test to differentiate
-        pools_cut = self.pools * shares / self.total_shares
-        self.locked_pools += pools_cut
-        self.locked_shares += shares
-
         lock = Lock(
             user=user,
             shares=shares,
-            pools_cut=pools_cut,
+            pools=self.pools,
             # unlock_time=self.time + self.duration
         )
 
@@ -132,33 +116,25 @@ class JusterB:
     def withdraw_lock(self, lock_id):
         lock = self.locks.pop(lock_id)
         deposit = self.get_deposit(lock.user)
-        lock_deposit = deposit * (lock.shares / deposit.shares)
-        self.deposits[lock.user] -= lock_deposit
-
-        # mixed approach: shares for pools and saved pools for revenues
-        self.pools -= self.pools * lock.shares / self.total_shares
-        self.locked_pools -= lock.pools_cut
-        # TODO: or is it better to have lock_shares? instead of lock pools?
-        self.total_shares -= lock.shares
-        self.locked_shares -= lock.shares
 
         # TODO: who_win_at() add timestamp here and use lock.ulock_time
         win_pool = self.get_win_pool()
 
         # Profit calculates as:
         # [loosing pool shared cut] without [provided amount in lose pool]:
-        win_profit = lock.pools_cut - lock_deposit.pools
-        profit = win_profit.get(reverse(win_pool))
+        pools_for_deposit = lock.pools * deposit.shares / self.total_shares
+        pools_profit = pools_for_deposit - deposit.pools
+        profit = pools_profit.get(reverse(win_pool))
 
-        self.balance_update(lock.user, lock_deposit.amount + profit)
+        withdrawn_fraction = lock.shares / deposit.shares
+        withdrawn_liquidity = (deposit.amount + profit) * withdrawn_fraction
+        self.balance_update(lock.user, withdrawn_liquidity)
+        self.deposits[lock.user] *= 1 - withdrawn_fraction
+        self.pools *= 1 - lock.shares / self.total_shares
+        self.total_shares -= lock.shares
 
     def claim_insurance_case(self):
         self.is_claimed = True
-
-    '''
-    def get_max_pool_name(self):
-        return 'for' if self.pools['for'] > self.pools['against'] else 'against'
-    '''
 
     def get_win_pool(self):
         return 'for' if self.is_claimed else 'against'
@@ -168,46 +144,6 @@ class JusterB:
 
         if agreement.pool == self.get_win_pool():
             self.balance_update(agreement.user, agreement.amount + agreement.delta)
-
-        '''
-        if self.total_shares == 0:
-            assert self.pools == Pools(0, 0)
-            return
-
-        pool_to = agreement.pool
-        pool_from = reverse(agreement.pool)
-
-        # removing liquidity back:
-        locked_liquidity = self.locked_shares / self.total_shares
-        active_liquidity = 1 - locked_liquidity
-
-        self.pools.remove(pool_to, agreement.amount * active_liquidity)
-        self.pools.add(pool_from, agreement.delta * active_liquidity)
-        self.locked_pools.remove(pool_to, agreement.amount * locked_liquidity)
-        self.locked_pools.add(pool_from, agreement.delta * locked_liquidity)
-
-        # TODO: need to have some method to return actual pools?
-        # TODO: maybe need to implement __add__ and __sub__ for pools?
-
-        # actual_pools = self.pools - self.locked_pools
-        actual_pools = self.pools
-        # TODO: assert actual_pools.assert_positive()
-        max_pool = actual_pools.max()
-        min_pool = actual_pools.min()
-
-        if agreement.pool == self.get_win_pool():
-            # win case: get reward and decrease pools by agreement.delta
-            shrink = (min_pool - agreement.delta) / min_pool
-        else:
-            # lose case: increases pools by agreement.delta
-            shrink = (max_pool + agreement.amount) / max_pool
-
-        # TODO: need to update actual pools instead:
-        # TODO: maybe I should use actual pools instead of sum of the pools
-        self.pools = self.pools*shrink
-        # OR:
-        # self.pools = (self.pools - self.locked_pools)*shrink + self.locked_pools
-        '''
 
         # TODO: assert self.pools.assert_positive()
 
