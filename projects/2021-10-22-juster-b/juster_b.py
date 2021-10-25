@@ -84,6 +84,7 @@ class JusterB:
     def insure(self, user, amount, pool):
         pool_to = pool
         pool_from = reverse(pool)
+        # actual_pools = self.pools * (1 - self.locked_shares / self.total_shares)
 
         ratio = self.pools.get(pool_from) / (self.pools.get(pool_to) + amount)
         delta = ratio * amount
@@ -108,6 +109,9 @@ class JusterB:
             # unlock_time=self.time + self.duration
         )
 
+        self.locked_shares += shares
+        self.pools *= 1 - shares / self.total_shares
+
         self.locks[self.next_lock_id] = lock
         self.next_lock_id += 1
         return self.next_lock_id - 1
@@ -130,8 +134,9 @@ class JusterB:
         withdrawn_liquidity = (deposit.amount + profit) * withdrawn_fraction
         self.balance_update(lock.user, withdrawn_liquidity)
         self.deposits[lock.user] *= 1 - withdrawn_fraction
-        self.pools *= 1 - lock.shares / self.total_shares
+        # self.pools *= 1 - lock.shares / self.total_shares
         self.total_shares -= lock.shares
+        self.locked_shares -= lock.shares
 
     def claim_insurance_case(self):
         self.is_claimed = True
