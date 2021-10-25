@@ -171,4 +171,38 @@ def test_case_when_provider_first_wins_and_then_loses_within_same_pool():
     jb.withdraw_lock(lock)
 
 
-# def test_case_where_part_of_liquidity_withdrawn_and_then_
+def test_case_with_insurance_case_while_partial_liquidity_lock():
+    # A deposits equally 1000:1000
+    jb = JusterB.new_with_deposit('A', 1000, 1000)
+
+    # B get insurance (and then wins, during A liquidity lock):
+    insurance_one = jb.insure('B', 1000, 'for')
+    assert jb.pools == Pools(2000, 500)
+
+    # A tries to remove liquidity, but this liquidity would be required to pay B:
+    lock_one = jb.lock_liquidity('A', 500)
+    assert jb.pools == Pools(1000, 250)
+
+    # C get insurance with possible win 800 (=1000/1250*1000) but lose:
+    # it is important that he used only active liquidity
+    insurance_two = jb.insure('C', 1000, 'against')
+    assert jb.pools == Pools(200, 1250)
+
+    jb.claim_insurance_case()
+
+    jb.give_reward(insurance_one)
+    jb.give_reward(insurance_two)
+
+    # First lock: A should pay B 50% of 500 and get 50% of 1000 deposit:
+    # -1000 - 500/2 + 1000/2 = -750
+    jb.withdraw_lock(lock_one)
+    jb.assert_balances_equal({'A': -750})
+
+    lock_two = jb.lock_liquidity('A', 500)
+    # A should pay B 50% of 500 and get from C the whole 1000 + 50% of 1000 deposit:
+    # -750 - 500/2 + 1000/2 + 1000 = +500
+    jb.withdraw_lock(lock_two)
+    jb.assert_balances_equal({'A': 500})
+
+    jb.assert_empty()
+
