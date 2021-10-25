@@ -14,6 +14,9 @@ class Pools:
     def max(self):
         return max(self.pools.values())
 
+    def min(self):
+        return min(self.pools.values())
+
     def __add__(self, other):
         return Pools(
             amount_for=self.pools['for'] + other.pools['for'],

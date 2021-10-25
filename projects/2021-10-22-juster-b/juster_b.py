@@ -169,6 +169,7 @@ class JusterB:
         if agreement.pool == self.get_win_pool():
             self.balance_update(agreement.user, agreement.amount + agreement.delta)
 
+        '''
         if self.total_shares == 0:
             assert self.pools == Pools(0, 0)
             return
@@ -187,13 +188,16 @@ class JusterB:
 
         # TODO: need to have some method to return actual pools?
         # TODO: maybe need to implement __add__ and __sub__ for pools?
-        actual_pools = self.pools - self.locked_pools
+
+        # actual_pools = self.pools - self.locked_pools
+        actual_pools = self.pools
         # TODO: assert actual_pools.assert_positive()
         max_pool = actual_pools.max()
+        min_pool = actual_pools.min()
 
         if agreement.pool == self.get_win_pool():
             # win case: get reward and decrease pools by agreement.delta
-            shrink = (max_pool - agreement.delta) / max_pool
+            shrink = (min_pool - agreement.delta) / min_pool
         else:
             # lose case: increases pools by agreement.delta
             shrink = (max_pool + agreement.amount) / max_pool
@@ -203,6 +207,7 @@ class JusterB:
         self.pools = self.pools*shrink
         # OR:
         # self.pools = (self.pools - self.locked_pools)*shrink + self.locked_pools
+        '''
 
         # TODO: assert self.pools.assert_positive()
 
@@ -227,7 +232,7 @@ class JusterB:
 
     def assert_empty(self, tolerance=1e-8):
         assert abs(sum(self.balances.values())) < 1e-8
-        self.pools.assert_empty()
+        # self.pools.assert_empty()
 
     def assert_balances_equal(self, balances, tolerance=1e-8):
         """ Checks all given balances dict that their values diffs less than
