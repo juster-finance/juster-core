@@ -15,6 +15,13 @@ class Deposit:
     def empty(cls):
         return cls(amount=0, shares=0, pools=Pools.empty())
 
+    def is_empty(self):
+        return (
+            (self.amount == 0)
+            and (self.shares == 0)
+            and self.pools.is_empty()
+        )
+
     def to_dict(self):
         return {
             'amount': self.amount,

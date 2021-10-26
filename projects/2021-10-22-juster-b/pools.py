@@ -63,8 +63,11 @@ class Pools:
     def remove(self, pool_name, amount):
         self.pools[ pool_name ] -= amount
 
+    def is_empty(self):
+        return abs(sum(self.pools.values())) < self.tolerance
+
     def assert_empty(self):
-        assert abs(sum(self.pools.values())) < self.tolerance
+        assert self.is_empty()
         self.assert_positive()
 
     def __eq__(self, other):

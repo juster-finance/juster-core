@@ -45,6 +45,7 @@ class JusterB:
             tolerance=1e-8
         ):
         # TODO: add fee?
+        # TODO: add duration management
 
         self.pools = pools
         self.total_shares = total_shares
@@ -146,7 +147,7 @@ class JusterB:
         if agreement.pool == self.get_win_pool():
             self.balance_update(agreement.user, agreement.amount + agreement.delta)
 
-        # TODO: assert self.pools.assert_positive()
+        self.pools.assert_positive()
 
     def to_dict(self):
         """ Returns all storage values in dict form """
@@ -173,7 +174,7 @@ class JusterB:
         assert abs(self.balances['contract']) < self.tolerance
         assert self.total_shares == 0
         assert len(self.agreements) == 0
-        # TODO: assert all(deposit.is_empty() for deposit in self.deposits)
+        assert all(deposit.is_empty() for deposit in self.deposits.values())
 
     def assert_balances_equal(self, balances):
         """ Checks all given balances dict that their values diffs less than
