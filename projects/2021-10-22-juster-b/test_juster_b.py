@@ -1,8 +1,11 @@
 from juster_b import JusterB
 from pools import Pools
+from exceptions import InvalidState
+import pytest
 
 
 def test_two_providers_and_one_insurance_simple_linear():
+
     jb = JusterB.new_with_deposit('A', 100, 100)
     jb.provide_liquidity('B', 50)
 
@@ -58,17 +61,20 @@ def test_some_liquidity_removed_and_then_some_bet_placed():
     # but total liquidity amount reduces by agreement.delta:
     jb.give_reward(insurance_one)
     assert jb.pools == Pools(50, 200)
+    # assert jb.pools == Pools(12.5, 50)  # if pools normalized by liquidity
 
     # A withdraws liquidity and no one interacts while it is locked:
     lock = jb.lock_liquidity('A', 40)
     jb.withdraw_lock(lock)
     assert jb.total_shares == 60
     assert jb.pools == Pools(30, 120)
+    # assert jb.pools == Pools(7.5, 30)  # if pools normalized by liquidity
 
     # A returns 40% of deposit: 40 and accepts 40% of the losses (-20)
     jb.assert_balances_equal({'A': -100 + 40 - 20})
 
     # C makes another win with 30/150*30 = 6
+    # C makes another win with 7.5/60*30 = 3.75 if pools normalized by liquidity
     insurance_two = jb.insure('C', 30, 'against')
 
     # This time A withdraws first:
@@ -87,7 +93,6 @@ def test_some_liquidity_removed_and_then_some_bet_placed():
     })
     jb.assert_empty()
 
-
 def test_where_pools_turn_over():
     jb = JusterB.new_with_deposit('A', 1, 2)
 
@@ -100,7 +105,6 @@ def test_where_pools_turn_over():
     assert jb.pools == Pools(4, 2)
 
     jb.give_reward(insurance_one)
-    assert jb.pools == Pools(4, 2)
 
     lock = jb.lock_liquidity('A', 4)
     jb.withdraw_lock(lock)
@@ -128,10 +132,10 @@ def test_where_provider_exploits_insurance_case():
     # in reality withdraw_lock should not be possible before the next claim:
     jb.withdraw_lock(lock)
     jb.claim_insurance_case()
-    jb.give_reward(insurance_one)
 
     # because both A and B "wins" - there are divergent balance:
-    assert sum(jb.balances.values()) > 1
+    with pytest.raises(InvalidState):
+        jb.give_reward(insurance_one)
 
 
 def test_insurance_after_lock_affect_provider():
@@ -204,7 +208,7 @@ def test_case_with_insurance_case_while_partial_liquidity_lock():
     jb.assert_empty()
 
 
-'''
+@pytest.mark.skip(reason="need to find a way how to change model to pass this tes")
 def test_case_where_one_wins_with_against_and_then_other_wins_with_for():
     jb = JusterB.new_with_deposit('A', 100, 100)
     insurance_one = jb.insure('B', 9900, 'against')
@@ -227,5 +231,4 @@ def test_case_where_one_wins_with_against_and_then_other_wins_with_for():
     lock = jb.lock_liquidity('A', 100)
     jb.withdraw_lock(lock)
     jb.assert_empty()
-'''
 

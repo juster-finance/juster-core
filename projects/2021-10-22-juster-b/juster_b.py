@@ -3,6 +3,7 @@ from deposit import Deposit
 from agreement import Agreement
 from lock import Lock
 from pools import Pools
+from exceptions import InvalidState
 
 
 def reverse(pool):
@@ -16,17 +17,19 @@ class JusterB:
         pools = Pools(pool_for, pool_against)
         amount = pools.max()
         deposit = Deposit(amount, amount, pools)
-        return cls(
+        jb = cls(
             pools=pools,
             total_shares=amount,
             is_claimed=False,
             agreements={},
             deposits={user: deposit},
             next_agreement_id=0,
-            balances={user: -amount},
+            balances=0,
             locks={},
-            next_lock_id=0,
+            next_lock_id=0
         )
+        jb.balance_update(user, -amount)
+        return jb
 
     def __init__(
             self,
@@ -39,6 +42,7 @@ class JusterB:
             balances=None,
             locks=None,
             next_lock_id=0,
+            tolerance=1e-8
         ):
         # TODO: add fee?
 
@@ -51,12 +55,16 @@ class JusterB:
         self.next_agreement_id = next_agreement_id
         self.locks = locks or {}
         self.next_lock_id = next_lock_id
+        self.tolerance = tolerance
 
     def get_deposit(self, user):
         return self.deposits.get(user, Deposit.empty())
 
     def balance_update(self, user, change):
         self.balances[user] = self.balances.get(user, 0) + change
+        self.balances['contract'] = self.balances.get('contract', 0) - change
+        if self.balances['contract'] < -self.tolerance:
+            raise InvalidState('Negative amount on contract')
 
     def provide_liquidity(self, user, amount):
         deposit = Deposit(
@@ -129,6 +137,9 @@ class JusterB:
     def get_win_pool(self):
         return 'for' if self.is_claimed else 'against'
 
+    def rebalance_pools(self):
+        pass
+
     def give_reward(self, agreement_id):
         agreement = self.agreements.pop(agreement_id)
 
@@ -156,11 +167,15 @@ class JusterB:
     def __repr__(self):
         return (f'<Line>\n{json.dumps(self.to_dict(), indent=4)}')
 
-    def assert_empty(self, tolerance=1e-8):
-        assert abs(sum(self.balances.values())) < 1e-8
+    def assert_empty(self):
+        assert abs(sum(self.balances.values())) < self.tolerance
         self.pools.assert_empty()
+        assert abs(self.balances['contract']) < self.tolerance
+        assert self.total_shares == 0
+        assert len(self.agreements) == 0
+        # TODO: assert all(deposit.is_empty() for deposit in self.deposits)
 
-    def assert_balances_equal(self, balances, tolerance=1e-8):
+    def assert_balances_equal(self, balances):
         """ Checks all given balances dict that their values diffs less than
             tolerance value from the same keys in self.balances """
 
@@ -168,5 +183,5 @@ class JusterB:
             key: abs(self.balances.get(key, 0) - balances.get(key, 0))
             for key in balances
         }
-        assert all(diff < tolerance for diff in diffs.values())
+        assert all(diff < self.tolerance for diff in diffs.values())
 
