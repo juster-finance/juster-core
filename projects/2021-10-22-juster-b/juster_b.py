@@ -13,7 +13,6 @@ class JusterB:
 
     @classmethod
     def new_with_deposit(cls, user, pool_for, pool_against):
-        # TODO: pool_for, pool_against -> pools<Pools>
         pools = Pools(pool_for, pool_against)
         amount = pools.max()
         deposit = Deposit(amount, amount, pools)
@@ -59,21 +58,17 @@ class JusterB:
     def balance_update(self, user, change):
         self.balances[user] = self.balances.get(user, 0) + change
 
-    def _add_deposit(self, user, deposit):
-        # TODO: maybe recalculate for/against using shares?
-        # and then maybe it would be possible to use within remove_liquidity
-        self.deposits[user] = self.get_deposit(user) + deposit
-        self.pools += deposit.pools
-        self.total_shares += deposit.shares
-        self.balance_update(user, -deposit.amount)
-
     def provide_liquidity(self, user, amount):
-        new_deposit = Deposit(
+        deposit = Deposit(
             amount=amount,
             pools=self.pools.norm() * amount,
             shares=amount / self.pools.max() * self.total_shares
         )
-        self._add_deposit(user, new_deposit)
+
+        self.deposits[user] = self.get_deposit(user) + deposit
+        self.pools += deposit.pools
+        self.total_shares += deposit.shares
+        self.balance_update(user, -deposit.amount)
 
     def insure(self, user, amount, pool):
         pool_to = pool
@@ -126,7 +121,6 @@ class JusterB:
         withdrawn_liquidity = (deposit.amount + profit) * withdrawn_fraction
         self.balance_update(lock.user, withdrawn_liquidity)
         self.deposits[lock.user] *= 1 - withdrawn_fraction
-        # self.pools *= 1 - lock.shares / self.total_shares
         self.total_shares -= lock.shares
 
     def claim_insurance_case(self):
@@ -164,7 +158,7 @@ class JusterB:
 
     def assert_empty(self, tolerance=1e-8):
         assert abs(sum(self.balances.values())) < 1e-8
-        # self.pools.assert_empty()
+        self.pools.assert_empty()
 
     def assert_balances_equal(self, balances, tolerance=1e-8):
         """ Checks all given balances dict that their values diffs less than
