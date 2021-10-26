@@ -27,8 +27,6 @@ class JusterB:
             balances={user: -amount},
             locks={},
             next_lock_id=0,
-            locked_pools=Pools.empty(),
-            locked_shares=0
         )
 
     def __init__(
@@ -42,8 +40,6 @@ class JusterB:
             balances=None,
             locks=None,
             next_lock_id=0,
-            locked_pools=Pools.empty(),
-            locked_shares=0
         ):
         # TODO: add fee?
 
@@ -56,8 +52,6 @@ class JusterB:
         self.next_agreement_id = next_agreement_id
         self.locks = locks or {}
         self.next_lock_id = next_lock_id
-        self.locked_pools = locked_pools or {}
-        self.locked_shares = locked_shares
 
     def get_deposit(self, user):
         return self.deposits.get(user, Deposit.empty())
@@ -84,7 +78,6 @@ class JusterB:
     def insure(self, user, amount, pool):
         pool_to = pool
         pool_from = reverse(pool)
-        # actual_pools = self.pools * (1 - self.locked_shares / self.total_shares)
 
         ratio = self.pools.get(pool_from) / (self.pools.get(pool_to) + amount)
         delta = ratio * amount
@@ -109,7 +102,6 @@ class JusterB:
             # unlock_time=self.time + self.duration
         )
 
-        self.locked_shares += shares
         self.pools *= 1 - shares / self.total_shares
 
         self.locks[self.next_lock_id] = lock
@@ -136,7 +128,6 @@ class JusterB:
         self.deposits[lock.user] *= 1 - withdrawn_fraction
         # self.pools *= 1 - lock.shares / self.total_shares
         self.total_shares -= lock.shares
-        self.locked_shares -= lock.shares
 
     def claim_insurance_case(self):
         self.is_claimed = True
@@ -159,7 +150,7 @@ class JusterB:
             return {k: v.to_dict() for k, v in dct.items()}
 
         return dict(
-            actual_pools=(self.pools - self.locked_pools).to_dict(),
+            pools=self.pools.to_dict(),
             total_shares=self.total_shares,
             is_claimed=self.is_claimed,
             agreements=values_to_dict(self.agreements),
