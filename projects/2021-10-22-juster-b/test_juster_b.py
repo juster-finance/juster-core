@@ -203,3 +203,27 @@ def test_case_with_insurance_case_while_partial_liquidity_lock():
 
     jb.assert_empty()
 
+
+def test_case_where_one_wins_with_against_and_then_other_wins_with_for():
+    jb = JusterB.new_with_deposit('A', 100, 100)
+    insurance_one = jb.insure('B', 9900, 'against')
+
+    assert jb.pools == Pools(1, 10000)
+    jb.give_reward(insurance_one)
+
+    # Pools should be reduced here, but there are no such kind of logic in model yet:
+    # assert jb.pools == Pools(0.01, 100)
+
+    insurance_two = jb.insure('C', 1, 'for')
+
+    # at the moment jb.pools == Pools(2, 5000) and this is wrong
+    # either jb.pools == Pools(1.01, ??)
+    # either there should be some kind of pool inflation multiplier used
+
+    jb.claim_insurance_case()
+    jb.give_reward(insurance_two)
+
+    lock = jb.lock_liquidity('A', 100)
+    jb.withdraw_lock(lock)
+    jb.assert_empty()
+
