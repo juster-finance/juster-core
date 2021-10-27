@@ -82,3 +82,15 @@ class Pools:
             tolerance=self.tolerance
         )
 
+    def dot_product(self, other):
+        return (
+            self.pools['for'] * other.pools['for']
+            + self.pools['against'] * other.pools['against'])
+
+    def reverse(self):
+        return Pools(
+            amount_for=self.pools['against'],
+            amount_against=self.pools['for'],
+            tolerance=self.tolerance
+        )
+

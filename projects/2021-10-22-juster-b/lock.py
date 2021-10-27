@@ -1,6 +1,7 @@
 import json
 
 
+'''
 class Lock:
     def __init__(self, user, shares, pools):
         self.user = user
@@ -16,4 +17,11 @@ class Lock:
 
     def __repr__(self):
         return (f'<Lock>\n{json.dumps(self.to_dict(), indent=4)}')
+'''
+
+
+from container import Container
+
+class Lock(Container):
+    name = 'Lock'
 
