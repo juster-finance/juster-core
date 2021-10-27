@@ -26,7 +26,8 @@ class JusterB:
             next_agreement_id=0,
             balances=0,
             locks={},
-            next_lock_id=0
+            next_lock_id=0,
+            duration=3600
         )
         jb.balance_update(user, -amount)
         return jb
@@ -42,10 +43,11 @@ class JusterB:
             balances=None,
             locks=None,
             next_lock_id=0,
-            tolerance=1e-8
+            tolerance=1e-8,
+            duration=3600
         ):
         # TODO: add fee?
-        # TODO: add duration management
+        # TODO: add duration management: self.current_time, self.wait
 
         self.pools = pools
         self.total_shares = total_shares
@@ -57,6 +59,7 @@ class JusterB:
         self.locks = locks or {}
         self.next_lock_id = next_lock_id
         self.tolerance = tolerance
+        self.duration = duration
 
     def get_deposit(self, user):
         return self.deposits.get(user, Deposit.empty())
@@ -133,6 +136,9 @@ class JusterB:
         self.total_shares -= lock.shares
 
     def claim_insurance_case(self):
+        # TODO: in the contract time / block level of the claim should be recorded
+        # and only agreements that finished after this time should be considered
+        # as winning for
         self.is_claimed = True
 
     def get_win_pool(self):
