@@ -93,6 +93,7 @@ type linesLedger is big_map(nat, lineType)
 type storage is record [
     lines : linesLedger;
     agreements : agreementsLedger;
+    (* TODO: rename to deposits? *)
     depositedLiquidity : liquidityLedger;
 
     nextLineId : nat;
@@ -362,7 +363,38 @@ function removeLiquidity(
     const p : removeLiquidityParams;
     const s : storage) : return is
 block {
-    skip;
+
+    (* Calculating provider return: *)
+    const deposit = getDepositedLiquidity(s, (Tezos.sender, p.lineId));
+    const line = getLine(s, lineId);
+
+    if (p.shares > deposit.shares) then failwith("Not enought shares") else skip;
+
+    (* TODO: should removeLiquidity be possible at any time? *)
+    (* TODO: make sure that low-digits is impossible to exploit something here *)
+
+    (* Leveraged liquidity provided in the smallest pool should be excluded: *)
+    var providerProfit : int := 0;
+
+    (* One of the edgecases if there was no liquidity provided and there are 0n shares: *)
+    if (line.totalShares = 0n) then skip else
+        providerProfit := if isBetsAboveEqWin
+            then share * poolB / totalShares - providedB
+            else share * poolA / totalShares - providedA;
+
+    (* Cutting profits from provided liquidity: *)
+    const profitFee : nat = store.config.providerProfitFee;
+    const precision : nat = store.providerProfitFeePrecision;
+
+    const fee : nat = if providerProfit > 0
+        then abs(providerProfit) * profitFee / precision
+        else 0n;
+
+    if fee > abs(providerProfit) then failwith("Fee is more than 100%")
+    else skip;
+
+    const provider : nat = abs(deposited + providerProfit - fee);
+
 } with ((nil: list(operation)), s)
 
 
@@ -370,7 +402,18 @@ function giveReward(
     const p : giveRewardParams;
     const s : storage) : return is
 block {
-    skip;
+    (* Calculating bet return: *)
+    const betA : nat = tezToNat(getLedgerAmount(key, store.betsAboveEq));
+    const betB : nat = tezToNat(getLedgerAmount(key, store.betsBelow));
+
+    const isBetsAboveEqWin : bool = case event.isBetsAboveEqWin of
+    | Some(isWin) -> isWin
+    (* should not be here: *)
+    | None -> (failwith("Winner is undefined") : bool)
+    end;
+
+    const bet : nat = if isBetsAboveEqWin then betA else betB;
+
 } with ((nil: list(operation)), s)
 
 

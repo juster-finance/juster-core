@@ -239,3 +239,12 @@ def test_case_where_one_wins_with_against_and_then_other_wins_with_for():
     jb.withdraw_lock(lock)
     jb.assert_empty()
 
+
+
+# TODO: need to have test where provider lock withdrawal, no insurance case claimed
+# during this waiting but he was not withdrawn lock and the claim affected other
+# providers. How would it be handled?
+
+# especially if this is one provider who locks without claim and then he have some
+# liquidity left that was affected by insurance claim
+

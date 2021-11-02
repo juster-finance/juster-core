@@ -21,15 +21,13 @@ class JusterB:
             pools=pools,
             total_shares=amount,
             is_claimed=False,
-            claimed_time=None,
             agreements={},
             deposits={user: deposit},
             next_agreement_id=0,
             balances=0,
             locks={},
             next_lock_id=0,
-            duration=3600,
-            time=0
+            inflation=1
         )
         jb.balance_update(user, -amount)
         return jb
@@ -39,35 +37,29 @@ class JusterB:
             pools=Pools.empty(),
             total_shares=0,
             is_claimed=False,
-            claimed_time=None,
             agreements=None,
             deposits=None,
             next_agreement_id=0,
             balances=None,
             locks=None,
             next_lock_id=0,
-            tolerance=1e-8,
-            duration=3600,
-            time=0
+            inflation=1,
+            tolerance=1e-8
         ):
         # TODO: add fee?
 
         self.pools = pools
         self.total_shares = total_shares
         self.is_claimed = is_claimed
-        self.claimed_time = claimed_time
         self.agreements = agreements or {}
         self.deposits = deposits or {}
         self.balances = balances or {}
         self.next_agreement_id = next_agreement_id
         self.locks = locks or {}
         self.next_lock_id = next_lock_id
+        self.inflation = inflation
         self.tolerance = tolerance
-        self.duration = duration
-        self.time = time
-
-    def wait(self, seconds):
-        self.time += seconds
+        self.balancer_pool = Pools.empty()
 
     def get_deposit(self, user):
         return self.deposits.get(user, Deposit.empty())
@@ -94,13 +86,12 @@ class JusterB:
         pool_to = pool
         pool_from = reverse(pool)
 
-        ratio = self.pools.get(pool_from) / (self.pools.get(pool_to) + amount)
+        ratio = self.pools.get(pool_from) / (self.pools.get(pool_to) + amount*self.inflation)
         delta = ratio * amount
 
         self.pools.add(pool_to, amount)
         self.pools.remove(pool_from, delta)
 
-        # TODO: add `remain_until` variable in agreement
         agreement = Agreement(user, pool, amount, delta)
         self.agreements[self.next_agreement_id] = agreement
         self.next_agreement_id += 1
@@ -115,7 +106,8 @@ class JusterB:
             user=user,
             shares=shares,
             pools=self.pools,
-            unlock_time=self.time + self.duration
+            inflation=self.inflation
+            # unlock_time=self.time + self.duration
         )
 
         self.pools *= 1 - shares / self.total_shares
@@ -125,67 +117,48 @@ class JusterB:
         return self.next_lock_id - 1
 
 
-    def is_claimed_at(self, claimed_time):
-        assert self.claimed_time is not None
-        # TODO: return self.claimed_time < claimed_time
-        return False
-
-
     def withdraw_lock(self, lock_id):
         lock = self.locks.pop(lock_id)
         deposit = self.get_deposit(lock.user)
 
-        # TODO: maybe good to have who_win_at() add timestamp here and use lock.ulock_time
-        # win_pool = self.get_win_pool()
+        # TODO: who_win_at() add timestamp here and use lock.ulock_time
+        win_pool = self.get_win_pool()
 
-        if not self.is_claimed_at(lock.unlock_time):
-            # then profit calculates the way juster calculates it:
-            # [loosing pool shared cut] without [provided amount in lose pool]:
+        # Profit calculates as:
+        # [loosing pool shared cut] without [provided amount in lose pool]:
+        pools_for_deposit = lock.pools * deposit.shares / self.total_shares # / lock.inflation
+        pools_profit = pools_for_deposit - deposit.pools
 
-            pools_for_deposit = lock.pools * deposit.shares / self.total_shares
-            pools_profit = pools_for_deposit - deposit.pools
-            profit = pools_profit.get('for')
+        # profit for first participant should be inflated by x4 and by second by self.inflation
+        # -30 + (-3.75)
+        profit = pools_profit.get(reverse(win_pool))
+        # profit += self.balancer_pool.get(reverse(win_pool))
+        # profit = pools_profit.dot_product(self.balancer_pool.reverse().norm())
 
-            withdrawn_fraction = lock.shares / deposit.shares
-            withdrawn_liquidity = (deposit.amount + profit) * withdrawn_fraction
-
-        if self.is_claimed_at(lock.unlock_time):
-            # waiting untill all participants claim their rewards (in contract
-            # we allow anyone to call give_reward)
-            assert len(self.agreements) == 0
-
-            # TODO: find a way hot to handle unclaimed withdrawals that was
-            # finished before claim and was not withdrawn
-
-            # TODO: assert that there are no locks that have
-            # lock.unlock_time < self.claimed_time (how?)
-
-            # Finally: split all that left according to the shares
-            # TODO: how calculate what left?
-
-            # TODO: and the baddest question: is it possible to use liquidty from
-            # other participants? because it looks like not. Then it is crushing
-            # this idea to inflation pools (and I don't like this)
-
-            # So: the test is already there, what happens if one participant
-            # votes against event, then someone used his vote as liquidity, the
-            # first wins before claim and get his liquidity back and then there
-            # is not liquidity to pay back for the second. SAD
-
+        withdrawn_fraction = lock.shares / deposit.shares
+        withdrawn_liquidity = (deposit.amount + profit) * withdrawn_fraction
         self.balance_update(lock.user, withdrawn_liquidity)
         self.deposits[lock.user] *= 1 - withdrawn_fraction
         self.total_shares -= lock.shares
 
     def claim_insurance_case(self):
-        # TODO: in the contract time / block level of the claim should be recorded
-        # and only agreements that finished after this time should be considered
-        # as winning for
         self.is_claimed = True
-        self.claimed_time = self.time
-
 
     def get_win_pool(self):
         return 'for' if self.is_claimed else 'against'
+
+    def inflate(self, amount):
+        """ Inflate/deflate pools by given amount
+            self.inflation keeps inflation data to properly calculate
+            provider rewards
+        """
+
+        total_liquidity = self.pools.max()
+        added = amount / total_liquidity if total_liquidity != 0 else 1
+
+        rate = 1 if total_liquidity == 0 else 1 + amount/total_liquidity
+        # self.pools *= rate
+        self.inflation /= rate
 
     def rebalance_pools(self):
         pass
@@ -195,8 +168,14 @@ class JusterB:
 
         if agreement.pool == self.get_win_pool():
             self.balance_update(agreement.user, agreement.amount + agreement.delta)
+            removed_liquidity = agreement.delta + agreement.amount
+            self.inflate(-removed_liquidity)
+            self.balancer_pool.remove(agreement.pool, removed_liquidity)
+        else:
+            self.inflate(agreement.amount)
+            self.balancer_pool.add(agreement.pool, agreement.amount)
 
-        self.pools.assert_positive()
+        # TODO: assert self.pools.assert_positive()
 
     def to_dict(self):
         """ Returns all storage values in dict form """
@@ -223,7 +202,7 @@ class JusterB:
         assert abs(self.balances['contract']) < self.tolerance
         assert self.total_shares == 0
         assert len(self.agreements) == 0
-        assert all(deposit.is_empty() for deposit in self.deposits.values())
+        # TODO: assert all(deposit.is_empty() for deposit in self.deposits)
 
     def assert_balances_equal(self, balances):
         """ Checks all given balances dict that their values diffs less than
