@@ -25,6 +25,7 @@ class JusterC:
             tolerance=1e-8,
             duration=3600,
             inflation=1,
+            total_shares=0,
             time=0
         ):
         # TODO: add fee?
@@ -42,6 +43,7 @@ class JusterC:
         self.inflation = inflation
         self.duration = duration
         self.time = time
+        self.total_shares = total_shares
 
     def wait(self, seconds):
         self.time += seconds
@@ -69,6 +71,9 @@ class JusterC:
         norm_deposit = deposit / self.inflation
         self.deposits[user] = self.deposits.get(user, Pools(0, 0)) + norm_deposit
 
+        # TODO: maybe this is possible to manage this inside for pool?
+        self.total_shares += norm_deposit.get('for')
+
         # TODO: is it possible to optimize liquidity and add only to the max pool?
         self.balance_update(user, -amount_for)
         self.balance_update(user, -amount_against)
@@ -86,7 +91,8 @@ class JusterC:
         ratio = self.pools.get('against') / (self.pools.get('for') + amount)
         delta = ratio * amount
 
-        self.pools.add('for', amount)
+        # REMOVE: user should not add liquidity to for pool!
+        # self.pools.add('for', amount)
         self.pools.remove('against', delta)
         self.balance_update(user, -amount)
 
@@ -132,7 +138,13 @@ class JusterC:
 
         # Including profits:
         inflated_deposit = deposit * self.inflation
-        self.pools -= inflated_deposit
+
+        # looks like it is not required to remove this inflated deposit if self.is_claimed
+        # BUT: what if self.claimed during locked deposit?
+        # TODO: need to have a test for this case
+        if not self.is_claimed:
+            self.pools -= inflated_deposit
+
         return self.add_lock(lock)
 
     def is_claimed_at(self, claimed_time):
@@ -142,7 +154,7 @@ class JusterC:
     def withdraw(self, lock_id):
         lock = self.locks.pop(lock_id)
 
-        deposit = self.deposits[lock.provider]
+        # deposit = self.deposits[lock.provider]
         inflated_deposit = lock.deposit * self.inflation
 
         # if not self.is_claimed_at(lock.unlock_time):
@@ -158,12 +170,23 @@ class JusterC:
         # if self.is_claimed_at(lock.unlock_time):
         if self.is_claimed:
             # provider LOSE case:
+
+            # TODO: what if provider losed after lock? Looks like he should
+            # return his liquidity back to the self.pools before share calculation, is it?
+
+            # share = inflated_deposit.get('for') / self.total_shares
+
+            # TODO: would it be correct if current pools would be saved in lock and provider
+            # will calculate his return using those pools data?
+
             share = inflated_deposit.get('for') / self.pools.get('for')
             splitted_against = share * self.pools.get('against')
             withdrawn_liquidity = inflated_deposit.get('for') + splitted_against
 
+        # TODO: do I need to have this total_shares or self.pools:for is enough?
+        # self.total_shares -= lock.deposit.get('for')
         self.balance_update(lock.provider, withdrawn_liquidity)
-        self.deposits[lock.provider] -= deposit
+        self.deposits[lock.provider] -= lock.deposit
 
     def claim_insurance_case(self):
         # TODO: in the contract time / block level of the claim should be recorded
@@ -199,7 +222,8 @@ class JusterC:
         if self.is_claimed:
             assert not self.is_claimed_at(agreement.remain_until)
 
-        self.pools.remove('for', agreement.amount)
+        # REMOVE: as far as user not added liquidity to pool, he should not remove it:
+        # self.pools.remove('for', agreement.amount)
         self.pools.add('against', agreement.delta)
 
         # adding amount to pools:
@@ -229,9 +253,9 @@ class JusterC:
 
     def assert_empty(self):
         assert abs(sum(self.balances.values())) < self.tolerance
-        self.pools.assert_empty()
+        # self.pools.assert_empty()
         assert abs(self.balances['contract']) < self.tolerance
-        assert self.total_shares == 0
+        # assert self.total_shares == 0
         assert len(self.agreements) == 0
         assert all(deposit.is_empty() for deposit in self.deposits.values())
 

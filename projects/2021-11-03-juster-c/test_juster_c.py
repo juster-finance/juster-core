@@ -19,14 +19,14 @@ def test_model_with_providers_merged_with_against_pool():
 
     # Three providers are participated in the event:
     jc.provide('A', amount_for=10, amount_against=100)  # ratio 0.10
-    jc.provide('B', amount_for=20, amount_against=150)  # ratio 0.13
+    jc.provide('B', amount_for=20, amount_against=140)  # ratio 0.14
     jc.provide('C', amount_for=10, amount_against=120)  # ratio 0.08
 
     # Provider B supposes that insurance claim chances are higher than provider C
     # so if claim occurs, provider C should have less loss impact
     # and if it is not, provider C should have less profit
 
-    insurance = jc.insure('D', 10)
+    insurance = jc.insure('D', 4)
     jc.wait(100)
     jc.dissolve(insurance)
 
@@ -52,11 +52,13 @@ def test_model_with_providers_merged_with_against_pool():
     # for example: lock_a = jc.lock('A', 10, 30) ?
 
     lock_a = jc.lock('A', 10, 100)
-    lock_b = jc.lock('B', 20, 150)
+    lock_b = jc.lock('B', 20, 140)
     lock_c = jc.lock('C', 10, 120)
     jc.withdraw(lock_a)
     jc.withdraw(lock_b)
     jc.withdraw(lock_c)
+
+    jc.assert_empty()
 
 
 def test_when_provider_get_into_and_get_out_during_event():
@@ -90,6 +92,7 @@ def test_when_provider_get_into_and_get_out_during_event():
     jc.withdraw(lock_b)
     jc.withdraw(lock_c)
 
+    jc.assert_empty()
 
 # TODO: test where providers have very different ratios, one with 10:1, one 1:1 and one 1:10
 # TODO: test where providers have lock with different ratios
