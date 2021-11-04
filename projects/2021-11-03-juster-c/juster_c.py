@@ -14,6 +14,7 @@ class JusterC:
     def __init__(
             self,
             pools=Pools.empty(),
+            locked_pools=Pools.empty(),
             is_claimed=False,
             claimed_time=None,
             agreements=None,
@@ -31,6 +32,7 @@ class JusterC:
         # TODO: add fee?
 
         self.pools = pools
+        self.locked_pools = locked_pools
         self.is_claimed = is_claimed
         self.claimed_time = claimed_time
         self.agreements = agreements or {}
@@ -85,11 +87,10 @@ class JusterC:
         return agreement_id
 
     def insure(self, user, amount):
+        # TODO: MAYBE amount should be inflated?
         ratio = self.pools.get('against') / (self.pools.get('for') + amount)
         delta = ratio * amount
 
-        # REMOVE: user should not add liquidity to for pool!
-        # self.pools.add('for', amount)
         self.pools.remove('against', delta)
         self.balance_update(user, -amount)
 
@@ -138,11 +139,8 @@ class JusterC:
         # Including profits:
         inflated_deposit = deposit * self.inflation
 
-        # looks like it is not required to remove this inflated deposit if self.is_claimed
-        # BUT: what if self.claimed during locked deposit?
-        # TODO: need to have a test for this case
-        if not self.is_claimed:
-            self.pools -= inflated_deposit
+        self.pools -= inflated_deposit
+        self.locked_pools += inflated_deposit
 
         return self.add_lock(lock)
 
@@ -161,25 +159,17 @@ class JusterC:
             # provider WIN case:
             assert lock.unlock_time >= self.time
 
-            # self.pools -= inflated_deposit
+            self.locked_pools -= inflated_deposit
+            self.locked_pools.assert_almost_positive()
             # TODO: is it possible to make self.pool < 0 here?
-            self.pools.assert_positive()
             withdrawn_liquidity = inflated_deposit.sum()
 
         # if self.is_claimed_at(lock.unlock_time):
         if self.is_claimed:
             # provider LOSE case:
-
-            # TODO: what if provider losed after lock? Looks like he should
-            # return his liquidity back to the self.pools before share calculation, is it?
-
-            # share = inflated_deposit.get('for') / self.total_shares
-
-            # TODO: would it be correct if current pools would be saved in lock and provider
-            # will calculate his return using those pools data?
-
-            share = inflated_deposit.get('for') / self.pools.get('for')
-            splitted_against = share * self.pools.get('against')
+            pools = self.pools + self.locked_pools
+            share = inflated_deposit.get('for') / pools.get('for')
+            splitted_against = share * pools.get('against')
             withdrawn_liquidity = inflated_deposit.get('for') + splitted_against
 
         # TODO: do I need to have this total_shares or self.pools:for is enough?
@@ -199,18 +189,6 @@ class JusterC:
         agreement = self.agreements.pop(agreement_id)
         self.balance_update(agreement.user, agreement.amount + agreement.delta)
 
-        # No pools change are hapenning because this is the end of the insurance line:
-        '''
-        self.pools.remove('for', agreement.amount)
-        self.pools.add('against', agreement.delta)
-
-        # removing delta from pools:
-        share = agreement.delta / self.pools.sum()
-        self.pools *= 1 - share
-        self.inflation *= 1 - share
-        self.pools.assert_positive()
-        '''
-
     def dissolve(self, agreement_id):
         """ Distribiute provided agreement value between pools """
 
@@ -227,6 +205,7 @@ class JusterC:
         # adding amount to pools:
         share = agreement.amount / self.pools.sum()
         self.pools *= 1 + share
+        self.locked_pools *= 1 + share
         self.inflation *= 1 + share
         self.pools.assert_positive()
 
@@ -238,6 +217,7 @@ class JusterC:
 
         return dict(
             pools=self.pools.to_dict(),
+            locked_pools=self.locked_pools.to_dict(),
             is_claimed=self.is_claimed,
             inflation=self.inflation,
             agreements=values_to_dict(self.agreements),

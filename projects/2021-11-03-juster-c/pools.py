@@ -54,6 +54,10 @@ class Pools:
         assert self.pools['for'] >= 0
         assert self.pools['against'] >= 0
 
+    def assert_almost_positive(self):
+        assert self.pools['for'] >= -self.tolerance
+        assert self.pools['against'] >= -self.tolerance
+
     def get(self, pool_name):
         return self.pools[pool_name]
 
