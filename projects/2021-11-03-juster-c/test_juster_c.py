@@ -63,14 +63,14 @@ def test_model_with_providers_merged_with_against_pool():
 
 def test_when_provider_get_into_and_get_out_during_event():
     jc = JusterC(duration=100)
-    jc.provide('A', amount_for=10, amount_against=100)
+    jc.provide('A', amount_for=10, amount_against=90)
 
     insurance = jc.insure('D', 10)
     jc.wait(100)
     jc.dissolve(insurance)
 
     jc.provide('B', amount_for=20, amount_against=150)
-    lock_a_1 = jc.lock('A', 5, 50)
+    lock_a_1 = jc.lock('A', 5, 45)
 
     insurance = jc.insure('E', 10)
     jc.wait(100)
@@ -78,7 +78,7 @@ def test_when_provider_get_into_and_get_out_during_event():
     jc.withdraw(lock_a_1)
 
     jc.provide('C', amount_for=10, amount_against=120)
-    lock_a_2 = jc.lock('A', 5, 50)
+    lock_a_2 = jc.lock('A', 5, 45)
 
     insurance = jc.insure('E', 10)
     jc.wait(25)
