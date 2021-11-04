@@ -203,7 +203,7 @@ class JusterC:
         self.pools.add('against', agreement.delta)
 
         # adding amount to pools:
-        share = agreement.amount / self.pools.sum()
+        share = agreement.amount / (self.pools.sum() + self.locked_pools.sum())
         self.pools *= 1 + share
         self.locked_pools *= 1 + share
         self.inflation *= 1 + share
