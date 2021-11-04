@@ -63,20 +63,17 @@ class JusterC:
             amount_for=amount_for,
             amount_against=amount_against
         )
+        self.deposits[user] = self.deposits.get(user, Pools(0, 0)) + deposit
 
-        self.pools += deposit
-
-        # Normalizing deposit by current profit inflation ratio:
-        # (to make all providers on the one scale, if there are some profits)
-        norm_deposit = deposit / self.inflation
-        self.deposits[user] = self.deposits.get(user, Pools(0, 0)) + norm_deposit
+        inflated_deposit = deposit * self.inflation
+        self.pools += inflated_deposit
 
         # TODO: maybe this is possible to manage this inside for pool?
-        self.total_shares += norm_deposit.get('for')
+        # self.total_shares += norm_deposit.get('for')
 
         # TODO: is it possible to optimize liquidity and add only to the max pool?
-        self.balance_update(user, -amount_for)
-        self.balance_update(user, -amount_against)
+        self.balance_update(user, -inflated_deposit.get('for'))
+        self.balance_update(user, -inflated_deposit.get('against'))
 
     def add_agreement(self, agreement):
         """ Adds agreement to self.agreements, increased counter and returns
@@ -123,6 +120,8 @@ class JusterC:
         deposit = Pools(
             amount_for=amount_for,
             amount_against=amount_against)
+        self.deposits[provider] -= deposit
+        self.deposits[provider].assert_positive()
 
         # TODO: assert that both pools in deposit < user deposit pools in ldgr
 
@@ -162,7 +161,7 @@ class JusterC:
             # provider WIN case:
             assert lock.unlock_time >= self.time
 
-            self.pools -= inflated_deposit
+            # self.pools -= inflated_deposit
             # TODO: is it possible to make self.pool < 0 here?
             self.pools.assert_positive()
             withdrawn_liquidity = inflated_deposit.sum()
@@ -186,7 +185,6 @@ class JusterC:
         # TODO: do I need to have this total_shares or self.pools:for is enough?
         # self.total_shares -= lock.deposit.get('for')
         self.balance_update(lock.provider, withdrawn_liquidity)
-        self.deposits[lock.provider] -= lock.deposit
 
     def claim_insurance_case(self):
         # TODO: in the contract time / block level of the claim should be recorded
