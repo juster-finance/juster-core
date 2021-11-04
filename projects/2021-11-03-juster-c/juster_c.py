@@ -70,9 +70,6 @@ class JusterC:
         inflated_deposit = deposit * self.inflation
         self.pools += inflated_deposit
 
-        # TODO: maybe this is possible to manage this inside for pool?
-        # self.total_shares += norm_deposit.get('for')
-
         # TODO: is it possible to optimize liquidity and add only to the max pool?
         self.balance_update(user, -inflated_deposit.get('for'))
         self.balance_update(user, -inflated_deposit.get('against'))
@@ -87,7 +84,6 @@ class JusterC:
         return agreement_id
 
     def insure(self, user, amount):
-        # TODO: MAYBE amount should be inflated?
         ratio = self.pools.get('against') / (self.pools.get('for') + amount)
         delta = ratio * amount
 
@@ -124,8 +120,6 @@ class JusterC:
         self.deposits[provider] -= deposit
         self.deposits[provider].assert_positive()
 
-        # TODO: assert that both pools in deposit < user deposit pools in ldgr
-
         lock = Lock(
             provider=provider,
             deposit=deposit,
@@ -150,21 +144,17 @@ class JusterC:
 
     def withdraw(self, lock_id):
         lock = self.locks.pop(lock_id)
-
-        # deposit = self.deposits[lock.provider]
         inflated_deposit = lock.deposit * self.inflation
 
-        # if not self.is_claimed_at(lock.unlock_time):
         if not self.is_claimed:
             # provider WIN case:
             assert lock.unlock_time >= self.time
 
             self.locked_pools -= inflated_deposit
             self.locked_pools.assert_almost_positive()
-            # TODO: is it possible to make self.pool < 0 here?
+            # TODO: need to understand, is it possible to make self.pool < 0 here?
             withdrawn_liquidity = inflated_deposit.sum()
 
-        # if self.is_claimed_at(lock.unlock_time):
         if self.is_claimed:
             # provider LOSE case:
             pools = self.pools + self.locked_pools
@@ -172,14 +162,9 @@ class JusterC:
             splitted_against = share * pools.get('against')
             withdrawn_liquidity = inflated_deposit.get('for') + splitted_against
 
-        # TODO: do I need to have this total_shares or self.pools:for is enough?
-        # self.total_shares -= lock.deposit.get('for')
         self.balance_update(lock.provider, withdrawn_liquidity)
 
     def claim_insurance_case(self):
-        # TODO: in the contract time / block level of the claim should be recorded
-        # and only agreements that finished after this time should be considered
-        # as winning for
         self.is_claimed = True
         self.claimed_time = self.time
 
@@ -198,16 +183,17 @@ class JusterC:
         if self.is_claimed:
             assert not self.is_claimed_at(agreement.remain_until)
 
-        # REMOVE: as far as user not added liquidity to pool, he should not remove it:
-        # self.pools.remove('for', agreement.amount)
         self.pools.add('against', agreement.delta)
+
+        # MAYBE: to have some coefficient to split profits and part of the profits
+        # should go to providers and another part should go directly to the AGAINST pool?
+        # the current case is where this coef equal to ratio:
 
         # adding amount to pools:
         share = agreement.amount / (self.pools.sum() + self.locked_pools.sum())
         self.pools *= 1 + share
         self.locked_pools *= 1 + share
         self.inflation *= 1 + share
-        self.pools.assert_positive()
 
     def to_dict(self):
         """ Returns all storage values in dict form """
@@ -233,7 +219,6 @@ class JusterC:
         assert abs(sum(self.balances.values())) < self.tolerance
         # self.pools.assert_empty()
         assert abs(self.balances['contract']) < self.tolerance
-        # assert self.total_shares == 0
         assert len(self.agreements) == 0
         assert all(deposit.is_empty() for deposit in self.deposits.values())
 

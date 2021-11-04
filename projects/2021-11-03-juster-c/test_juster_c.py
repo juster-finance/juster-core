@@ -11,6 +11,7 @@
 
 # pool ratio used to calculate insurance deltas, pool works the same way it works in Juster
 
+import pytest
 from juster_c import JusterC
 
 
@@ -29,19 +30,6 @@ def test_model_with_providers_merged_with_against_pool():
     insurance = jc.insure('D', 4)
     jc.wait(100)
     jc.dissolve(insurance)
-
-    # TODO: need to understand how this earned value can be distributed amount providers
-    # a) special `profit` variable that providers can withdraw when he apply to lock
-    #    (calculating difference between profit at the moment provider get into and
-    #    the moment he withdraws liquidity?)
-
-    # b) the better way for liquidity is to redistribute it to the pools according
-    #    to the current ratio. But how to track then how much providers earned?
-    #    maybe some kind of inflation ratio?
-
-    # MAYBE: to have some coefficient to split profits and part of the profits
-    # should go to providers and another part should go directly to the AGAINST pool?
-    # and idk maybe this coef can be equal to the current ratio?
 
     insurance = jc.insure('E', 10)
     jc.wait(25)
@@ -65,36 +53,54 @@ def test_when_provider_get_into_and_get_out_during_event():
     jc = JusterC(duration=100)
     jc.provide('A', amount_for=10, amount_against=90)
 
+    # D aggreed for insurance and no claim raised during his agreement:
     insurance = jc.insure('D', 10)
     jc.wait(100)
     jc.dissolve(insurance)
 
+    # B decided to add liquidity too:
     jc.provide('B', amount_for=20, amount_against=150)
-    # A removes some liquidity but keeping FOR pool:
+
+    # A removes some liquidity but keeping FOR pool (non symetrical case):
     lock_a_1 = jc.lock('A', 0, 30)
 
+    # E get insurance and no claim raised:
     insurance = jc.insure('E', 10)
     jc.wait(100)
     jc.dissolve(insurance)
+
+    # A withdraws locked liquidity after `duration` period:
     jc.withdraw(lock_a_1)
 
+    # C decided to add liquidity too:
     jc.provide('C', amount_for=10, amount_against=120)
-    # A removes the rest of the liquidity:
+
+    # A locks the rest of the liquidity:
     lock_a_2 = jc.lock('A', 10, 60)
 
+    # E applies for insurance and claim arised:
     insurance = jc.insure('E', 10)
     jc.wait(25)
     jc.claim_insurance_case()
 
+    # A withdraws his 10:60 using LOSE PROVIDER scenario:
     jc.withdraw(lock_a_2)
+
+    # C get reward for the claimed insurance:
     jc.reward(insurance)
 
+    # Other providers withdraw their liquidity too:
     lock_b = jc.lock('B', 20, 150)
     lock_c = jc.lock('C', 10, 120)
     jc.withdraw(lock_b)
     jc.withdraw(lock_c)
 
     jc.assert_empty()
+
+
+@pytest.mark.skip(reason='under development')
+def test_where_providers_have_very_different_ratios():
+    pass
 
 # TODO: test where providers have very different ratios, one with 10:1, one 1:1 and one 1:10
 # TODO: test where providers have lock with different ratios
