@@ -164,7 +164,7 @@ def test_where_providers_have_very_different_ratios_lose_case():
     # so then, does it mean that provider should just add all liquidity to FOR pool?
     # ^^ need to test that clearly exploit this
 
-    # Simplified profit formula: splitted FOR pool - provided AGAINST
+    # Simplified profit formula: splitted AGAINST pool - provided AGAINST
     jc.assert_balances_equal({
         'A': 0.04 * 50 - 48,
         'B': 0.48 * 50 - 48,
@@ -174,6 +174,43 @@ def test_where_providers_have_very_different_ratios_lose_case():
     jc.assert_empty()
 
 
-# TODO: test where providers have very different ratios, one with 10:1, one 1:1 and one 1:10
+def test_provider_puts_alot_in_for_to_exploit_the_system():
+
+    def scenario(case='win'):
+        jc = JusterC(duration=100)
+
+        # Three providers are participated in the event:
+        jc.provide('A', amount_for=50,  amount_against=50)
+        jc.provide('B', amount_for=150, amount_against=0)
+        assert jc.pools == Pools(200, 50)
+
+        insurance = jc.insure('C', 50)
+        assert jc.pools == Pools(200, 40)
+
+        if case == 'win':
+            jc.wait(100)
+            jc.dissolve(insurance)
+        else:
+            jc.claim_insurance_case()
+            jc.reward(insurance)
+
+        lock_a = jc.lock('A', 50, 50)
+        lock_b = jc.lock('B', 150, 0)
+        jc.withdraw(lock_a)
+        jc.withdraw(lock_b)
+        return jc
+
+    # B have very good result here in both cases:
+    scenario('win').assert_balances_equal({
+        'A': 100 / 250 * 50,
+        'B': 150 / 250 * 50
+    })
+
+    scenario('lose').assert_balances_equal({
+        'A': 50 / 200 * 40 - 50,
+        'B': 150 / 200 * 40 - 0
+    })
+
+
 # TODO: test where providers have lock with different ratios
 
