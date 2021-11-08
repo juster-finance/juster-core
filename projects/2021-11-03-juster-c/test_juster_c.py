@@ -214,3 +214,10 @@ def test_provider_puts_alot_in_for_to_exploit_the_system():
 
 # TODO: test where providers have lock with different ratios
 
+# TODO: make this tests more abstract (there are no need to bound on numbers
+#       need to test properties of the model, not exact pool ratios / balances)
+
+# TODO: test property: where user insurance once for AMOUNT and where he insurances
+#       twice for AMOUNT/2, with both same states of the contract, should receive
+#       the same delta in both cases.
+

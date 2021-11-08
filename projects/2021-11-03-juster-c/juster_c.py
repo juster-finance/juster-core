@@ -89,6 +89,10 @@ class JusterC:
 
         self.pools.remove('against', delta)
         self.balance_update(user, -amount)
+        # TODO: insure MUST increase FOR pool to, otherwise two small insurances
+        # will be better than one big:
+        # - A places 100 to 100:100 ------ 100/200 * 100 = 50
+        # - A places 50 twice to 100:100 - 100/150 * 50 + 100/200 * 50 = 58.33
 
         agreement = Agreement(
             user=user,
