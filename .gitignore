@@ -1,13 +1,6 @@
-node_modules
-build/contracts/
-package-lock.json
-yarn.lock
-faucet.json
+key.json
 **/.ipynb_checkpoints/*
 **/__pycache__/*
-2021-*.txt
-pytezos-tests/*.ipynb
-NAMES.MD
 **/test-keys/*
 *.log
 *.gzip
