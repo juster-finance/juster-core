@@ -2,13 +2,24 @@
     {
         "currency_pair": "XTZ-USD",
         "target_dynamics": 1.0,
+        "bets_period": 3600,
+        "measure_period": 3600,
+        "liquidity_percent": 0.01,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000,
+        "pool_a_ratio": 494983,
+        "pool_b_ratio": 505017
+    },
+    {
+        "currency_pair": "XTZ-USD",
+        "target_dynamics": 1.0,
         "bets_period": 21600,
         "measure_period": 21600,
         "liquidity_percent": 0.01,
         "expiration_fee": 100000,
         "measure_start_fee": 100000,
-        "pool_a_ratio": 488294,
-        "pool_b_ratio": 511706
+        "pool_a_ratio": 501672,
+        "pool_b_ratio": 498328
     },
     {
         "currency_pair": "XTZ-USD",
@@ -18,8 +29,19 @@
         "liquidity_percent": 0.01,
         "expiration_fee": 100000,
         "measure_start_fee": 100000,
-        "pool_a_ratio": 448160,
-        "pool_b_ratio": 551840
+        "pool_a_ratio": 451505,
+        "pool_b_ratio": 548495
+    },
+    {
+        "currency_pair": "BTC-USD",
+        "target_dynamics": 1.0,
+        "bets_period": 3600,
+        "measure_period": 3600,
+        "liquidity_percent": 0.01,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000,
+        "pool_a_ratio": 494983,
+        "pool_b_ratio": 505017
     },
     {
         "currency_pair": "BTC-USD",
@@ -29,8 +51,8 @@
         "liquidity_percent": 0.01,
         "expiration_fee": 100000,
         "measure_start_fee": 100000,
-        "pool_a_ratio": 454849,
-        "pool_b_ratio": 545151
+        "pool_a_ratio": 444816,
+        "pool_b_ratio": 555184
     },
     {
         "currency_pair": "BTC-USD",
@@ -40,8 +62,19 @@
         "liquidity_percent": 0.01,
         "expiration_fee": 100000,
         "measure_start_fee": 100000,
-        "pool_a_ratio": 471571,
-        "pool_b_ratio": 528429
+        "pool_a_ratio": 488294,
+        "pool_b_ratio": 511706
+    },
+    {
+        "currency_pair": "ETH-USD",
+        "target_dynamics": 1.0,
+        "bets_period": 3600,
+        "measure_period": 3600,
+        "liquidity_percent": 0.01,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000,
+        "pool_a_ratio": 481605,
+        "pool_b_ratio": 518395
     },
     {
         "currency_pair": "ETH-USD",
@@ -51,8 +84,8 @@
         "liquidity_percent": 0.01,
         "expiration_fee": 100000,
         "measure_start_fee": 100000,
-        "pool_a_ratio": 474916,
-        "pool_b_ratio": 525084
+        "pool_a_ratio": 434782,
+        "pool_b_ratio": 565218
     },
     {
         "currency_pair": "ETH-USD",
@@ -62,7 +95,7 @@
         "liquidity_percent": 0.01,
         "expiration_fee": 100000,
         "measure_start_fee": 100000,
-        "pool_a_ratio": 414715,
-        "pool_b_ratio": 585285
+        "pool_a_ratio": 431438,
+        "pool_b_ratio": 568562
     }
 ]
