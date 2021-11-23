@@ -24,7 +24,8 @@ python scripts/deploy.py
 Note that you need to have `key.json` key file in your project root directory that will be used to deploy the contract. You can get one for test networks [here](https://faucet.tzalpha.net/)
 
 ## Description
-![Event life-cycle](docs/JUSTER-FLOW-event-lyfecycle.drawio.png)
-![Core entrypoints](docs/JUSTER-FLOW-juster-core.drawio.png)
-![Management entrypoints](docs/JUSTER-FLOW-juster-management.drawio.png)
+There are some flow charts that show Juster core contract implementation details:
+* [Event life-cycle](docs/JUSTER-FLOW-event-lyfecycle.drawio.png)
+* [Core entrypoints](docs/JUSTER-FLOW-juster-core.drawio.png)
+* [Magement entrypoints](docs/JUSTER-FLOW-juster-management.drawio.png)
 
