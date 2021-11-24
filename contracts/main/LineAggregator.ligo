@@ -1,19 +1,11 @@
 type lineType is record [
+    currentEventId : option(nat);
     lastBetsCloseTime : timestamp;
     currencyPair : string;
     targetDynamics : nat;
     liquidityPercent : nat;
     rateAboveEq : nat;
     rateBelow : nat;
-]
-
-type providerType is record [
-    shares : nat;
-    (* withdrawable events is events where provider can get his share,
-        key: eventId
-        value: sharesCount
-    *)
-    withdrawableEvents : map(nat, nat);
 ]
 
 type storage is record [
@@ -32,10 +24,23 @@ type storage is record [
     withdrawableLiquidity : tez;
 
     (* claims is liquidity, that can be withdrawn by providers,
-        key: eventId
+        key: eventId*providerAddress
         value: shares*totalShares
     *)
-    claims : big_map(nat, nat*nat);
+
+    claims : big_map(nat*address, nat*nat);
+    (* TODO: alternative way is to have big_map with
+        key: providerAddress
+        value: map(eventId, shares*totalShares)
+        then it would be possible to iterate onchain (but maybe this is bad idea)
+            - anyway this is required to iterate over lines to create this claim
+
+        ALSO can be done with:
+        key: claimId
+        value: providerAddress*shares*totalShares*list(eventId)
+        claims : big_map(nat, nat*nat);
+        nextClaimId : nat;
+    *)
 
     manager : address;
     (* TODO: lockedShares: nat; ?*)
@@ -79,7 +84,25 @@ function claimLiquidity(
     const shares : nat;
     var store : storage) : (list(operation) * storage) is
 block {
-    skip;
+    const providerAddress = Tezos.sender;
+    const providerSharesOption = Big_map.find_opt(providerAddress, store.shares);
+    const providerShares = case providerSharesOption of
+    | Some(shares) -> shares
+    | None -> (failwith("No provided liquidity") : nat)
+    end;
+
+    (* TODO: assert that shares < providerAddress shares in ledger *)
+
+    for lineId -> lineParams in map store.lines block {
+        store.claims := case lineParams.currentEventId of
+        | Some(eventId) -> Big_map.add(
+            (eventId, providerAddress),
+            (providerShares, store.totalShares),
+            store.claims
+        )
+        | None -> store.claims
+        end;
+    }
 } with ((nil: list(operation)), store)
 
 
