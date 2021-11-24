@@ -20,7 +20,7 @@ type storage is record [
     shares : big_map(address, nat);
     totalShares : nat;
 
-    eventResults : big_map(nat, tez);
+    eventResults : big_map(nat, nat);
     withdrawableLiquidity : tez;
 
     (* claims is liquidity, that can be withdrawn by providers,
@@ -91,7 +91,17 @@ block {
     | None -> (failwith("No provided liquidity") : nat)
     end;
 
-    (* TODO: assert that shares < providerAddress shares in ledger *)
+    if shares > providerShares then failwith("Not enough shares") else skip;
+    const leftShares = abs(providerShares - shares);
+
+    (* TODO: what happens if provider already requested withdraw for a given
+        eventId? For example he requested 50/100 shares and then 50 more.
+        There should be possibility to add this shares to the claims:
+
+        need to have addClaim function where either new value added to big map
+        either if big map already have some claim for the particiant*eventId
+        then it should be increased
+    *)
 
     for lineId -> lineParams in map store.lines block {
         store.claims := case lineParams.currentEventId of
@@ -102,16 +112,61 @@ block {
         )
         | None -> store.claims
         end;
-    }
+    };
+
+    store.shares := Big_map.update(providerAddress, Some(leftShares), store.shares);
+    (* TODO: Big_map.remove if leftShares == 0n? or this is not important? *)
+
+    (* TODO: assert that store.totalShares > shares? this case should be
+        impossible, but feels like this is good to have this check? *)
+    store.totalShares := abs(store.totalShares - shares);
+
 } with ((nil: list(operation)), store)
+
+
+(* TODO: use tools that created for Juster? *)
+function getReceiver(const a : address) : contract(unit) is
+    case (Tezos.get_contract_opt(a): option(contract(unit))) of
+    | Some (con) -> con
+    | None -> (failwith ("Not a contract") : (contract(unit)))
+    end;
+
+function prepareOperation(
+    const addressTo : address;
+    const payout : tez
+) : operation is Tezos.transaction(unit, payout, getReceiver(addressTo));
 
 
 function withdrawLiquidity(
     const eventIds : list(nat);
     var store : storage) : (list(operation) * storage) is
 block {
-    skip;
-} with ((nil: list(operation)), store)
+
+    const providerAddress = Tezos.sender;
+
+    var withdrawSum := 0n;
+    for eventId in list eventIds block {
+        const eventResult = case Big_map.find_opt(eventId, store.eventResults) of
+        | Some(result) -> result
+        | None -> 0n
+        end;
+
+        const key = (eventId, providerAddress);
+        const eventReward = case Big_map.find_opt(key, store.claims) of
+        | Some(claim) -> eventResult * claim.0 / claim.1
+        | None -> 0n
+        end;
+
+        withdrawSum := withdrawSum + eventReward;
+        store.claims := Big_map.remove(key, store.claims);
+    };
+
+    const payout = withdrawSum * 1mutez;
+    const operations = if payout > 0tez then
+        list[prepareOperation(providerAddress, payout)]
+    else (nil: list(operation));
+
+} with (operations, store)
 
 
 function getReward(
