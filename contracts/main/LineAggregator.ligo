@@ -298,12 +298,75 @@ block {
 } with ((nil: list(operation)), store)
 
 
+(* TODO: need to use Juster newEventParams and provideLiquidityParams instead
+    having this copies here *)
+type newEventParams is record [
+    currencyPair : string;
+    targetDynamics : nat;
+    betsCloseTime : timestamp;
+    measurePeriod : nat;
+    liquidityPercent : nat;
+]
+
+type provideLiquidityParams is record [
+    eventId : nat;
+    expectedRatioAboveEq : nat;
+    expectedRatioBelow : nat;
+    maxSlippage : nat;
+]
+
+
+function createEvent(
+    const lineId : nat;
+    var store : storage) : (operation * operation * storage) is
+block {
+    (* checking that event can be created *)
+
+    (*
+    (* newEvent transaction *)
+    const newEventEntrypoint =
+        case (Tezos.get_entrypoint_opt("%newEvent", store.juster) : option(contract(newEventParams))) of
+        | None -> (failwith("Juster is not found") : contract(newEventParams))
+        | Some(con) -> con
+        end;
+
+    const newEvent = record [
+        currencyPair : string;
+        targetDynamics : nat;
+        betsCloseTime : timestamp;
+        measurePeriod : nat;
+        liquidityPercent : nat;
+    ]
+
+    (* TODO: need to transfer some xtz to create new events! *)
+    const callback : operation = Tezos.transaction(
+        (event.currencyPair, entrypoint),
+        0tez,
+        newEventEntrypoint);
+    const operations = makeCallToOracle(
+        eventId, store, (Tezos.self("%closeCallback") : callbackEntrypoint));
+    store.closeCallId := Some(eventId);
+
+    *)
+
+    const newEventOperation = Tezos.transaction(unit, 0tez, getReceiver(store.juster));
+    const provideLiquidityOperation = Tezos.transaction(unit, 0tez, getReceiver(store.juster));
+
+    (* provideLiquidity transaction *)
+} with (newEventOperation, provideLiquidityOperation, store)
+
+
 function createEvents(
     const lineIds : list(nat);
     var store : storage) : (list(operation) * storage) is
 block {
-    skip;
-} with ((nil: list(operation)), store)
+    var operations := (nil : list(operation));
+    for lineId in list lineIds block {
+        const (newEventOperation, provideLiquidityOperation, updatedStore) = createEvent(lineId, store);
+        operations := newEventOperation # provideLiquidityOperation # operations;
+        store := updatedStore
+    }
+} with (operations, store)
 
 
 function main (const params : action; var s : storage) : (list(operation) * storage) is
