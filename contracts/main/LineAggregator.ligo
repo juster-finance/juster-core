@@ -4,13 +4,16 @@ type lineType is record [
     liquidityPercent : nat;
     rateAboveEq : nat;
     rateBelow : nat;
-    (* TODO: maybe this is good to have both betsPeriod and measurePeriod *)
-    period : nat;
+
+    measurePeriod : nat;
+    betsPeriod : nat;
 
     (* parameters used to control events flow *)
     lastBetsCloseTime : timestamp;
 
     (* TODO: consider having maxEvents amount that run in parallel for the line? *)
+    (* TODO: consider having advanceTime that allows to create new event before
+        lastBetsCloseTime *)
 ]
 
 type positionType is record [
@@ -53,7 +56,7 @@ type storage is record [
     lines : map(nat, lineType);
 
     (* active lines is mapping between eventId and lineId *)
-    activeLines : map(nat, nat);
+    activeEvents : map(nat, nat);
     events : big_map(nat, eventType);
 
     // events : big_map(nat, eventType);
@@ -74,6 +77,8 @@ type storage is record [
     (* TODO: lockedShares: nat; ?*)
 
     juster : address;
+    newEventFee : tez;
+    maxActiveEvents : nat;
 ]
 
 
@@ -98,7 +103,8 @@ type action is
 (* receiving reward from Juster, nat is eventId *)
 | PayReward of nat
 (* TODO: removeLine? *)
-| CreateEvents of list(nat)
+// | CreateEvents of list(nat)
+| CreateEvent of nat
 
 
 function addLine(
@@ -106,6 +112,7 @@ function addLine(
     var store : storage) : (list(operation) * storage) is
 block {
     skip;
+    (* TODO: increase maxActiveEvents *)
 } with ((nil: list(operation)), store)
 
 
@@ -149,7 +156,7 @@ block {
     const leftShares = abs(position.shares - params.shares);
 
     (* TODO: maybe this is enough to have set of eventIds instead of mapping *)
-    for eventId -> lineId in map store.activeLines block {
+    for eventId -> lineId in map store.activeEvents block {
         const key = record [
             eventId = eventId;
             positionId = params.positionId;
@@ -199,6 +206,7 @@ block {
         impossible, but feels like this is good to have this check? *)
     store.totalShares := abs(store.totalShares - params.shares);
 
+    (* TODO: give reward from free liquidity that are not used in any events *)
 } with ((nil: list(operation)), store)
 
 
@@ -268,7 +276,7 @@ block {
     (* TODO: is this field isFinished required anywhere? *)
     event.isFinished := True;
     store.events := Big_map.update(eventId, Some(event), store.events);
-    store.activeLines := Map.remove(eventId, store.activeLines);
+    store.activeEvents := Map.remove(eventId, store.activeEvents);
 
     (* adding withdrawable liquidity to the pool: *)
     const newWithdrawable = reward * event.lockedShares / event.totalShares;
@@ -305,44 +313,93 @@ type provideLiquidityParams is record [
 
 function createEvent(
     const lineId : nat;
-    var store : storage) : (operation * operation * storage) is
+    var store : storage) : (list(operation) * storage) is
 block {
-    (* checking that event can be created *)
 
-    (*
+    (* TODO: if store.activeEvents.size > store.maxActiveEvents then failwith *)
+
+    var line := case Map.find_opt(lineId, store.lines) of
+    | Some(line) -> line
+    | None -> (failwith("Line is not found") : lineType)
+    end;
+
+    (* checking that event can be created *)
+    (* only one event in line can be opened for bets *)
+    (* TODO: consider having some 1-5 min advance for event creation? *)
+    if Tezos.now < line.lastBetsCloseTime then
+        failwith("Event cannot be created until previous event betsCloseTime")
+    else skip;
+
+    (* If there was some missed events, need to adjust nextBetsCloseTime *)
+    const periods = (Tezos.now - line.lastBetsCloseTime) / line.betsPeriod + 1n;
+    const nextBetsCloseTime = line.lastBetsCloseTime + line.betsPeriod*periods;
+
     (* newEvent transaction *)
     const newEventEntrypoint =
-        case (Tezos.get_entrypoint_opt("%newEvent", store.juster) : option(contract(newEventParams))) of
-        | None -> (failwith("Juster is not found") : contract(newEventParams))
+        case (Tezos.get_entrypoint_opt("%newEvent", store.juster)
+              : option(contract(newEventParams))) of
+        | None -> (failwith("Juster.newEvent is not found") : contract(newEventParams))
         | Some(con) -> con
         end;
 
     const newEvent = record [
-        currencyPair : string;
-        targetDynamics : nat;
-        betsCloseTime : timestamp;
-        measurePeriod : nat;
-        liquidityPercent : nat;
-    ]
+        currencyPair = line.currencyPair;
+        targetDynamics = line.targetDynamics;
+        betsCloseTime = nextBetsCloseTime;
+        measurePeriod = line.measurePeriod;
+        liquidityPercent = line.liquidityPercent;
+    ];
 
-    (* TODO: need to transfer some xtz to create new events! *)
-    const callback : operation = Tezos.transaction(
-        (event.currencyPair, entrypoint),
-        0tez,
-        newEventEntrypoint);
-    const operations = makeCallToOracle(
-        eventId, store, (Tezos.self("%closeCallback") : callbackEntrypoint));
-    store.closeCallId := Some(eventId);
+    const newEventOperation = Tezos.transaction(
+        newEvent, store.newEventFee, newEventEntrypoint);
 
-    *)
-
-    const newEventOperation = Tezos.transaction(unit, 0tez, getReceiver(store.juster));
-    const provideLiquidityOperation = Tezos.transaction(unit, 0tez, getReceiver(store.juster));
+    (* getting nextEventId from Juster *)
+    const nextEventIdOption : option(nat) = Tezos.call_view
+        ("getNextEventId", Unit, store.juster);
+    const nextEventId = case nextEventIdOption of
+    | Some(id) -> id
+    | None -> (failwith("Juster.getNextEventId view is not found") : nat)
+    end;
 
     (* provideLiquidity transaction *)
-} with (newEventOperation, provideLiquidityOperation, store)
+    const provideLiquidityEntrypoint =
+        case (Tezos.get_entrypoint_opt("%provideLiquidity", store.juster)
+              : option(contract(provideLiquidityParams))) of
+        | None -> (failwith("Juster.provideLiquidity is not found") : contract(provideLiquidityParams))
+        | Some(con) -> con
+        end;
+
+    const provideLiquidity = record [
+        eventId = nextEventId;
+        expectedRatioAboveEq = line.rateAboveEq;
+        expectedRatioBelow = line.rateBelow;
+        maxSlippage = 0n;
+    ];
+
+    const freeLiquidity = Tezos.amount/1mutez - store.withdrawableLiquidity;
+    (* TODO: assert freeLiquidity > 0tez ? *)
+    const expectedEvents = store.maxActiveEvents - Map.size(store.activeEvents);
+    const liquidityAmount = abs(freeLiquidity / expectedEvents) * 1mutez;
+
+    const provideLiquidityOperation = Tezos.transaction(
+        provideLiquidity, liquidityAmount, provideLiquidityEntrypoint);
+
+    const operations = list[newEventOperation; provideLiquidityOperation];
+
+    (* adding new activeEvent: *)
+    const event = record [
+        createdTime = Tezos.now;
+        totalShares = store.totalShares;
+        isFinished = False;
+        lockedShares = 0n;
+        result = (None : option(nat));
+    ];
+    store.activeEvents := Big_map.add(nextEventId, lineId, store.activeEvents);
+
+} with (operations, store)
 
 
+(*
 function createEvents(
     const lineIds : list(nat);
     var store : storage) : (list(operation) * storage) is
@@ -354,6 +411,7 @@ block {
         store := updatedStore
     }
 } with (operations, store)
+*)
 
 
 function main (const params : action; var s : storage) : (list(operation) * storage) is
@@ -363,6 +421,6 @@ case params of
 | ClaimLiquidity(p) -> claimLiquidity(p, s)
 | WithdrawLiquidity(p) -> withdrawLiquidity(p, s)
 | PayReward(p) -> payReward(p, s)
-| CreateEvents(p) -> createEvents(p, s)
+| CreateEvent(p) -> createEvent(p, s)
 end
 
