@@ -10,13 +10,7 @@ type lineType is record [
     (* parameters used to control events flow *)
     lastBetsCloseTime : timestamp;
 
-    (* parameters used in claims: *)
-    isRunning : bool;
-    (* TODO: as far as eventId == 0 is valid option, maybe this is better to have  option(nat) *)
-    lastEventId : nat;
-    lastEventCreatedTime : timestamp;
-    lastTotalShares : nat;
-    lockedShares : nat;
+    (* TODO: consider having maxEvents amount that run in parallel for the line? *)
 ]
 
 type positionType is record [
@@ -29,18 +23,15 @@ type positionType is record [
     addedTime : timestamp;
 ]
 
-(*
 type eventType is record [
-    // createdTime : timestamp;
-    // totalShares : nat;
-    // isFinished : bool;
-    (* TODO: why do I need this provided amount? is it some kind of totalShares? *)
-    // provided : nat;
+    createdTime : timestamp;
+    totalShares : nat;
 
-    (* TODO: maybe this would be enought to have only event results registry? *)
+    (* TODO: do I need to have this isFinished status? *)
+    isFinished : bool;
+    lockedShares : nat;
     result : option(nat);
 ]
-*)
 
 type claimKey is record [
     eventId : nat;
@@ -63,9 +54,7 @@ type storage is record [
 
     (* active lines is mapping between eventId and lineId *)
     activeLines : map(nat, nat);
-
-    (* received results of each events: *)
-    eventResults : big_map(nat, nat);
+    events : big_map(nat, eventType);
 
     // events : big_map(nat, eventType);
     positions : big_map(nat, positionType);
@@ -139,6 +128,13 @@ if (position.provider =/= Tezos.sender) then failwith("Not position owner")
 else Unit;
 
 
+function getEvent(const store : storage; const eventId : nat) : eventType is
+case Big_map.find_opt(eventId, store.events) of
+| Some(event) -> event
+| None -> (failwith("Event is not found") : eventType)
+end;
+
+
 function claimLiquidity(
     const params : claimLiquidityParams;
     var store : storage) : (list(operation) * storage) is
@@ -152,15 +148,14 @@ block {
     else skip;
     const leftShares = abs(position.shares - params.shares);
 
-    (* TODO: consider to iterate over activeLines instead: this is map(evendId, lineId); *)
-    for lineId -> line in map store.lines block {
-        (* TODO: consider possibility to have lastEventId None?
-            or this will be always with isRunning == False so this is not important?
-        *)
+    (* TODO: maybe this is enough to have set of eventIds instead of mapping *)
+    for eventId -> lineId in map store.activeLines block {
         const key = record [
-            eventId = line.lastEventId;
+            eventId = eventId;
             positionId = params.positionId;
         ];
+
+        var event := getEvent(store, eventId);
 
         (* checking if this claim already have some shares: *)
         const alreadyClaimedShares = case Big_map.find_opt(key, store.claims) of
@@ -170,7 +165,7 @@ block {
 
         const updatedClaim = record [
             shares = alreadyClaimedShares + params.shares;
-            totalShares = line.lastTotalShares;
+            totalShares = event.totalShares;
         ];
 
         (* TODO: what happens if positon added in the same block when event was
@@ -179,8 +174,7 @@ block {
             of time?
         *)
 
-        const isPositionActive = position.addedTime > line.lastEventCreatedTime;
-        if line.isRunning and isPositionActive then
+        if position.addedTime > event.createdTime then
             store.claims := Big_map.update(key, Some(updatedClaim), store.claims)
         else skip;
 
@@ -188,8 +182,8 @@ block {
             was runned and then line was finished? He should be able to receive
             his remaining 50% from current liquidity pool *)
 
-        line.lockedShares := line.lockedShares + params.shares;
-        store.lines := Map.update(lineId, Some(line), store.lines);
+        event.lockedShares := event.lockedShares + params.shares;
+        store.events := Big_map.update(eventId, Some(event), store.events);
     };
 
     const updatedPosition = record [
@@ -231,9 +225,10 @@ block {
         const position = getPosition(store, key.positionId);
         checkPositionProviderIsSender(position);
 
-        const eventResult = case Big_map.find_opt(key.eventId, store.eventResults) of
+        const event = getEvent(store, key.eventId);
+        const eventResult = case event.result of
         | Some(result) -> result
-        | None -> (failwith("Event result is not found") : nat)
+        | None -> (failwith("Event result is not received yet") : nat)
         end;
 
         (* TODO: consider failwith if claim is not found? *)
@@ -267,24 +262,16 @@ block {
 
     (* adding event result *)
     const reward = Tezos.amount / 1mutez;
-    store.eventResults := Big_map.add(eventId, reward, store.eventResults);
+    var event := getEvent(store, eventId);
+    event.result := Some(reward);
 
-    (* updating lines *)
-    const lineId = case Map.find_opt(eventId, store.activeLines) of
-    | Some(id) -> id
-    | None -> (failwith("Wrong Juster state: event id not in lines") : nat)
-    end;
+    (* TODO: is this field isFinished required anywhere? *)
+    event.isFinished := True;
+    store.events := Big_map.update(eventId, Some(event), store.events);
     store.activeLines := Map.remove(eventId, store.activeLines);
 
-    var line := case Map.find_opt(lineId, store.lines) of
-    | Some(id) -> id
-    | None -> (failwith("Wrong Juster state: line is not found") : lineType)
-    end;
-    line.isRunning := False;
-    store.lines := Map.update(lineId, Some(line), store.lines);
-
     (* adding withdrawable liquidity to the pool: *)
-    const newWithdrawable = reward * line.lockedShares / line.lastTotalShares;
+    const newWithdrawable = reward * event.lockedShares / event.totalShares;
 
     store.withdrawableLiquidity := store.withdrawableLiquidity + newWithdrawable;
 
