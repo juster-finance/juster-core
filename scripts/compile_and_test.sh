@@ -1,3 +1,4 @@
+docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.29.0 compile contract contracts/main/LineAggregator.ligo -e main --protocol hangzhou > build/tz/line_aggregator.tz
 docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.29.0 compile contract contracts/main/OracleMock.ligo -e main > build/tz/oracle_mock.tz
 docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.29.0 compile contract contracts/main/Juster.ligo -e main > build/tz/juster.tz
 docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.29.0 compile expression pascaligo lambda --init-file "contracts/lambdas/raiseLiquidityFee.ligo" > build/tz/lambda_raise_liq_fee.tz
