@@ -3949,5 +3949,6 @@
                               PAIR } ;
                          SWAP ;
                          CAR ;
-                         PAIR } } } } } }
+                         PAIR } } } } } ;
+  view "getNextEventId" unit nat { CDR ; CAR ; CDR ; CDR ; CAR ; CAR } }
 

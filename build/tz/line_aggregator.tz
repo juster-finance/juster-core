@@ -414,12 +414,29 @@
                      DUP ;
                      DUG 2 ;
                      CAR ;
-                     CDR ;
+                     CAR ;
+                     CAR ;
+                     CAR ;
+                     SIZE ;
+                     DUP 3 ;
                      CAR ;
                      CDR ;
+                     CDR ;
+                     CDR ;
+                     SUB ;
+                     PUSH int 0 ;
                      SWAP ;
                      DUP ;
                      DUG 2 ;
+                     COMPARE ;
+                     LE ;
+                     IF { PUSH string "Max active events limit reached" ; FAILWITH } {} ;
+                     DUP 3 ;
+                     CAR ;
+                     CDR ;
+                     CAR ;
+                     CDR ;
+                     DUP 3 ;
                      GET ;
                      IF_NONE { PUSH string "Line is not found" ; FAILWITH } {} ;
                      DUP ;
@@ -468,7 +485,7 @@
                      CDR ;
                      CAR ;
                      ADD ;
-                     DUP 4 ;
+                     DUP 5 ;
                      CAR ;
                      CDR ;
                      CAR ;
@@ -478,7 +495,7 @@
                                    (pair (nat %liquidityPercent) (nat %measurePeriod)))
                              (nat %targetDynamics)) ;
                      IF_NONE { PUSH string "Juster.newEvent is not found" ; FAILWITH } {} ;
-                     DUP 5 ;
+                     DUP 6 ;
                      CDR ;
                      CAR ;
                      CAR ;
@@ -506,7 +523,7 @@
                      PAIR ;
                      PAIR ;
                      TRANSFER_TOKENS ;
-                     DUP 4 ;
+                     DUP 5 ;
                      CAR ;
                      CDR ;
                      CAR ;
@@ -516,7 +533,7 @@
                      IF_NONE
                        { PUSH string "Juster.getNextEventId view is not found" ; FAILWITH }
                        {} ;
-                     DUP 5 ;
+                     DUP 6 ;
                      CAR ;
                      CDR ;
                      CAR ;
@@ -525,15 +542,28 @@
                        (pair (pair (nat %eventId) (nat %expectedRatioAboveEq))
                              (pair (nat %expectedRatioBelow) (nat %maxSlippage))) ;
                      IF_NONE { PUSH string "Juster.provideLiquidity is not found" ; FAILWITH } {} ;
-                     DUP 6 ;
+                     PUSH mutez 1 ;
+                     DUP 8 ;
+                     CDR ;
+                     CAR ;
+                     CAR ;
+                     CAR ;
+                     DIG 6 ;
+                     ABS ;
+                     MUL ;
+                     EDIV ;
+                     IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                     CAR ;
+                     DUP 7 ;
                      CDR ;
                      CDR ;
                      CDR ;
                      PUSH mutez 1 ;
-                     AMOUNT ;
+                     BALANCE ;
                      EDIV ;
                      IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
                      CAR ;
+                     SUB ;
                      SUB ;
                      DUP 7 ;
                      CAR ;
