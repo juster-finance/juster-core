@@ -69,33 +69,42 @@ function forceMajeureReturnPayout(
         + getLedgerAmount(key, store.depositedLiquidity);
 
 
-function excludeFeeReward(
+function calculateFee(
     const store : storage;
     const params : withdrawParams;
-    const payout : tez) : list(operation) is
-
+    const event : eventType;
+    const payout : tez) : tez is
 block {
-    var operations : list(operation) := nil;
-    var participantPayout : tez := 0tez;
-    var senderPayout : tez := 0tez;
+    (* fee cannot exceed payout: *)
+    const fee = if payout < store.config.rewardCallFee
+        then payout
+        else store.config.rewardCallFee;
 
-    if payout > store.config.rewardCallFee
-    then block {
-        participantPayout := payout - store.config.rewardCallFee;
-        senderPayout := store.config.rewardCallFee;
-    } else senderPayout := payout;
+    (* fee can be extracted only if two conditions meet:
+        - sender is not participant itself
+        - after closing event timedelta was passed *)
+    const closedTime = case event.closedOracleTime of
+    | Some(time) -> time
+    | None -> (failwith("Wrong state: caulculating fee for unfinished event"): timestamp)
+    end;
 
-    if participantPayout > 0tez
-    then operations := prepareOperation(
-            params.participantAddress, participantPayout) # operations
-    else skip;
+    const feeTime : timestamp = closedTime + int(store.config.rewardFeeSplitAfter);
+    const senderCanGetFee = Tezos.now >= feeTime;
+    const senderIsNotParticipant = Tezos.sender =/= params.participantAddress;
 
-    if senderPayout > 0tez
-    then operations := prepareOperation(
-            Tezos.sender, senderPayout) # operations
-    else skip;
+    const senderFee = if senderIsNotParticipant and senderCanGetFee
+        then fee
+        else 0tez;
+} with senderFee
 
-} with operations
+
+function makeParticipantPayoutOperation(
+    const payout : tez;
+    const destination : address) : operation is
+block {
+    (* TODO: try to get entrypoint payReward with nat *)
+    const operation = Tezos.transaction(unit, payout, getReceiver(destination));
+} with operation
 
 
 function makeWithdrawOperations(
@@ -105,22 +114,20 @@ function makeWithdrawOperations(
     const payout : tez) : list(operation) is
 block {
 
-    (* By default creating one operation to participantAddress: *)
-    var operations : list(operation) :=
-        makeOperationsIfNotZero(params.participantAddress, payout);
+    const senderFee = calculateFee(store, params, event, payout);
+    const participantPayout = payout - senderFee;
 
-    (* If a lot time passed from closed time, splitting reward and
-        rewriting operations: *)
-    case event.closedOracleTime of
-    | Some(time) -> block{
-        const feeTime : timestamp = time + int(store.config.rewardFeeSplitAfter);
+    var operations : list(operation) := nil;
 
-        if (Tezos.sender =/= params.participantAddress) and (Tezos.now >= feeTime)
-        then operations := excludeFeeReward(store, params, payout)
-        else skip;
-    }
-    | None -> skip
-    end;
+    if participantPayout > 0tez
+    then operations := makeParticipantPayoutOperation
+        (participantPayout, params.participantAddress) # operations
+    else skip;
+
+    if senderFee > 0tez
+    then operations := Tezos.transaction 
+        (unit, senderFee, getReceiver(Tezos.sender)) # operations
+    else skip;
 
 } with operations;
 
@@ -165,7 +172,11 @@ block {
     if event.isForceMajeure then
     block {
         const payoutValue : tez = forceMajeureReturnPayout(store, key);
-        operations := makeOperationsIfNotZero(params.participantAddress, payoutValue);
+        operations := if payoutValue > 0tez
+            then list[
+                makeParticipantPayoutOperation
+                    (payoutValue, params.participantAddress)]
+            else (nil: list(operation))
     }
     else block {
         const payout : payoutInfo = calculatePayout(store, event, key);

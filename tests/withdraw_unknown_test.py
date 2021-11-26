@@ -26,6 +26,7 @@ class WithdrawUnknownTest(JusterBaseTestCase):
 
         # Forced finish:
         self.storage['events'][0].update({
+            'closedOracleTime': 0,
             'isClosed': True,
             'isBetsAboveEqWin': True
         })
@@ -63,6 +64,7 @@ class WithdrawUnknownTest(JusterBaseTestCase):
 
         # Forced finish:
         self.storage['events'][0].update({
+            'closedOracleTime': 0,
             'isClosed': True,
             'isBetsAboveEqWin': True
         })
