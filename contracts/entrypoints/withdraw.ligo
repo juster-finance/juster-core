@@ -100,11 +100,12 @@ block {
 
 function makeParticipantPayoutOperation(
     const payout : tez;
-    const destination : address) : operation is
-block {
-    (* TODO: try to get entrypoint payReward with nat *)
-    const operation = Tezos.transaction(unit, payout, getReceiver(destination));
-} with operation
+    const destination : address;
+    const eventId : nat) : operation is
+case (Tezos.get_entrypoint_opt("%payReward", destination) : option(contract(nat))) of
+| None -> Tezos.transaction(unit, payout, getReceiver(destination))
+| Some(receiver) -> Tezos.transaction(eventId, payout, receiver)
+end;
 
 
 function makeWithdrawOperations(
@@ -121,7 +122,7 @@ block {
 
     if participantPayout > 0tez
     then operations := makeParticipantPayoutOperation
-        (participantPayout, params.participantAddress) # operations
+        (participantPayout, params.participantAddress, params.eventId) # operations
     else skip;
 
     if senderFee > 0tez
@@ -175,7 +176,7 @@ block {
         operations := if payoutValue > 0tez
             then list[
                 makeParticipantPayoutOperation
-                    (payoutValue, params.participantAddress)]
+                    (payoutValue, params.participantAddress, params.eventId)]
             else (nil: list(operation))
     }
     else block {
