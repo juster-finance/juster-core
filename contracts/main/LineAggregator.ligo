@@ -35,6 +35,7 @@ type eventType is record [
     isFinished : bool;
     lockedShares : nat;
     result : option(nat);
+    provided : nat;
 ]
 
 type claimKey is record [
@@ -60,10 +61,13 @@ type storage is record [
     activeEvents : map(nat, nat);
     events : big_map(nat, eventType);
 
-    // events : big_map(nat, eventType);
     positions : big_map(nat, positionType);
     nextPositionId : nat;
     totalShares : nat;
+
+    (* activeLiquidity aggregates all liquidity that are in activeEvents,
+        it is needed to calculate new share amount for new positions *)
+    activeLiquidity : nat;
 
     withdrawableLiquidity : nat;
 
@@ -125,7 +129,22 @@ block {
 function depositLiquidity(
     var store : storage) : (list(operation) * storage) is
 block {
-    skip;
+
+    (* calculating shares *)
+    const provided = Tezos.amount/1mutez;
+    const totalLiquidity = store.activeLiquidity + Tezos.balance/1mutez;
+    const shares = provided * store.totalShares / totalLiquidity;
+
+    const newPosition = record [
+        provider = Tezos.sender;
+        shares = shares;
+        addedTime = Tezos.now;
+    ];
+
+    store.positions[store.nextPositionId] := newPosition;
+    store.nextPositionId := store.nextPositionId + 1n;
+    store.totalShares := store.totalShares + shares;
+
 } with ((nil: list(operation)), store)
 
 
@@ -296,6 +315,9 @@ block {
         to make sure
     *)
 
+    (* TODO: assert that event.provided >= store.activeLiquidity *)
+    store.activeLiquidity := abs(store.activeLiquidity - event.provided);
+
 } with ((nil: list(operation)), store)
 
 
@@ -399,8 +421,11 @@ block {
         isFinished = False;
         lockedShares = 0n;
         result = (None : option(nat));
+        provided = liquidityAmount/1mutez;
     ];
+    store.events[nextEventId] := event;
     store.activeEvents := Big_map.add(nextEventId, lineId, store.activeEvents);
+    store.activeLiquidity := store.activeLiquidity + liquidityAmount/1mutez;
 
 } with (operations, store)
 
@@ -423,7 +448,7 @@ block {
 function main (const params : action; var s : storage) : (list(operation) * storage) is
 case params of
 | AddLine(p) -> addLine(p, s)
-| DepositLiquidity(p) -> depositLiquidity(s)
+| DepositLiquidity -> depositLiquidity(s)
 | ClaimLiquidity(p) -> claimLiquidity(p, s)
 | WithdrawLiquidity(p) -> withdrawLiquidity(p, s)
 | PayReward(p) -> payReward(p, s)
