@@ -108,6 +108,8 @@ type action is
 (* receiving reward from Juster, nat is eventId *)
 | PayReward of nat
 (* TODO: removeLine? *)
+(* TODO: updateLine? to change ratios for example, only manager can call *)
+(* TODO: updateNewEventFee if it changed in Juster, only manager can call *)
 // | CreateEvents of list(nat)
 | CreateEvent of nat
 
@@ -132,8 +134,10 @@ block {
 
     (* calculating shares *)
     const provided = Tezos.amount/1mutez;
-    const totalLiquidity = store.activeLiquidity + Tezos.balance/1mutez;
-    const shares = provided * store.totalShares / totalLiquidity;
+    const totalLiquidity = store.activeLiquidity + provided;
+    const shares = if store.totalShares = 0n
+        then totalLiquidity
+        else provided * store.totalShares / totalLiquidity;
 
     const newPosition = record [
         provider = Tezos.sender;
@@ -345,6 +349,10 @@ function createEvent(
 block {
 
     (* TODO: if store.activeEvents.size > store.maxActiveEvents then failwith *)
+    (* TODO: is it possible to calculate how much events runned in each line
+        and failwith if there are already too many events in the line? *)
+    (* TODO: reserve new event fees from liquidity (calculate how many events
+        can be created based on maxActiveEvents and newEventFee *)
 
     var line := case Map.find_opt(lineId, store.lines) of
     | Some(line) -> line
