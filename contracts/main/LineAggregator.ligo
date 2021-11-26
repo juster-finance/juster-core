@@ -118,6 +118,7 @@ function addLine(
     const line : lineType;
     var store : storage) : (list(operation) * storage) is
 block {
+    (* TODO: assert no tez provided *)
     (* TODO: assert that Tezos.sender is manager *)
 
     (* TODO: consider lines to be list *)
@@ -175,6 +176,7 @@ function claimLiquidity(
     const params : claimLiquidityParams;
     var store : storage) : (list(operation) * storage) is
 block {
+    (* TODO: assert no tez provided *)
 
     const position = getPosition(store, params.positionId);
     checkPositionProviderIsSender(position);
@@ -256,6 +258,7 @@ function withdrawLiquidity(
     const withdrawRequests : withdrawLiquidityParams;
     var store : storage) : (list(operation) * storage) is
 block {
+    (* TODO: assert no tez provided *)
 
     var withdrawSum := 0n;
     for key in list withdrawRequests block {
@@ -347,6 +350,7 @@ function createEvent(
     const lineId : nat;
     var store : storage) : (list(operation) * storage) is
 block {
+    (* TODO: assert no tez provided *)
 
     (* TODO: if store.activeEvents.size > store.maxActiveEvents then failwith *)
     (* TODO: is it possible to calculate how much events runned in each line
