@@ -172,6 +172,19 @@ case Big_map.find_opt(eventId, store.events) of
 end;
 
 
+(* TODO: use tools that created for Juster? *)
+function getReceiver(const a : address) : contract(unit) is
+    case (Tezos.get_contract_opt(a): option(contract(unit))) of
+    | Some (con) -> con
+    | None -> (failwith ("Not a contract") : (contract(unit)))
+    end;
+
+function prepareOperation(
+    const addressTo : address;
+    const payout : tez
+) : operation is Tezos.transaction(unit, payout, getReceiver(addressTo));
+
+
 function claimLiquidity(
     const params : claimLiquidityParams;
     var store : storage) : (list(operation) * storage) is
@@ -233,25 +246,30 @@ block {
         params.positionId, Some(updatedPosition), store.positions);
     (* TODO: consider Big_map.remove if leftShares == 0n? *)
 
+    (* calculating free liquidity that can be withdrawn. This calculation
+        differs from freeLiquidity that calculated when new event created, this
+        is because newEventFee amount can be removed here
+        TODO: consider making this calculation the same in both places?
+    *)
+
+    (* TODO: assert that store.withdrawableLiquidity < Tezos.balance/1mutez?
+        but if this happens: it would mean that things went very wrong
+        somewhere else *)
+    const freeLiquidity = abs(
+        Tezos.balance/1mutez
+        - store.withdrawableLiquidity);
+
+    const payout = params.shares * freeLiquidity / store.totalShares * 1mutez;
+
     (* TODO: assert that store.totalShares > shares? this case should be
         impossible, but feels like this is good to have this check? *)
     store.totalShares := abs(store.totalShares - params.shares);
 
-    (* TODO: give reward from free liquidity that are not used in any events *)
-} with ((nil: list(operation)), store)
+    const operations = if payout > 0tez then
+        list[prepareOperation(Tezos.sender, payout)]
+    else (nil: list(operation));
 
-
-(* TODO: use tools that created for Juster? *)
-function getReceiver(const a : address) : contract(unit) is
-    case (Tezos.get_contract_opt(a): option(contract(unit))) of
-    | Some (con) -> con
-    | None -> (failwith ("Not a contract") : (contract(unit)))
-    end;
-
-function prepareOperation(
-    const addressTo : address;
-    const payout : tez
-) : operation is Tezos.transaction(unit, payout, getReceiver(addressTo));
+} with (operations, store)
 
 
 function withdrawLiquidity(
@@ -473,4 +491,6 @@ case params of
 | PayReward(p) -> payReward(p, s)
 | CreateEvent(p) -> createEvent(p, s)
 end
+
+[@view] function getBalance (const _ : unit ; const _s: storage) : tez is Tezos.balance
 
