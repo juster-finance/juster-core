@@ -45,6 +45,7 @@ type claimKey is record [
 
 type claimParams is record [
     shares : nat;
+    (* TODO: do I need to have this totalShares in claim params? need to figure out *)
     totalShares : nat;
 ]
 
@@ -225,7 +226,7 @@ block {
             of time?
         *)
 
-        if position.addedTime > event.createdTime then
+        if position.addedTime < event.createdTime then
             store.claims := Big_map.update(key, Some(updatedClaim), store.claims)
         else skip;
 
