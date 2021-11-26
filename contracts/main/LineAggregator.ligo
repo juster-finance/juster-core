@@ -352,11 +352,12 @@ function createEvent(
 block {
     (* TODO: assert no tez provided *)
 
-    (* TODO: if store.activeEvents.size > store.maxActiveEvents then failwith *)
     (* TODO: is it possible to calculate how much events runned in each line
         and failwith if there are already too many events in the line? *)
-    (* TODO: reserve new event fees from liquidity (calculate how many events
-        can be created based on maxActiveEvents and newEventFee *)
+
+    const freeEventSlots = store.maxActiveEvents - Map.size(store.activeEvents);
+    if freeEventSlots <= 0 then failwith("Max active events limit reached")
+    else skip;
 
     var line := case Map.find_opt(lineId, store.lines) of
     | Some(line) -> line
@@ -416,8 +417,14 @@ block {
         maxSlippage = 0n;
     ];
 
-    const freeLiquidity = Tezos.amount/1mutez - store.withdrawableLiquidity;
-    (* TODO: assert freeLiquidity > 0tez ? *)
+    const freeLiquidity = (
+        Tezos.balance/1mutez
+        - store.withdrawableLiquidity
+        - abs(freeEventSlots)*store.newEventFee/1mutez);
+
+    if freeLiquidity <= 0 then failwith("Not enough liquidity to run event")
+    else skip;
+
     const expectedEvents = store.maxActiveEvents - Map.size(store.activeEvents);
     const liquidityAmount = abs(freeLiquidity / expectedEvents) * 1mutez;
 
