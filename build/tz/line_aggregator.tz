@@ -272,7 +272,7 @@
                             CAR ;
                             CAR ;
                             COMPARE ;
-                            GT ;
+                            LT ;
                             IF { DUP 5 ;
                                  CDR ;
                                  DUP 6 ;
