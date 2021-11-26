@@ -208,7 +208,7 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
     def _withdraw(self, event_id=0, user=None, participant_address=None):
 
         user = user or self.manager
-        participant_address = pkh(user)
+        participant_address = participant_address or pkh(user)
 
         opg = user.contract(self.juster.address).withdraw(
             eventId=event_id,
