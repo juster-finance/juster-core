@@ -11,7 +11,8 @@ type lineType is record [
     (* parameters used to control events flow *)
     lastBetsCloseTime : timestamp;
 
-    (* TODO: consider having maxEvents amount that run in parallel for the line? *)
+    (* maxEvents is amount of events that can be runned in parallel for the line? *)
+    maxActiveEvents : nat;
     (* TODO: consider having advanceTime that allows to create new event before
         lastBetsCloseTime *)
 ]
@@ -52,7 +53,7 @@ type storage is record [
     (* lines is ledger with all possible event lines that can be created *)
     (* TODO: consider type big_map, but then it would not be possible to
         all lines in the cycle *)
-    (* TODO: consider type list(lineType) *)
+    (* TODO: consider type list(lineType): then this would not required to have nextLineId *)
     lines : map(nat, lineType);
 
     (* active lines is mapping between eventId and lineId *)
@@ -108,11 +109,16 @@ type action is
 
 
 function addLine(
-    const lineParams : lineType;
+    const line : lineType;
     var store : storage) : (list(operation) * storage) is
 block {
-    skip;
-    (* TODO: increase maxActiveEvents *)
+    (* TODO: assert that Tezos.sender is manager *)
+
+    (* TODO: consider lines to be list *)
+    store.lines[store.nextLineId] := line;
+    store.nextLineId := store.nextLineId + 1n;
+    store.maxActiveEvents := store.maxActiveEvents + line.maxActiveEvents;
+
 } with ((nil: list(operation)), store)
 
 
