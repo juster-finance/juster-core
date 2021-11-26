@@ -85,7 +85,16 @@
              SWAP ;
              GET ;
              IF_NONE { PUSH string "Event is not found" ; FAILWITH } {} } ;
-         DIG 3 ;
+         LAMBDA
+           (pair address mutez)
+           operation
+           { UNPAIR ;
+             CONTRACT unit ;
+             IF_NONE { PUSH string "Not a contract" ; FAILWITH } {} ;
+             SWAP ;
+             UNIT ;
+             TRANSFER_TOKENS } ;
+         DIG 4 ;
          UNPAIR ;
          IF_LEFT
            { IF_LEFT
@@ -93,7 +102,8 @@
                    { DIG 2 ;
                      DIG 3 ;
                      DIG 4 ;
-                     DROP 3 ;
+                     DIG 5 ;
+                     DROP 4 ;
                      SWAP ;
                      DUP ;
                      DUG 2 ;
@@ -191,11 +201,11 @@
                      CAR ;
                      DUP 3 ;
                      PAIR ;
-                     DIG 5 ;
+                     DIG 6 ;
                      SWAP ;
                      EXEC ;
                      DUP ;
-                     DIG 5 ;
+                     DIG 6 ;
                      SWAP ;
                      EXEC ;
                      DROP ;
@@ -234,7 +244,7 @@
                             DUG 2 ;
                             DUP 4 ;
                             PAIR ;
-                            DUP 8 ;
+                            DUP 9 ;
                             SWAP ;
                             EXEC ;
                             DUP ;
@@ -341,7 +351,7 @@
                             PAIR ;
                             PAIR ;
                             PAIR } ;
-                     DIG 4 ;
+                     DIG 5 ;
                      DROP ;
                      DUP ;
                      CDR ;
@@ -385,30 +395,60 @@
                      CDR ;
                      CDR ;
                      CDR ;
-                     DIG 2 ;
-                     CDR ;
+                     PUSH mutez 1 ;
+                     BALANCE ;
+                     EDIV ;
+                     IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                     CAR ;
+                     SUB ;
+                     ABS ;
+                     PUSH mutez 1 ;
                      DUP 3 ;
+                     CDR ;
+                     CDR ;
+                     CAR ;
+                     DIG 2 ;
+                     DUP 5 ;
+                     CDR ;
+                     MUL ;
+                     EDIV ;
+                     IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                     CAR ;
+                     MUL ;
+                     SWAP ;
+                     DUP ;
+                     DUG 2 ;
+                     CDR ;
+                     CDR ;
+                     CDR ;
+                     DIG 3 ;
+                     CDR ;
+                     DUP 4 ;
                      CDR ;
                      CDR ;
                      CAR ;
                      SUB ;
                      ABS ;
                      PAIR ;
-                     SWAP ;
-                     DUP ;
-                     DUG 2 ;
+                     DUP 3 ;
                      CDR ;
                      CAR ;
                      PAIR ;
-                     SWAP ;
+                     DIG 2 ;
                      CAR ;
                      PAIR ;
-                     NIL operation ;
+                     PUSH mutez 0 ;
+                     DUP 3 ;
+                     COMPARE ;
+                     GT ;
+                     IF { NIL operation ; DIG 2 ; SENDER ; PAIR ; DIG 3 ; SWAP ; EXEC ; CONS }
+                        { SWAP ; DIG 2 ; DROP 2 ; NIL operation } ;
                      PAIR } }
                { DIG 2 ;
                  DIG 3 ;
                  DIG 4 ;
-                 DROP 3 ;
+                 DIG 5 ;
+                 DROP 4 ;
                  IF_LEFT
                    { SWAP ;
                      DUP ;
@@ -565,6 +605,13 @@
                      CAR ;
                      SUB ;
                      SUB ;
+                     PUSH int 0 ;
+                     SWAP ;
+                     DUP ;
+                     DUG 2 ;
+                     COMPARE ;
+                     LE ;
+                     IF { PUSH string "Not enough liquidity to run event" ; FAILWITH } {} ;
                      DUP 7 ;
                      CAR ;
                      CAR ;
@@ -837,9 +884,10 @@
                      NIL operation ;
                      PAIR } } }
            { IF_LEFT
-               { DIG 3 ;
+               { DIG 2 ;
                  DIG 4 ;
-                 DROP 2 ;
+                 DIG 5 ;
+                 DROP 3 ;
                  PUSH mutez 1 ;
                  AMOUNT ;
                  EDIV ;
@@ -1020,10 +1068,10 @@
                         CDR ;
                         DUP 3 ;
                         PAIR ;
-                        DUP 7 ;
+                        DUP 8 ;
                         SWAP ;
                         EXEC ;
-                        DUP 6 ;
+                        DUP 7 ;
                         SWAP ;
                         EXEC ;
                         DROP ;
@@ -1031,7 +1079,7 @@
                         CAR ;
                         DUP 3 ;
                         PAIR ;
-                        DUP 5 ;
+                        DUP 6 ;
                         SWAP ;
                         EXEC ;
                         CDR ;
@@ -1084,9 +1132,9 @@
                         PAIR ;
                         PAIR ;
                         PAIR } ;
-                 SWAP ;
                  DIG 2 ;
                  DIG 3 ;
+                 DIG 4 ;
                  DROP 3 ;
                  DUP ;
                  CAR ;
@@ -1103,16 +1151,8 @@
                  DUG 2 ;
                  COMPARE ;
                  GT ;
-                 IF { NIL operation ;
-                      SWAP ;
-                      SENDER ;
-                      CONTRACT unit ;
-                      IF_NONE { PUSH string "Not a contract" ; FAILWITH } {} ;
-                      SWAP ;
-                      UNIT ;
-                      TRANSFER_TOKENS ;
-                      CONS }
-                    { DROP ; NIL operation } ;
+                 IF { NIL operation ; SWAP ; SENDER ; PAIR ; DIG 4 ; SWAP ; EXEC ; CONS }
+                    { DIG 3 ; DROP 2 ; NIL operation } ;
                  SWAP ;
                  DUP 3 ;
                  CDR ;
@@ -1133,5 +1173,6 @@
                  CAR ;
                  PAIR ;
                  SWAP ;
-                 PAIR } } } }
+                 PAIR } } } ;
+  view "getBalance" unit mutez { DROP ; BALANCE } }
 
