@@ -14,6 +14,7 @@ from test_data import generate_storage
 
 
 JUSTER_FN = '../build/tz/juster.tz'
+LINE_AGGREGATOR_FN = '../build/tz/line_aggregator.tz'
 ORACLE_MOCK_FN = '../build/tz/oracle_mock.tz'
 
 
@@ -78,6 +79,42 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
         self.bake_block()
 
         self.oracle_mock = self._find_contract_by_hash(client, result.hash())
+
+
+    def _deploy_line_aggregator(self, client, juster_address):
+        """ Deploys Line Aggregator """
+
+        filename = join(dirname(__file__), LINE_AGGREGATOR_FN)
+        contract = ContractInterface.from_file(filename)
+        contract = contract.using(shell=self.get_node_url(), key=client.key)
+
+        new_event_fee = (
+            self.juster.storage['config']['expirationFee']()
+            + self.juster.storage['config']['measureStartFee']()
+        )
+
+        storage = {
+            'nextLineId': 0,
+            'lines': {},
+            'activeEvents': {},
+            'events': {},
+            'positions': {},
+            'nextPositionId': 0,
+            'totalShares': 0,
+            'activeLiquidity': 0,
+            'withdrawableLiquidity': 0,
+            'claims': {},
+            'manager': pkh(client),
+            'juster': juster_address,
+            'newEventFee': new_event_fee,
+            'maxActiveEvents': 0
+        }
+
+        opg = contract.originate(initial_storage=storage)
+        result = opg.send()
+        self.bake_block()
+
+        self.line_aggregator = self._find_contract_by_hash(client, result.hash())
 
 
     def _find_call_result_by_hash(self, client, opg_hash):
@@ -203,4 +240,5 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
         self._activate_accs()
         self._deploy_oracle_mock(self.manager)
         self._deploy_juster(self.manager, self.oracle_mock.address)
+        self._deploy_line_aggregator(self.manager, self.juster.address)
 
