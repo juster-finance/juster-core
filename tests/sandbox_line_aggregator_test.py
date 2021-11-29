@@ -87,7 +87,7 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
         self.assertEqual(event_params['poolBelow'], 5_000_000)
         self.assertEqual(event_params['poolAboveEq'], 5_000_000)
 
-        # A claims 40% of his liquidity:
+        # A claims 40% of his liquidity (10tez + fees/2 - 5tez) * 0.4 = :
         opg = self._claim_liquidity(self.a, 0, int(0.4*shares))
         self.bake_block()
         result = self._find_call_result_by_hash(self.a, opg.hash())
@@ -109,16 +109,29 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
         [self.bake_block() for _ in range(5)]
         self._run_measurements()
 
-        # withdrawing for line aggregator (should be 15 tez):
+        # withdrawing for line aggregator (should be 10 tez):
         self._withdraw(participant_address=self.line_aggregator.address)
         self.bake_block()
 
-        # withdrawing for claimed position for A, should be 40% of 15 tez:
+        # withdrawing for claimed position for A, should be 40% of 10 tez:
         opg = self._aggregator_withdraw(self.a, 0, 0)
         self.bake_block()
         result = self._find_call_result_by_hash(self.a, opg.hash())
-        # TODO: check that result is expected
+        op = result.operations[0]
+        self.assertEqual(int(op['amount']), 4_000_000)
 
-        import pdb; pdb.set_trace()
-        # TODO: let provider withdraw the rest 60% of the liquidity
+        # provider withdraw the rest 60% of the liquidity
+        opg = self._claim_liquidity(self.a, 0, int(0.6*shares))
+        self.bake_block()
+        result = self._find_call_result_by_hash(self.a, opg.hash())
+        self.assertEqual(len(result.operations), 1)
+        op = result.operations[0]
+        self.assertEqual(op['destination'], pkh(self.a))
+
+        # provider returns his 60% of unused liquidity + 6xtz that was earned
+        # from the first event (using provider liquidity)
+        self.assertEqual(int(op['amount']), 0.6*shares/2 + 6_000_000)
+
+        # nothing should be left on the contract:
+        self.assertEqual(self.line_aggregator.getBalance().storage_view(), 0)
 
