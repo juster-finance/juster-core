@@ -7,16 +7,14 @@ class SimpleProvideAndExitTest(LineAggregatorBaseTestCase):
         # creating default event:
         self.add_line()
 
-        '''
-        import pdb; pdb.set_trace()
-
         # providing liquidity:
-        self.provide_liquidity(self.a)
+        provided_amount = 10_000_000
+        self.deposit_liquidity(self.a, amount=provided_amount)
 
         # removing liquidity:
-        self.lock_liquidity(self.a, position_id=0)
+        withdrawn_amount = self.claim_liquidity(
+            self.a, position_id=0, shares=provided_amount)
 
-        # TODO: assert that a.balance is not changed
-        # TODO: assert that line_aggregator contract balance not changed
-        '''
+        # checking that line_aggregator contract balance not changed
+        self.assertEqual(withdrawn_amount, provided_amount)
 

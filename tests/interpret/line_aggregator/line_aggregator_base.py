@@ -31,6 +31,7 @@ class LineAggregatorBaseTestCase(TestCase):
         self.d = 'tz1TdKuFwYgbPHHb7y1VvLH4xiwtAzcjwDjM'
 
         self.manager = self.a
+        self.address = 'contract'
 
         self.juster_address = 'KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn'
         self.current_time = RUN_TIME
@@ -41,29 +42,128 @@ class LineAggregatorBaseTestCase(TestCase):
         )
 
         self.storage = self.init_storage.copy()
+        self.balances = {self.address: 0}
 
 
-    def add_line(self):
+    def update_balance(self, address, amount):
+        """ Used to track balances of different users """
+        self.balances[address] = self.balances.get('address', 0) + amount
+
+
+    def add_line(self, sender=None):
+        sender = sender or self.manager
         line_params = generate_line_params()
         result = self.aggregator.addLine(line_params).interpret(
-            storage=self.storage)
+            storage=self.storage,
+            now=self.current_time,
+            sender=sender
+        )
 
         # TODO: assert that storage changes was valid
+        # TODO: assert that line was added, that added time is correct that other params are correct
         self.storage = result.storage
 
 
-    def deposit_liqudiity(self):
-        pass
+    def deposit_liquidity(self, sender=None, amount=1_000_000):
+        sender = sender or self.manager
+        result = self.aggregator.depositLiquidity().with_amount(amount).interpret(
+            storage=self.storage,
+            now=self.current_time,
+            sender=sender,
+            balance=self.balances[self.address]
+        )
 
-    def claim_liquidity(self):
-        pass
+        # TODO: assert that storage changes was valid
+        # TODO: assert that position added, that shares calculated properly, that time is correct
+        self.storage = result.storage
+        self.update_balance(self.address, amount)
+        self.update_balance(sender, -amount)
 
-    def withdraw_liquidity(self):
-        pass
 
-    def pay_reward(self):
-        pass
+    def claim_liquidity(self, sender=None, position_id=0, shares=1_000_000):
+        sender = sender or self.manager
+        params = {
+            'positionId': position_id,
+            'shares': shares
+        }
 
-    def create_event(self):
-        pass
+        result = self.aggregator.claimLiquidity(params).interpret(
+            storage=self.storage,
+            now=self.current_time,
+            sender=sender,
+            balance=self.balances[self.address]
+        )
+
+        # TODO: assert that storage changes was valid
+        # TODO: assert that position changed/removed, that shares calculated properly, that time is correct
+        self.storage = result.storage
+
+        # extracting amount:
+        self.assertEqual(len(result.operations), 1)
+        op = result.operations[0]
+        amount = int(op['amount'])
+
+        # TODO: assert that amount was calculated properly
+
+        self.update_balance(self.address, -amount)
+        self.update_balance(sender, amount)
+        return amount
+
+
+    def withdraw_liquidity(self, sender=None, positions=None):
+        sender = sender or self.manager
+        positions = positions or [dict(position_id=0, event_id=0)]
+
+        result = self.aggregator.withdrawLiqudidity(positions).interpret(
+            storage=self.storage,
+            now=self.current_time,
+            sender=sender,
+            balance=self.balances[self.address]
+        )
+
+        # TODO: assert that storage changes was valid
+        # TODO: assert that claim is removed, assert that withdrawn amount is correct
+        self.storage = result.storage
+
+        # TODO: extract amount:
+        import pdb; pdb.set_trace()
+        self.update_balance(self.address, -amount)
+        self.update_balance(sender, amount)
+        return amount
+
+
+    def pay_reward(self, sender=None, event_id=0, amount=1_000_000):
+        sender = sender or self.juster_address
+
+        result = self.aggregator.payReward(event_id).with_amount(amount).interpret(
+            storage=self.storage,
+            now=self.current_time,
+            sender=sender,
+            balance=self.balances[self.address]
+        )
+
+        # TODO: assert that storage changes was valid
+        # TODO: assert that event removed from activeEvents, assert that withdrawnLiquidity calculated properly
+        self.storage = result.storage
+        self.update_balance(sender, -amount)
+        self.update_balance(self.address, amount)
+
+
+    def create_event(self, sender=None, event_line_id=0):
+        sender = sender or self.manager
+
+        result = self.aggregator.createEvent(event_line_id).interpret(
+            storage=self.storage,
+            now=self.current_time,
+            sender=sender
+        )
+
+        # TODO: assert that storage changes was valid
+        # TODO: assert that event added to activeEvents, assert that event have correct liquidity amounts
+        self.storage = result.storage
+
+        import pdb; pdb.set_trace()
+        # TODO: extract liquidity provided amount
+        self.update_balance(self.address, -amount)
+        self.update_balance(self.juster_address, amount)
 
