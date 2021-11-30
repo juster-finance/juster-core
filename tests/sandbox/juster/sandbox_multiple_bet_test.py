@@ -2,7 +2,7 @@ import unittest
 from pytezos.sandbox.node import SandboxedNodeTestCase
 from os.path import join, dirname
 from pytezos import ContractInterface, pytezos
-from tests.test_data import generate_storage
+from tests.test_data import generate_juster_storage
 
 
 JUSTER_FN = '../build/tz/juster.tz'
@@ -17,7 +17,7 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
             shell=self.get_node_url(),
             key=self.client.key)
 
-        initial_storage = generate_storage(
+        initial_storage = generate_juster_storage(
             manager=self.client.key.public_key_hash(),
             oracle_address='KT1MwuujtBodVQFm1Jk1KTGNc49wygqoLvpe')
 

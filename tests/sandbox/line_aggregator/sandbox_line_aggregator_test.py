@@ -1,21 +1,12 @@
 from tests.sandbox.sandbox_base import SandboxedJusterTestCase, pkh
 from pytezos.rpc.errors import MichelsonError
+from tests.test_data import generate_line_params
 
 
 class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
 
     def _add_line(self, user):
-        line_params = {
-            'currencyPair': 'XTZ-USD',
-            'targetDynamics': 1_000_000,
-            'liquidityPercent': 0,
-            'rateAboveEq': 1,
-            'rateBelow': 1,
-            'measurePeriod': 1,
-            'betsPeriod': 5,
-            'lastBetsCloseTime': 0,
-            'maxActiveEvents': 2
-        }
+        line_params = generate_line_params(bets_period=5, measure_period=1)
 
         opg = (user.contract(self.line_aggregator.address)
             .addLine(line_params)

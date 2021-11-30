@@ -5,7 +5,7 @@ ONE_HOUR = 60*60
 ONE_DAY = ONE_HOUR*24
 
 
-def generate_storage(manager, oracle_address):
+def generate_juster_storage(manager, oracle_address):
     config = {
         'expirationFee': 100_000,
         'minLiquidityPercent': 0,
@@ -50,3 +50,37 @@ def generate_storage(manager, oracle_address):
     }
 
     return storage
+
+
+def generate_line_aggregator_storage(manager, juster_address, new_event_fee=0):
+    return {
+        'nextLineId': 0,
+        'lines': {},
+        'activeEvents': {},
+        'events': {},
+        'positions': {},
+        'nextPositionId': 0,
+        'totalShares': 0,
+        'activeLiquidity': 0,
+        'withdrawableLiquidity': 0,
+        'claims': {},
+        'manager': manager,
+        'juster': juster_address,
+        'newEventFee': new_event_fee,
+        'maxActiveEvents': 0
+    }
+
+
+def generate_line_params(bets_period=3600, measure_period=3600):
+    return {
+        'currencyPair': 'XTZ-USD',
+        'targetDynamics': 1_000_000,
+        'liquidityPercent': 0,
+        'rateAboveEq': 1,
+        'rateBelow': 1,
+        'measurePeriod': measure_period,
+        'betsPeriod': bets_period,
+        'lastBetsCloseTime': 0,
+        'maxActiveEvents': 2
+    }
+

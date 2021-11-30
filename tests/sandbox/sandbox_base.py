@@ -10,7 +10,10 @@ from pytezos.contract.result import ContractCallResult
 import unittest
 from os.path import dirname, join
 import json
-from tests.test_data import generate_storage
+from tests.test_data import (
+    generate_juster_storage,
+    generate_line_aggregator_storage
+)
 
 
 JUSTER_FN = '../../build/contracts/juster.tz'
@@ -52,7 +55,7 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
         contract = ContractInterface.from_file(filename)
         contract = contract.using(shell=self.get_node_url(), key=client.key)
 
-        storage = generate_storage(pkh(client), oracle_address)
+        storage = generate_juster_storage(pkh(client), oracle_address)
         # the minimum event period params is setted to 1-sec because 1-sec blocks in sandbox:
         storage['config'].update({
             'minMeasurePeriod': 1,  # 1 block
@@ -93,22 +96,11 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
             + self.juster.storage['config']['measureStartFee']()
         )
 
-        storage = {
-            'nextLineId': 0,
-            'lines': {},
-            'activeEvents': {},
-            'events': {},
-            'positions': {},
-            'nextPositionId': 0,
-            'totalShares': 0,
-            'activeLiquidity': 0,
-            'withdrawableLiquidity': 0,
-            'claims': {},
-            'manager': pkh(client),
-            'juster': juster_address,
-            'newEventFee': new_event_fee,
-            'maxActiveEvents': 0
-        }
+        storage = generate_line_aggregator_storage(
+            manager=pkh(self.manager),
+            juster_address=juster_address,
+            new_event_fee=new_event_fee
+        )
 
         opg = contract.originate(initial_storage=storage)
         result = opg.send()

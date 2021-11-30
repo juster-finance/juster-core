@@ -11,7 +11,7 @@ import time
 from os.path import dirname, join
 from pytezos import ContractInterface, pytezos, MichelsonRuntimeError
 from tests.interpret.juster.event_model import EventModel
-from tests.test_data import generate_storage, ONE_HOUR, ONE_DAY
+from tests.test_data import generate_juster_storage, ONE_HOUR, ONE_DAY
 
 CONTRACT_FN = '../../../build/contracts/juster.tz'
 RUN_TIME = int(time.time())
@@ -455,7 +455,8 @@ class JusterBaseTestCase(TestCase):
             'liquidityPercent': 0,
         }
 
-        self.init_storage = generate_storage(self.manager, self.oracle_address)
+        self.init_storage = generate_juster_storage(
+            self.manager, self.oracle_address)
         self.default_config = self.init_storage['config']
         self.measure_start_fee = self.init_storage['config']['measureStartFee']
         self.expiration_fee = self.init_storage['config']['expirationFee']
