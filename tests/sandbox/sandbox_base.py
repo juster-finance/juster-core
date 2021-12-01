@@ -146,9 +146,9 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
         opg = (client.contract(self.juster.address)
             .newEvent(event_params)
             .with_amount(amount)
-            .inject())
+            .send())
         self.bake_block()
-        result = self._find_call_result_by_hash(client, opg['hash'])
+        result = self._find_call_result_by_hash(client, opg.hash())
 
 
     def _provide_liquidity(
