@@ -15,23 +15,23 @@ class MultipleEventsAndProvidersTest(LineAggregatorBaseTestCase):
         # import pdb; pdb.set_trace()
         # running two events, in each should be added 1xtz:
         # TODO: this next line fails with "'Juster.getNextEventId view is not found'" Michelson runtime error
-        self.create_event(0)
-        self.create_event(1)
+        self.create_event(0, next_event_id=0)
+        self.create_event(1, next_event_id=1)
 
         # second provider adds the same amount of liquidity:
         self.deposit_liquidity(self.a, amount=3_000_000)
 
         # running last event with 4xtz liquidity:
-        self.create_event(2)
+        self.create_event(2, next_event_id=2)
 
         self.wait(3600)
 
         # let first two events be profitable and last not:
-        self.pay_reward(0, 2_000_000)
-        self.pay_reward(1, 2_000_000)
-        self.pay_reward(2, 2_000_000)
+        self.pay_reward(event_id=0, amount=2_000_000)
+        self.pay_reward(event_id=1, amount=2_000_000)
+        self.pay_reward(event_id=2, amount=2_000_000)
 
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         # So A should get all the profit from 0 and 1 (+2xtz)
         # and pay for the last event 50% (-1xtz)
 

@@ -47,7 +47,7 @@ class LineAggregatorBaseTestCase(TestCase):
 
     def update_balance(self, address, amount):
         """ Used to track balances of different users """
-        self.balances[address] = self.balances.get('address', 0) + amount
+        self.balances[address] = self.balances.get(address, 0) + amount
 
 
     def add_line(
@@ -159,22 +159,30 @@ class LineAggregatorBaseTestCase(TestCase):
         self.update_balance(self.address, amount)
 
 
-    def create_event(self, sender=None, event_line_id=0):
+    def create_event(self, sender=None, event_line_id=0, next_event_id=0):
         sender = sender or self.manager
 
         contract_call = self.aggregator.createEvent(event_line_id)
         result = contract_call.interpret(
             storage=self.storage,
             now=self.current_time,
-            sender=sender
+            sender=sender,
+            view_results={
+                f'{self.juster_address}%getNextEventId': next_event_id
+            },
+            balance=self.balances[self.address]
         )
 
         # TODO: assert that storage changes was valid
         # TODO: assert that event added to activeEvents, assert that event have correct liquidity amounts
         self.storage = result.storage
 
-        import pdb; pdb.set_trace()
-        # TODO: extract liquidity provided amount
+        # two operations: one with newEvent and one provideLiquidity:
+        self.assertEqual(len(result.operations), 2)
+        provide_op = result.operations[1]
+        amount = int(provide_op['amount'])
+
+        # TODO: check that amount calculated properly
         self.update_balance(self.address, -amount)
         self.update_balance(self.juster_address, amount)
 
