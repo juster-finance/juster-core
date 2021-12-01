@@ -771,7 +771,11 @@
                      EDIV ;
                      IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
                      CAR ;
-                     DUP ;
+                     PUSH mutez 1 ;
+                     BALANCE ;
+                     EDIV ;
+                     IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                     CAR ;
                      DUP 3 ;
                      CAR ;
                      CAR ;
@@ -785,7 +789,7 @@
                      CAR ;
                      COMPARE ;
                      EQ ;
-                     IF { SWAP ; DROP }
+                     IF { DROP }
                         { DUP 3 ;
                           CDR ;
                           CDR ;
