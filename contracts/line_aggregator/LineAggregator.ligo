@@ -136,9 +136,9 @@ block {
 
     (* calculating shares *)
     const provided = Tezos.amount/1mutez;
-    const totalLiquidity = store.activeLiquidity + provided;
+    const totalLiquidity = store.activeLiquidity + Tezos.balance/1mutez;
     const shares = if store.totalShares = 0n
-        then totalLiquidity
+        then provided
         else provided * store.totalShares / totalLiquidity;
 
     const newPosition = record [
