@@ -5,7 +5,7 @@ from pytezos import ContractInterface, pytezos
 from tests.test_data import generate_juster_storage
 
 
-JUSTER_FN = '../build/tz/juster.tz'
+JUSTER_FN = '../../../build/contracts/juster.tz'
 
 
 class SandboxedJusterTestCase(SandboxedNodeTestCase):
@@ -68,6 +68,7 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
 
 
     @unittest.skip("this test fails with RpcError 404, need to find out why")
+    # This test working if it is runned alone but fails if it is runned by pytest
     def test_should_allow_to_bet_100_times(self):
         # fails after 19th bet:
         for number in range(100):

@@ -9,7 +9,7 @@ from random import choice
 from tqdm import tqdm
 
 
-ITERATIONS = 5
+ITERATIONS = 1
 
 
 class SandboxRandomTestCase(SandboxedJusterTestCase):
@@ -54,19 +54,23 @@ class SandboxRandomTestCase(SandboxedJusterTestCase):
 
 
     @unittest.skip("this test fails with RpcError 404, need to find out why")
+    # This test working if it is runned alone but fails if it is runned by pytest
     def test_withdrawals_should_be_the_same_as_deposits(self):
+        """ This test takes a lot of time, about 2 minute
+            for 50 bets and 2 iterations
+        """
 
         def iterate_users():
             while True:
                 yield self.a
-                # yield self.b
-                # yield self.c
+                yield self.b
+                yield self.c
         user_iterator = iterate_users()
 
         for event_id in tqdm(range(ITERATIONS)):
             print(f'creating event {event_id}')
 
-            bets_time = 100
+            bets_time = 25
             self._create_simple_event(self.manager, bets_time=bets_time)
 
             self._provide_liquidity(
@@ -86,7 +90,6 @@ class SandboxRandomTestCase(SandboxedJusterTestCase):
 
                 user = next(user_iterator)
                 deposited += action(event_id, user)
-                print(f'act {number}')
                 self.bake_block()
                 # TODO: decide if this bake_block() should be inside action in sandbox base?
                 # this would simplify testing and checking that state is correct for universal cases
