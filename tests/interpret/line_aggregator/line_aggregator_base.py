@@ -50,9 +50,19 @@ class LineAggregatorBaseTestCase(TestCase):
         self.balances[address] = self.balances.get('address', 0) + amount
 
 
-    def add_line(self, sender=None):
+    def add_line(
+            self,
+            sender=None,
+            currency_pair='XTZ-USD',
+            max_active_events=2
+        ):
+
         sender = sender or self.manager
-        line_params = generate_line_params()
+        line_params = generate_line_params(
+            currency_pair=currency_pair,
+            max_active_events=max_active_events
+        )
+
         result = self.aggregator.addLine(line_params).interpret(
             storage=self.storage,
             now=self.current_time,
@@ -152,7 +162,8 @@ class LineAggregatorBaseTestCase(TestCase):
     def create_event(self, sender=None, event_line_id=0):
         sender = sender or self.manager
 
-        result = self.aggregator.createEvent(event_line_id).interpret(
+        contract_call = self.aggregator.createEvent(event_line_id)
+        result = contract_call.interpret(
             storage=self.storage,
             now=self.current_time,
             sender=sender
@@ -166,4 +177,8 @@ class LineAggregatorBaseTestCase(TestCase):
         # TODO: extract liquidity provided amount
         self.update_balance(self.address, -amount)
         self.update_balance(self.juster_address, amount)
+
+
+    def wait(self, wait_time=0):
+        self.current_time += wait_time
 

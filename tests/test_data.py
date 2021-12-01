@@ -71,9 +71,14 @@ def generate_line_aggregator_storage(manager, juster_address, new_event_fee=0):
     }
 
 
-def generate_line_params(bets_period=3600, measure_period=3600):
+def generate_line_params(
+        bets_period=3600,
+        measure_period=3600,
+        currency_pair='XTZ_USD',
+        max_active_events=2
+    ):
     return {
-        'currencyPair': 'XTZ-USD',
+        'currencyPair': currency_pair,
         'targetDynamics': 1_000_000,
         'liquidityPercent': 0,
         'rateAboveEq': 1,
@@ -81,6 +86,6 @@ def generate_line_params(bets_period=3600, measure_period=3600):
         'measurePeriod': measure_period,
         'betsPeriod': bets_period,
         'lastBetsCloseTime': 0,
-        'maxActiveEvents': 2
+        'maxActiveEvents': max_active_events
     }
 
