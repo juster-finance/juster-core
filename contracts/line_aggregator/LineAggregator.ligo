@@ -59,6 +59,7 @@ type storage is record [
     lines : map(nat, lineType);
 
     (* active lines is mapping between eventId and lineId *)
+    (* TODO: make this set(nat) ? *)
     activeEvents : map(nat, nat);
     events : big_map(nat, eventType);
 
@@ -316,7 +317,7 @@ function payReward(
     var store : storage) : (list(operation) * storage) is
 block {
     (* TODO: assert that Tezos.sender is store.juster *)
-    (* NOTE: this method based on assumption that getReward only called by
+    (* NOTE: this method based on assumption that payReward only called by
         Juster when event is finished / canceled *)
 
     (* adding event result *)
@@ -371,9 +372,6 @@ function createEvent(
 block {
     (* TODO: assert no tez provided *)
 
-    (* TODO: is it possible to calculate how much events runned in each line
-        and failwith if there are already too many events in the line? *)
-
     const freeEventSlots = store.maxActiveEvents - Map.size(store.activeEvents);
     if freeEventSlots <= 0 then failwith("Max active events limit reached")
     else skip;
@@ -382,6 +380,14 @@ block {
     | Some(line) -> line
     | None -> (failwith("Line is not found") : lineType)
     end;
+
+    (* checking how much events already runned in the line *)
+    function countEvents (const count : nat; const ids : nat*nat) : nat is
+        if ids.1 = lineId then count + 1n else count;
+    const activeEventsInLine = Map.fold(countEvents, store.activeEvents, 0n);
+    if activeEventsInLine > line.maxActiveEvents
+        then failwith("Max active events limit reached")
+        else skip;
 
     (* checking that event can be created *)
     (* only one event in line can be opened for bets *)
@@ -462,7 +468,7 @@ block {
         provided = liquidityAmount/1mutez;
     ];
     store.events[nextEventId] := event;
-    store.activeEvents := Big_map.add(nextEventId, lineId, store.activeEvents);
+    store.activeEvents := Map.add(nextEventId, lineId, store.activeEvents);
     store.activeLiquidity := store.activeLiquidity + liquidityAmount/1mutez;
 
 } with (operations, store)
