@@ -124,6 +124,8 @@ block {
     (* TODO: assert that Tezos.sender is manager *)
 
     (* TODO: consider lines to be list *)
+    (* TODO: assert that this line is not repeating another one? *)
+
     store.lines[store.nextLineId] := line;
     store.nextLineId := store.nextLineId + 1n;
     store.maxActiveEvents := store.maxActiveEvents + line.maxActiveEvents;
@@ -138,9 +140,10 @@ block {
     (* calculating shares *)
     const provided = Tezos.amount/1mutez;
     const totalLiquidity = store.activeLiquidity + Tezos.balance/1mutez;
+    const liquidityBeforeDeposit = abs(totalLiquidity - provided);
     const shares = if store.totalShares = 0n
         then provided
-        else provided * store.totalShares / totalLiquidity;
+        else provided * store.totalShares / liquidityBeforeDeposit;
 
     const newPosition = record [
         provider = Tezos.sender;
