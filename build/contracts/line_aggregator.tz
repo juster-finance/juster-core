@@ -806,6 +806,12 @@
                      CAR ;
                      CDR ;
                      ADD ;
+                     SWAP ;
+                     DUP ;
+                     DUG 2 ;
+                     SWAP ;
+                     SUB ;
+                     ABS ;
                      PUSH nat 0 ;
                      DUP 4 ;
                      CDR ;
