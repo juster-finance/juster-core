@@ -80,7 +80,7 @@ class LineAggregatorBaseTestCase(TestCase):
             storage=self.storage,
             now=self.current_time,
             sender=sender,
-            balance=self.balances[self.address]
+            balance=self.balances[self.address] + amount
         )
 
         # TODO: assert that storage changes was valid
