@@ -60,7 +60,7 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
         storage['config'].update({
             'minMeasurePeriod': 1,  # 1 block
             'minPeriodToBetsClose': 1,  # 1 block
-            'maxAllowedMeasureLag': 10,  # 10 blocks
+            'maxAllowedMeasureLag': 100,  # 100 blocks
         })
 
         opg = contract.originate(initial_storage=storage)

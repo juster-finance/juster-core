@@ -75,11 +75,12 @@ def generate_line_params(
         bets_period=3600,
         measure_period=3600,
         currency_pair='XTZ_USD',
-        max_active_events=2
+        max_active_events=2,
+        target_dynamics=1_000_000
     ):
     return {
         'currencyPair': currency_pair,
-        'targetDynamics': 1_000_000,
+        'targetDynamics': target_dynamics,
         'liquidityPercent': 0,
         'rateAboveEq': 1,
         'rateBelow': 1,
