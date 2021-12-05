@@ -204,8 +204,7 @@ block {
     else skip;
     const leftShares = abs(position.shares - params.shares);
 
-    (* TODO: maybe this is enough to have set of eventIds instead of mapping *)
-    for eventId -> lineId in map store.activeEvents block {
+    for eventId -> _lineId in map store.activeEvents block {
         const key = record [
             eventId = eventId;
             positionId = params.positionId;
@@ -402,6 +401,10 @@ block {
     (* If there was some missed events, need to adjust nextBetsCloseTime *)
     const periods = (Tezos.now - line.lastBetsCloseTime) / line.betsPeriod + 1n;
     const nextBetsCloseTime = line.lastBetsCloseTime + line.betsPeriod*periods;
+
+    (* Updating line *)
+    line.lastBetsCloseTime := nextBetsCloseTime;
+    store.lines[lineId] := line;
 
     (* newEvent transaction *)
     const newEventEntrypoint =
