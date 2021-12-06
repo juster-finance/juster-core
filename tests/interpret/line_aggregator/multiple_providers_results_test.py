@@ -13,6 +13,30 @@ class MultipleProvidersResultsTestCase(LineAggregatorBaseTestCase):
         # so instead of bumping all liquidity from the new provider to the one
         # event, it would be splitted for max_active_events?
 
+        # the worst case: new provider adds little amount of liquidity:
+        # 1 xtz in pool, 9 xtz added, 9 + 0.1 xtz go to the last event, provider return 0.9*9.1 = 8.19
+        # 9 xtz in pool, 1 xtz added, 0.9 + 1 xtz go to the last event, provider return 0.1*1.9 = 0.19
+        # 99 xtz in pool, 1 xtz added, 9.9 + 1 xtz go in the last event, provider return 0.01*10.9 = 0.109
+
+        # Solutions:
+        # 1) having a liquidityLock list [] with length = maxActiveEvents - 1
+        #   when new provider comes, he updates this list and adds some amounts
+        #   that should not be used to the next several events. For example:
+        #   provider adds 9 tez for max K=3 events, he creates lock : [6xtz, 3xtz]
+        #   this means that in the next event -6xtz should be used and lock transforms to [3xtz]
+        #   and in the next of the next -3xtz should be used and lock transforms to []
+        #   the problem here is how to manage if provider decides to go out before his locks are finished
+        #   the easiest solution is not allowing him to exit before K events created
+
+        # 2) having nextEventLiquidity estimated value in the storage. After each new
+        #   event finished: recalculate this value (for example if there are 10 events
+        #   and event finished with 10xtz loss, then nextEventLiquidity should be reduced by
+        #   1 xtz). When liquidity added: increase value by amount/maxActiveEvents.
+        #   And use this calculation to provide liquidity for the next events.
+        #   the problem here is that is is possible that in a row of loss events it would be
+        #   not enough balance to create new line.
+        #   the solution is to have reserve percent + ability to create event with less liquidity
+
         # creating default event:
         self.add_line(max_active_events=2)
 
