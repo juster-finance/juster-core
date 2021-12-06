@@ -15,6 +15,8 @@ type lineType is record [
     maxActiveEvents : nat;
     (* TODO: consider having advanceTime that allows to create new event before
         lastBetsCloseTime *)
+    (* TODO: consider having min time delta before next betsCloseTime to prevent
+        possibility of event creation with very small period until betsClose *)
 ]
 
 type positionType is record [
@@ -24,11 +26,11 @@ type positionType is record [
     (* TODO: consider addedCounter & eventLine.lastEventCreatedTimeCounter
         instead of time? This can resolve problems when liquidity added in the
         same block when event is created *)
-    addedTime : timestamp;
+    addedCounter : nat;
 ]
 
 type eventType is record [
-    createdTime : timestamp;
+    createdCounter : nat;
     totalShares : nat;
     lockedShares : nat;
     result : option(nat);
@@ -87,6 +89,12 @@ type storage is record [
 
     (* aggregated max active events required to calculate liquidity amount *)
     maxActiveEvents : nat;
+
+    (* As far as liquidity can be added in the same block as a new event created
+        it is required to understand if this liquidity was added before or
+        after event creation. There is why special counter used instead of
+        using time/level *)
+    counter : nat;
 ]
 
 
@@ -149,12 +157,13 @@ block {
     const newPosition = record [
         provider = Tezos.sender;
         shares = shares;
-        addedTime = Tezos.now;
+        addedCounter = store.counter;
     ];
 
     store.positions[store.nextPositionId] := newPosition;
     store.nextPositionId := store.nextPositionId + 1n;
     store.totalShares := store.totalShares + shares;
+    store.counter := store.counter + 1n;
 
 } with ((nil: list(operation)), store)
 
@@ -224,13 +233,7 @@ block {
             totalShares = event.totalShares;
         ];
 
-        (* TODO: what happens if positon added in the same block when event was
-            created? Is it possible to check what was before and what was after?
-            MAYBE: maybe it is better to have some kind of internal counter instead
-            of time?
-        *)
-
-        if position.addedTime < event.createdTime then
+        if position.addedCounter < event.createdCounter then
             store.claims := Big_map.update(key, Some(updatedClaim), store.claims)
         else skip;
 
@@ -245,7 +248,7 @@ block {
     const updatedPosition = record [
         provider = position.provider;
         shares = leftShares;
-        addedTime = position.addedTime;
+        addedCounter = position.addedCounter;
     ];
     store.positions := Big_map.update(
         params.positionId, Some(updatedPosition), store.positions);
@@ -468,7 +471,7 @@ block {
 
     (* adding new activeEvent: *)
     const event = record [
-        createdTime = Tezos.now;
+        createdCounter = store.counter;
         totalShares = store.totalShares;
         lockedShares = 0n;
         result = (None : option(nat));
@@ -477,6 +480,7 @@ block {
     store.events[nextEventId] := event;
     store.activeEvents := Map.add(nextEventId, lineId, store.activeEvents);
     store.activeLiquidity := store.activeLiquidity + liquidityAmount/1mutez;
+    store.counter := store.counter + 1n;
 
 } with (operations, store)
 
