@@ -1,0 +1,42 @@
+from tests.interpret.line_aggregator.line_aggregator_base import LineAggregatorBaseTestCase
+from pytezos import MichelsonRuntimeError
+
+
+class EventCountLimitCase(LineAggregatorBaseTestCase):
+    def test_exceeding_event_count_should_fail(self):
+
+        PERIOD = 5*60
+
+        # adding some liquidity so it will be possible to create events:
+        self.deposit_liquidity(self.a, amount=3_000_000)
+
+        # creating line with a lot of possible events and bets period 5 min:
+        self.add_line(
+            currency_pair='XTZ-USD',
+            max_active_events=3,
+            bets_period=PERIOD
+        )
+
+        # creating first three events should succeed:
+        self.create_event(event_line_id=0, next_event_id=0)
+        self.wait(PERIOD)
+
+        self.create_event(event_line_id=0, next_event_id=1)
+        self.wait(PERIOD)
+
+        self.create_event(event_line_id=0, next_event_id=2)
+        self.wait(PERIOD)
+
+        # creating fourth event should fail:
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.create_event(event_line_id=0, next_event_id=3)
+        msg = 'Max active events limit reached'
+        self.assertTrue(msg in str(cm.exception))
+
+        # closing event and trying again:
+        self.pay_reward(event_id=0)
+        self.create_event(event_line_id=0, next_event_id=3)
+
+        # the first event is not removed:
+        self.assertEqual(len(self.storage['events']), 4)
+
