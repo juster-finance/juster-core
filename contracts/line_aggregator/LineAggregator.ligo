@@ -30,11 +30,10 @@ type positionType is record [
 type eventType is record [
     createdTime : timestamp;
     totalShares : nat;
-
-    (* TODO: do I need to have this isFinished status? *)
-    isFinished : bool;
     lockedShares : nat;
     result : option(nat);
+    (* TODO: consider having isFinished : bool field? Or result as an option
+        is enough? *)
     provided : nat;
 ]
 
@@ -85,6 +84,8 @@ type storage is record [
 
     juster : address;
     newEventFee : tez;
+
+    (* aggregated max active events required to calculate liquidity amount *)
     maxActiveEvents : nat;
 ]
 
@@ -311,6 +312,10 @@ block {
 
     (* TODO: assert that store.withdrawableLiquidity <= payout ? *)
     store.withdrawableLiquidity := abs(store.withdrawableLiquidity - withdrawSum);
+    (* TODO: consider removing events when they are fully withdrawn?
+        Alternative: moving event result to separate ledger and remove event
+        when payReward received *)
+
 } with (operations, store)
 
 
@@ -326,9 +331,6 @@ block {
     const reward = Tezos.amount / 1mutez;
     var event := getEvent(store, eventId);
     event.result := Some(reward);
-
-    (* TODO: is this field isFinished required anywhere? *)
-    event.isFinished := True;
     store.events := Big_map.update(eventId, Some(event), store.events);
     store.activeEvents := Map.remove(eventId, store.activeEvents);
 
@@ -468,7 +470,6 @@ block {
     const event = record [
         createdTime = Tezos.now;
         totalShares = store.totalShares;
-        isFinished = False;
         lockedShares = 0n;
         result = (None : option(nat));
         provided = liquidityAmount/1mutez;
