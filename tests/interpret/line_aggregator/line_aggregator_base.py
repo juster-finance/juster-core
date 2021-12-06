@@ -110,23 +110,26 @@ class LineAggregatorBaseTestCase(TestCase):
         # TODO: assert that position changed/removed, that shares calculated properly, that time is correct
         self.storage = result.storage
 
-        # extracting amount:
-        self.assertEqual(len(result.operations), 1)
-        op = result.operations[0]
-        amount = int(op['amount'])
+        # extracting amount if there are operations:
+        if result.operations:
+            self.assertTrue(len(result.operations) == 1)
+            op = result.operations[0]
+            amount = int(op['amount'])
 
-        # TODO: assert that amount was calculated properly
+            # TODO: assert that amount was calculated properly
 
-        self.update_balance(self.address, -amount)
-        self.update_balance(sender, amount)
-        return amount
+            self.update_balance(self.address, -amount)
+            self.update_balance(sender, amount)
+            return amount
+
+        return 0
 
 
     def withdraw_liquidity(self, sender=None, positions=None):
         sender = sender or self.manager
-        positions = positions or [dict(position_id=0, event_id=0)]
+        positions = positions or [dict(positionId=0, eventId=0)]
 
-        result = self.aggregator.withdrawLiqudidity(positions).interpret(
+        result = self.aggregator.withdrawLiquidity(positions).interpret(
             storage=self.storage,
             now=self.current_time,
             sender=sender,
@@ -134,14 +137,26 @@ class LineAggregatorBaseTestCase(TestCase):
         )
 
         # TODO: assert that storage changes was valid
-        # TODO: assert that claim is removed, assert that withdrawn amount is correct
+        for position in positions:
+            key = (position['eventId'], position['positionId'])
+            self.assertTrue(result.storage['claims'][key] is None)
+            result.storage['claims'].pop(key)
+
         self.storage = result.storage
 
         # TODO: extract amount:
-        import pdb; pdb.set_trace()
-        self.update_balance(self.address, -amount)
-        self.update_balance(sender, amount)
-        return amount
+        if result.operations:
+            self.assertTrue(len(result.operations) == 1)
+            op = result.operations[0]
+            amount = int(op['amount'])
+
+            # TODO: assert that amount was calculated properly
+
+            self.update_balance(self.address, -amount)
+            self.update_balance(sender, amount)
+            return amount
+
+        return 0
 
 
     def pay_reward(self, sender=None, event_id=0, amount=1_000_000):
