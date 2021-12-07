@@ -68,7 +68,8 @@ def generate_line_aggregator_storage(manager, juster_address, new_event_fee=0):
         'juster': juster_address,
         'newEventFee': new_event_fee,
         'maxActiveEvents': 0,
-        'counter': 0
+        'counter': 0,
+        'nextEventLiquidity': 0
     }
 
 

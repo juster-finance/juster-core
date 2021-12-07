@@ -7,15 +7,15 @@ class LateEventTestCase(LineAggregatorBaseTestCase):
 
         PERIOD = 5*60
 
-        # adding some liquidity so it will be possible to create events:
-        self.deposit_liquidity(self.a, amount=3_000_000)
-
         # creating line with a lot of possible events and bets period 5 min:
         self.add_line(
             currency_pair='XTZ-USD',
             max_active_events=3,
             bets_period=PERIOD
         )
+
+        # adding some liquidity so it will be possible to create events:
+        self.deposit_liquidity(self.a, amount=3_000_000)
 
         # creating first event:
         self.create_event(event_line_id=0, next_event_id=0)

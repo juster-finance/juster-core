@@ -11,8 +11,8 @@ class MultipleEventsAndProvidersTest(LineAggregatorBaseTestCase):
 
         # providing liquidity with first provider:
         self.deposit_liquidity(self.a, amount=3_000_000)
+        self.assertEqual(self.storage['nextEventLiquidity'], 1_000_000)
 
-        # import pdb; pdb.set_trace()
         # running two events, in each should be added 1xtz:
         # TODO: this next line fails with "'Juster.getNextEventId view is not found'" Michelson runtime error
         self.create_event(event_line_id=0, next_event_id=0)
@@ -20,16 +20,23 @@ class MultipleEventsAndProvidersTest(LineAggregatorBaseTestCase):
 
         # second provider adds the same amount of liquidity:
         self.deposit_liquidity(self.b, amount=3_000_000)
+        self.assertEqual(self.storage['nextEventLiquidity'], 2_000_000)
 
-        # running last event with 4xtz liquidity:
+        # running last event with 2xtz liquidity:
         self.create_event(event_line_id=2, next_event_id=2)
 
         self.wait(3600)
 
-        # let first two events be profitable and last not:
-        self.pay_reward(event_id=0, amount=2_000_000)
-        self.pay_reward(event_id=1, amount=2_000_000)
-        self.pay_reward(event_id=2, amount=2_000_000)
+        # let first two events be profitable (+0.9 xtz):
+        self.pay_reward(event_id=0, amount=1_900_000)
+        self.assertEqual(self.storage['nextEventLiquidity'], 2_300_000)
+
+        self.pay_reward(event_id=1, amount=1_900_000)
+        self.assertEqual(self.storage['nextEventLiquidity'], 2_600_000)
+
+        # and last one is not (-1.8 xtz):
+        self.pay_reward(event_id=2, amount=200_000)
+        self.assertEqual(self.storage['nextEventLiquidity'], 2_000_000)
 
         # TODO: remove this thoughts somewhere else:
         # In ideal scenario A should get all the profit from 0 and 1 (+2xtz)

@@ -16,7 +16,7 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
             max_active_events=2):
 
         line_params = generate_line_params(
-            bets_period=5,
+            bets_period=20,
             measure_period=measure_period,
             max_active_events=max_active_events,
             target_dynamics=target_dynamics)
@@ -110,7 +110,7 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
         )
 
         # waiting for the end of the betting period:
-        [self.bake_block() for _ in range(5)]
+        [self.bake_block() for _ in range(10)]
         self._run_measurements()
 
         # withdrawing for line aggregator (should be 10 tez):
@@ -141,6 +141,9 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
 
 
     def test_double_liquidity_provided_the_same_amount(self):
+
+        self._add_line(self.manager)
+        self.bake_block()
 
         # providing first liquidity:
         self._deposit_liquidity(self.a, 10_000_000)

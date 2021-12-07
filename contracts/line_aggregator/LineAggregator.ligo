@@ -95,6 +95,8 @@ type storage is record [
         after event creation. There is why special counter used instead of
         using time/level *)
     counter : nat;
+
+    nextEventLiquidity : nat;
 ]
 
 
@@ -118,7 +120,7 @@ type action is
 
 (* receiving reward from Juster, nat is eventId *)
 | PayReward of nat
-(* TODO: removeLine? *)
+(* TODO: removeLine? [consider to have at least one line to support nextEventLiquidity] *)
 (* TODO: updateLine? to change ratios for example, only manager can call *)
 (* TODO: updateNewEventFee if it changed in Juster, only manager can call *)
 // | CreateEvents of list(nat)
@@ -137,7 +139,10 @@ block {
 
     store.lines[store.nextLineId] := line;
     store.nextLineId := store.nextLineId + 1n;
-    store.maxActiveEvents := store.maxActiveEvents + line.maxActiveEvents;
+    const newMaxActiveEvents = store.maxActiveEvents + line.maxActiveEvents;
+    store.nextEventLiquidity :=
+        store.nextEventLiquidity * store.maxActiveEvents / newMaxActiveEvents;
+    store.maxActiveEvents := newMaxActiveEvents;
 
 } with ((nil: list(operation)), store)
 
@@ -145,6 +150,11 @@ block {
 function depositLiquidity(
     var store : storage) : (list(operation) * storage) is
 block {
+
+    (* if there are no lines, then it is impossible to calculate providedPerEvent
+        and there would be DIV/0 error *)
+    if store.maxActiveEvents = 0n
+        then failwith("Need to have at least one line") else skip;
 
     (* calculating shares *)
     const provided = Tezos.amount/1mutez;
@@ -164,6 +174,8 @@ block {
     store.nextPositionId := store.nextPositionId + 1n;
     store.totalShares := store.totalShares + shares;
     store.counter := store.counter + 1n;
+    const providedPerEvent = provided / store.maxActiveEvents;
+    store.nextEventLiquidity := store.nextEventLiquidity + providedPerEvent;
 
 } with ((nil: list(operation)), store)
 
@@ -198,6 +210,9 @@ function prepareOperation(
     const addressTo : address;
     const payout : tez
 ) : operation is Tezos.transaction(unit, payout, getReceiver(addressTo));
+
+
+function absPositive(const value : int) is if value >= 0 then abs(value) else 0n
 
 
 function claimLiquidity(
@@ -267,14 +282,19 @@ block {
         Tezos.balance/1mutez
         - store.withdrawableLiquidity);
 
-    const payout = params.shares * freeLiquidity / store.totalShares * 1mutez;
+    const payoutValue = params.shares * freeLiquidity / store.totalShares;
+    const liquidityPerEvent = payoutValue / store.maxActiveEvents;
+
+    (* TODO: is it possible to have liquidityPerEvent > store.nextEventLiquidity ? *)
+    store.nextEventLiquidity :=
+        absPositive(store.nextEventLiquidity - liquidityPerEvent);
 
     (* TODO: assert that store.totalShares > shares? this case should be
         impossible, but feels like this is good to have this check? *)
     store.totalShares := abs(store.totalShares - params.shares);
 
-    const operations = if payout > 0tez then
-        list[prepareOperation(Tezos.sender, payout)]
+    const operations = if payoutValue > 0n then
+        list[prepareOperation(Tezos.sender, payoutValue * 1mutez)]
     else (nil: list(operation));
 
 } with (operations, store)
@@ -314,6 +334,7 @@ block {
     else (nil: list(operation));
 
     (* TODO: assert that store.withdrawableLiquidity <= payout ? *)
+    (* TODO: need to find this test cases if it is possible or find some proof that it is not *)
     store.withdrawableLiquidity := abs(store.withdrawableLiquidity - withdrawSum);
     (* TODO: consider removing events when they are fully withdrawn?
         Alternative: moving event result to separate ledger and remove event
@@ -351,6 +372,15 @@ block {
 
     (* TODO: assert that event.provided >= store.activeLiquidity *)
     store.activeLiquidity := abs(store.activeLiquidity - event.provided);
+    const profitLossPerEvent = (reward - event.provided) / store.maxActiveEvents;
+
+    (* TODO: is it possible to make newNextEventLiquidity < 0? when liquidity withdrawn
+        for example and then failed event? Its good to be sure that it is impossible *)
+    (* TODO: need to find this test cases if it is possible or find some proof that it is not *)
+    store.nextEventLiquidity :=
+        absPositive(store.nextEventLiquidity + profitLossPerEvent);
+    (* TODO: is it better to have failwith here? don't want to have possibility
+        to block contract communications *)
 
 } with ((nil: list(operation)), store)
 
@@ -453,19 +483,22 @@ block {
         maxSlippage = 0n;
     ];
 
+    var liquidityAmount := store.nextEventLiquidity - store.newEventFee/1mutez;
+
     const freeLiquidity = (
         Tezos.balance/1mutez
         - store.withdrawableLiquidity
         - abs(freeEventSlots)*store.newEventFee/1mutez);
 
-    if freeLiquidity <= 0 then failwith("Not enough liquidity to run event")
+    if freeLiquidity < liquidityAmount then liquidityAmount := freeLiquidity
     else skip;
 
-    const expectedEvents = store.maxActiveEvents - Map.size(store.activeEvents);
-    const liquidityAmount = abs(freeLiquidity / expectedEvents) * 1mutez;
+    if liquidityAmount <= 0 then failwith("Not enough liquidity to run event")
+    else skip;
 
+    const liquidityPayout = abs(liquidityAmount) * 1mutez;
     const provideLiquidityOperation = Tezos.transaction(
-        provideLiquidity, liquidityAmount, provideLiquidityEntrypoint);
+        provideLiquidity, liquidityPayout, provideLiquidityEntrypoint);
 
     const operations = list[newEventOperation; provideLiquidityOperation];
 
@@ -475,11 +508,11 @@ block {
         totalShares = store.totalShares;
         lockedShares = 0n;
         result = (None : option(nat));
-        provided = liquidityAmount/1mutez;
+        provided = liquidityPayout/1mutez;
     ];
     store.events[nextEventId] := event;
     store.activeEvents := Map.add(nextEventId, lineId, store.activeEvents);
-    store.activeLiquidity := store.activeLiquidity + liquidityAmount/1mutez;
+    store.activeLiquidity := store.activeLiquidity + liquidityPayout/1mutez;
     store.counter := store.counter + 1n;
 
 } with (operations, store)
