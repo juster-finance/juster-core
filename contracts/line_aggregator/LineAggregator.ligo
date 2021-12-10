@@ -228,6 +228,7 @@ block {
         failwith("Claim shares is exceed position shares")
     else skip;
     const leftShares = abs(position.shares - params.shares);
+    var providedLiquiditySum := 0n;
 
     for eventId -> _lineId in map store.activeEvents block {
         const key = record [
@@ -248,8 +249,11 @@ block {
             totalShares = event.totalShares;
         ];
 
-        if position.addedCounter < event.createdCounter then
-            store.claims := Big_map.update(key, Some(updatedClaim), store.claims)
+        if position.addedCounter < event.createdCounter then block {
+            store.claims := Big_map.update(key, Some(updatedClaim), store.claims);
+            const providedLiquidity = params.shares * event.provided / event.totalShares;
+            providedLiquiditySum := providedLiquiditySum + providedLiquidity;
+        }
         else skip;
 
         (* TODO: what happen if user claimed 50% of his position during line
@@ -269,21 +273,19 @@ block {
         params.positionId, Some(updatedPosition), store.positions);
     (* TODO: consider Big_map.remove if leftShares == 0n? *)
 
-    (* calculating free liquidity that can be withdrawn. This calculation
-        differs from freeLiquidity that calculated when new event created, this
-        is because newEventFee amount can be removed here
-        TODO: consider making this calculation the same in both places?
-    *)
-
     (* TODO: assert that store.withdrawableLiquidity < Tezos.balance/1mutez?
         but if this happens: it would mean that things went very wrong
         somewhere else *)
-    const freeLiquidity = abs(
+    const totalLiquidity = abs(
         Tezos.balance/1mutez
-        - store.withdrawableLiquidity);
+        - store.withdrawableLiquidity
+        + store.activeLiquidity);
 
-    const payoutValue = params.shares * freeLiquidity / store.totalShares;
-    const liquidityPerEvent = payoutValue / store.maxActiveEvents;
+    const participantLiquidity = params.shares * totalLiquidity / store.totalShares;
+    const payoutValue = participantLiquidity - providedLiquiditySum;
+    (* TODO: check that payoutValue > 0 (is it possible to have it < 0?) *)
+
+    const liquidityPerEvent = participantLiquidity / store.maxActiveEvents;
 
     (* TODO: is it possible to have liquidityPerEvent > store.nextEventLiquidity ? *)
     store.nextEventLiquidity :=
@@ -293,8 +295,11 @@ block {
         impossible, but feels like this is good to have this check? *)
     store.totalShares := abs(store.totalShares - params.shares);
 
-    const operations = if payoutValue > 0n then
-        list[prepareOperation(Tezos.sender, payoutValue * 1mutez)]
+    (* TODO: is it possible to have store.activeLiquidity < providedLiquiditySum? *)
+    store.activeLiquidity := abs(store.activeLiquidity - providedLiquiditySum);
+
+    const operations = if payoutValue > 0 then
+        list[prepareOperation(Tezos.sender, abs(payoutValue) * 1mutez)]
     else (nil: list(operation));
 
 } with (operations, store)
@@ -370,8 +375,10 @@ block {
         to make sure
     *)
 
-    (* TODO: assert that event.provided >= store.activeLiquidity *)
-    store.activeLiquidity := abs(store.activeLiquidity - event.provided);
+    const claimedLiquidity = event.provided * event.lockedShares / event.totalShares;
+    const remainedLiquidity = event.provided - claimedLiquidity;
+    (* TODO: assert that leftLiquidity >= store.activeLiquidity *)
+    store.activeLiquidity := abs(store.activeLiquidity - remainedLiquidity);
     const profitLossPerEvent = (reward - event.provided) / store.maxActiveEvents;
 
     (* TODO: is it possible to make newNextEventLiquidity < 0? when liquidity withdrawn
