@@ -31,12 +31,11 @@ class MultipleProvidersResultsTestCase(LineAggregatorBaseTestCase):
         # providers decided to remove their liquidity:
         withdrawn_amount = self.claim_liquidity(
             self.a, position_id=0, shares=10_000_000)
-        self.assertEqual(withdrawn_amount, 2_500_000)
-        # OK LOOKS LIKE IT GOT WORSE :( now provider can get this others liquidity a lot faster
+        self.assertEqual(withdrawn_amount, 0)
 
         withdrawn_amount = self.claim_liquidity(
             self.b, position_id=1, shares=10_000_000)
-        self.assertEqual(withdrawn_amount, 2_500_000)
+        self.assertEqual(withdrawn_amount, 5_000_000)
 
         # first event is finished with profit 2xtz, all this 7xtz should go to
         # the first provider:
