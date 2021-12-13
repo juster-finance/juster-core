@@ -221,3 +221,14 @@ type storage is record [
     isWithdrawn : ledgerUnitType;
 ]
 
+type positionType is record [
+    providedLiquidityAboveEq : tez;
+    providedLiquidityBelow : tez;
+    betsAboveEq : tez;
+    betsBelow : tez;
+    liquidityShares : nat;
+    depositedLiquidity : tez;
+    depositedBets : tez;
+    isWithdrawn : bool;
+];
+
