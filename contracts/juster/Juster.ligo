@@ -39,19 +39,6 @@ case params of
 end
 
 [@view] function getNextEventId (const _ : unit ; const s: storage) : nat is s.nextEventId
-[@view] function getEventCreatorAddress (const eventId : nat ; const s : storage) : address is
-block { const event = getEvent(s, eventId) } with event.creator
-
-type positionType is record [
-    providedLiquidityAboveEq : tez;
-    providedLiquidityBelow : tez;
-    betsAboveEq : tez;
-    betsBelow : tez;
-    liquidityShares : nat;
-    depositedLiquidity : tez;
-    depositedBets : tez;
-    isWithdrawn : bool;
-];
 
 [@view] function getPosition (const key : ledgerKey ; const s : storage) : positionType is
 record [
@@ -64,4 +51,7 @@ record [
     depositedBets = getLedgerAmount(key, s.depositedBets);
     isWithdrawn = Big_map.mem(key, s.isWithdrawn);
 ]
+
+[@view] function getEvent (const eventId : nat ; const s : storage) : eventType is
+block { const event = getEvent(s, eventId) } with event
 
