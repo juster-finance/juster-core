@@ -3502,24 +3502,6 @@
                          CAR ;
                          PAIR } } } } } ;
   view "getNextEventId" unit nat { CDR ; CAR ; CDR ; CDR ; CAR ; CDR } ;
-  view "getEventCreatorAddress"
-       nat
-       address
-       { UNPAIR ;
-         SWAP ;
-         CAR ;
-         CAR ;
-         CDR ;
-         CDR ;
-         CDR ;
-         SWAP ;
-         GET ;
-         IF_NONE { PUSH string "Event is not found" ; FAILWITH } {} ;
-         CAR ;
-         CAR ;
-         CDR ;
-         CAR ;
-         CDR } ;
   view "getPosition"
        (pair address nat)
        (pair (pair (pair (mutez %betsAboveEq) (mutez %betsBelow))
@@ -3624,5 +3606,29 @@
          EXEC ;
          PAIR ;
          PAIR ;
-         PAIR } }
+         PAIR } ;
+  view "getEvent"
+       nat
+       (pair (pair (pair (pair (pair (timestamp %betsCloseTime) (option %closedDynamics nat))
+                               (pair (option %closedOracleTime timestamp) (option %closedRate nat)))
+                         (pair (pair (timestamp %createdTime) (address %creator))
+                               (pair (string %currencyPair) (mutez %expirationFee))))
+                   (pair (pair (pair (option %isBetsAboveEqWin bool) (bool %isClosed))
+                               (pair (bool %isForceMajeure) (nat %liquidityPercent)))
+                         (pair (pair (nat %maxAllowedMeasureLag) (option %measureOracleStartTime timestamp))
+                               (pair (nat %measurePeriod) (mutez %measureStartFee)))))
+             (pair (pair (pair (address %oracleAddress) (mutez %poolAboveEq))
+                         (pair (mutez %poolBelow) (mutez %rewardCallFee)))
+                   (pair (pair (option %startRate nat) (nat %targetDynamics))
+                         (nat %totalLiquidityShares))))
+       { UNPAIR ;
+         SWAP ;
+         CAR ;
+         CAR ;
+         CDR ;
+         CDR ;
+         CDR ;
+         SWAP ;
+         GET ;
+         IF_NONE { PUSH string "Event is not found" ; FAILWITH } {} } }
 
