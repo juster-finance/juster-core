@@ -1,5 +1,6 @@
 from tests.sandbox.sandbox_base import SandboxedJusterTestCase
 from pytezos.rpc.errors import MichelsonError
+from pytezos.michelson.micheline import MichelsonRuntimeError
 
 
 class ViewsSandboxTestCase(SandboxedJusterTestCase):
@@ -12,6 +13,11 @@ class ViewsSandboxTestCase(SandboxedJusterTestCase):
         # creating event and checking getEventCreatorAddress view:
         self._create_simple_event(self.a)
         self.bake_block()
+
+        # trying to get view of not existed event should fail:
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            creator = self.juster.getEventCreatorAddress(1).storage_view()
+        self.assertTrue('Event is not found' in str(cm.exception))
 
         # TODO: why does this return 0?
         # self.assertEqual(self.juster.getNextEventId().storage_view(), 1)
