@@ -16,19 +16,19 @@ class ViewsSandboxTestCase(SandboxedJusterTestCase):
 
         # trying to get view of not existed event should fail:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            creator = self.juster.getEventCreatorAddress(1).storage_view()
+            event = self.juster.getEvent(1).storage_view()
         self.assertTrue('Event is not found' in str(cm.exception))
 
         # TODO: why does this return 0?
         # self.assertEqual(self.juster.getNextEventId().storage_view(), 1)
-        creator = self.juster.getEventCreatorAddress(0).storage_view()
-        self.assertEqual(creator, self.a.key.public_key_hash())
+        event = self.juster.getEvent(0).storage_view()
+        self.assertEqual(event['creator'], self.a.key.public_key_hash())
 
         # creating another event with another address:
         self._create_simple_event(self.b)
         self.bake_block()
-        creator = self.juster.getEventCreatorAddress(1).storage_view()
-        self.assertEqual(creator, self.b.key.public_key_hash())
+        event = self.juster.getEvent(1).storage_view()
+        self.assertEqual(event['creator'], self.b.key.public_key_hash())
 
         # providing liquidity and bet:
         self._provide_liquidity(
@@ -64,4 +64,10 @@ class ViewsSandboxTestCase(SandboxedJusterTestCase):
         key = (self.b.key.public_key_hash(), 0)
         position = self.juster.getPosition(key).storage_view()
         self.assertEqual(position, expected_position)
+
+        # checking event params:
+        event = self.juster.getEvent(0).storage_view()
+        self.assertEqual(event['poolAboveEq'], 2_000_000)
+        self.assertEqual(event['poolBelow'], 500_000)
+        self.assertEqual(event['totalLiquidityShares'], 100_000_000)
 
