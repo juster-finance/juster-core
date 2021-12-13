@@ -3519,5 +3519,110 @@
          CAR ;
          CDR ;
          CAR ;
-         CDR } }
+         CDR } ;
+  view "getPosition"
+       (pair address nat)
+       (pair (pair (pair (mutez %betsAboveEq) (mutez %betsBelow))
+                   (pair (mutez %depositedBets) (mutez %depositedLiquidity)))
+             (pair (pair (bool %isWithdrawn) (nat %liquidityShares))
+                   (pair (mutez %providedLiquidityAboveEq) (mutez %providedLiquidityBelow))))
+       { LAMBDA
+           (pair (pair address nat) (big_map (pair address nat) mutez))
+           mutez
+           { UNPAIR ; GET ; IF_NONE { PUSH mutez 0 } {} } ;
+         SWAP ;
+         UNPAIR ;
+         SWAP ;
+         DUP ;
+         DUG 2 ;
+         CDR ;
+         CAR ;
+         CAR ;
+         CAR ;
+         SWAP ;
+         DUP ;
+         DUG 2 ;
+         PAIR ;
+         DUP 4 ;
+         SWAP ;
+         EXEC ;
+         DUP 3 ;
+         CAR ;
+         CDR ;
+         CDR ;
+         CDR ;
+         CDR ;
+         DUP 3 ;
+         PAIR ;
+         DUP 5 ;
+         SWAP ;
+         EXEC ;
+         PAIR ;
+         DUP 3 ;
+         CAR ;
+         CDR ;
+         CAR ;
+         CDR ;
+         CAR ;
+         DUP 3 ;
+         GET ;
+         IF_NONE { PUSH nat 0 } {} ;
+         DUP 4 ;
+         CAR ;
+         CDR ;
+         CAR ;
+         CAR ;
+         CAR ;
+         DUP 4 ;
+         MEM ;
+         PAIR ;
+         PAIR ;
+         DUP 3 ;
+         CAR ;
+         CAR ;
+         CDR ;
+         CDR ;
+         CAR ;
+         DUP 3 ;
+         PAIR ;
+         DUP 5 ;
+         SWAP ;
+         EXEC ;
+         DUP 4 ;
+         CAR ;
+         CAR ;
+         CDR ;
+         CAR ;
+         CDR ;
+         DUP 4 ;
+         PAIR ;
+         DUP 6 ;
+         SWAP ;
+         EXEC ;
+         PAIR ;
+         DUP 4 ;
+         CAR ;
+         CAR ;
+         CAR ;
+         CDR ;
+         CAR ;
+         DUP 4 ;
+         PAIR ;
+         DUP 6 ;
+         SWAP ;
+         EXEC ;
+         DIG 4 ;
+         CAR ;
+         CAR ;
+         CAR ;
+         CAR ;
+         CDR ;
+         DIG 4 ;
+         PAIR ;
+         DIG 4 ;
+         SWAP ;
+         EXEC ;
+         PAIR ;
+         PAIR ;
+         PAIR } }
 
