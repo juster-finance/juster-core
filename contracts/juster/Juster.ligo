@@ -39,4 +39,6 @@ case params of
 end
 
 [@view] function getNextEventId (const _ : unit ; const s: storage) : nat is s.nextEventId
+[@view] function getEventCreatorAddress (const eventId : nat ; const s: storage) : address is
+block { const event = getEvent(s, eventId) } with event.creator
 

@@ -66,6 +66,7 @@ block {
         oracleAddress = config.oracleAddress;
         maxAllowedMeasureLag = config.maxAllowedMeasureLag;
         isForceMajeure = False;
+        creator = Tezos.sender;
     ];
 
     store.events[store.nextEventId] := newEvent;
