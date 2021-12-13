@@ -30,3 +30,38 @@ class ViewsSandboxTestCase(SandboxedJusterTestCase):
         creator = self.juster.getEventCreatorAddress(1).storage_view()
         self.assertEqual(creator, self.b.key.public_key_hash())
 
+        # providing liquidity and bet:
+        self._provide_liquidity(
+            event_id=0,
+            user=self.b,
+            expected_below=1,
+            expected_above_eq=1,
+            amount=1_000_000
+        )
+        self.bake_block()
+
+        self._bet(
+            event_id=0,
+            user=self.b,
+            side='aboveEq',
+            minimal_win_amount=1_500_000,
+            amount=1_000_000
+        )
+        self.bake_block()
+
+        # checking that B position is expected:
+        expected_position = {
+            'betsAboveEq': 1_500_000,
+            'betsBelow': 0,
+            'depositedBets': 1_000_000,
+            'depositedLiquidity': 1_000_000,
+            'isWithdrawn': False,
+            'liquidityShares': 100_000_000,
+            'providedLiquidityAboveEq': 1_000_000,
+            'providedLiquidityBelow': 1_000_000
+        }
+
+        key = (self.b.key.public_key_hash(), 0)
+        position = self.juster.getPosition(key).storage_view()
+        self.assertEqual(position, expected_position)
+
