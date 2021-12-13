@@ -54,15 +54,16 @@
                                      nat
                                      (pair (pair (pair (pair (pair (timestamp %betsCloseTime) (option %closedDynamics nat))
                                                              (pair (option %closedOracleTime timestamp) (option %closedRate nat)))
-                                                       (pair (pair (timestamp %createdTime) (string %currencyPair))
-                                                             (pair (mutez %expirationFee) (option %isBetsAboveEqWin bool))))
-                                                 (pair (pair (pair (bool %isClosed) (bool %isForceMajeure))
-                                                             (pair (nat %liquidityPercent) (nat %maxAllowedMeasureLag)))
-                                                       (pair (pair (option %measureOracleStartTime timestamp) (nat %measurePeriod))
-                                                             (pair (mutez %measureStartFee) (address %oracleAddress)))))
-                                           (pair (pair (pair (mutez %poolAboveEq) (mutez %poolBelow))
-                                                       (pair (mutez %rewardCallFee) (option %startRate nat)))
-                                                 (pair (nat %targetDynamics) (nat %totalLiquidityShares))))))))
+                                                       (pair (pair (timestamp %createdTime) (address %creator))
+                                                             (pair (string %currencyPair) (mutez %expirationFee))))
+                                                 (pair (pair (pair (option %isBetsAboveEqWin bool) (bool %isClosed))
+                                                             (pair (bool %isForceMajeure) (nat %liquidityPercent)))
+                                                       (pair (pair (nat %maxAllowedMeasureLag) (option %measureOracleStartTime timestamp))
+                                                             (pair (nat %measurePeriod) (mutez %measureStartFee)))))
+                                           (pair (pair (pair (address %oracleAddress) (mutez %poolAboveEq))
+                                                       (pair (mutez %poolBelow) (mutez %rewardCallFee)))
+                                                 (pair (pair (option %startRate nat) (nat %targetDynamics))
+                                                       (nat %totalLiquidityShares))))))))
                 (pair (pair (pair (big_map %isWithdrawn (pair address nat) unit) (nat %liquidityPrecision))
                             (pair (big_map %liquidityShares (pair address nat) nat) (address %manager)))
                       (pair (pair (option %measurementStartCallId nat) (nat %nextEventId))
@@ -118,20 +119,20 @@
                                                (big_map
                                                   nat
                                                   (pair (pair (pair (pair (pair timestamp (option nat)) (pair (option timestamp) (option nat)))
-                                                                    (pair (pair timestamp string) (pair mutez (option bool))))
-                                                              (pair (pair (pair bool bool) (pair nat nat))
-                                                                    (pair (pair (option timestamp) nat) (pair mutez address))))
-                                                        (pair (pair (pair mutez mutez) (pair mutez (option nat))) (pair nat nat)))))))
+                                                                    (pair (pair timestamp address) (pair string mutez)))
+                                                              (pair (pair (pair (option bool) bool) (pair bool nat))
+                                                                    (pair (pair nat (option timestamp)) (pair nat mutez))))
+                                                        (pair (pair (pair address mutez) (pair mutez mutez)) (pair (pair (option nat) nat) nat)))))))
                              (pair (pair (pair (big_map (pair address nat) unit) nat)
                                          (pair (big_map (pair address nat) nat) address))
                                    (pair (pair (option nat) nat) (pair (option address) (big_map (pair address nat) mutez)))))
                        (pair (pair (pair (big_map (pair address nat) mutez) nat) (pair nat mutez)) (pair nat nat)))
                  nat)
            (pair (pair (pair (pair (pair timestamp (option nat)) (pair (option timestamp) (option nat)))
-                             (pair (pair timestamp string) (pair mutez (option bool))))
-                       (pair (pair (pair bool bool) (pair nat nat))
-                             (pair (pair (option timestamp) nat) (pair mutez address))))
-                 (pair (pair (pair mutez mutez) (pair mutez (option nat))) (pair nat nat)))
+                             (pair (pair timestamp address) (pair string mutez)))
+                       (pair (pair (pair (option bool) bool) (pair bool nat))
+                             (pair (pair nat (option timestamp)) (pair nat mutez))))
+                 (pair (pair (pair address mutez) (pair mutez mutez)) (pair (pair (option nat) nat) nat)))
            { UNPAIR ;
              CAR ;
              CAR ;
@@ -166,20 +167,20 @@
                                                         (big_map
                                                            nat
                                                            (pair (pair (pair (pair (pair timestamp (option nat)) (pair (option timestamp) (option nat)))
-                                                                             (pair (pair timestamp string) (pair mutez (option bool))))
-                                                                       (pair (pair (pair bool bool) (pair nat nat))
-                                                                             (pair (pair (option timestamp) nat) (pair mutez address))))
-                                                                 (pair (pair (pair mutez mutez) (pair mutez (option nat))) (pair nat nat)))))))
+                                                                             (pair (pair timestamp address) (pair string mutez)))
+                                                                       (pair (pair (pair (option bool) bool) (pair bool nat))
+                                                                             (pair (pair nat (option timestamp)) (pair nat mutez))))
+                                                                 (pair (pair (pair address mutez) (pair mutez mutez)) (pair (pair (option nat) nat) nat)))))))
                                       (pair (pair (pair (big_map (pair address nat) unit) nat)
                                                   (pair (big_map (pair address nat) nat) address))
                                             (pair (pair (option nat) nat) (pair (option address) (big_map (pair address nat) mutez)))))
                                 (pair (pair (pair (big_map (pair address nat) mutez) nat) (pair nat mutez)) (pair nat nat)))
                           nat)
                     (pair (pair (pair (pair (pair timestamp (option nat)) (pair (option timestamp) (option nat)))
-                                      (pair (pair timestamp string) (pair mutez (option bool))))
-                                (pair (pair (pair bool bool) (pair nat nat))
-                                      (pair (pair (option timestamp) nat) (pair mutez address))))
-                          (pair (pair (pair mutez mutez) (pair mutez (option nat))) (pair nat nat))))
+                                      (pair (pair timestamp address) (pair string mutez)))
+                                (pair (pair (pair (option bool) bool) (pair bool nat))
+                                      (pair (pair nat (option timestamp)) (pair nat mutez))))
+                          (pair (pair (pair address mutez) (pair mutez mutez)) (pair (pair (option nat) nat) nat))))
                  (pair (pair nat
                              (pair (pair (pair (pair (pair mutez (big_map (pair address nat) mutez))
                                                      (pair (big_map (pair address nat) mutez) (option nat)))
@@ -190,10 +191,10 @@
                                                            (big_map
                                                               nat
                                                               (pair (pair (pair (pair (pair timestamp (option nat)) (pair (option timestamp) (option nat)))
-                                                                                (pair (pair timestamp string) (pair mutez (option bool))))
-                                                                          (pair (pair (pair bool bool) (pair nat nat))
-                                                                                (pair (pair (option timestamp) nat) (pair mutez address))))
-                                                                    (pair (pair (pair mutez mutez) (pair mutez (option nat))) (pair nat nat)))))))
+                                                                                (pair (pair timestamp address) (pair string mutez)))
+                                                                          (pair (pair (pair (option bool) bool) (pair bool nat))
+                                                                                (pair (pair nat (option timestamp)) (pair nat mutez))))
+                                                                    (pair (pair (pair address mutez) (pair mutez mutez)) (pair (pair (option nat) nat) nat)))))))
                                          (pair (pair (pair (big_map (pair address nat) unit) nat)
                                                      (pair (big_map (pair address nat) nat) address))
                                                (pair (pair (option nat) nat) (pair (option address) (big_map (pair address nat) mutez)))))
@@ -210,11 +211,10 @@
              SWAP ;
              EXEC ;
              DUP ;
+             CDR ;
              CAR ;
-             CDR ;
-             CDR ;
-             CDR ;
-             CDR ;
+             CAR ;
+             CAR ;
              CONTRACT %get
                (pair string
                      (contract (pair (string %currencyPair) (pair (timestamp %lastUpdate) (nat %rate))))) ;
@@ -225,8 +225,8 @@
              CAR ;
              CAR ;
              CDR ;
-             CAR ;
              CDR ;
+             CAR ;
              PAIR ;
              TRANSFER_TOKENS ;
              NIL operation ;
@@ -272,10 +272,10 @@
                                          (big_map
                                             nat
                                             (pair (pair (pair (pair (pair timestamp (option nat)) (pair (option timestamp) (option nat)))
-                                                              (pair (pair timestamp string) (pair mutez (option bool))))
-                                                        (pair (pair (pair bool bool) (pair nat nat))
-                                                              (pair (pair (option timestamp) nat) (pair mutez address))))
-                                                  (pair (pair (pair mutez mutez) (pair mutez (option nat))) (pair nat nat)))))))
+                                                              (pair (pair timestamp address) (pair string mutez)))
+                                                        (pair (pair (pair (option bool) bool) (pair bool nat))
+                                                              (pair (pair nat (option timestamp)) (pair nat mutez))))
+                                                  (pair (pair (pair address mutez) (pair mutez mutez)) (pair (pair (option nat) nat) nat)))))))
                        (pair (pair (pair (big_map (pair address nat) unit) nat)
                                    (pair (big_map (pair address nat) nat) address))
                              (pair (pair (option nat) nat) (pair (option address) (big_map (pair address nat) mutez)))))
@@ -430,8 +430,8 @@
                          DUG 2 ;
                          CDR ;
                          CAR ;
-                         CAR ;
                          CDR ;
+                         CAR ;
                          COMPARE ;
                          EQ ;
                          PUSH mutez 0 ;
@@ -439,7 +439,7 @@
                          CDR ;
                          CAR ;
                          CAR ;
-                         CAR ;
+                         CDR ;
                          COMPARE ;
                          EQ ;
                          OR ;
@@ -468,14 +468,14 @@
                          CAR ;
                          CAR ;
                          IF_LEFT
-                           { DROP ; SWAP ; DUP ; DUG 2 ; CDR ; CAR ; CAR ; CAR ; DUP 9 ; SWAP ; EXEC }
-                           { DROP ; SWAP ; DUP ; DUG 2 ; CDR ; CAR ; CAR ; CDR ; DUP 9 ; SWAP ; EXEC } ;
+                           { DROP ; SWAP ; DUP ; DUG 2 ; CDR ; CAR ; CAR ; CDR ; DUP 9 ; SWAP ; EXEC }
+                           { DROP ; SWAP ; DUP ; DUG 2 ; CDR ; CAR ; CDR ; CAR ; DUP 9 ; SWAP ; EXEC } ;
                          DUP 5 ;
                          CAR ;
                          CAR ;
                          IF_LEFT
-                           { DROP ; DUP 3 ; CDR ; CAR ; CAR ; CDR ; DUP 10 ; SWAP ; EXEC }
-                           { DROP ; DUP 3 ; CDR ; CAR ; CAR ; CAR ; DUP 10 ; SWAP ; EXEC } ;
+                           { DROP ; DUP 3 ; CDR ; CAR ; CDR ; CAR ; DUP 10 ; SWAP ; EXEC }
+                           { DROP ; DUP 3 ; CDR ; CAR ; CAR ; CDR ; DUP 10 ; SWAP ; EXEC } ;
                          AMOUNT ;
                          DIG 10 ;
                          SWAP ;
@@ -530,7 +530,7 @@
                          CDR ;
                          CAR ;
                          CDR ;
-                         CAR ;
+                         CDR ;
                          MUL ;
                          EDIV ;
                          IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
@@ -643,15 +643,15 @@
                              CDR ;
                              CAR ;
                              CDR ;
+                             DIG 4 ;
+                             DUP 10 ;
+                             SWAP ;
+                             EXEC ;
                              DUP 7 ;
                              CDR ;
                              CAR ;
                              CAR ;
-                             CDR ;
-                             DIG 5 ;
-                             DUP 11 ;
-                             SWAP ;
-                             EXEC ;
+                             CAR ;
                              PAIR ;
                              PAIR ;
                              PAIR ;
@@ -667,16 +667,16 @@
                              CDR ;
                              CAR ;
                              CDR ;
+                             CDR ;
                              DIG 4 ;
                              DIG 8 ;
                              SWAP ;
                              EXEC ;
-                             DUP 4 ;
+                             PAIR ;
+                             DUP 3 ;
                              CDR ;
                              CAR ;
                              CAR ;
-                             CAR ;
-                             PAIR ;
                              PAIR ;
                              PAIR ;
                              SWAP ;
@@ -740,15 +740,15 @@
                              CDR ;
                              CAR ;
                              CDR ;
+                             DIG 3 ;
+                             DUP 10 ;
+                             SWAP ;
+                             EXEC ;
                              DUP 7 ;
                              CDR ;
                              CAR ;
                              CAR ;
-                             CDR ;
-                             DIG 4 ;
-                             DUP 11 ;
-                             SWAP ;
-                             EXEC ;
+                             CAR ;
                              PAIR ;
                              PAIR ;
                              PAIR ;
@@ -764,16 +764,16 @@
                              CDR ;
                              CAR ;
                              CDR ;
+                             CDR ;
                              DIG 4 ;
                              DIG 8 ;
                              SWAP ;
                              EXEC ;
-                             DUP 4 ;
+                             PAIR ;
+                             DUP 3 ;
                              CDR ;
                              CAR ;
                              CAR ;
-                             CAR ;
-                             PAIR ;
                              PAIR ;
                              PAIR ;
                              SWAP ;
@@ -1114,11 +1114,10 @@
                          SWAP ;
                          EXEC ;
                          DUP ;
+                         CDR ;
                          CAR ;
-                         CDR ;
-                         CDR ;
-                         CDR ;
-                         CDR ;
+                         CAR ;
+                         CAR ;
                          SENDER ;
                          COMPARE ;
                          NEQ ;
@@ -1127,8 +1126,8 @@
                          CAR ;
                          CAR ;
                          CDR ;
-                         CAR ;
                          CDR ;
+                         CAR ;
                          DUP 4 ;
                          CAR ;
                          COMPARE ;
@@ -1139,7 +1138,7 @@
                          CDR ;
                          CDR ;
                          CAR ;
-                         CAR ;
+                         CDR ;
                          IF_NONE
                            { PUSH string "Can't close event before measurement period started" ;
                              FAILWITH }
@@ -1150,8 +1149,8 @@
                          CAR ;
                          CDR ;
                          CDR ;
-                         CAR ;
                          CDR ;
+                         CAR ;
                          INT ;
                          ADD ;
                          DUP ;
@@ -1168,9 +1167,9 @@
                          DUG 2 ;
                          CAR ;
                          CDR ;
+                         CDR ;
                          CAR ;
-                         CDR ;
-                         CDR ;
+                         CAR ;
                          INT ;
                          ADD ;
                          DUP 4 ;
@@ -1253,9 +1252,9 @@
                          PAIR ;
                          DUP ;
                          CDR ;
+                         CDR ;
                          CAR ;
-                         CDR ;
-                         CDR ;
+                         CAR ;
                          IF_NONE
                            { DIG 2 ; DROP ; PUSH string "event.startRate is empty" ; FAILWITH }
                            { DUP 5 ;
@@ -1310,13 +1309,13 @@
                          CDR ;
                          CAR ;
                          CDR ;
-                         DUP 4 ;
-                         CAR ;
-                         CDR ;
-                         CAR ;
-                         CAR ;
-                         CDR ;
                          PUSH bool True ;
+                         DUP 5 ;
+                         CAR ;
+                         CDR ;
+                         CAR ;
+                         CAR ;
+                         CAR ;
                          PAIR ;
                          PAIR ;
                          PAIR ;
@@ -1332,32 +1331,33 @@
                          DUG 2 ;
                          CAR ;
                          CDR ;
+                         CDR ;
                          DUP 3 ;
+                         CAR ;
+                         CDR ;
+                         CAR ;
+                         CDR ;
+                         DUP 4 ;
+                         CAR ;
+                         CDR ;
+                         CAR ;
+                         CAR ;
+                         CDR ;
+                         DUP 5 ;
                          CDR ;
                          CDR ;
                          CAR ;
-                         DIG 4 ;
+                         CDR ;
+                         DIG 6 ;
                          COMPARE ;
                          GE ;
                          SOME ;
-                         DUP 4 ;
-                         CAR ;
-                         CAR ;
-                         CDR ;
-                         CDR ;
-                         CAR ;
                          PAIR ;
-                         DUP 4 ;
-                         CAR ;
-                         CAR ;
-                         CDR ;
-                         CAR ;
                          PAIR ;
-                         DIG 3 ;
-                         CAR ;
-                         CAR ;
-                         CAR ;
                          PAIR ;
+                         DIG 2 ;
+                         CAR ;
+                         CAR ;
                          PAIR ;
                          PAIR ;
                          DUP ;
@@ -1365,7 +1365,7 @@
                          CAR ;
                          CDR ;
                          CDR ;
-                         CAR ;
+                         CDR ;
                          SOURCE ;
                          PAIR ;
                          DIG 4 ;
@@ -1387,13 +1387,13 @@
                          DUP 6 ;
                          CAR ;
                          CDR ;
-                         DUP 7 ;
-                         CAR ;
-                         CAR ;
-                         CDR ;
-                         CDR ;
-                         CDR ;
                          PUSH mutez 0 ;
+                         DUP 8 ;
+                         CAR ;
+                         CAR ;
+                         CDR ;
+                         CDR ;
+                         CAR ;
                          PAIR ;
                          DUP 8 ;
                          CAR ;
@@ -1649,64 +1649,68 @@
                          PUSH nat 0 ;
                          DUP 3 ;
                          CDR ;
-                         PAIR ;
                          NONE nat ;
-                         DUP 3 ;
-                         CDR ;
-                         CDR ;
-                         CAR ;
-                         PAIR ;
-                         PUSH mutez 0 ;
-                         PUSH mutez 0 ;
-                         PAIR ;
                          PAIR ;
                          PAIR ;
                          SWAP ;
                          DUP ;
                          DUG 2 ;
                          CDR ;
-                         CAR ;
                          CDR ;
                          CAR ;
-                         DUP 3 ;
-                         CAR ;
+                         PUSH mutez 0 ;
+                         PAIR ;
+                         PUSH mutez 0 ;
+                         DUP 4 ;
                          CDR ;
+                         CAR ;
                          CDR ;
                          CAR ;
                          PAIR ;
+                         PAIR ;
+                         PAIR ;
+                         SWAP ;
+                         DUP ;
+                         DUG 2 ;
+                         CAR ;
+                         CDR ;
+                         CDR ;
+                         CAR ;
                          DUP 4 ;
                          CAR ;
                          CDR ;
                          CDR ;
+                         PAIR ;
                          NONE timestamp ;
-                         PAIR ;
-                         PAIR ;
-                         DUP 3 ;
-                         CAR ;
-                         CAR ;
-                         CDR ;
-                         CAR ;
-                         DUP 5 ;
-                         CAR ;
-                         CDR ;
-                         CAR ;
-                         PAIR ;
-                         PUSH bool False ;
-                         PUSH bool False ;
-                         PAIR ;
-                         PAIR ;
-                         PAIR ;
-                         NONE bool ;
-                         DIG 3 ;
-                         CAR ;
-                         CAR ;
-                         CAR ;
-                         CAR ;
-                         PAIR ;
                          DUP 4 ;
                          CAR ;
                          CAR ;
                          CDR ;
+                         CAR ;
+                         PAIR ;
+                         PAIR ;
+                         DUP 4 ;
+                         CAR ;
+                         CDR ;
+                         CAR ;
+                         PUSH bool False ;
+                         PAIR ;
+                         PUSH bool False ;
+                         NONE bool ;
+                         PAIR ;
+                         PAIR ;
+                         PAIR ;
+                         DIG 2 ;
+                         CAR ;
+                         CAR ;
+                         CAR ;
+                         CAR ;
+                         DUP 4 ;
+                         CAR ;
+                         CAR ;
+                         CDR ;
+                         PAIR ;
+                         SENDER ;
                          NOW ;
                          PAIR ;
                          PAIR ;
@@ -1829,15 +1833,15 @@
                          DUP ;
                          CDR ;
                          CAR ;
-                         CAR ;
                          CDR ;
+                         CAR ;
                          SWAP ;
                          DUP ;
                          DUG 2 ;
                          CDR ;
                          CAR ;
                          CAR ;
-                         CAR ;
+                         CDR ;
                          ADD ;
                          DUP 3 ;
                          SENDER ;
@@ -1865,12 +1869,12 @@
                          NEQ ;
                          IF { PUSH string "Wrong state" ; FAILWITH } {} ;
                          DUP ;
-                         IF { DUP 9 } { DUP 5 ; CDR ; CAR ; CAR ; CAR ; DUP 17 ; SWAP ; EXEC } ;
+                         IF { DUP 9 } { DUP 5 ; CDR ; CAR ; CAR ; CDR ; DUP 17 ; SWAP ; EXEC } ;
                          SWAP ;
                          DUP ;
                          DUG 2 ;
                          IF { DIG 16 ; DROP ; DUP 9 }
-                            { DUP 6 ; CDR ; CAR ; CAR ; CDR ; DIG 17 ; SWAP ; EXEC } ;
+                            { DUP 6 ; CDR ; CAR ; CDR ; CAR ; DIG 17 ; SWAP ; EXEC } ;
                          PUSH nat 0 ;
                          DUP 11 ;
                          COMPARE ;
@@ -2004,21 +2008,21 @@
                          CDR ;
                          CAR ;
                          CDR ;
-                         DUP 9 ;
-                         CDR ;
-                         CAR ;
-                         CAR ;
-                         CDR ;
-                         DUP 6 ;
-                         DUP 16 ;
+                         DUP 5 ;
+                         DUP 15 ;
                          SWAP ;
                          EXEC ;
-                         DUP 11 ;
+                         DUP 10 ;
+                         CDR ;
+                         CAR ;
+                         CAR ;
+                         CDR ;
+                         ADD ;
+                         DUP 10 ;
                          CDR ;
                          CAR ;
                          CAR ;
                          CAR ;
-                         ADD ;
                          PAIR ;
                          PAIR ;
                          PAIR ;
@@ -2034,6 +2038,7 @@
                          CDR ;
                          CAR ;
                          CDR ;
+                         CDR ;
                          DUP 5 ;
                          DUP 15 ;
                          SWAP ;
@@ -2041,15 +2046,14 @@
                          DUP 4 ;
                          CDR ;
                          CAR ;
-                         CAR ;
                          CDR ;
+                         CAR ;
                          ADD ;
-                         DUP 4 ;
+                         PAIR ;
+                         DUP 3 ;
                          CDR ;
                          CAR ;
                          CAR ;
-                         CAR ;
-                         PAIR ;
                          PAIR ;
                          PAIR ;
                          SWAP ;
@@ -2432,11 +2436,10 @@
                          SWAP ;
                          EXEC ;
                          DUP ;
+                         CDR ;
                          CAR ;
-                         CDR ;
-                         CDR ;
-                         CDR ;
-                         CDR ;
+                         CAR ;
+                         CAR ;
                          SENDER ;
                          COMPARE ;
                          NEQ ;
@@ -2445,8 +2448,8 @@
                          CAR ;
                          CAR ;
                          CDR ;
-                         CAR ;
                          CDR ;
+                         CAR ;
                          DUP 4 ;
                          CAR ;
                          COMPARE ;
@@ -2457,7 +2460,7 @@
                          CDR ;
                          CDR ;
                          CAR ;
-                         CAR ;
+                         CDR ;
                          IF_NONE
                            {}
                            { DROP ; PUSH string "Measurement period already started" ; FAILWITH } ;
@@ -2479,9 +2482,9 @@
                          DUP ;
                          CAR ;
                          CDR ;
+                         CDR ;
                          CAR ;
-                         CDR ;
-                         CDR ;
+                         CAR ;
                          INT ;
                          SWAP ;
                          DUP ;
@@ -2508,15 +2511,15 @@
                          CDR ;
                          CDR ;
                          CDR ;
-                         DUP 3 ;
-                         CAR ;
-                         CDR ;
-                         CDR ;
-                         CAR ;
-                         CDR ;
-                         DUP 6 ;
+                         DUP 5 ;
                          GET 3 ;
                          SOME ;
+                         DUP 4 ;
+                         CAR ;
+                         CDR ;
+                         CDR ;
+                         CAR ;
+                         CAR ;
                          PAIR ;
                          PAIR ;
                          DUP 3 ;
@@ -2532,20 +2535,24 @@
                          DUP ;
                          CDR ;
                          CDR ;
-                         DIG 3 ;
+                         CDR ;
+                         SWAP ;
+                         DUP ;
+                         DUG 2 ;
+                         CDR ;
+                         CDR ;
+                         CAR ;
+                         CDR ;
+                         DIG 4 ;
                          GET 4 ;
                          SOME ;
-                         DUP 3 ;
-                         CDR ;
-                         CAR ;
-                         CDR ;
-                         CAR ;
                          PAIR ;
-                         DUP 3 ;
+                         PAIR ;
+                         SWAP ;
+                         DUP ;
+                         DUG 2 ;
                          CDR ;
                          CAR ;
-                         CAR ;
-                         PAIR ;
                          PAIR ;
                          SWAP ;
                          CAR ;
@@ -2555,7 +2562,7 @@
                          CDR ;
                          CDR ;
                          CDR ;
-                         CAR ;
+                         CDR ;
                          SOURCE ;
                          PAIR ;
                          DIG 4 ;
@@ -2574,13 +2581,13 @@
                          CDR ;
                          DUP 5 ;
                          CDR ;
-                         DUP 6 ;
+                         PUSH mutez 0 ;
+                         DUP 7 ;
                          CAR ;
                          CDR ;
                          CDR ;
                          CDR ;
-                         CDR ;
-                         PUSH mutez 0 ;
+                         CAR ;
                          PAIR ;
                          DUP 7 ;
                          CAR ;
@@ -2670,8 +2677,8 @@
                          CAR ;
                          CDR ;
                          CAR ;
-                         CAR ;
                          CDR ;
+                         CAR ;
                          IF { PUSH string "Already in Force Majeure state" ; FAILWITH } {} ;
                          NIL operation ;
                          SWAP ;
@@ -2681,7 +2688,7 @@
                          CDR ;
                          CDR ;
                          CAR ;
-                         CAR ;
+                         CDR ;
                          IF_NONE
                            { SWAP ;
                              DUP ;
@@ -2696,9 +2703,9 @@
                              DUP 3 ;
                              CAR ;
                              CDR ;
+                             CDR ;
                              CAR ;
-                             CDR ;
-                             CDR ;
+                             CAR ;
                              SWAP ;
                              DUP ;
                              DUG 2 ;
@@ -2722,8 +2729,8 @@
                              CAR ;
                              CDR ;
                              CDR ;
-                             CAR ;
                              CDR ;
+                             CAR ;
                              DUP 4 ;
                              CAR ;
                              CAR ;
@@ -2736,9 +2743,9 @@
                              DUP 4 ;
                              CAR ;
                              CDR ;
+                             CDR ;
                              CAR ;
-                             CDR ;
-                             CDR ;
+                             CAR ;
                              SWAP ;
                              DUP ;
                              DUG 2 ;
@@ -2761,13 +2768,13 @@
                               CAR ;
                               CDR ;
                               CDR ;
-                              CAR ;
+                              CDR ;
                               DUP 4 ;
                               CAR ;
                               CDR ;
                               CDR ;
                               CDR ;
-                              CAR ;
+                              CDR ;
                               ADD ;
                               DUP ;
                               DUG 2 ;
@@ -2784,14 +2791,14 @@
                               CDR ;
                               CAR ;
                               CDR ;
+                              CDR ;
                               PUSH bool True ;
-                              DUP 8 ;
+                              PAIR ;
+                              DUP 7 ;
                               CAR ;
                               CDR ;
                               CAR ;
                               CAR ;
-                              CAR ;
-                              PAIR ;
                               PAIR ;
                               PAIR ;
                               DIG 5 ;
@@ -2812,13 +2819,13 @@
                               CDR ;
                               CAR ;
                               CDR ;
-                              DUP 4 ;
-                              CAR ;
-                              CDR ;
-                              CAR ;
-                              CAR ;
-                              CDR ;
                               PUSH bool True ;
+                              DUP 5 ;
+                              CAR ;
+                              CDR ;
+                              CAR ;
+                              CAR ;
+                              CAR ;
                               PAIR ;
                               PAIR ;
                               PAIR ;
@@ -2829,15 +2836,13 @@
                               PAIR ;
                               DUP ;
                               CDR ;
-                              SWAP ;
-                              DUP ;
-                              DUG 2 ;
+                              PUSH mutez 0 ;
+                              DUP 3 ;
                               CAR ;
                               CDR ;
                               CDR ;
                               CDR ;
-                              CDR ;
-                              PUSH mutez 0 ;
+                              CAR ;
                               PAIR ;
                               DUP 3 ;
                               CAR ;
@@ -2867,13 +2872,13 @@
                               DUP 3 ;
                               CAR ;
                               CDR ;
-                              DUP 4 ;
-                              CAR ;
-                              CAR ;
-                              CDR ;
-                              CDR ;
-                              CDR ;
                               PUSH mutez 0 ;
+                              DUP 5 ;
+                              CAR ;
+                              CAR ;
+                              CDR ;
+                              CDR ;
+                              CAR ;
                               PAIR ;
                               DUP 5 ;
                               CAR ;
@@ -3020,7 +3025,7 @@
                          CDR ;
                          CAR ;
                          CAR ;
-                         CAR ;
+                         CDR ;
                          IF {}
                             { PUSH string "Withdraw is not allowed until event is closed" ; FAILWITH } ;
                          SWAP ;
@@ -3029,8 +3034,8 @@
                          CAR ;
                          CDR ;
                          CAR ;
-                         CAR ;
                          CDR ;
+                         CAR ;
                          IF { SWAP ;
                               DIG 5 ;
                               DIG 7 ;
@@ -3119,10 +3124,10 @@
                               EXEC ;
                               DUP 4 ;
                               CAR ;
+                              CDR ;
                               CAR ;
-                              CDR ;
-                              CDR ;
-                              CDR ;
+                              CAR ;
+                              CAR ;
                               IF_NONE { PUSH string "Winner is undefined" ; FAILWITH } {} ;
                               DUP 4 ;
                               CAR ;
@@ -3180,15 +3185,15 @@
                               CDR ;
                               CAR ;
                               CAR ;
-                              CAR ;
+                              CDR ;
                               DUP 18 ;
                               SWAP ;
                               EXEC ;
                               DUP 10 ;
                               CDR ;
                               CAR ;
-                              CAR ;
                               CDR ;
+                              CAR ;
                               DIG 18 ;
                               SWAP ;
                               EXEC ;
@@ -3496,5 +3501,23 @@
                          SWAP ;
                          CAR ;
                          PAIR } } } } } ;
-  view "getNextEventId" unit nat { CDR ; CAR ; CDR ; CDR ; CAR ; CDR } }
+  view "getNextEventId" unit nat { CDR ; CAR ; CDR ; CDR ; CAR ; CDR } ;
+  view "getEventCreatorAddress"
+       nat
+       address
+       { UNPAIR ;
+         SWAP ;
+         CAR ;
+         CAR ;
+         CDR ;
+         CDR ;
+         CDR ;
+         SWAP ;
+         GET ;
+         IF_NONE { PUSH string "Event is not found" ; FAILWITH } {} ;
+         CAR ;
+         CAR ;
+         CDR ;
+         CAR ;
+         CDR } }
 
