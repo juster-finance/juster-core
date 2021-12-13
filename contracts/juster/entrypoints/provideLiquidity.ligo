@@ -61,11 +61,6 @@ block {
         failwith("Expected ratio very differs from current pool ratio")
     else skip;
 
-    (* Increasing providers count if this participant is not provider yet: *)
-    if isParticipant(store, key)
-    then skip
-    else event.participants := event.participants + 1n;
-
     (* Distributing liquidity: *)
     (* To cover all possible bets, it is enough for LP
         to fill only the largest pool, because only one pool loose in the end: *)

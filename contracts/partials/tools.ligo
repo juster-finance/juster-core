@@ -132,29 +132,6 @@ block {
 } with unit
 
 
-function isHaveValueTez(const k : ledgerKey; const l : ledgerType) : bool is
-    case Big_map.find_opt(k, l) of
-    | Some(_value) -> True
-    | None -> False
-    end
-
-
-function isHaveValueNat(const k : ledgerKey; const l : ledgerNatType) : bool is
-    case Big_map.find_opt(k, l) of
-    | Some(_value) -> True
-    | None -> False
-    end
-
-
-function isParticipant(
-    const store : storage;
-    const key : ledgerKey) : bool is
-
-    isHaveValueTez(key, store.betsAboveEq)
-    or isHaveValueTez(key, store.betsBelow)
-    or isHaveValueNat(key, store.liquidityShares)
-
-
 function allowOnlyManager(const store : storage) : unit is
     if Tezos.sender =/= store.manager then
         failwith("Not a contract manager")

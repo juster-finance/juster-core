@@ -28,6 +28,9 @@ type ledgerType is big_map(ledgerKey, tez)
 (* another ledger, used to calculate shares: *)
 type ledgerNatType is big_map(ledgerKey, nat)
 
+(* another ledger, used to track withdrawals *)
+type ledgerUnitType is big_map(ledgerKey, unit)
+
 
 (* params that used in new event creation that can be configured by
     contract manager (changing this params would not affect existing events
@@ -122,10 +125,6 @@ type eventType is record [
 
     (* Flag that used to activate crash withdrawals *)
     isForceMajeure : bool;
-
-    (* Calculating participants/providers count to remove them from events
-        after all withdrawals completed: *)
-    participants : nat;
 ]
 
 
@@ -216,4 +215,7 @@ type storage is record [
 
     (* Address of the manager who can accept ownership: *)
     proposedManager : option(address);
+
+    isWithdrawn : ledgerUnitType;
 ]
+

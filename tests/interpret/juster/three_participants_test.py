@@ -68,7 +68,6 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
         self.new_event(
             event_params=self.default_event_params,
             amount=amount)
-        self.assertEqual(self.storage['events'][self.id]['participants'], 0)
 
         # Participant A: adding liquidity 50/50 just at start:
         self.provide_liquidity(
@@ -76,7 +75,6 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
             amount=50_000,
             expected_above_eq=1,
             expected_below=1)
-        self.assertEqual(self.storage['events'][self.id]['participants'], 1)
 
         # Testing that with current ratio 1:1, bet with 10:1 ratio fails:
         with self.assertRaises(MichelsonRuntimeError) as cm:
@@ -95,7 +93,6 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
             amount=50_000,
             bet='aboveEq',
             minimal_win=50_000)
-        self.assertEqual(self.storage['events'][self.id]['participants'], 2)
 
         # Participant A: adding more liquidity after 12 hours
         # (1/2 of the bets period):
@@ -105,7 +102,6 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
             amount=40_000,
             expected_above_eq=4,
             expected_below=1)
-        self.assertEqual(self.storage['events'][self.id]['participants'], 2)
 
         # Participant C: adding more liquidity at the very end:
         self.current_time = RUN_TIME + 24*ONE_HOUR
@@ -114,7 +110,6 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
             amount=80_000,
             expected_above_eq=4,
             expected_below=1)
-        self.assertEqual(self.storage['events'][self.id]['participants'], 3)
 
         # Running measurement and make failwith checks:
         self.current_time = RUN_TIME + 26*ONE_HOUR
@@ -234,16 +229,8 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
             self.trigger_force_majeure(sender=self.a)
 
         # Withdrawals:
-        self.assertEqual(self.storage['events'][self.id]['participants'], 3)
         self.current_time = RUN_TIME + 64*ONE_HOUR
-
         self.withdraw(self.a, 65_000)
-        self.assertEqual(self.storage['events'][self.id]['participants'], 2)
-
-        # Another withdrawals:
         self.withdraw(self.b, 75_000)
-        self.assertEqual(self.storage['events'][self.id]['participants'], 1)
-
-        # This is last participant, checking that event is removed:
         self.withdraw(self.c, 80_000)
-        self.assertFalse(self.id in self.storage['events'])
+

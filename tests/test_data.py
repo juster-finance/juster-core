@@ -46,7 +46,8 @@ def generate_juster_storage(manager, oracle_address):
 
         'bakingRewards': 0,
         'retainedProfits': 0,
-        'proposedManager': None
+        'proposedManager': None,
+        'isWithdrawn': {}
     }
 
     return storage

@@ -76,6 +76,6 @@ class WithdrawUnknownTest(JusterBaseTestCase):
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.withdraw(self.a, 1_000_000)
 
-        msg = 'Participant not found'
+        msg = 'Already withdrawn'
         self.assertTrue(msg in str(cm.exception))
 

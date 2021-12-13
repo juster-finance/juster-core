@@ -38,21 +38,17 @@ class MultipleEventsAndProvidersTest(LineAggregatorBaseTestCase):
         self.pay_reward(event_id=2, amount=200_000)
         self.assertEqual(self.storage['nextEventLiquidity'], 2_000_000)
 
-        # TODO: remove this thoughts somewhere else:
-        # In ideal scenario A should get all the profit from 0 and 1 (+2xtz)
-        # and pay for the last event 50% (-1xtz)
-        # B should pay for the last event 50% (-1xtz)
+        # TODO: looks like this logic can be exploitable:
+        # when provider sees that there are event that profitable for aggregator
+        # he can get into aggregator and then get shares cheaper that they are
+        # will be right after event payReward called (arbitrague opportunity).
+        # There are two ways to solve this:
 
-        # However looks like this logic would not work here
-        # it can be exploitable, when provider sees that there are event that
-        # profitable for providers he can get into aggregator and then get shares
-        # cheaper that they are
-
-        # solutions? 1) keep as it is and exploit
-        # 2) recalculate share price each time pay_reward is called (but is it possible?)
-        # 3) lock shares that are in provided liquidity and evaluate new provided liquidity
-        # according to the unknown price of locked shares (looks impossible)
-        # 4) add fees for withdrawing liquidity in first K hours/days (the way plenty does)
+        # 1) add fees for withdrawing liquidity in first K hours/days (the way plenty does)
+        # 2) is it possible to record all activeEvents list to the provider position when he enters. And then when he leave: calculate and remove difference for all of the events he was not participated it?
+        # 3) lock shares that are in provided liquidity and evaluate new provided liquidity (requires a lot of additional logic and might be impossible to implement)
+        # - maybe some logic to acknowledge shares from events that was started?
+        # - so provider enters, receive some shares from free liquidity and some `share_claims` that he can demand after event is complete? and some pool for entryLiquidity?
 
         # The second cycle both providers in place:
         self.create_event(event_line_id=0, next_event_id=3)

@@ -133,23 +133,13 @@ block {
 } with operations;
 
 
-(* Removing key from all ledgers: *)
-function removeKeyFromAllLedgers(
-    var store : storage;
-    const key : ledgerKey) : storage is
-block {
+function isParticipant(
+    const store : storage;
+    const key : ledgerKey) : bool is
 
-    store.betsAboveEq := Big_map.remove(key, store.betsAboveEq);
-    store.betsBelow := Big_map.remove(key, store.betsBelow);
-    store.providedLiquidityAboveEq :=
-        Big_map.remove(key, store.providedLiquidityAboveEq);
-    store.providedLiquidityBelow :=
-        Big_map.remove(key, store.providedLiquidityBelow);
-    store.liquidityShares := Big_map.remove(key, store.liquidityShares);
-    store.depositedBets := Big_map.remove(key, store.depositedBets);
-    store.depositedLiquidity := Big_map.remove(key, store.depositedLiquidity);
-
-} with store
+    Big_map.mem(key, store.betsAboveEq)
+    or Big_map.mem(key, store.betsBelow)
+    or Big_map.mem(key, store.liquidityShares)
 
 
 function withdraw(
@@ -159,7 +149,7 @@ block {
 
     checkNoAmountIncluded(unit);
 
-    var event : eventType := getEvent(store, params.eventId);
+    const event : eventType = getEvent(store, params.eventId);
     const key : ledgerKey = (params.participantAddress, params.eventId);
 
     if event.isClosed then skip
@@ -186,16 +176,11 @@ block {
         operations := makeWithdrawOperations(store, params, event, payoutValue);
     };
 
-    (* Decreasing participants count: *)
-    if isParticipant(store, key)
-    then event.participants := abs(event.participants - 1n)
-    else failwith("Participant not found");
+    if isParticipant(store, key) then skip else failwith("Participant not found");
 
-    store := removeKeyFromAllLedgers(store, key);
-
-    (* If there are no participants in event left: removing event: *)
-    if event.participants = 0n
-    then store.events := Big_map.remove(params.eventId, store.events)
-    else store.events[params.eventId] := event;
+    (* Checking that participant was not withdrawn before: *)
+    if Big_map.mem(key, store.isWithdrawn) then failwith("Already withdrawn")
+    else store.isWithdrawn := Big_map.add(key, Unit, store.isWithdrawn);
 
 } with (operations, store)
+

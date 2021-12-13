@@ -58,10 +58,6 @@ block {
 
     const betValue : nat = tezToNat(Tezos.amount);
 
-    (* Increasing participants count if this participant is not counted yet: *)
-    if isParticipant(store, key) then skip
-    else event.participants := event.participants + 1n;
-
     (* adding liquidity to betting pool *)
     poolTo := poolTo + betValue;
 

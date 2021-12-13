@@ -177,21 +177,3 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
         # B withdraws all:
         self.withdraw(self.b, 10)
 
-        # Test that event was deleted and any interaction would lead to error:
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.close(
-                callback_values=callback_values,
-                source=self.a,
-                sender=self.oracle_address)
-        msg = "Event is not found"
-        self.assertTrue(msg in str(cm.exception))
-
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.bet(
-                participant=self.a,
-                amount=1,
-                bet='below',
-                minimal_win=5)
-        msg = 'Event is not found'
-        self.assertTrue(msg in str(cm.exception))
-

@@ -222,14 +222,6 @@ class JusterBaseTestCase(TestCase):
             withdraw_amount, result, participant, sender)
 
         storage = self.remove_none_values(result.storage)
-        # Checking that participant removed from all ledgers:
-        key = (participant, self.id)
-        self.assertFalse(key in storage['betsAboveEq'])
-        self.assertFalse(key in storage['betsBelow'])
-        self.assertFalse(key in storage['providedLiquidityAboveEq'])
-        self.assertFalse(key in storage['providedLiquidityBelow'])
-        self.assertFalse(key in storage['liquidityShares'])
-        self.assertFalse(key in storage['depositedBets'])
 
         self.check_storage_integrity(storage)
         self.storage = storage

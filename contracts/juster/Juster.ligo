@@ -38,6 +38,5 @@ case params of
 | AcceptOwnership(p)          -> acceptOwnership(p, s)
 end
 
-(* view 'getNextEventId', returns value of the nextEvenId *)
 [@view] function getNextEventId (const _ : unit ; const s: storage) : nat is s.nextEventId
 
