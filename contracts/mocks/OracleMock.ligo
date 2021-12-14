@@ -38,3 +38,5 @@ case params of
 | Update(p) -> update(p, s)
 end
 
+[@view] function getPrice(const _pair : string; var s : oracleStorage) : timestamp*nat is (Tezos.now, s)
+
