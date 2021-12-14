@@ -1,3 +1,4 @@
+docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.29.0 compile contract contracts/reward_program/RewardProgram.ligo -e main --protocol hangzhou > build/contracts/reward_program.tz
 docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.29.0 compile contract contracts/line_aggregator/LineAggregator.ligo -e main --protocol hangzhou > build/contracts/line_aggregator.tz
 docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.29.0 compile contract contracts/mocks/OracleMock.ligo -e main > build/mocks/oracle_mock.tz
 docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.29.0 compile contract contracts/juster/Juster.ligo -e main > build/contracts/juster.tz
