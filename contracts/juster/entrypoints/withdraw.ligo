@@ -133,15 +133,6 @@ block {
 } with operations;
 
 
-function isParticipant(
-    const store : storage;
-    const key : ledgerKey) : bool is
-
-    Big_map.mem(key, store.betsAboveEq)
-    or Big_map.mem(key, store.betsBelow)
-    or Big_map.mem(key, store.liquidityShares)
-
-
 function withdraw(
     const params : withdrawParams;
     var store: storage) : (list(operation) * storage) is

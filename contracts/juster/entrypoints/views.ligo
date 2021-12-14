@@ -1,7 +1,11 @@
 [@view] function getNextEventId (const _ : unit ; const s: storage) : nat is s.nextEventId
 
 [@view] function getPosition (const key : ledgerKey ; const s : storage) : positionType is
-record [
+block {
+    if isParticipant(s, key)
+        then skip;
+        else failwith("Position is not found");
+} with record [
     providedLiquidityAboveEq = getLedgerAmount(key, s.providedLiquidityAboveEq);
     providedLiquidityBelow = getLedgerAmount(key, s.providedLiquidityBelow);
     betsAboveEq = getLedgerAmount(key, s.betsAboveEq);

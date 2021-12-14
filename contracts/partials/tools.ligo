@@ -59,6 +59,7 @@ function getReceiver(const a : address) : contract(unit) is
     end;
 
 
+(* TODO: make one func using polymorphism *)
 (* Returns current amount of tez in ledger, if key is not in ledger return 0tez *)
 function getLedgerAmount(const k : ledgerKey; const l : ledgerType) : tez is
 block {
@@ -136,3 +137,13 @@ function allowOnlyManager(const store : storage) : unit is
     if Tezos.sender =/= store.manager then
         failwith("Not a contract manager")
     else unit;
+
+
+function isParticipant(
+    const store : storage;
+    const key : ledgerKey) : bool is
+
+    Big_map.mem(key, store.betsAboveEq)
+    or Big_map.mem(key, store.betsBelow)
+    or Big_map.mem(key, store.liquidityShares)
+
