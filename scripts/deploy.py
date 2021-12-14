@@ -3,14 +3,14 @@ import time
 
 ONE_HOUR = 60*60
 ONE_DAY = ONE_HOUR*24
-SHELL = 'https://granadanet.smartpy.io/'
+SHELL = 'https://rpc.tzkt.io/hangzhou2net/'
 KEY_FILENAME = 'key.json'
 CONTRACTS = {
-    'juster': ContractInterface.from_file('build/tz/juster.tz'),
+    'juster': ContractInterface.from_file('build/contracts/juster.tz'),
 }
 
-# Granadanet Harbinger normalizer address:
-ORACLE_ADDRESS = 'KT1MwuujtBodVQFm1Jk1KTGNc49wygqoLvpe'
+# Hangzhou2 Harbinger normalizer address:
+ORACLE_ADDRESS = 'KT1PMQZxQTrFPJn3pEaj9rvGfJA9Hvx7Z1CL'
 
 
 def generate_storage(manager, oracle_address):
@@ -54,7 +54,8 @@ def generate_storage(manager, oracle_address):
 
         'bakingRewards': 0,
         'retainedProfits': 0,
-        'proposedManager': None
+        'proposedManager': None,
+        'isWithdrawn': {}
     }
 
     return storage

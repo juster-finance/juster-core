@@ -1,4 +1,4 @@
-key.json
+key*.json
 **/.ipynb_checkpoints/*
 **/__pycache__/*
 **/test-keys/*
