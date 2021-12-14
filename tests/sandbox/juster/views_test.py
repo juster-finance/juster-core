@@ -71,3 +71,14 @@ class ViewsSandboxTestCase(SandboxedJusterTestCase):
         self.assertEqual(event['poolBelow'], 500_000)
         self.assertEqual(event['totalLiquidityShares'], 100_000_000)
 
+        # requesting non existed position should fail:
+        wrong_key = (self.b.key.public_key_hash(), 1)
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.juster.getPosition(wrong_key).storage_view()
+        self.assertTrue('Position is not found' in str(cm.exception))
+
+        wrong_key = (self.c.key.public_key_hash(), 0)
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.juster.getPosition(wrong_key).storage_view()
+        self.assertTrue('Position is not found' in str(cm.exception))
+
