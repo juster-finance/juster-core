@@ -19,3 +19,6 @@ block {
 [@view] function getEvent (const eventId : nat ; const s : storage) : eventType is
 block { const event = getEvent(s, eventId) } with event
 
+[@view] function isParticipatedInEvent (
+    const key : ledgerKey ; const s : storage) : bool is isParticipant(s, key)
+
