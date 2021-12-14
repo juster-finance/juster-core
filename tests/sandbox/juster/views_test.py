@@ -10,6 +10,10 @@ class ViewsSandboxTestCase(SandboxedJusterTestCase):
         # checking that initial nextEventId is 0
         self.assertEqual(self.juster.getNextEventId().storage_view(), 0)
 
+        # checking that a was not participated in 0 event:
+        key = (self.a.key.public_key_hash(), 0)
+        self.assertFalse(self.juster.isParticipatedInEvent(key).storage_view())
+
         # creating event and checking getEventCreatorAddress view:
         self._create_simple_event(self.a)
         self.bake_block()
@@ -47,6 +51,16 @@ class ViewsSandboxTestCase(SandboxedJusterTestCase):
             amount=1_000_000
         )
         self.bake_block()
+
+        # checking that b was participated in 0 event and a was not:
+        key = (self.b.key.public_key_hash(), 0)
+        self.assertTrue(self.juster.isParticipatedInEvent(key).storage_view())
+        key = (self.a.key.public_key_hash(), 0)
+        self.assertFalse(self.juster.isParticipatedInEvent(key).storage_view())
+
+        # and B was not participated in 1 event:
+        key = (self.b.key.public_key_hash(), 1)
+        self.assertFalse(self.juster.isParticipatedInEvent(key).storage_view())
 
         # checking that B position is expected:
         expected_position = {
