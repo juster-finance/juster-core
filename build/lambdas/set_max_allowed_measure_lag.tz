@@ -1,0 +1,22 @@
+{ DUP ;
+  CDR ;
+  SWAP ;
+  DUP ;
+  DUG 2 ;
+  CAR ;
+  CDR ;
+  DUP 3 ;
+  CAR ;
+  CAR ;
+  CDR ;
+  CDR ;
+  PUSH nat 9000 ;
+  PAIR ;
+  DIG 3 ;
+  CAR ;
+  CAR ;
+  CAR ;
+  PAIR ;
+  PAIR ;
+  PAIR }
+
