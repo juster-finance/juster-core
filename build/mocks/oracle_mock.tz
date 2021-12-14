@@ -24,5 +24,6 @@
              DIG 2 ;
              CONS ;
              PAIR }
-           { SWAP ; DROP ; NIL operation ; PAIR } } }
+           { SWAP ; DROP ; NIL operation ; PAIR } } ;
+  view "getPrice" string (pair timestamp nat) { CDR ; NOW ; PAIR } }
 
