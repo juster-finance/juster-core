@@ -19,8 +19,7 @@ class ViewsSandboxTestCase(SandboxedJusterTestCase):
             event = self.juster.getEvent(1).storage_view()
         self.assertTrue('Event is not found' in str(cm.exception))
 
-        # TODO: why does this return 0?
-        # self.assertEqual(self.juster.getNextEventId().storage_view(), 1)
+        self.assertEqual(self.juster.getNextEventId().storage_view(), 1)
         event = self.juster.getEvent(0).storage_view()
         self.assertEqual(event['creator'], self.a.key.public_key_hash())
 
