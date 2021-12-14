@@ -3661,5 +3661,38 @@
          CDR ;
          SWAP ;
          GET ;
-         IF_NONE { PUSH string "Event is not found" ; FAILWITH } {} } }
+         IF_NONE { PUSH string "Event is not found" ; FAILWITH } {} } ;
+  view "isParticipatedInEvent"
+       (pair address nat)
+       bool
+       { UNPAIR ;
+         SWAP ;
+         DUP ;
+         CAR ;
+         CDR ;
+         CAR ;
+         CDR ;
+         CAR ;
+         DUP 3 ;
+         MEM ;
+         SWAP ;
+         DUP ;
+         DUG 2 ;
+         CAR ;
+         CAR ;
+         CAR ;
+         CDR ;
+         CAR ;
+         DUP 4 ;
+         MEM ;
+         DIG 2 ;
+         CAR ;
+         CAR ;
+         CAR ;
+         CAR ;
+         CDR ;
+         DIG 3 ;
+         MEM ;
+         OR ;
+         OR } }
 
