@@ -74,12 +74,16 @@ type storage is record [
 
     withdrawableLiquidity : nat;
 
+    (* added liquidity that can be applied when event is finished *)
+    // entryLiquidity : nat;
+
     (* claims is liquidity, that can be withdrawn by providers,
         key: eventId*positionId
         value: shares
     *)
 
     claims : big_map(claimKey, claimParams);
+    // shareClaims : big_map(claimKey, claimParams);
 
     manager : address;
     (* TODO: lockedShares: nat; ?*)
