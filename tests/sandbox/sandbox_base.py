@@ -19,6 +19,7 @@ from tests.test_data import (
 JUSTER_FN = '../../build/contracts/juster.tz'
 LINE_AGGREGATOR_FN = '../../build/contracts/line_aggregator.tz'
 ORACLE_MOCK_FN = '../../build/mocks/oracle_mock.tz'
+REWARD_PROGRAM_FN = '../../build/contracts/reward_program.tz'
 
 
 def pkh(key):
@@ -107,6 +108,25 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
         self.bake_block()
 
         self.line_aggregator = self._find_contract_by_hash(client, result.hash())
+
+
+    def _deploy_reward_program(self, client, juster_address):
+        """ Deploys Reward Program """
+
+        filename = join(dirname(__file__), REWARD_PROGRAM_FN)
+        contract = ContractInterface.from_file(filename)
+        contract = contract.using(shell=self.get_node_url(), key=client.key)
+
+        storage = dict(
+            juster=juster_address,
+            result=False
+        )
+
+        opg = contract.originate(initial_storage=storage)
+        result = opg.send()
+        self.bake_block()
+
+        self.reward_program = self._find_contract_by_hash(client, result.hash())
 
 
     def _find_call_result_by_hash(self, client, opg_hash):
