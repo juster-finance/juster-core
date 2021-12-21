@@ -60,3 +60,14 @@ class ApproveLiquidityTestCase(LineAggregatorBaseTestCase):
         self.wait(1)
         self.approve_liquidity(entry_position_id=0)
 
+
+    def test_that_anyone_can_approve_others_liquidity(self):
+        # creating default event:
+        self.add_line()
+
+        # providing liquidity with A:
+        self.deposit_liquidity(sender=self.a)
+
+        # approving with B:
+        self.approve_liquidity(sender=self.b, entry_position_id=0)
+
