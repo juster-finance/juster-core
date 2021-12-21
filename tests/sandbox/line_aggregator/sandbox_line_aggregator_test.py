@@ -39,6 +39,15 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
         return opg
 
 
+    def _approve_liquidity(self, user, entry_position_id):
+        opg = (user.contract(self.line_aggregator.address)
+            .approveLiquidity(entry_position_id)
+            .send()
+        )
+
+        return opg
+
+
     def _aggregator_create_event(self, user, line_id=0):
         opg = (user.contract(self.line_aggregator.address)
             .createEvent(line_id)
@@ -81,6 +90,9 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
         self._deposit_liquidity(self.a, shares)
         self.bake_block()
 
+        self._approve_liquidity(self.a, 0)
+        self.bake_block()
+
         # A runs event:
         opg = self._aggregator_create_event(self.a)
         self.bake_block()
@@ -110,7 +122,7 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
         )
 
         # waiting for the end of the betting period:
-        [self.bake_block() for _ in range(10)]
+        [self.bake_block() for _ in range(30)]
         self._run_measurements()
 
         # withdrawing for line aggregator (should be 10 tez):
@@ -148,12 +160,20 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
         # providing first liquidity:
         self._deposit_liquidity(self.a, 10_000_000)
         self.bake_block()
+
+        self._approve_liquidity(self.a, 0)
+        self.bake_block()
+
         shares = self.line_aggregator.storage['positions'][0]()['shares']
         self.assertEqual(shares, 10_000_000)
 
         # providing liquidity second time, nohting else changed:
         self._deposit_liquidity(self.a, 10_000_000)
         self.bake_block()
+
+        self._approve_liquidity(self.a, 1)
+        self.bake_block()
+
         shares = self.line_aggregator.storage['positions'][1]()['shares']
         self.assertEqual(shares, 10_000_000)
 
@@ -180,10 +200,17 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
         self.bake_block()
         self.assertEqual(len(self.line_aggregator.storage['lines']()), LINES)
 
-        for liquidity in range(PROVIDERS):
+        for entry_id in range(PROVIDERS):
             self._deposit_liquidity(self.a, 10_000_000)
-
         self.bake_block()
+
+        self.assertEqual(
+            self.line_aggregator.storage['nextEntryPositionId'](), PROVIDERS)
+
+        for entry_id in range(PROVIDERS):
+            self._approve_liquidity(self.a, entry_id)
+        self.bake_block()
+
         self.assertEqual(
             self.line_aggregator.storage['nextPositionId'](), PROVIDERS)
 

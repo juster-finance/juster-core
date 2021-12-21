@@ -9,10 +9,12 @@ class NextEventLiquidityTestCase(LineAggregatorBaseTestCase):
 
         # providing liquidity:
         self.deposit_liquidity(self.a, amount=80_000_000)
+        self.approve_liquidity(self.a, entry_position_id=0)
         self.assertEqual(self.storage['nextEventLiquidity'], 8_000_000)
 
         # second provider adds some liquidity with 20% shares:
         self.deposit_liquidity(self.b, amount=20_000_000)
+        self.approve_liquidity(self.a, entry_position_id=1)
         self.assertEqual(self.storage['nextEventLiquidity'], 10_000_000)
 
         # creating one event:

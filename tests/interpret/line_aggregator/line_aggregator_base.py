@@ -86,10 +86,26 @@ class LineAggregatorBaseTestCase(TestCase):
         )
 
         # TODO: assert that storage changes was valid
-        # TODO: assert that position added, that shares calculated properly, that time is correct
+        entry_position_id = self.storage['nextEntryPositionId']
         self.storage = result.storage
         self.update_balance(self.address, amount)
         self.update_balance(sender, -amount)
+
+        return entry_position_id
+
+
+    def approve_liquidity(self, sender=None, entry_position_id=0):
+        sender = sender or self.manager
+        result = self.aggregator.approveLiquidity(entry_position_id).interpret(
+            storage=self.storage,
+            now=self.current_time,
+            sender=sender,
+            balance=self.balances[self.address]
+        )
+
+        # TODO: assert that storage changes was valid
+        # TODO: assert that position added, that shares calculated properly, that time is correct
+        self.storage = result.storage
 
 
     def claim_liquidity(self, sender=None, position_id=0, shares=1_000_000):
