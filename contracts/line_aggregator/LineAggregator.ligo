@@ -202,6 +202,7 @@ block {
 
     const entryPosition = getOrFail(
         entryPositionId, store.entryPositions, "Entry position is not found");
+    store.entryPositions := Big_map.remove(entryPositionId, store.entryPositions);
 
     if Tezos.now < entryPosition.acceptAfter
         then failwith("Cannot approve liquidity before acceptAfter") else skip;
