@@ -50,6 +50,14 @@ type claimParams is record [
     totalShares : nat;
 ]
 
+(*  entryPosition is not accepted yet position including provider address,
+    timestamp when liquidity can be accepted and amount of this liquidity *)
+type entryPositionType is record [
+    provider : address;
+    acceptAfter : timestamp;
+    amount : nat;
+]
+
 type storage is record [
     nextLineId: nat;
 
@@ -74,13 +82,14 @@ type storage is record [
 
     withdrawableLiquidity : nat;
 
-    (* added liquidity that can be applied when event is finished *)
-    // entryLiquidity : nat;
+    (* added liquidity that not recognized yet *)
+    entryLiquidity : nat;
 
-    (* claims is liquidity, that can be withdrawn by providers,
-        key: eventId*positionId
-        value: shares
-    *)
+    (* amount of time before liquidity can be recognized *)
+    entryLockPeriod : nat;
+
+    entryPositions : big_map(nat, entryPositionType);
+    nextEntryPositionId : nat;
 
     claims : big_map(claimKey, claimParams);
     // shareClaims : big_map(claimKey, claimParams);
@@ -114,6 +123,10 @@ type withdrawLiquidityParams is list(claimKey)
 type action is
 | AddLine of lineType
 | DepositLiquidity of unit
+(* TODO: how to cancel deposited but not approved liquidity?
+    only thorough approve process? Or there should be special entrypoint to do this?
+    Is it possible that approveLiquidity will be blocked and liquidity will be locked? *)
+| ApproveLiquidity of nat
 
 (* claiming liquidity with value of shares count allows to withdraw this shares
     from all current events *)
@@ -129,6 +142,11 @@ type action is
 (* TODO: updateNewEventFee if it changed in Juster, only manager can call *)
 // | CreateEvents of list(nat)
 | CreateEvent of nat
+(* TODO: updateEntryLockPeriod *)
+(* TODO: pauseEvents *)
+(* TODO: pauseDepositLiquidity *)
+(* TODO: views: getLineOfEvent, getNextEventLiquidity, getWithdrawableLiquidity,
+    getNextPositionId, getNextEntryPositionId, getNextClaimId ... etc *)
 
 
 function addLine(
@@ -155,21 +173,61 @@ function depositLiquidity(
     var store : storage) : (list(operation) * storage) is
 block {
 
+    const providedAmount = Tezos.amount / 1mutez;
+    const newEntryPosition = record[
+        provider = Tezos.sender;
+        acceptAfter = Tezos.now + int(store.entryLockPeriod);
+        amount = providedAmount;
+    ];
+    store.entryPositions[store.nextEntryPositionId] := newEntryPosition;
+    store.nextEntryPositionId := store.nextEntryPositionId + 1n;
+    store.entryLiquidity := store.entryLiquidity + providedAmount;
+
+} with ((nil: list(operation)), store)
+
+
+function getOrFail(
+    const key : _key;
+    const ledger : big_map(_key, _value);
+    const failwithMsg : string) : _value is
+case Big_map.find_opt(key, ledger) of
+| Some(value) -> value
+| None -> (failwith(failwithMsg) : _value)
+end;
+
+
+function approveLiquidity(
+    const entryPositionId : nat; var store : storage) : (list(operation) * storage) is
+block {
+
+    const entryPosition = getOrFail(
+        entryPositionId, store.entryPositions, "Entry position is not found");
+
+    if Tezos.now < entryPosition.acceptAfter
+        then failwith("Cannot approve liquidity before acceptAfter") else skip;
+
+    (* TODO: is it possible to have store.entryLiquidity < entryPosition.amount?
+        maybe need to check & failwith then? *)
+    store.entryLiquidity := abs(store.entryLiquidity - entryPosition.amount);
+
     (* if there are no lines, then it is impossible to calculate providedPerEvent
         and there would be DIV/0 error *)
     if store.maxActiveEvents = 0n
         then failwith("Need to have at least one line") else skip;
 
     (* calculating shares *)
-    const provided = Tezos.amount/1mutez;
-    const totalLiquidity = store.activeLiquidity + Tezos.balance/1mutez;
+    const provided = entryPosition.amount;
+    const totalLiquidity =
+        store.activeLiquidity + Tezos.balance/1mutez - store.entryLiquidity;
+    (* TODO: is it possible to have totalLiquidity < 0? *)
+
     const liquidityBeforeDeposit = abs(totalLiquidity - provided);
     const shares = if store.totalShares = 0n
         then provided
         else provided * store.totalShares / liquidityBeforeDeposit;
 
     const newPosition = record [
-        provider = Tezos.sender;
+        provider = entryPosition.provider;
         shares = shares;
         addedCounter = store.counter;
     ];
@@ -283,6 +341,7 @@ block {
     const totalLiquidity = abs(
         Tezos.balance/1mutez
         - store.withdrawableLiquidity
+        - store.entryLiquidity
         + store.activeLiquidity);
 
     const participantLiquidity = params.shares * totalLiquidity / store.totalShares;
@@ -499,6 +558,7 @@ block {
     const freeLiquidity = (
         Tezos.balance/1mutez
         - store.withdrawableLiquidity
+        - store.entryLiquidity
         - abs(freeEventSlots)*store.newEventFee/1mutez);
 
     if freeLiquidity < liquidityAmount then liquidityAmount := freeLiquidity
@@ -548,6 +608,7 @@ function main (const params : action; var s : storage) : (list(operation) * stor
 case params of
 | AddLine(p) -> addLine(p, s)
 | DepositLiquidity -> depositLiquidity(s)
+| ApproveLiquidity(p) -> approveLiquidity(p, s)
 | ClaimLiquidity(p) -> claimLiquidity(p, s)
 | WithdrawLiquidity(p) -> withdrawLiquidity(p, s)
 | PayReward(p) -> payReward(p, s)
