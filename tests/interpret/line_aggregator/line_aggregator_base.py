@@ -105,6 +105,8 @@ class LineAggregatorBaseTestCase(TestCase):
 
         # TODO: assert that storage changes was valid
         # TODO: assert that position added, that shares calculated properly, that time is correct
+        self.assertTrue(result.storage['entryPositions'][entry_position_id] is None)
+        result.storage['entryPositions'].pop(entry_position_id)
         self.storage = result.storage
 
 
