@@ -43,6 +43,7 @@ class LineAggregatorBaseTestCase(TestCase):
 
         self.storage = self.init_storage.copy()
         self.balances = {self.address: 0}
+        self.next_event_id = 0
 
 
     def update_balance(self, address, amount):
@@ -194,8 +195,9 @@ class LineAggregatorBaseTestCase(TestCase):
         self.update_balance(self.address, amount)
 
 
-    def create_event(self, sender=None, event_line_id=0, next_event_id=0):
+    def create_event(self, sender=None, event_line_id=0, next_event_id=None):
         sender = sender or self.manager
+        next_event_id = next_event_id or self.next_event_id
 
         contract_call = self.aggregator.createEvent(event_line_id)
         result = contract_call.interpret(
@@ -220,6 +222,7 @@ class LineAggregatorBaseTestCase(TestCase):
         # TODO: check that amount calculated properly
         self.update_balance(self.address, -amount)
         self.update_balance(self.juster_address, amount)
+        self.next_event_id += 1
 
 
     def wait(self, wait_time=0):
