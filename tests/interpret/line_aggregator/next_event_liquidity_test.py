@@ -107,3 +107,21 @@ class NextEventLiquidityTestCase(LineAggregatorBaseTestCase):
         # there are should be liquidity for the second line:
         self.assertEqual(self.storage['nextEventLiquidity'], 500_000)
 
+
+    def test_next_event_liquidity_cant_be_emptied_when_provider_goes_out(self):
+
+        # creating default event line:
+        self.add_line(max_active_events=2)
+
+        # providing liquidity:
+        self.deposit_liquidity(self.a, amount=2_000_000)
+        self.approve_liquidity(self.a, entry_position_id=0)
+
+        self.create_event()
+        self.wait(3600)
+        self.claim_liquidity(self.a, shares=2_000_000)
+
+        self.pay_reward(event_id=0, amount=0)
+
+        self.assertEqual(self.storage['nextEventLiquidity'], 0)
+
