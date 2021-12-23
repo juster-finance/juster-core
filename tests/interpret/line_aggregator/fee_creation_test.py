@@ -1,4 +1,5 @@
 from tests.interpret.line_aggregator.line_aggregator_base import LineAggregatorBaseTestCase
+from pytezos import MichelsonRuntimeError
 
 
 class FeeEventCreationTestCase(LineAggregatorBaseTestCase):
@@ -45,4 +46,22 @@ class FeeEventCreationTestCase(LineAggregatorBaseTestCase):
         # 2.5 * 3 / (3+2) = 1.5
         self.add_line(max_active_events=2)
         self.assertEqual(self.storage['nextEventLiquidity'], 1_500_000)
+
+
+    def test_should_fail_to_create_event_if_fee_more_than_next_event_liquidity(self):
+
+        self.storage['newEventFee'] = 500_000
+
+        # creating default event:
+        self.add_line(max_active_events=3)
+
+        # providing liquidity that only covers new event fees:
+        self.deposit_liquidity(self.a, amount=1_500_000)
+        self.approve_liquidity(self.a, entry_position_id=0)
+        self.assertEqual(self.storage['nextEventLiquidity'], 500_000)
+
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.create_event(event_line_id=0, next_event_id=1)
+        msg = 'Not enough liquidity to run event'
+        self.assertTrue(msg in str(cm.exception))
 
