@@ -223,6 +223,7 @@ class LineAggregatorBaseTestCase(TestCase):
         self.update_balance(self.address, -amount)
         self.update_balance(self.juster_address, amount)
         self.next_event_id += 1
+        return next_event_id
 
 
     def wait(self, wait_time=0):
