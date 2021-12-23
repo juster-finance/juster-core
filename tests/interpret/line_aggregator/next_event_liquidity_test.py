@@ -1,4 +1,5 @@
 from tests.interpret.line_aggregator.line_aggregator_base import LineAggregatorBaseTestCase
+from random import randint
 
 
 class NextEventLiquidityTestCase(LineAggregatorBaseTestCase):
@@ -37,4 +38,53 @@ class NextEventLiquidityTestCase(LineAggregatorBaseTestCase):
         self.wait(3600)
         self.pay_reward(event_id=2, amount=1_200_000)
         self.assertEqual(self.storage['nextEventLiquidity'], 2_100_000)
+
+
+    def test_next_event_liquidity_cant_be_emptied_when_all_events_are_lose(self):
+
+        # creating default event line:
+        self.add_line(max_active_events=5)
+
+        # providing liquidity:
+        self.deposit_liquidity(self.a, amount=5_000_000)
+        self.approve_liquidity(self.a, entry_position_id=0)
+
+        for event_id in range(5):
+            self.create_event(event_line_id=0, next_event_id=event_id)
+            self.wait(3600)
+
+        for event_id in range(5):
+            self.pay_reward(event_id=event_id, amount=0)
+
+        self.assertEqual(self.storage['nextEventLiquidity'], 0)
+
+        # TODO: the same but with two lines
+        # TODO: the same but with returned 100_000
+
+
+    def test_next_event_liquidity_shoul_be_equal_to_events_result_mean(self):
+
+        def random_amount():
+            return randint(1, 20) * 100_000
+
+        # creating event line:
+        self.add_line(max_active_events=5)
+
+        # providing liquidity, value should not matter:
+        self.deposit_liquidity(self.a, amount=random_amount()*5)
+        self.approve_liquidity(self.a, entry_position_id=0)
+
+        for event_id in range(5):
+            self.create_event(event_line_id=0)
+            self.wait(3600)
+
+        mean_amount = 0
+        for event_id in range(5):
+            amount = random_amount()
+            self.pay_reward(event_id=1, amount=amount)
+            mean_amount += amount / 5
+
+        self.assertEqual(self.storage['nextEventLiquidity'], mean_amount)
+
+        # TODO: the same but with two lines
 
