@@ -41,6 +41,10 @@ class LineAggregatorBaseTestCase(TestCase):
             juster_address=self.juster_address
         )
 
+        self.drop_changes()
+
+
+    def drop_changes(self):
         self.storage = self.init_storage.copy()
         self.balances = {self.address: 0}
         self.next_event_id = 0
