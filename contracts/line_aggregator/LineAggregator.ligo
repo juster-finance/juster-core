@@ -147,6 +147,7 @@ type action is
 (* TODO: pauseDepositLiquidity *)
 (* TODO: views: getLineOfEvent, getNextEventLiquidity, getWithdrawableLiquidity,
     getNextPositionId, getNextEntryPositionId, getNextClaimId ... etc *)
+(* TODO: updateNewEventFee *)
 
 
 function addLine(
