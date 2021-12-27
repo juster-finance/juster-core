@@ -1,3 +1,4 @@
+import unittest
 from tests.interpret.line_aggregator.line_aggregator_base import LineAggregatorBaseTestCase
 from pytezos import MichelsonRuntimeError
 from random import randint
@@ -69,5 +70,44 @@ class ClaimLiquidityTestCase(LineAggregatorBaseTestCase):
 
 
     def test_should_not_allow_to_claim_shares_twice(self):
+        self.add_line()
+        self.deposit_liquidity(amount=100)
+        self.approve_liquidity()
+        self.claim_liquidity(position_id=0, shares=100)
+
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.claim_liquidity(position_id=0, shares=100)
+        msg = 'Claim shares is exceed position shares'
+        self.assertTrue(msg in str(cm.exception))
+
+
+    def test_should_be_possible_to_claim_partial_liquidity(self):
+        self.add_line()
+        self.deposit_liquidity(amount=100)
+        self.approve_liquidity()
+        self.create_event(event_line_id=0)
+
+        self.claim_liquidity(position_id=0, shares=50)
+        self.claim_liquidity(position_id=0, shares=30)
+        self.claim_liquidity(position_id=0, shares=15)
+        self.claim_liquidity(position_id=0, shares=3)
+        self.claim_liquidity(position_id=0, shares=2)
+
+        target_claims = {
+            (0, 0): {'shares': 100, 'totalShares': 100},
+        }
+        self.assertDictEqual(self.storage['claims'], target_claims)
+
+
+    @unittest.skip("Need to decide what logic should be implemented in contract")
+    def test_should_not_be_possible_to_claim_zero_shares(self):
+        # TODO: need to decide what is the best practice to do in this case
+        # option 1: block this action, because it can be used to spam the network
+        # (but it would be costs of the spammer) and it would create a lot of
+        # claims with 0 shares
+        # option 2: improve contract logic so it would not create claims if
+        # 0 shares claimed and allow this action
+        # option 3: allow this action, because it can be useful in third contract
+        # interactions to simplify its logic (but maybe this is wrong way)
         pass
 
