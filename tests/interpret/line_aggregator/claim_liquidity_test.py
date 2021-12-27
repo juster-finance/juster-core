@@ -44,5 +44,30 @@ class ClaimLiquidityTestCase(LineAggregatorBaseTestCase):
 
 
     def test_should_return_unused_liquidity_amount(self):
+        self.add_line(max_active_events=2)
+        self.deposit_liquidity(sender=self.a, amount=100)
+        self.approve_liquidity(entry_position_id=0)
+        self.assertEqual(self.balances[self.a], -100)
+
+        # 50 mutez used in the first event (100 / 2 max active events):
+        self.create_event(event_line_id=0)
+        self.claim_liquidity(sender=self.a, position_id=0, shares=100)
+
+        # 50 mutez unused liquidity should be returned:
+        self.assertEqual(self.balances[self.a], -50)
+
+
+    def test_should_not_allow_to_claim_others_shares(self):
+        self.add_line()
+        self.deposit_liquidity(sender=self.a)
+        self.approve_liquidity()
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.claim_liquidity(sender=self.b)
+
+        msg = 'Not position owner'
+        self.assertTrue(msg in str(cm.exception))
+
+
+    def test_should_not_allow_to_claim_shares_twice(self):
         pass
 
