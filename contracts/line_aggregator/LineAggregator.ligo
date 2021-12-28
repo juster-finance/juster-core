@@ -22,10 +22,6 @@ type lineType is record [
 type positionType is record [
     provider : address;
     shares : nat;
-
-    (* TODO: consider addedCounter & eventLine.lastEventCreatedTimeCounter
-        instead of time? This can resolve problems when liquidity added in the
-        same block when event is created *)
     addedCounter : nat;
 ]
 
@@ -46,7 +42,6 @@ type claimKey is record [
 
 type claimParams is record [
     shares : nat;
-    (* TODO: do I need to have this totalShares in claim params? need to figure out *)
     totalShares : nat;
 ]
 
@@ -92,10 +87,8 @@ type storage is record [
     nextEntryPositionId : nat;
 
     claims : big_map(claimKey, claimParams);
-    // shareClaims : big_map(claimKey, claimParams);
 
     manager : address;
-    (* TODO: lockedShares: nat; ?*)
 
     juster : address;
     newEventFee : tez;
@@ -123,10 +116,8 @@ type withdrawLiquidityParams is list(claimKey)
 type action is
 | AddLine of lineType
 | DepositLiquidity of unit
-(* TODO: how to cancel deposited but not approved liquidity?
-    only thorough approve process? Or there should be special entrypoint to do this?
-    Is it possible that approveLiquidity will be blocked and liquidity will be locked? *)
 | ApproveLiquidity of nat
+// | CancelLiquidity of nat
 
 (* claiming liquidity with value of shares count allows to withdraw this shares
     from all current events *)
@@ -508,6 +499,10 @@ block {
     (* If there was some missed events, need to adjust nextBetsCloseTime *)
     const periods = (Tezos.now - line.lastBetsCloseTime) / line.betsPeriod + 1n;
     const nextBetsCloseTime = line.lastBetsCloseTime + line.betsPeriod*periods;
+
+    (* TODO: maybe this is good to have some logic that shifts nextBetsCloseTime
+        for one more period if there are not enough time left for the bets
+        (for example if this is less than a half of the betsPeriod *)
 
     (* Updating line *)
     line.lastBetsCloseTime := nextBetsCloseTime;
