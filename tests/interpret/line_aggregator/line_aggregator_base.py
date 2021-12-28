@@ -60,14 +60,16 @@ class LineAggregatorBaseTestCase(TestCase):
             sender=None,
             currency_pair='XTZ-USD',
             max_active_events=2,
-            bets_period=3600
+            bets_period=3600,
+            last_bets_close_time=0
         ):
 
         sender = sender or self.manager
         line_params = generate_line_params(
             currency_pair=currency_pair,
             max_active_events=max_active_events,
-            bets_period=bets_period
+            bets_period=bets_period,
+            last_bets_close_time=last_bets_close_time
         )
 
         result = self.aggregator.addLine(line_params).interpret(

@@ -83,7 +83,8 @@ def generate_line_params(
         measure_period=3600,
         currency_pair='XTZ_USD',
         max_active_events=2,
-        target_dynamics=1_000_000
+        target_dynamics=1_000_000,
+        last_bets_close_time=0
     ):
     return {
         'currencyPair': currency_pair,
@@ -93,7 +94,7 @@ def generate_line_params(
         'rateBelow': 1,
         'measurePeriod': measure_period,
         'betsPeriod': bets_period,
-        'lastBetsCloseTime': 0,
+        'lastBetsCloseTime': last_bets_close_time,
         'maxActiveEvents': max_active_events
     }
 
