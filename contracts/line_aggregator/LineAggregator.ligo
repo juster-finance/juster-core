@@ -117,7 +117,7 @@ type action is
 | AddLine of lineType
 | DepositLiquidity of unit
 | ApproveLiquidity of nat
-// | CancelLiquidity of nat
+| CancelLiquidity of nat
 
 (* claiming liquidity with value of shares count allows to withdraw this shares
     from all current events *)
@@ -235,6 +235,39 @@ block {
 } with ((nil: list(operation)), store)
 
 
+(* TODO: use tools that created for Juster? *)
+function getReceiver(const a : address) : contract(unit) is
+    case (Tezos.get_contract_opt(a): option(contract(unit))) of
+    | Some (con) -> con
+    | None -> (failwith ("Not a contract") : (contract(unit)))
+    end;
+
+function prepareOperation(
+    const addressTo : address;
+    const payout : tez
+) : operation is Tezos.transaction(unit, payout, getReceiver(addressTo));
+
+
+function cancelLiquidity(
+    const entryPositionId : nat; var store : storage) : (list(operation) * storage) is
+block {
+
+    const entryPosition = getOrFail(
+        entryPositionId, store.entryPositions, "Entry position is not found");
+    store.entryPositions := Big_map.remove(entryPositionId, store.entryPositions);
+
+    if Tezos.sender = entryPosition.provider
+        then skip else failwith("Not entry position owner");
+
+    store.entryLiquidity := abs(store.entryLiquidity - entryPosition.amount);
+
+    const operations = if entryPosition.amount > 0n then
+        list[prepareOperation(Tezos.sender, entryPosition.amount * 1mutez)]
+    else (nil: list(operation));
+
+} with (operations, store)
+
+
 function getPosition(const store : storage; const positionId : nat) : positionType is
 case Big_map.find_opt(positionId, store.positions) of
 | Some(pos) -> pos
@@ -252,19 +285,6 @@ case Big_map.find_opt(eventId, store.events) of
 | Some(event) -> event
 | None -> (failwith("Event is not found") : eventType)
 end;
-
-
-(* TODO: use tools that created for Juster? *)
-function getReceiver(const a : address) : contract(unit) is
-    case (Tezos.get_contract_opt(a): option(contract(unit))) of
-    | Some (con) -> con
-    | None -> (failwith ("Not a contract") : (contract(unit)))
-    end;
-
-function prepareOperation(
-    const addressTo : address;
-    const payout : tez
-) : operation is Tezos.transaction(unit, payout, getReceiver(addressTo));
 
 
 function absPositive(const value : int) is if value >= 0 then abs(value) else 0n
@@ -606,6 +626,7 @@ case params of
 | AddLine(p) -> addLine(p, s)
 | DepositLiquidity -> depositLiquidity(s)
 | ApproveLiquidity(p) -> approveLiquidity(p, s)
+| CancelLiquidity(p) -> cancelLiquidity(p, s)
 | ClaimLiquidity(p) -> claimLiquidity(p, s)
 | WithdrawLiquidity(p) -> withdrawLiquidity(p, s)
 | PayReward(p) -> payReward(p, s)
