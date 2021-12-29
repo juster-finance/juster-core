@@ -2070,7 +2070,7 @@
                             DUP 3 ;
                             GET ;
                             IF_NONE
-                              { DROP ; PUSH nat 0 }
+                              { DROP ; PUSH string "Claim is not found" ; FAILWITH }
                               { UNPAIR ;
                                 DIG 2 ;
                                 MUL ;
