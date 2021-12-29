@@ -398,10 +398,9 @@ block {
         | None -> (failwith("Event result is not received yet") : nat)
         end;
 
-        (* TODO: consider failwith if claim is not found? *)
         const eventReward = case Big_map.find_opt(key, store.claims) of
         | Some(claim) -> eventResult * claim.shares / claim.totalShares
-        | None -> 0n
+        | None -> (failwith("Claim is not found") : nat)
         end;
 
         withdrawSum := withdrawSum + eventReward;
