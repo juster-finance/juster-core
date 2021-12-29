@@ -386,6 +386,13 @@ function withdrawLiquidity(
     var store : storage) : (list(operation) * storage) is
 block {
     (* TODO: assert no tez provided *)
+    (* TODO: consider possibility to withdraw for another (not self)?
+        it is possible to check that all positions are owned by one address and
+        then create withdrawals for all this positions
+
+        or alternative way is to make multiple operations if there are multiple
+        owners in provided withdrawRequests
+    *)
 
     var withdrawSum := 0n;
     for key in list withdrawRequests block {
