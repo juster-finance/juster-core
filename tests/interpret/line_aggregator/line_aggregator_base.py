@@ -117,6 +117,29 @@ class LineAggregatorBaseTestCase(TestCase):
         self.storage = result.storage
 
 
+    def cancel_liquidity(self, sender=None, entry_position_id=0):
+        sender = sender or self.manager
+        result = self.aggregator.cancelLiquidity(entry_position_id).interpret(
+            storage=self.storage,
+            now=self.current_time,
+            sender=sender,
+            balance=self.balances[self.address]
+        )
+
+        # TODO: assert that storage changes was valid
+        self.assertTrue(result.storage['entryPositions'][entry_position_id] is None)
+        result.storage['entryPositions'].pop(entry_position_id)
+
+        # TODO: is it possible to have entry position with 0 amount?
+        entry_position = self.storage['entryPositions'][entry_position_id]
+        self.assertEqual(len(result.operations), 1)
+        op = result.operations[0]
+        self.assertEqual(op['destination'], sender)
+        self.assertEqual(op['amount'], str(entry_position['amount']))
+
+        self.storage = result.storage
+
+
     def claim_liquidity(self, sender=None, position_id=0, shares=1_000_000):
         sender = sender or self.manager
         params = {
