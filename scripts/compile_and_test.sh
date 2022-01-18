@@ -6,5 +6,6 @@ docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.29.0 compile expressi
 docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.29.0 compile expression pascaligo lambda --init-file "contracts/juster/lambdas/resetConfig.ligo" > build/lambdas/reset_new_event_config.tz
 docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.29.0 compile expression pascaligo lambda --init-file "contracts/juster/lambdas/changeOracle.ligo" > build/lambdas/change_oracle.tz
 docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.29.0 compile expression pascaligo lambda --init-file "contracts/juster/lambdas/triggerPauseEvents.ligo" > build/lambdas/trigger_pause.tz
+docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.29.0 compile expression pascaligo lambda --init-file "contracts/juster/lambdas/setMeasurementFees.ligo" > build/lambdas/set_measurement_fees.tz
 pytest -v --ignore=projects
 
