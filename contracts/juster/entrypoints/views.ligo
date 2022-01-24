@@ -22,3 +22,5 @@ block { const event = getEvent(s, eventId) } with event
 [@view] function isParticipatedInEvent (
     const key : ledgerKey ; const s : storage) : bool is isParticipant(s, key)
 
+[@view] function getConfig (const _ : unit ; const s : storage) is s.config
+
