@@ -3694,5 +3694,15 @@
          DIG 3 ;
          MEM ;
          OR ;
-         OR } }
+         OR } ;
+  view "getConfig"
+       unit
+       (pair (pair (pair (pair (mutez %expirationFee) (bool %isEventCreationPaused))
+                         (pair (nat %maxAllowedMeasureLag) (nat %maxLiquidityPercent)))
+                   (pair (pair (nat %maxMeasurePeriod) (nat %maxPeriodToBetsClose))
+                         (pair (mutez %measureStartFee) (nat %minLiquidityPercent))))
+             (pair (pair (pair (nat %minMeasurePeriod) (nat %minPeriodToBetsClose))
+                         (pair (address %oracleAddress) (nat %providerProfitFee)))
+                   (pair (mutez %rewardCallFee) (nat %rewardFeeSplitAfter))))
+       { CDR ; CAR ; CAR ; CDR ; CAR ; CAR } }
 
