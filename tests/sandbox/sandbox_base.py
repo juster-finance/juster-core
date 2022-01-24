@@ -34,7 +34,7 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
 
         contract = client.contract(contract_address)
         contract = contract.using(
-            shell=self.get_node_url(),
+            shell=client.shell,
             key=client.key)
         return contract
 
@@ -54,7 +54,7 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
 
         filename = join(dirname(__file__), JUSTER_FN)
         contract = ContractInterface.from_file(filename)
-        contract = contract.using(shell=self.get_node_url(), key=client.key)
+        contract = contract.using(shell=client.shell, key=client.key)
 
         storage = generate_juster_storage(pkh(client), oracle_address)
         # the minimum event period params is setted to 1-sec because 1-sec blocks in sandbox:
@@ -76,7 +76,7 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
 
         filename = join(dirname(__file__), ORACLE_MOCK_FN)
         contract = ContractInterface.from_file(filename)
-        contract = contract.using(shell=self.get_node_url(), key=client.key)
+        contract = contract.using(shell=client.shell, key=client.key)
 
         opg = contract.originate(initial_storage=5000000)
         result = opg.send()
@@ -90,7 +90,7 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
 
         filename = join(dirname(__file__), LINE_AGGREGATOR_FN)
         contract = ContractInterface.from_file(filename)
-        contract = contract.using(shell=self.get_node_url(), key=client.key)
+        contract = contract.using(shell=client.shell, key=client.key)
 
         new_event_fee = (
             self.juster.storage['config']['expirationFee']()
@@ -115,7 +115,7 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
 
         filename = join(dirname(__file__), REWARD_PROGRAM_FN)
         contract = ContractInterface.from_file(filename)
-        contract = contract.using(shell=self.get_node_url(), key=client.key)
+        contract = contract.using(shell=client.shell, key=client.key)
 
         storage = dict(
             juster=juster_address,
