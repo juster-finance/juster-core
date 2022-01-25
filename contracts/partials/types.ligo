@@ -219,6 +219,8 @@ type storage is record [
     proposedManager : option(address);
 
     isWithdrawn : ledgerUnitType;
+
+    metadata : big_map (string, bytes);
 ]
 
 type positionType is record [

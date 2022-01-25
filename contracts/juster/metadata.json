@@ -1,0 +1,12 @@
+{
+    "version": "0.1.0",
+    "name": "Juster Core",
+    "description": "Juster is an on-chain smart contract platform allowing users to take part in an automated betting market by creating events, providing liquidity to them, and making bets.",
+    "interfaces": [
+        "TZIP-016"
+    ],
+    "license": {
+        "name": "MIT"
+    },
+    "homepage": "https://github.com/juster-finance/juster-core"
+}
