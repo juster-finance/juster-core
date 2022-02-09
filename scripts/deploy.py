@@ -1,27 +1,35 @@
 from pytezos import ContractInterface, pytezos
 import time
+from getpass import getpass
 
 ONE_HOUR = 60*60
 ONE_DAY = ONE_HOUR*24
-SHELL = 'https://rpc.tzkt.io/hangzhou2net/'
-KEY_FILENAME = 'key.json'
+SHELL = 'https://rpc.tzkt.io/mainnet/'
+KEY = getpass()
 CONTRACTS = {
     'juster': ContractInterface.from_file('build/contracts/juster.tz'),
 }
 
 # Hangzhou2 Harbinger normalizer address:
-ORACLE_ADDRESS = 'KT1PMQZxQTrFPJn3pEaj9rvGfJA9Hvx7Z1CL'
+ORACLE_ADDRESS = 'KT1AdbYiPYb5hDuEuVrfxmFehtnBCXv4Np7r'
+
+# URI to metadata:
+CONTRACT_METADATA_URI = 'ipfs://QmZ2Ub7cWYeuxCsd4YnM82czampX5kK1WUPD86Reid8yFG'
+
+
+def to_hex(string):
+    return string.encode().hex()
 
 
 def generate_storage(manager, oracle_address):
     config = {
-        'expirationFee': 100_000,
+        'expirationFee': 200_000,
         'minLiquidityPercent': 0,
         'maxLiquidityPercent': 300_000,  # 30% for 1_000_000 liquidityPrecision
         'maxAllowedMeasureLag': 60*15,  # 15 minutes
         'maxMeasurePeriod': ONE_DAY*31,  # 31 day
         'maxPeriodToBetsClose': ONE_DAY*31,  # 31 day
-        'measureStartFee': 100_000,
+        'measureStartFee': 200_000,
         'minMeasurePeriod': 60*5,  # 5 min
         'minPeriodToBetsClose': 60*5,  # 5 min
         'oracleAddress': oracle_address,
@@ -55,7 +63,8 @@ def generate_storage(manager, oracle_address):
         'bakingRewards': 0,
         'retainedProfits': 0,
         'proposedManager': None,
-        'isWithdrawn': {}
+        'isWithdrawn': {},
+        'metadata': {"": to_hex(CONTRACT_METADATA_URI)}
     }
 
     return storage
@@ -72,7 +81,7 @@ def activate_and_reveal(client):
 
 def deploy_juster(client):
     print(f'deploying juster...')
-    contract = CONTRACTS['juster'].using(key=KEY_FILENAME, shell=SHELL)
+    contract = CONTRACTS['juster'].using(key=KEY, shell=SHELL)
     storage = generate_storage(
         manager=client.key.public_key_hash(),
         oracle_address=ORACLE_ADDRESS)
@@ -82,7 +91,7 @@ def deploy_juster(client):
     client.wait(opg)
 
     # Searching for Juster contract address:
-    opg = client.shell.blocks['head':].find_operation(opg.hash())
+    opg = client.shell.blocks[-10:].find_operation(opg.hash())
     op_result = opg['contents'][0]['metadata']['operation_result']
     address = op_result['originated_contracts'][0]
     print(f'juster address: {address}')
@@ -91,7 +100,7 @@ def deploy_juster(client):
 
 if __name__ == '__main__':
 
-    client = pytezos.using(key=KEY_FILENAME, shell=SHELL)
+    client = pytezos.using(key=KEY, shell=SHELL)
 
     """
     1. If key hasn't been used before, this function will allow to activate key:
