@@ -1646,6 +1646,13 @@
                      EDIV ;
                      IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
                      CAR ;
+                     PUSH nat 0 ;
+                     SWAP ;
+                     DUP ;
+                     DUG 2 ;
+                     COMPARE ;
+                     EQ ;
+                     IF { PUSH string "Should provide tez" ; FAILWITH } {} ;
                      SENDER ;
                      SWAP ;
                      DUP ;
