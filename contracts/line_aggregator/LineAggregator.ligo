@@ -91,6 +91,9 @@ type storage is record [
     manager : address;
 
     juster : address;
+
+    (* TODO: remove newEventFee and use config view instead
+            (require Juster redeploying in hangzhounet) *)
     newEventFee : tez;
 
     (* aggregated max active events required to calculate liquidity amount *)
@@ -113,32 +116,35 @@ type claimLiquidityParams is record [
 
 type withdrawLiquidityParams is list(claimKey)
 
+(* entrypoints:
+    - addLine: adding new line of typical events, only manager can add new lines
+    - depositLiquidity: creating request for adding new liquidity
+    - approveLiquidity: adds requested liquidity to the aggregator
+    - cancelLiquidity: cancels request for adding new liquidity
+    - claimLiquidity: creates request for withdraw liquidity from all current events
+    - withdrawLiquidity: withdraws claimed events
+    - payReward: callback that receives withdraws from Juster
+    - createEvent: creates new event in line, anyone can call this
+*)
+
 type action is
 | AddLine of lineType
 | DepositLiquidity of unit
 | ApproveLiquidity of nat
 | CancelLiquidity of nat
-
-(* claiming liquidity with value of shares count allows to withdraw this shares
-    from all current events *)
 | ClaimLiquidity of claimLiquidityParams
-
-(* withdrawing claimed events, parameter is list of event ids with position ids *)
 | WithdrawLiquidity of withdrawLiquidityParams
-
-(* receiving reward from Juster, nat is eventId *)
 | PayReward of nat
+| CreateEvent of nat
+(* TODO: consider having CreateEvents of list(nat) *)
 (* TODO: removeLine? [consider to have at least one line to support nextEventLiquidity] *)
 (* TODO: updateLine? to change ratios for example, only manager can call *)
 (* TODO: updateNewEventFee if it changed in Juster, only manager can call *)
-// | CreateEvents of list(nat)
-| CreateEvent of nat
 (* TODO: updateEntryLockPeriod *)
 (* TODO: pauseEvents *)
 (* TODO: pauseDepositLiquidity *)
 (* TODO: views: getLineOfEvent, getNextEventLiquidity, getWithdrawableLiquidity,
     getNextPositionId, getNextEntryPositionId, getNextClaimId ... etc *)
-(* TODO: updateNewEventFee *)
 
 
 function addLine(
@@ -550,6 +556,7 @@ block {
         liquidityPercent = line.liquidityPercent;
     ];
 
+    (* TODO: make call to juster.getConfig view instead of using store.newEventFee *)
     const newEventOperation = Tezos.transaction(
         newEvent, store.newEventFee, newEventEntrypoint);
 
@@ -596,17 +603,19 @@ block {
 
     const operations = list[newEventOperation; provideLiquidityOperation];
 
+    const eventCosts = (liquidityPayout + store.newEventFee)/1mutez;
+
     (* adding new activeEvent: *)
     const event = record [
         createdCounter = store.counter;
         totalShares = store.totalShares;
         lockedShares = 0n;
         result = (None : option(nat));
-        provided = liquidityPayout/1mutez;
+        provided = eventCosts;
     ];
     store.events[nextEventId] := event;
     store.activeEvents := Map.add(nextEventId, lineId, store.activeEvents);
-    store.activeLiquidity := store.activeLiquidity + liquidityPayout/1mutez;
+    store.activeLiquidity := store.activeLiquidity + eventCosts;
     store.counter := store.counter + 1n;
 
 } with (operations, store)
