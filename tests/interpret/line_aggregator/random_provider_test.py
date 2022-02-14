@@ -17,8 +17,8 @@ class RandomProviderTestCase(LineAggregatorBaseTestCase):
             self.add_line(max_active_events=3)
 
             # A is core provider:
-            shares = 30_000_000
-            total_liquidity = 30_000_000
+            shares = 90_000_000
+            total_liquidity = 90_000_000
             self.deposit_liquidity(self.a, amount=total_liquidity)
             self.approve_liquidity(self.a, entry_position_id=0)
 
