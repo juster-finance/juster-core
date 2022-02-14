@@ -237,8 +237,6 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
         opg = self._claim_liquidity(self.a, 1, 5_000_000)
         self.bake_block()
 
-        # TODO: check how much gas needed to run transactions
-
         # running measuerements for (1):
         for event_id in range(LINES):
             self._run_measurements(event_id)
@@ -247,14 +245,25 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
         # withdrawing for (1):
         for event_id in range(LINES):
             self._withdraw(
-                event_id = event_id,
+                event_id=event_id,
                 participant_address=self.line_aggregator.address
             )
 
         self.bake_block()
+
         # withdrawing for participant:
-        # TODO: check that amount about 10_000_000 / EVENTS / 3
         for event_id in range(LINES):
             opg = self._aggregator_withdraw(self.a, event_id, 0)
             opg = self._aggregator_withdraw(self.a, event_id, 1)
+
+        self.bake_block()
+
+        # checking that withdrawal amount for the last event and participant
+        # who withdrawn 5/100 shares is calculated properly:
+        result = self._find_call_result_by_hash(self.a, opg.hash())
+        event_result = self.line_aggregator.storage['events'][event_id]()['result']
+        self.assertEqual(
+            int(result.operations[0]['amount']),
+            int(event_result * 5 / 100)
+        )
 

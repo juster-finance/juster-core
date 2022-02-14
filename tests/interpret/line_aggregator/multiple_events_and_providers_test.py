@@ -15,7 +15,6 @@ class MultipleEventsAndProvidersTest(LineAggregatorBaseTestCase):
         self.assertEqual(self.storage['nextEventLiquidity'], 1_000_000)
 
         # running two events, in each should be added 1xtz:
-        # TODO: this next line fails with "'Juster.getNextEventId view is not found'" Michelson runtime error
         self.create_event(event_line_id=0, next_event_id=0)
         self.create_event(event_line_id=1, next_event_id=1)
 

@@ -125,3 +125,25 @@ class NextEventLiquidityTestCase(LineAggregatorBaseTestCase):
 
         self.assertEqual(self.storage['nextEventLiquidity'], 0)
 
+
+    def test_event_creation_fees_included_in_costs(self):
+
+        self.storage['newEventFee'] = 300_000
+        self.add_line(max_active_events=2)
+
+        # providing liquidity:
+        self.deposit_liquidity(self.a, amount=1_000_000)
+        self.approve_liquidity(self.a, entry_position_id=0)
+
+        self.create_event()
+        self.assertEqual(self.storage['nextEventLiquidity'], 500_000)
+        self.assertEqual(self.storage['events'][0]['provided'], 500_000)
+        self.wait(3600)
+
+        self.pay_reward(event_id=0, amount=200_000)
+        self.assertEqual(self.storage['nextEventLiquidity'], 350_000)
+
+        self.create_event()
+        self.assertEqual(self.storage['events'][1]['provided'], 350_000)
+        self.wait(3600)
+
