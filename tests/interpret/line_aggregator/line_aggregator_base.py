@@ -78,8 +78,17 @@ class LineAggregatorBaseTestCase(TestCase):
             sender=sender
         )
 
-        # TODO: assert that storage changes was valid
-        # TODO: assert that line was added, that added time is correct that other params are correct
+        self.assertEqual(
+            self.storage['nextLineId'] + 1,
+            result.storage['nextLineId']
+        )
+
+        added_line = result.storage['lines'][self.storage['nextLineId']]
+        self.assertEqual(added_line['currencyPair'], currency_pair)
+        self.assertEqual(added_line['maxActiveEvents'], max_active_events)
+        self.assertEqual(added_line['betsPeriod'], bets_period)
+        self.assertEqual(added_line['lastBetsCloseTime'], last_bets_close_time)
+
         self.storage = result.storage
 
 
@@ -92,8 +101,18 @@ class LineAggregatorBaseTestCase(TestCase):
             balance=self.balances[self.address] + amount
         )
 
-        # TODO: assert that storage changes was valid
         entry_position_id = self.storage['nextEntryPositionId']
+        self.assertEqual(
+            entry_position_id + 1,
+            result.storage['nextEntryPositionId']
+        )
+
+        added_position = result.storage['entryPositions'][entry_position_id]
+        expected_unlock_time = self.storage['entryLockPeriod'] + self.current_time
+        self.assertEqual(added_position['acceptAfter'], expected_unlock_time)
+        self.assertEqual(added_position['amount'], amount)
+        self.assertEqual(added_position['provider'], sender)
+
         self.storage = result.storage
         self.update_balance(self.address, amount)
         self.update_balance(sender, -amount)
@@ -110,10 +129,31 @@ class LineAggregatorBaseTestCase(TestCase):
             balance=self.balances[self.address]
         )
 
-        # TODO: assert that storage changes was valid
-        # TODO: assert that position added, that shares calculated properly, that time is correct
         self.assertTrue(result.storage['entryPositions'][entry_position_id] is None)
         result.storage['entryPositions'].pop(entry_position_id)
+
+        added_position = result.storage['positions'][self.storage['nextPositionId']]
+        self.assertEqual(added_position['addedCounter'], self.storage['counter'])
+        self.assertEqual(result.storage['counter'], self.storage['counter'] + 1)
+
+        entry_position = self.storage['entryPositions'][entry_position_id]
+        self.assertEqual(added_position['provider'], entry_position['provider'])
+
+        amount = entry_position['amount']
+        total_shares = self.storage['totalShares']
+        total_liquidity = (
+            self.balances['contract']
+            + self.storage['activeLiquidity']
+            - self.storage['withdrawableLiquidity']
+            - self.storage['entryLiquidity']
+        )
+
+        is_new = total_shares == 0
+        expected_added_shares = int(
+            amount if is_new else amount / total_liquidity * total_shares)
+
+        self.assertEqual(added_position['shares'], expected_added_shares)
+
         self.storage = result.storage
 
 
@@ -126,11 +166,15 @@ class LineAggregatorBaseTestCase(TestCase):
             balance=self.balances[self.address]
         )
 
-        # TODO: assert that storage changes was valid
+        position = self.storage['entryPositions'][entry_position_id]
+        self.assertEqual(position['provider'], sender)
+        liquidity_diff = (
+            self.storage['entryLiquidity'] - result.storage['entryLiquidity'])
+        self.assertEqual(liquidity_diff, position['amount'])
+
         self.assertTrue(result.storage['entryPositions'][entry_position_id] is None)
         result.storage['entryPositions'].pop(entry_position_id)
 
-        # TODO: is it possible to have entry position with 0 amount?
         entry_position = self.storage['entryPositions'][entry_position_id]
         self.assertEqual(len(result.operations), 1)
         op = result.operations[0]
@@ -154,17 +198,63 @@ class LineAggregatorBaseTestCase(TestCase):
             balance=self.balances[self.address]
         )
 
-        # TODO: assert that storage changes was valid
-        # TODO: assert that position changed/removed, that shares calculated properly, that time is correct
+        position = self.storage['positions'][position_id]
+        provided_liquidity_sum = 0
+
+        for event_id in self.storage['activeEvents']:
+            event = self.storage['events'][event_id]
+            if position['addedCounter'] < event['createdCounter']:
+                key = (event_id, position_id)
+                default_claim = {'totalShares': 0, 'shares': 0}
+                old_claim = self.storage['claims'].get(key, default_claim)
+                new_claim = result.storage['claims'][key]
+
+                self.assertEqual(
+                    new_claim['shares'] - old_claim['shares'],
+                    shares)
+
+                event = self.storage['events'][event_id]
+                self.assertEqual(new_claim['totalShares'], event['totalShares'])
+
+                provided_liquidity_sum += int(
+                    event['provided'] * shares / new_claim['totalShares'])
+
+        old_position = self.storage['positions'][position_id]
+        new_position = result.storage['positions'][position_id]
+        is_should_be_removed = old_position['shares'] == shares
+
+        if is_should_be_removed:
+            self.assertTrue(new_position is None)
+            result.storage['positions'].pop(position_id)
+        else:
+            self.assertEqual(old_position['provider'], new_position['provider'])
+            self.assertEqual(new_position['provider'], sender)
+            shares_diff = old_position['shares'] - new_position['shares']
+            self.assertEqual(shares_diff, shares)
+            self.assertEqual(
+                new_position['addedCounter'], old_position['addedCounter'])
+            total_shares_diff = (
+                self.storage['totalShares'] - result.storage['totalShares'])
+            self.assertEqual(total_shares_diff, shares)
+
+        total_liquidity = (
+            self.balances['contract']
+            - self.storage['entryLiquidity']
+            - self.storage['withdrawableLiquidity']
+            + self.storage['activeLiquidity']
+        )
+
+        expected_amount = int(
+            total_liquidity * shares / self.storage['totalShares']
+            - provided_liquidity_sum)
         self.storage = result.storage
 
         # extracting amount if there are operations:
-        if result.operations:
+        if expected_amount:
             self.assertTrue(len(result.operations) == 1)
             op = result.operations[0]
             amount = int(op['amount'])
-
-            # TODO: assert that amount was calculated properly
+            self.assertEqual(expected_amount, amount)
 
             self.update_balance(self.address, -amount)
             self.update_balance(sender, amount)
@@ -194,7 +284,9 @@ class LineAggregatorBaseTestCase(TestCase):
 
         # TODO: extract amount:
         if result.operations:
-            self.assertTrue(len(result.operations) == 1)
+            # HIGH IMPORTANCE:
+            # TODO: calculate withdrawals for all positions and check that it is correct
+            # self.assertTrue(len(result.operations) == 1)
             op = result.operations[0]
             amount = int(op['amount'])
 

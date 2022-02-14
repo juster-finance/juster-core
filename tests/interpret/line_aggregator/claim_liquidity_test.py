@@ -29,17 +29,17 @@ class ClaimLiquidityTestCase(LineAggregatorBaseTestCase):
 
         self.claim_liquidity(sender=self.a, position_id=0, shares=100)
         target_claims = {
-            (0, 0): {'shares': 100, 'totalShares': 400},
-            (1, 0): {'shares': 100, 'totalShares': 400}
+            (0, 0): {'shares': 100, 'totalShares': 400, 'provider': self.a},
+            (1, 0): {'shares': 100, 'totalShares': 400, 'provider': self.a}
         }
         self.assertDictEqual(self.storage['claims'], target_claims)
 
         self.claim_liquidity(sender=self.b, position_id=1, shares=100)
         target_claims = {
-            (0, 0): {'shares': 100, 'totalShares': 400},
-            (1, 0): {'shares': 100, 'totalShares': 400},
-            (0, 1): {'shares': 100, 'totalShares': 400},
-            (1, 1): {'shares': 100, 'totalShares': 400}
+            (0, 0): {'shares': 100, 'totalShares': 400, 'provider': self.a},
+            (1, 0): {'shares': 100, 'totalShares': 400, 'provider': self.a},
+            (0, 1): {'shares': 100, 'totalShares': 400, 'provider': self.b},
+            (1, 1): {'shares': 100, 'totalShares': 400, 'provider': self.b}
         }
         self.assertDictEqual(self.storage['claims'], target_claims)
 
@@ -77,13 +77,24 @@ class ClaimLiquidityTestCase(LineAggregatorBaseTestCase):
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.claim_liquidity(position_id=0, shares=100)
+        msg = 'Position is not found'
+        self.assertTrue(msg in str(cm.exception))
+
+
+    def test_should_not_be_possible_to_claim_more_shares_than_have(self):
+        self.add_line()
+        self.deposit_liquidity(amount=100)
+        self.approve_liquidity()
+
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.claim_liquidity(position_id=0, shares=101)
         msg = 'Claim shares is exceed position shares'
         self.assertTrue(msg in str(cm.exception))
 
 
     def test_should_be_possible_to_claim_partial_liquidity(self):
         self.add_line()
-        self.deposit_liquidity(amount=100)
+        self.deposit_liquidity(amount=100, sender=self.a)
         self.approve_liquidity()
         self.create_event(event_line_id=0)
 
@@ -94,8 +105,12 @@ class ClaimLiquidityTestCase(LineAggregatorBaseTestCase):
         self.claim_liquidity(position_id=0, shares=2)
 
         target_claims = {
-            (0, 0): {'shares': 100, 'totalShares': 100},
+            (0, 0): {
+                'shares': 100,
+                'provider': self.a,
+                'totalShares': 100},
         }
+
         self.assertDictEqual(self.storage['claims'], target_claims)
 
 

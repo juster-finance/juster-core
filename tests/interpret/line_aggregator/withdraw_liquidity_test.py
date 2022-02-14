@@ -38,47 +38,45 @@ class WithdrawLiquidityTestCase(LineAggregatorBaseTestCase):
         self.assertTrue(msg in str(cm.exception))
 
 
-    def test_should_fail_if_trying_to_withdraw_from_others_position(self):
+    def test_anyone_can_call_withdraw_for_finished_position(self):
         self.add_line()
         self.deposit_liquidity(sender=self.a)
         self.approve_liquidity()
         self.create_event(next_event_id=0)
         self.claim_liquidity(position_id=0)
+        self.pay_reward(event_id=0)
 
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.withdraw_liquidity(
-                sender=self.b,
-                positions=[{'eventId': 0, 'positionId': 0}]
-            )
-        msg = 'Not position owner'
-        self.assertTrue(msg in str(cm.exception))
+        self.withdraw_liquidity(
+            sender=self.b,
+            positions=[{'eventId': 0, 'positionId': 0}]
+        )
 
-
-    # TODO: consider having this test instead of previous if there would be
-    # logic that allows to make withdrawals for others
-    # def test_anyone_can_call_withdraw_for_finished_position(self):
 
     def test_multiple_withdraw_should_be_possible(self):
         self.add_line(max_active_events=5)
         self.deposit_liquidity(sender=self.a)
-        self.approve_liquidity()
+        self.approve_liquidity(entry_position_id=0)
+        self.deposit_liquidity(sender=self.b)
+        self.approve_liquidity(entry_position_id=1)
 
         for _ in range(5):
             self.create_event()
             self.wait(3600)
 
-        self.claim_liquidity(position_id=0)
+        self.claim_liquidity(position_id=0, sender=self.a)
+        self.claim_liquidity(position_id=1, sender=self.b)
 
         for event_id in range(5):
             self.pay_reward(event_id=event_id)
 
-        positions = [{
-            'eventId': event_id,
-            'positionId': 0} for event_id in range(5)
+        positions = [{'eventId': event_id, 'positionId': position_id}
+            for event_id in range(5)
+            for position_id in range(2)
         ]
 
         self.withdraw_liquidity(
             sender=self.a,
             positions=positions
         )
+        # TODO: assert that there are two operations with different amounts
 
