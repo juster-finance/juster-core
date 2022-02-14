@@ -4,4 +4,5 @@ key*.json
 **/test-keys/*
 *.log
 *.gzip
+projects/
 
