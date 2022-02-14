@@ -245,8 +245,10 @@ class LineAggregatorBaseTestCase(TestCase):
 
         # two operations: one with newEvent and one provideLiquidity:
         self.assertEqual(len(result.operations), 2)
-        provide_op = result.operations[1]
-        amount = int(provide_op['amount'])
+
+        event_fee = int(result.operations[0]['amount'])
+        provide_op = int(result.operations[1]['amount'])
+        amount = event_fee + provide_op
 
         # TODO: check that amount calculated properly
         self.update_balance(self.address, -amount)
