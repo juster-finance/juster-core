@@ -43,6 +43,7 @@ type claimKey is record [
 type claimParams is record [
     shares : nat;
     totalShares : nat;
+    provider : address;
 ]
 
 (*  entryPosition is not accepted yet position including provider address,
@@ -330,6 +331,7 @@ block {
         const updatedClaim = record [
             shares = alreadyClaimedShares + params.shares;
             totalShares = event.totalShares;
+            provider = position.provider;
         ];
 
         if position.addedCounter < event.createdCounter then block {
@@ -338,10 +340,6 @@ block {
             providedLiquiditySum := providedLiquiditySum + providedLiquidity;
         }
         else skip;
-
-        (* TODO: what happen if user claimed 50% of his position during line
-            was runned and then line was finished? He should be able to receive
-            his remaining 50% from current liquidity pool *)
 
         event.lockedShares := event.lockedShares + params.shares;
         store.events := Big_map.update(eventId, Some(event), store.events);
@@ -352,9 +350,10 @@ block {
         shares = leftShares;
         addedCounter = position.addedCounter;
     ];
-    store.positions := Big_map.update(
-        params.positionId, Some(updatedPosition), store.positions);
-    (* TODO: consider Big_map.remove if leftShares == 0n? *)
+
+    store.positions := if leftShares > 0n
+    then Big_map.update(params.positionId, Some(updatedPosition), store.positions);
+    else Big_map.remove(params.positionId, store.positions);
 
     (* TODO: assert that store.withdrawableLiquidity < Tezos.balance/1mutez?
         but if this happens: it would mean that things went very wrong
@@ -394,43 +393,44 @@ function withdrawLiquidity(
     var store : storage) : (list(operation) * storage) is
 block {
     (* TODO: assert no tez provided *)
-    (* TODO: consider possibility to withdraw for another (not self)?
-        it is possible to check that all positions are owned by one address and
-        then create withdrawals for all this positions
 
-        or alternative way is to make multiple operations if there are multiple
-        owners in provided withdrawRequests
-    *)
-
-    var withdrawSum := 0n;
+    var withdrawalSums := (Map.empty : map(address, nat));
     for key in list withdrawRequests block {
-        const position = getPosition(store, key.positionId);
-        checkPositionProviderIsSender(position);
-
         const event = getEvent(store, key.eventId);
         const eventResult = case event.result of
         | Some(result) -> result
         | None -> (failwith("Event result is not received yet") : nat)
         end;
 
-        const eventReward = case Big_map.find_opt(key, store.claims) of
-        | Some(claim) -> eventResult * claim.shares / claim.totalShares
-        | None -> (failwith("Claim is not found") : nat)
+        const claim = case Big_map.find_opt(key, store.claims) of
+        | Some(claim) -> claim
+        | None -> (failwith("Claim is not found") : claimParams)
         end;
 
-        withdrawSum := withdrawSum + eventReward;
+        const eventReward = eventResult * claim.shares / claim.totalShares;
+
+        const updatedSum = case Map.find_opt(claim.provider, withdrawalSums) of
+        | Some(sum) -> sum + eventReward
+        | None -> eventReward
+        end;
+
+        withdrawalSums := Map.update(claim.provider, Some(updatedSum), withdrawalSums);
+
         store.claims := Big_map.remove(key, store.claims);
     };
 
-    const payout = withdrawSum * 1mutez;
-    const operations = if payout > 0tez then
-        (* Tezos.sender was checked for each position already *)
-        list[prepareOperation(Tezos.sender, payout)]
-    else (nil: list(operation));
+    var operations := (nil : list(operation));
+    for participant -> withdrawSum in map withdrawalSums block {
+        const payout = withdrawSum * 1mutez;
+        if payout > 0tez
+        then operations := prepareOperation(participant, payout) # operations
+        else skip;
 
-    (* TODO: assert that store.withdrawableLiquidity <= payout ? *)
-    (* TODO: need to find this test cases if it is possible or find some proof that it is not *)
-    store.withdrawableLiquidity := abs(store.withdrawableLiquidity - withdrawSum);
+        (* TODO: assert that store.withdrawableLiquidity <= payout ? *)
+        (* TODO: need to find this test cases if it is possible or find some proof that it is not *)
+        store.withdrawableLiquidity := abs(store.withdrawableLiquidity - withdrawSum);
+    }
+
     (* TODO: consider removing events when they are fully withdrawn?
         Alternative: moving event result to separate ledger and remove event
         when payReward received *)
