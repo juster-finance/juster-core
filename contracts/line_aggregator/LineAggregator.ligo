@@ -172,6 +172,8 @@ function depositLiquidity(
 block {
 
     const providedAmount = Tezos.amount / 1mutez;
+    if providedAmount = 0n then failwith("Should provide tez") else skip;
+
     const newEntryPosition = record[
         provider = Tezos.sender;
         acceptAfter = Tezos.now + int(store.entryLockPeriod);
