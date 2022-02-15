@@ -274,29 +274,35 @@ class LineAggregatorBaseTestCase(TestCase):
             balance=self.balances[self.address]
         )
 
-        # TODO: assert that storage changes was valid
+        amounts = {}
         for position in positions:
             key = (position['eventId'], position['positionId'])
             self.assertTrue(result.storage['claims'][key] is None)
             result.storage['claims'].pop(key)
 
+            claim = self.storage['claims'][key]
+            event = self.storage['events'][position['eventId']]
+            amount = int(claim['shares'] / claim['totalShares'] * event['result'])
+            provider = claim['provider']
+
+            if amount > 0:
+                amounts[provider] = amounts.get(provider, 0) + amount
+
         self.storage = result.storage
 
-        # TODO: extract amount:
-        if result.operations:
-            # HIGH IMPORTANCE:
-            # TODO: calculate withdrawals for all positions and check that it is correct
-            # self.assertTrue(len(result.operations) == 1)
-            op = result.operations[0]
-            amount = int(op['amount'])
+        amounts_sum = sum(amounts.values())
+        self.assertEqual(len(amounts), len(result.operations))
 
-            # TODO: assert that amount was calculated properly
+        if amounts_sum:
+            for op in result.operations:
+                amount = int(op['amount'])
+                participant = op['destination']
+                self.assertEqual(amount, amounts[participant])
 
-            self.update_balance(self.address, -amount)
-            self.update_balance(sender, amount)
-            return amount
+                self.update_balance(self.address, -amount)
+                self.update_balance(participant, amount)
 
-        return 0
+        return amounts
 
 
     def pay_reward(self, sender=None, event_id=0, amount=1_000_000):

@@ -48,20 +48,20 @@ class MultipleProvidersResultsTestCase(LineAggregatorBaseTestCase):
         self.pay_reward(event_id=1, amount=10_000_000)
 
         # first provider first event 100%:
-        amount = self.withdraw_liquidity(
+        amounts = self.withdraw_liquidity(
             positions=[dict(positionId=0, eventId=0)],
             sender=self.a)
-        self.assertEqual(amount, 7_000_000)
+        self.assertEqual(amounts[self.a], 7_000_000)
 
         # second provider second event 50%:
-        amount = self.withdraw_liquidity(
+        amounts = self.withdraw_liquidity(
             positions=[dict(positionId=1, eventId=1)],
             sender=self.b)
-        self.assertEqual(amount, 5_000_000)
+        self.assertEqual(amounts[self.b], 5_000_000)
 
         # first provider second event 50%:
-        amount = self.withdraw_liquidity(
+        amounts = self.withdraw_liquidity(
             positions=[dict(positionId=0, eventId=1)],
             sender=self.a)
-        self.assertEqual(amount, 5_000_000)
+        self.assertEqual(amounts[self.a], 5_000_000)
 

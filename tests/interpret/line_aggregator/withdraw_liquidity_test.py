@@ -74,9 +74,9 @@ class WithdrawLiquidityTestCase(LineAggregatorBaseTestCase):
             for position_id in range(2)
         ]
 
-        self.withdraw_liquidity(
+        amounts = self.withdraw_liquidity(
             sender=self.a,
             positions=positions
         )
-        # TODO: assert that there are two operations with different amounts
+        self.assertEqual(len(amounts), 2)
 
