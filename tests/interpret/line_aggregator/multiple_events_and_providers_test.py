@@ -39,18 +39,6 @@ class MultipleEventsAndProvidersTest(LineAggregatorBaseTestCase):
         self.pay_reward(event_id=2, amount=200_000)
         self.assertEqual(self.storage['nextEventLiquidity'], 2_000_000)
 
-        # TODO: looks like this logic can be exploitable:
-        # when provider sees that there are event that profitable for aggregator
-        # he can get into aggregator and then get shares cheaper that they are
-        # will be right after event payReward called (arbitrague opportunity).
-        # There are two ways to solve this:
-
-        # 1) add fees for withdrawing liquidity in first K hours/days (the way plenty does)
-        # 2) is it possible to record all activeEvents list to the provider position when he enters. And then when he leave: calculate and remove difference for all of the events he was not participated it?
-        # 3) lock shares that are in provided liquidity and evaluate new provided liquidity (requires a lot of additional logic and might be impossible to implement)
-        # - maybe some logic to acknowledge shares from events that was started?
-        # - so provider enters, receive some shares from free liquidity and some `share_claims` that he can demand after event is complete? and some pool for entryLiquidity?
-
         # The second cycle both providers in place:
         self.create_event(event_line_id=0, next_event_id=3)
         self.create_event(event_line_id=1, next_event_id=4)

@@ -12,6 +12,10 @@ class PayRewardTestCase(LineAggregatorBaseTestCase):
         # but then it will freeze withdrawals
         # option 2: allow this action, because it can't harm (or can it?)
         # maybe allow this action and act as if it was added to `default`?
+
+        # 2022-02-15: it is a lot easier in the code that aggregator fails if
+        # event is not found. And I am seeing no case when Juster can make this
+        # payReward with not created event_id
         pass
 
     @unittest.skip("Need to decide what logic should be implemented in contract")
@@ -21,6 +25,12 @@ class PayRewardTestCase(LineAggregatorBaseTestCase):
         # but then it will freeze withdrawals
         # option 2: allow this action, because it can't harm (or can it?)
         # maybe allow this action and act as if it was added to `default`?
+
+        # 2022-02-15: it is important to make impossible event creation if this
+        # id was already used before (nextEventId). There is possible case when
+        # Juster contract is updated and its eventIds interlapse with previous.
+        # This is wrong setup and aggregator should fail to work with this.
+        # But event finished twice shouldn't be possible, Juster should fail
         pass
 
     def test_pay_reward_finishes_event(self):
