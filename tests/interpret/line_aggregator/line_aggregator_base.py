@@ -159,10 +159,13 @@ class LineAggregatorBaseTestCase(TestCase):
             amount if is_new else amount / total_liquidity * total_shares)
 
         self.assertEqual(added_position['shares'], expected_added_shares)
+        entry_liquidity_diff = (
+            self.storage['entryLiquidity']
+            - result.storage['entryLiquidity']
+        )
+        self.assertEqual(entry_liquidity_diff, amount)
 
         self.storage = result.storage
-
-        # TODO: assert entryLiquidity is reduced properly
 
 
     def cancel_liquidity(self, sender=None, entry_position_id=0):
@@ -208,8 +211,6 @@ class LineAggregatorBaseTestCase(TestCase):
 
         position = self.storage['positions'][position_id]
         provided_liquidity_sum = 0
-
-        # TODO: assert activeLiquidity is reduced
 
         for event_id in self.storage['activeEvents']:
             event = self.storage['events'][event_id]
@@ -261,6 +262,14 @@ class LineAggregatorBaseTestCase(TestCase):
         expected_amount = int(
             total_liquidity * shares / self.storage['totalShares']
             - provided_liquidity_sum)
+
+        active_liquidity_diff = (
+            self.storage['activeLiquidity']
+            - result.storage['activeLiquidity']
+        )
+
+        self.assertEqual(active_liquidity_diff, provided_liquidity_sum)
+
         self.storage = result.storage
 
         # extracting amount if there are operations:
@@ -302,10 +311,15 @@ class LineAggregatorBaseTestCase(TestCase):
             if amount > 0:
                 amounts[provider] = amounts.get(provider, 0) + amount
 
-        self.storage = result.storage
-
         amounts_sum = sum(amounts.values())
         self.assertEqual(len(amounts), len(result.operations))
+
+        withdrawable_diff = (
+            self.storage['withdrawableLiquidity']
+            - result.storage['withdrawableLiquidity']
+        )
+        self.assertEqual(withdrawable_diff, amounts_sum)
+        self.storage = result.storage
 
         if amounts_sum:
             for op in result.operations:
@@ -316,7 +330,6 @@ class LineAggregatorBaseTestCase(TestCase):
                 self.update_balance(self.address, -amount)
                 self.update_balance(participant, amount)
 
-        # TODO: assert withdrawable liquidity is reduced properly
         return amounts
 
 
