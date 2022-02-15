@@ -203,21 +203,25 @@ class LineAggregatorBaseTestCase(TestCase):
 
         for event_id in self.storage['activeEvents']:
             event = self.storage['events'][event_id]
+
             if position['addedCounter'] < event['createdCounter']:
                 key = (event_id, position_id)
                 default_claim = {'totalShares': 0, 'shares': 0}
                 old_claim = self.storage['claims'].get(key, default_claim)
-                new_claim = result.storage['claims'][key]
 
-                self.assertEqual(
-                    new_claim['shares'] - old_claim['shares'],
-                    shares)
+                if shares > 0:
+                    new_claim = result.storage['claims'][key]
 
-                event = self.storage['events'][event_id]
-                self.assertEqual(new_claim['totalShares'], event['totalShares'])
+                    self.assertEqual(
+                        new_claim['shares'] - old_claim['shares'],
+                        shares)
 
-                provided_liquidity_sum += int(
-                    event['provided'] * shares / new_claim['totalShares'])
+                    self.assertEqual(
+                        new_claim['totalShares'],
+                        event['totalShares'])
+
+                    provided_liquidity_sum += int(
+                        event['provided'] * shares / new_claim['totalShares'])
 
         old_position = self.storage['positions'][position_id]
         new_position = result.storage['positions'][position_id]

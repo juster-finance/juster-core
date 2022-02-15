@@ -114,15 +114,12 @@ class ClaimLiquidityTestCase(LineAggregatorBaseTestCase):
         self.assertDictEqual(self.storage['claims'], target_claims)
 
 
-    @unittest.skip("Need to decide what logic should be implemented in contract")
-    def test_should_not_be_possible_to_claim_zero_shares(self):
-        # TODO: need to decide what is the best practice to do in this case
-        # option 1: block this action, because it can be used to spam the network
-        # (but it would be costs of the spammer) and it would create a lot of
-        # claims with 0 shares
-        # option 2: improve contract logic so it would not create claims if
-        # 0 shares claimed and allow this action
-        # option 3: allow this action, because it can be useful in third contract
-        # interactions to simplify its logic (but maybe this is wrong way)
-        pass
+    def test_should_not_create_claims_for_zero_shares(self):
+        self.add_line()
+        self.deposit_liquidity(amount=100, sender=self.a)
+        self.approve_liquidity()
+        self.create_event(event_line_id=0)
+
+        self.claim_liquidity(position_id=0, shares=0)
+        self.assertEqual(len(self.storage['claims']), 0)
 
