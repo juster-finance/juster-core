@@ -11,3 +11,8 @@ class DepositLiquidityTestCase(LineAggregatorBaseTestCase):
         msg = 'Should provide tez'
         self.assertTrue(msg in str(cm.exception))
 
+
+    def test_should_be_able_to_deposit_liquidity(self):
+        self.add_line()
+        self.deposit_liquidity(amount=1000)
+

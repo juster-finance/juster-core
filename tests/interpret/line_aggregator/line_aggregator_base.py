@@ -113,6 +113,12 @@ class LineAggregatorBaseTestCase(TestCase):
         self.assertEqual(added_position['amount'], amount)
         self.assertEqual(added_position['provider'], sender)
 
+        entry_liquidity_diff = (
+            result.storage['entryLiquidity']
+            - self.storage['entryLiquidity']
+        )
+        self.assertEqual(entry_liquidity_diff, amount)
+
         self.storage = result.storage
         self.update_balance(self.address, amount)
         self.update_balance(sender, -amount)
@@ -155,6 +161,8 @@ class LineAggregatorBaseTestCase(TestCase):
         self.assertEqual(added_position['shares'], expected_added_shares)
 
         self.storage = result.storage
+
+        # TODO: assert entryLiquidity is reduced properly
 
 
     def cancel_liquidity(self, sender=None, entry_position_id=0):
@@ -200,6 +208,8 @@ class LineAggregatorBaseTestCase(TestCase):
 
         position = self.storage['positions'][position_id]
         provided_liquidity_sum = 0
+
+        # TODO: assert activeLiquidity is reduced
 
         for event_id in self.storage['activeEvents']:
             event = self.storage['events'][event_id]
@@ -306,6 +316,7 @@ class LineAggregatorBaseTestCase(TestCase):
                 self.update_balance(self.address, -amount)
                 self.update_balance(participant, amount)
 
+        # TODO: assert withdrawable liquidity is reduced properly
         return amounts
 
 
@@ -319,8 +330,17 @@ class LineAggregatorBaseTestCase(TestCase):
             balance=self.balances[self.address]
         )
 
-        # TODO: assert that storage changes was valid
-        # TODO: assert that event removed from activeEvents, assert that withdrawnLiquidity calculated properly
+        self.assertEqual(result.storage['events'][event_id]['result'], amount)
+        self.assertFalse(event_id in result.storage['activeEvents'])
+        withdrawable_diff = (
+            result.storage['withdrawableLiquidity']
+            - self.storage['withdrawableLiquidity']
+        )
+
+        event = self.storage['events'][event_id]
+        event_lock = int(event['lockedShares'] / event['totalShares'] * amount)
+        self.assertEqual(withdrawable_diff, event_lock)
+
         self.storage = result.storage
         self.update_balance(sender, -amount)
         self.update_balance(self.address, amount)
@@ -341,8 +361,25 @@ class LineAggregatorBaseTestCase(TestCase):
             balance=self.balances[self.address]
         )
 
-        # TODO: assert that storage changes was valid
-        # TODO: assert that event added to activeEvents, assert that event have correct liquidity amounts
+        self.assertTrue(next_event_id in result.storage['activeEvents'])
+        active_liquidity_diff = (
+            result.storage['activeLiquidity']
+            - self.storage['activeLiquidity']
+        )
+        self.assertEqual(active_liquidity_diff, self.storage['nextEventLiquidity'])
+        added_event = result.storage['events'][next_event_id]
+
+        target_event = {
+            'createdCounter': self.storage['counter'],
+            'lockedShares': 0,
+            'provided': self.storage['nextEventLiquidity'],
+            'result': None,
+            'totalShares': self.storage['totalShares']
+        }
+
+        self.assertDictEqual(added_event, target_event)
+
+        self.assertEqual(self.storage['counter'] + 1, result.storage['counter'])
         self.storage = result.storage
 
         # two operations: one with newEvent and one provideLiquidity:
@@ -352,7 +389,10 @@ class LineAggregatorBaseTestCase(TestCase):
         provide_op = int(result.operations[1]['amount'])
         amount = event_fee + provide_op
 
-        # TODO: check that amount calculated properly
+        self.assertEqual(event_fee, self.storage['newEventFee'])
+        expected_provided = self.storage['nextEventLiquidity'] - event_fee
+        self.assertEqual(provide_op, expected_provided)
+
         self.update_balance(self.address, -amount)
         self.update_balance(self.juster_address, amount)
         self.next_event_id += 1
