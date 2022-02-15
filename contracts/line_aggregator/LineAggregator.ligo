@@ -337,7 +337,10 @@ block {
         ];
 
         if position.addedCounter < event.createdCounter then block {
-            store.claims := Big_map.update(key, Some(updatedClaim), store.claims);
+            if params.shares > 0n
+            then store.claims := Big_map.update(key, Some(updatedClaim), store.claims)
+            else skip;
+
             const providedLiquidity = params.shares * event.provided / event.totalShares;
             providedLiquiditySum := providedLiquiditySum + providedLiquidity;
         }
