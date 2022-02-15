@@ -20,6 +20,7 @@ type lineType is record [
 ]
 
 type positionType is record [
+    (* TODO: replace provider with NFT token_id that represents this position? *)
     provider : address;
     shares : nat;
     addedCounter : nat;
@@ -146,6 +147,7 @@ type action is
 (* TODO: pauseDepositLiquidity *)
 (* TODO: views: getLineOfEvent, getNextEventLiquidity, getWithdrawableLiquidity,
     getNextPositionId, getNextEntryPositionId, getNextClaimId ... etc *)
+(* TODO: views: getPosition(id), getClaim(id), getEvent? *)
 
 
 function addLine(
