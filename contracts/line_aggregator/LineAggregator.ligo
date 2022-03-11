@@ -1,3 +1,7 @@
+#include "../partials/errors.ligo"
+#include "../partials/helpers.ligo"
+
+(* TODO: move all aggegator types to separate interface .ligo *)
 type lineType is record [
     currencyPair : string;
     targetDynamics : nat;
@@ -14,9 +18,14 @@ type lineType is record [
     (* maxEvents is amount of events that can be runned in parallel for the line? *)
     maxActiveEvents : nat;
     (* TODO: consider having advanceTime that allows to create new event before
-        lastBetsCloseTime *)
+        lastBetsCloseTime
+        {2022-03-11: but this is not very effective liquidity use} *)
     (* TODO: consider having min time delta before next betsCloseTime to prevent
         possibility of event creation with very small period until betsClose *)
+
+    (* TODO: consider having isPaused field *)
+    (* TODO: consider having Juster address in line instead of storage
+        (easier to update and possibility to have multiple juster contracts) *)
 ]
 
 type positionType is record [
@@ -43,6 +52,8 @@ type claimKey is record [
 
 type claimParams is record [
     shares : nat;
+    (* TODO: is it required to record this totalShares here, they already
+        recorded in event ledger *)
     totalShares : nat;
     provider : address;
 ]
@@ -59,13 +70,10 @@ type storage is record [
     nextLineId: nat;
 
     (* lines is ledger with all possible event lines that can be created *)
-    (* TODO: consider type big_map, but then it would not be possible to
-        all lines in the cycle *)
-    (* TODO: consider type list(lineType): then this would not required to have nextLineId *)
     lines : map(nat, lineType);
 
     (* active lines is mapping between eventId and lineId *)
-    (* TODO: make this set(nat) ? *)
+    (* TODO: make this set(nat) ? {2022-03-11: looks like this lineId used somewhere} *)
     activeEvents : map(nat, nat);
     events : big_map(nat, eventType);
 
@@ -84,6 +92,7 @@ type storage is record [
 
     (* amount of time before liquidity can be recognized *)
     entryLockPeriod : nat;
+    (* TODO: ^^ consider moving this to `configs` and having configs ledger *)
 
     entryPositions : big_map(nat, entryPositionType);
     nextEntryPositionId : nat;
@@ -108,6 +117,15 @@ type storage is record [
     counter : nat;
 
     nextEventLiquidity : nat;
+
+    (* TODO: condider having withdrawStats ledger with some data that can be
+        used in reward programs *)
+    (* TODO: to calculate withdrawalStats it might be good to have
+        - createdEventsCount
+        - providedPerShare
+        - maybe something else
+        - it might be in some kind of stats record
+    *)
 ]
 
 
@@ -139,14 +157,26 @@ type action is
 | PayReward of nat
 | CreateEvent of nat
 (* TODO: consider having CreateEvents of list(nat) *)
-(* TODO: removeLine? [consider to have at least one line to support nextEventLiquidity] *)
-(* TODO: updateLine? to change ratios for example, only manager can call *)
-(* TODO: updateNewEventFee if it changed in Juster, only manager can call *)
-(* TODO: updateEntryLockPeriod *)
+(* TODO: removeLine?
+        1) consider to have at least one line to support nextEventLiquidity
+        2) it is better to stopLine / pauseLine / triggerPauseLine instead so the info can be used in views later
+*)
+(* TODO: updateLine? to change ratios for example, only manager can call
+        2022-03-11: it is better to have just stopLine/pauseLine + addLine so any updates would
+            require both removing and adding line (this will allow use this data in the
+            reward programs in the future, updating lines will remove info about this lines
+*)
+(* TODO: updateNewEventFee if it changed in Juster, only manager can call
+    - it is better read config from Juster views
+    - maybe it would be good to have here some kind of config too (with juster address etc)
+    - and lines can be binded to different configs
+*)
+(* TODO: updateEntryLockPeriod {or move this to updateConfig} *)
 (* TODO: pauseEvents *)
 (* TODO: pauseDepositLiquidity *)
 (* TODO: views: getLineOfEvent, getNextEventLiquidity, getWithdrawableLiquidity,
-    getNextPositionId, getNextEntryPositionId, getNextClaimId ... etc *)
+    getNextPositionId, getNextEntryPositionId, getNextClaimId,
+    getConfig, getWithdrawalStat ... etc *)
 (* TODO: views: getPosition(id), getClaim(id), getEvent? *)
 
 
@@ -154,10 +184,10 @@ function addLine(
     const line : lineType;
     var store : storage) : (list(operation) * storage) is
 block {
-    (* TODO: assert no tez provided *)
+    (* TODO: checkNoAmountIncluded(unit); *)
     (* TODO: assert that Tezos.sender is manager *)
 
-    (* TODO: consider lines to be list *)
+    (* TODO: consider lines to be list {but then it will be harder to stop them?} *)
     (* TODO: assert that this line is not repeating another one? *)
 
     store.lines[store.nextLineId] := line;
@@ -189,6 +219,7 @@ block {
 } with ((nil: list(operation)), store)
 
 
+(* TODO: move to helpers.ligo *)
 function getOrFail(
     const key : _key;
     const ledger : big_map(_key, _value);
@@ -211,11 +242,15 @@ block {
         then failwith("Cannot approve liquidity before acceptAfter") else skip;
 
     (* TODO: is it possible to have store.entryLiquidity < entryPosition.amount?
-        maybe need to check & failwith then? *)
+        maybe need to check & failwith then?
+        - and add special Errors.wrong_state error for this cases that should
+            not happen, but they `can` happen if something will be hacked
+    *)
     store.entryLiquidity := abs(store.entryLiquidity - entryPosition.amount);
 
     (* if there are no lines, then it is impossible to calculate providedPerEvent
         and there would be DIV/0 error *)
+    (* TODO: make this special helper: checkHaveActiveEvents *)
     if store.maxActiveEvents = 0n
         then failwith("Need to have at least one line") else skip;
 
@@ -223,9 +258,12 @@ block {
     const provided = entryPosition.amount;
     const totalLiquidity =
         store.activeLiquidity + Tezos.balance/1mutez - store.entryLiquidity;
-    (* TODO: is it possible to have totalLiquidity < 0? *)
+    (* TODO: is it possible to have totalLiquidity < 0? again check and raise Errors.wrong_state *)
 
     const liquidityBeforeDeposit = abs(totalLiquidity - provided);
+    (* TODO: provided liquidity should be included in store.entryLiquidity but it is better to
+        check that totalLiquidity > provided too *)
+
     const shares = if store.totalShares = 0n
         then provided
         else provided * store.totalShares / liquidityBeforeDeposit;
@@ -267,6 +305,7 @@ block {
         entryPositionId, store.entryPositions, "Entry position is not found");
     store.entryPositions := Big_map.remove(entryPositionId, store.entryPositions);
 
+    (* TODO: move this check to separate helper checkSenderIs(address) *)
     if Tezos.sender = entryPosition.provider
         then skip else failwith("Not entry position owner");
 
@@ -279,6 +318,7 @@ block {
 } with (operations, store)
 
 
+(* TODO: use getOrFail instead?: *)
 function getPosition(const store : storage; const positionId : nat) : positionType is
 case Big_map.find_opt(positionId, store.positions) of
 | Some(pos) -> pos
@@ -286,11 +326,13 @@ case Big_map.find_opt(positionId, store.positions) of
 end;
 
 
+(* TODO: use helper checkSenderIs *)
 function checkPositionProviderIsSender(const position : positionType) : unit is
 if (position.provider =/= Tezos.sender) then failwith("Not position owner")
 else Unit;
 
 
+(* TODO: use getOrFail instead?: *)
 function getEvent(const store : storage; const eventId : nat) : eventType is
 case Big_map.find_opt(eventId, store.events) of
 | Some(event) -> event
@@ -347,6 +389,8 @@ block {
         else skip;
 
         event.lockedShares := event.lockedShares + params.shares;
+        (* TODO: assert that event.lockedShares < event.totalShares ?
+            this is wrongState but feels that it is better to assert it *)
         store.events := Big_map.update(eventId, Some(event), store.events);
     };
 
@@ -362,7 +406,7 @@ block {
 
     (* TODO: assert that store.withdrawableLiquidity < Tezos.balance/1mutez?
         but if this happens: it would mean that things went very wrong
-        somewhere else *)
+        somewhere else (Errors.wrongState) *)
     const totalLiquidity = abs(
         Tezos.balance/1mutez
         - store.withdrawableLiquidity
@@ -373,6 +417,8 @@ block {
     const payoutValue = participantLiquidity - providedLiquiditySum;
     (* TODO: check that payoutValue > 0 (is it possible to have it < 0?) *)
 
+    (* TODO: make you sure that it is required to distribute
+        participantLiquidity and not payoutValue instead {is there any tests for this difference?} *)
     const liquidityPerEvent = participantLiquidity / store.maxActiveEvents;
 
     (* TODO: is it possible to have liquidityPerEvent > store.nextEventLiquidity ? *)
@@ -389,6 +435,8 @@ block {
     const operations = if payoutValue > 0 then
         list[prepareOperation(Tezos.sender, abs(payoutValue) * 1mutez)]
     else (nil: list(operation));
+
+    (* TODO: add new withdrawalStat position with data that can be used in reward programs? *)
 
 } with (operations, store)
 
@@ -412,6 +460,8 @@ block {
         | None -> (failwith("Claim is not found") : claimParams)
         end;
 
+        (* TODO: is it required to record totalShares in claim or it is enough
+            to have this totalShares in the event ledger? *)
         const eventReward = eventResult * claim.shares / claim.totalShares;
 
         const updatedSum = case Map.find_opt(claim.provider, withdrawalSums) of
@@ -438,7 +488,9 @@ block {
 
     (* TODO: consider removing events when they are fully withdrawn?
         Alternative: moving event result to separate ledger and remove event
-        when payReward received *)
+        when payReward received
+        {2022-03-11: it might be good to keep events to use it in reward programs}
+    *)
 
 } with (operations, store)
 
@@ -447,7 +499,11 @@ function payReward(
     const eventId : nat;
     var store : storage) : (list(operation) * storage) is
 block {
-    (* TODO: assert that Tezos.sender is store.juster *)
+    (* TODO: assert that Tezos.sender is store.juster {or one of possible justers}
+        maybe it is possible to keep juster address in line and get it using
+        eventId {but it might be confusing if two Juster contracts will have the
+        same ids: this might be solved if juster address added to eventId key}
+    *)
     (* NOTE: this method based on assumption that payReward only called by
         Juster when event is finished / canceled *)
 
@@ -472,7 +528,11 @@ block {
 
     const claimedLiquidity = event.provided * event.lockedShares / event.totalShares;
     const remainedLiquidity = event.provided - claimedLiquidity;
-    (* TODO: assert that leftLiquidity >= store.activeLiquidity *)
+    (* TODO: assert that remainedLiquidity >= store.activeLiquidity *)
+    (* TODO: why does only remainedLiquidity excluded from activeLiquidity and
+        not all event.provided? was claimedLiquidity already excluded during claim?
+        looks like it is. Would it better to exclude all event.provided here and
+        not split it in two parts? Need to understand make this logic more clear *)
     store.activeLiquidity := abs(store.activeLiquidity - remainedLiquidity);
     const profitLossPerEvent = (reward - event.provided) / store.maxActiveEvents;
 
@@ -539,15 +599,19 @@ block {
     const periods = (Tezos.now - line.lastBetsCloseTime) / line.betsPeriod + 1n;
     const nextBetsCloseTime = line.lastBetsCloseTime + line.betsPeriod*periods;
 
-    (* TODO: maybe this is good to have some logic that shifts nextBetsCloseTime
+    (* TODO: it is good to move nextBetsCloseTime in time for one more period
+        if time that left is less than 30 minutes (or some const provided in
+        event line params) *)
+    (* TODO {the same}: maybe this is good to have some logic that shifts nextBetsCloseTime
         for one more period if there are not enough time left for the bets
-        (for example if this is less than a half of the betsPeriod *)
+        (for example if this is less than a half of the betsPeriod) *)
 
     (* Updating line *)
     line.lastBetsCloseTime := nextBetsCloseTime;
     store.lines[lineId] := line;
 
     (* newEvent transaction *)
+    (* TODO: store juster address in line instead of storage? *)
     const newEventEntrypoint =
         case (Tezos.get_entrypoint_opt("%newEvent", store.juster)
               : option(contract(newEventParams))) of
@@ -583,6 +647,8 @@ block {
         | Some(con) -> con
         end;
 
+    (* TODO: is it possible to have some hook (view) to calculate line ratios?
+        using data from another contract? *)
     const provideLiquidity = record [
         eventId = nextEventId;
         expectedRatioAboveEq = line.rateAboveEq;
@@ -598,9 +664,13 @@ block {
         - store.entryLiquidity
         - abs(freeEventSlots)*store.newEventFee/1mutez);
 
+    (* TODO: is it really required to remove all freeEventSlots newEventFees or it
+        will be enough to just remove it once? *)
+
     if freeLiquidity < liquidityAmount then liquidityAmount := freeLiquidity
     else skip;
 
+    (* TODO: is this case with 0 liquidity presented in tests? *)
     if liquidityAmount <= 0 then failwith("Not enough liquidity to run event")
     else skip;
 

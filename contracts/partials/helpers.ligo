@@ -4,6 +4,7 @@ function checkNoAmountIncluded(const _p : unit) : unit is
     else unit;
 
 
+(* TODO: maybe change it to checkSenderIs (but then what to do with error message) *)
 function onlyManager(const manager : address) : unit is
     if Tezos.sender =/= manager then
         failwith(Errors.notManager)
