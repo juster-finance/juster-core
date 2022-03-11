@@ -1,3 +1,5 @@
+#include "../partials/errors.ligo"
+#include "../partials/helpers.ligo"
 #include "../partials/types.ligo"
 #include "../partials/tools.ligo"
 #include "entrypoints/newEvent.ligo"

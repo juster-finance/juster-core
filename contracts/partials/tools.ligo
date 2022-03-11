@@ -124,21 +124,6 @@ block {
 } with operations
 
 
-(* Checking that there are no amount included in operation: *)
-function checkNoAmountIncluded(const _p : unit) : unit is
-block {
-    if Tezos.amount > 0tez then
-        failwith("Including tez using this entrypoint call is not allowed")
-    else skip;
-} with unit
-
-
-function allowOnlyManager(const store : storage) : unit is
-    if Tezos.sender =/= store.manager then
-        failwith("Not a contract manager")
-    else unit;
-
-
 function isParticipant(
     const store : storage;
     const key : ledgerKey) : bool is

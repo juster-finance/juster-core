@@ -4,7 +4,7 @@ function changeManager(
 block {
 
     checkNoAmountIncluded(unit);
-    allowOnlyManager(store);
+    onlyManager(store.manager);
     store.proposedManager := Some(newManager);
 
 } with ((nil: list(operation)), store)

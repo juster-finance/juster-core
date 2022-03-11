@@ -4,7 +4,7 @@ function claimBakingRewards(
 block {
 
     checkNoAmountIncluded(unit);
-    allowOnlyManager(store);
+    onlyManager(store.manager);
 
     const operations : list(operation) =
         makeOperationsIfNotZero(Tezos.sender, store.bakingRewards);

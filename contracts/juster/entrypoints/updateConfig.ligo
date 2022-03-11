@@ -3,7 +3,7 @@ function updateConfig(
     var store: storage) : (list(operation) * storage) is
 block {
 
-    allowOnlyManager(store);
+    onlyManager(store.manager);
 
     const config : configType =
         updateConfigLambda(store.config);
