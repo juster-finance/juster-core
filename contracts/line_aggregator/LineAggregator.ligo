@@ -177,6 +177,13 @@ type action is
     getNextPositionId, getNextEntryPositionId, getNextClaimId,
     getConfig, getWithdrawalStat ... etc *)
 (* TODO: views: getPosition(id), getClaim(id), getEvent? *)
+(* TODO: default entrypoint for baking rewards *)
+(* TODO: entrypoint to change delegator
+        - reuse Juster code
+*)
+(* TODO: change manager entrypoints handshake
+        - reuse Juster code
+*)
 
 
 function addLine(
