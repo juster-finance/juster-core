@@ -93,11 +93,12 @@
            (pair (pair string string) address)
            unit
            { UNPAIR ;
+             CDR ;
              SWAP ;
              SENDER ;
              COMPARE ;
              NEQ ;
-             IF { CDR ; FAILWITH } { DROP ; UNIT } } ;
+             IF { FAILWITH } { DROP ; UNIT } } ;
          SWAP ;
          APPLY ;
          LAMBDA

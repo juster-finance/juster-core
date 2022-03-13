@@ -120,9 +120,10 @@
                      SWAP ;
                      EXEC ;
                      DROP ;
-                     SWAP ;
-                     DUP ;
-                     DUG 2 ;
+                     DIG 2 ;
+                     CAR ;
+                     CDR ;
+                     DUP 3 ;
                      CAR ;
                      CDR ;
                      CAR ;
@@ -131,7 +132,7 @@
                      SENDER ;
                      COMPARE ;
                      NEQ ;
-                     IF { DIG 2 ; CAR ; CDR ; FAILWITH } { DIG 2 ; DROP } ;
+                     IF { FAILWITH } { DROP } ;
                      SWAP ;
                      DUP ;
                      DUG 2 ;
