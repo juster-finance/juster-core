@@ -61,7 +61,8 @@ class LineAggregatorBaseTestCase(TestCase):
             currency_pair='XTZ-USD',
             max_active_events=2,
             bets_period=3600,
-            last_bets_close_time=0
+            last_bets_close_time=0,
+            amount=0
         ):
 
         sender = sender or self.manager
@@ -72,7 +73,8 @@ class LineAggregatorBaseTestCase(TestCase):
             last_bets_close_time=last_bets_close_time
         )
 
-        result = self.aggregator.addLine(line_params).interpret(
+        call = self.aggregator.addLine(line_params)
+        result = call.with_amount(amount).interpret(
             storage=self.storage,
             now=self.current_time,
             sender=sender
@@ -94,7 +96,8 @@ class LineAggregatorBaseTestCase(TestCase):
 
     def deposit_liquidity(self, sender=None, amount=1_000_000):
         sender = sender or self.manager
-        result = self.aggregator.depositLiquidity().with_amount(amount).interpret(
+        call = self.aggregator.depositLiquidity()
+        result = call.with_amount(amount).interpret(
             storage=self.storage,
             now=self.current_time,
             sender=sender,
@@ -126,9 +129,10 @@ class LineAggregatorBaseTestCase(TestCase):
         return entry_position_id
 
 
-    def approve_liquidity(self, sender=None, entry_position_id=0):
+    def approve_liquidity(self, sender=None, entry_position_id=0, amount=0):
         sender = sender or self.manager
-        result = self.aggregator.approveLiquidity(entry_position_id).interpret(
+        call = self.aggregator.approveLiquidity(entry_position_id)
+        result = call.with_amount(amount).interpret(
             storage=self.storage,
             now=self.current_time,
             sender=sender,
@@ -168,9 +172,10 @@ class LineAggregatorBaseTestCase(TestCase):
         self.storage = result.storage
 
 
-    def cancel_liquidity(self, sender=None, entry_position_id=0):
+    def cancel_liquidity(self, sender=None, entry_position_id=0, amount=0):
         sender = sender or self.manager
-        result = self.aggregator.cancelLiquidity(entry_position_id).interpret(
+        call = self.aggregator.cancelLiquidity(entry_position_id)
+        result = call.with_amount(amount).interpret(
             storage=self.storage,
             now=self.current_time,
             sender=sender,
@@ -195,14 +200,15 @@ class LineAggregatorBaseTestCase(TestCase):
         self.storage = result.storage
 
 
-    def claim_liquidity(self, sender=None, position_id=0, shares=1_000_000):
+    def claim_liquidity(self, sender=None, position_id=0, shares=1_000_000, amount=0):
         sender = sender or self.manager
         params = {
             'positionId': position_id,
             'shares': shares
         }
 
-        result = self.aggregator.claimLiquidity(params).interpret(
+        call = self.aggregator.claimLiquidity(params)
+        result = call.with_amount(amount).interpret(
             storage=self.storage,
             now=self.current_time,
             sender=sender,
@@ -286,11 +292,12 @@ class LineAggregatorBaseTestCase(TestCase):
         return 0
 
 
-    def withdraw_liquidity(self, sender=None, positions=None):
+    def withdraw_liquidity(self, sender=None, positions=None, amount=0):
         sender = sender or self.manager
         positions = positions or [dict(positionId=0, eventId=0)]
 
-        result = self.aggregator.withdrawLiquidity(positions).interpret(
+        call = self.aggregator.withdrawLiquidity(positions)
+        result = call.with_amount(amount).interpret(
             storage=self.storage,
             now=self.current_time,
             sender=sender,
@@ -336,7 +343,8 @@ class LineAggregatorBaseTestCase(TestCase):
     def pay_reward(self, sender=None, event_id=0, amount=1_000_000):
         sender = sender or self.juster_address
 
-        result = self.aggregator.payReward(event_id).with_amount(amount).interpret(
+        call = self.aggregator.payReward(event_id)
+        result = call.with_amount(amount).interpret(
             storage=self.storage,
             now=self.current_time,
             sender=sender,
@@ -359,12 +367,12 @@ class LineAggregatorBaseTestCase(TestCase):
         self.update_balance(self.address, amount)
 
 
-    def create_event(self, sender=None, event_line_id=0, next_event_id=None):
+    def create_event(self, sender=None, event_line_id=0, next_event_id=None, amount=0):
         sender = sender or self.manager
         next_event_id = next_event_id or self.next_event_id
 
         contract_call = self.aggregator.createEvent(event_line_id)
-        result = contract_call.interpret(
+        result = contract_call.with_amount(amount).interpret(
             storage=self.storage,
             now=self.current_time,
             sender=sender,
