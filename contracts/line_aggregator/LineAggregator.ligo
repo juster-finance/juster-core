@@ -1,6 +1,7 @@
 #include "../partials/errors.ligo"
 #include "../partials/helpers.ligo"
 
+
 (* TODO: move all aggegator types to separate interface .ligo *)
 type lineType is record [
     currencyPair : string;
@@ -186,6 +187,22 @@ type action is
 *)
 
 
+(* Some helpers, TODO: move to some separate .ligo *)
+function getEntry(const entryId : nat; const store : storage) : entryPositionType is
+    getOrFail(entryId, store.entryPositions, Errors.entryNotFound)
+
+function getPosition(const positionId : nat; const store : storage) : positionType is
+    getOrFail(positionId, store.positions, Errors.positionNotFound)
+
+function getEvent(const eventId : nat; const store : storage) : eventType is
+    getOrFail(eventId, store.events, Errors.eventNotFound)
+
+function checkHasActiveEvents(const store : storage) : unit is
+    if store.maxActiveEvents = 0n
+    then failwith(Errors.noActiveEvents)
+    else unit;
+
+
 function addLine(
     const line : lineType;
     var store : storage) : (list(operation) * storage) is
@@ -225,17 +242,17 @@ block {
 
 
 function approveLiquidity(
-    const entryPositionId : nat; var store : storage) : (list(operation) * storage) is
+    const entryId : nat; var store : storage) : (list(operation) * storage) is
 block {
 
     checkNoAmountIncluded(unit);
 
-    const entryPosition = getOrFail(
-        entryPositionId, store.entryPositions, "Entry position is not found");
-    store.entryPositions := Big_map.remove(entryPositionId, store.entryPositions);
+    const entryPosition = getEntry(entryId, store);
+    store.entryPositions := Big_map.remove(entryId, store.entryPositions);
 
     if Tezos.now < entryPosition.acceptAfter
-        then failwith("Cannot approve liquidity before acceptAfter") else skip;
+    then failwith(Errors.earlyApprove)
+    else skip;
 
     (* store.entryLiquidity is the sum of all entryPositions, so the following
         condition should not be true but it is better to check *)
@@ -247,9 +264,7 @@ block {
 
     (* if there are no lines, then it is impossible to calculate providedPerEvent
         and there would be DIV/0 error *)
-    (* TODO: make this special helper: checkHaveActiveEvents *)
-    if store.maxActiveEvents = 0n
-        then failwith("Need to have at least one line") else skip;
+    checkHasActiveEvents(store);
 
     (* calculating shares *)
     const provided = entryPosition.amount;
@@ -298,18 +313,15 @@ function prepareOperation(
 
 
 function cancelLiquidity(
-    const entryPositionId : nat; var store : storage) : (list(operation) * storage) is
+    const entryId : nat; var store : storage) : (list(operation) * storage) is
 block {
 
     checkNoAmountIncluded(unit);
 
-    const entryPosition = getOrFail(
-        entryPositionId, store.entryPositions, "Entry position is not found");
-    store.entryPositions := Big_map.remove(entryPositionId, store.entryPositions);
+    const entryPosition = getEntry(entryId, store);
+    store.entryPositions := Big_map.remove(entryId, store.entryPositions);
 
-    (* TODO: move this check to separate helper checkSenderIs(address) *)
-    if Tezos.sender = entryPosition.provider
-        then skip else failwith("Not entry position owner");
+    checkSenderIs(entryPosition.provider, Errors.notPositionOwner);
 
     store.entryLiquidity := abs(store.entryLiquidity - entryPosition.amount);
 
@@ -320,26 +332,10 @@ block {
 } with (operations, store)
 
 
-(* TODO: use getOrFail instead?: *)
-function getPosition(const store : storage; const positionId : nat) : positionType is
-case Big_map.find_opt(positionId, store.positions) of
-| Some(pos) -> pos
-| None -> (failwith("Position is not found") : positionType)
-end;
-
-
 (* TODO: use helper checkSenderIs *)
 function checkPositionProviderIsSender(const position : positionType) : unit is
 if (position.provider =/= Tezos.sender) then failwith("Not position owner")
 else Unit;
-
-
-(* TODO: use getOrFail instead?: *)
-function getEvent(const store : storage; const eventId : nat) : eventType is
-case Big_map.find_opt(eventId, store.events) of
-| Some(event) -> event
-| None -> (failwith("Event is not found") : eventType)
-end;
 
 
 function absPositive(const value : int) is if value >= 0 then abs(value) else 0n
@@ -352,7 +348,7 @@ block {
 
     checkNoAmountIncluded(unit);
 
-    const position = getPosition(store, params.positionId);
+    const position = getPosition(params.positionId, store);
     checkPositionProviderIsSender(position);
 
     if params.shares > position.shares then
@@ -367,7 +363,7 @@ block {
             positionId = params.positionId;
         ];
 
-        var event := getEvent(store, eventId);
+        var event := getEvent(eventId, store);
 
         (* checking if this claim already have some shares: *)
         const alreadyClaimedShares = case Big_map.find_opt(key, store.claims) of
@@ -453,7 +449,7 @@ block {
 
     var withdrawalSums := (Map.empty : map(address, nat));
     for key in list withdrawRequests block {
-        const event = getEvent(store, key.eventId);
+        const event = getEvent(key.eventId, store);
         const eventResult = case event.result of
         | Some(result) -> result
         | None -> (failwith("Event result is not received yet") : nat)
@@ -513,7 +509,7 @@ block {
 
     (* adding event result *)
     const reward = Tezos.amount / 1mutez;
-    var event := getEvent(store, eventId);
+    var event := getEvent(eventId, store);
     event.result := Some(reward);
     store.events := Big_map.update(eventId, Some(event), store.events);
     store.activeEvents := Map.remove(eventId, store.activeEvents);
