@@ -73,7 +73,6 @@ type storage is record [
     lines : map(nat, lineType);
 
     (* active lines is mapping between eventId and lineId *)
-    (* TODO: make this set(nat) ? {2022-03-11: looks like this lineId used somewhere} *)
     activeEvents : map(nat, nat);
     events : big_map(nat, eventType);
 
@@ -184,8 +183,8 @@ function addLine(
     const line : lineType;
     var store : storage) : (list(operation) * storage) is
 block {
-    (* TODO: checkNoAmountIncluded(unit); *)
-    (* TODO: assert that Tezos.sender is manager *)
+    checkNoAmountIncluded(unit);
+    onlyManager(store.manager);
 
     (* TODO: consider lines to be list {but then it will be harder to stop them?} *)
     (* TODO: assert that this line is not repeating another one? *)
@@ -233,6 +232,8 @@ end;
 function approveLiquidity(
     const entryPositionId : nat; var store : storage) : (list(operation) * storage) is
 block {
+
+    checkNoAmountIncluded(unit);
 
     const entryPosition = getOrFail(
         entryPositionId, store.entryPositions, "Entry position is not found");
@@ -301,6 +302,8 @@ function cancelLiquidity(
     const entryPositionId : nat; var store : storage) : (list(operation) * storage) is
 block {
 
+    checkNoAmountIncluded(unit);
+
     const entryPosition = getOrFail(
         entryPositionId, store.entryPositions, "Entry position is not found");
     store.entryPositions := Big_map.remove(entryPositionId, store.entryPositions);
@@ -347,7 +350,8 @@ function claimLiquidity(
     const params : claimLiquidityParams;
     var store : storage) : (list(operation) * storage) is
 block {
-    (* TODO: assert no tez provided *)
+
+    checkNoAmountIncluded(unit);
 
     const position = getPosition(store, params.positionId);
     checkPositionProviderIsSender(position);
@@ -445,7 +449,8 @@ function withdrawLiquidity(
     const withdrawRequests : withdrawLiquidityParams;
     var store : storage) : (list(operation) * storage) is
 block {
-    (* TODO: assert no tez provided *)
+
+    checkNoAmountIncluded(unit);
 
     var withdrawalSums := (Map.empty : map(address, nat));
     for key in list withdrawRequests block {
@@ -569,7 +574,8 @@ function createEvent(
     const lineId : nat;
     var store : storage) : (list(operation) * storage) is
 block {
-    (* TODO: assert no tez provided *)
+
+    checkNoAmountIncluded(unit);
 
     const freeEventSlots = store.maxActiveEvents - Map.size(store.activeEvents);
     if freeEventSlots <= 0 then failwith("Max active events limit reached")
