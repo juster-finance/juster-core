@@ -403,38 +403,47 @@ block {
     then Big_map.update(params.positionId, Some(updatedPosition), store.positions);
     else Big_map.remove(params.positionId, store.positions);
 
-    const natBalance = Tezos.balance/1mutez;
-
-    (* The next condition should not be true because withdrawable liquidity
-        formed from payments that increased Tezos.balance, but it is good to
-        check this case: *)
-    if store.withdrawableLiquidity < natBalance
-    then failwith(Errors.wrongState)
-    else skip;
-
-    const totalLiquidity = abs(
-        natBalance
+    const totalLiquidity =
+        Tezos.balance/1mutez
         - store.withdrawableLiquidity
         - store.entryLiquidity
-        + store.activeLiquidity);
+        + store.activeLiquidity;
 
     const participantLiquidity = params.shares * totalLiquidity / store.totalShares;
     const payoutValue = participantLiquidity - providedLiquiditySum;
-    (* TODO: check that payoutValue > 0 (is it possible to have it < 0?) *)
+
+    (* Having negative payoutValue should not be possible,
+        but it is better to check: *)
+    if payoutValue < 0
+    then failwith(Errors.wrongState)
+    else skip;
 
     (* TODO: make you sure that it is required to distribute
-        participantLiquidity and not payoutValue instead {is there any tests for this difference?} *)
+        participantLiquidity and not payoutValue instead
+        {is there any tests for this difference?}
+        payoutValue is part of liquidity that user can withdraw right now,
+        but next event liquidity should be reduced with all removed liquidity
+    *)
     const liquidityPerEvent = participantLiquidity / store.maxActiveEvents;
 
     (* TODO: is it possible to have liquidityPerEvent > store.nextEventLiquidity ? *)
     store.nextEventLiquidity :=
         absPositive(store.nextEventLiquidity - liquidityPerEvent);
 
-    (* TODO: assert that store.totalShares > shares? this case should be
-        impossible, but feels like this is good to have this check? *)
+    (* Another impossible condition that is better to check: *)
+    if store.totalShares < params.shares
+    then failwith(Errors.wrongState)
+    else skip;
+
     store.totalShares := abs(store.totalShares - params.shares);
 
-    (* TODO: is it possible to have store.activeLiquidity < providedLiquiditySum? *)
+    (* activeLiquidity cannot be less than providedLiquidity because it is
+        provided liquidity that used in evetns (so it is part of activeLiquidity
+        but it is better to check: *)
+    if store.activeLiquidity < store.activeLiquidity
+    then failwith(Errors.wrongState)
+    else skip;
+
     store.activeLiquidity := abs(store.activeLiquidity - providedLiquiditySum);
 
     const operations = if payoutValue > 0 then
