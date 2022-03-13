@@ -403,11 +403,17 @@ block {
     then Big_map.update(params.positionId, Some(updatedPosition), store.positions);
     else Big_map.remove(params.positionId, store.positions);
 
-    (* TODO: assert that store.withdrawableLiquidity < Tezos.balance/1mutez?
-        but if this happens: it would mean that things went very wrong
-        somewhere else (Errors.wrongState) *)
+    const natBalance = Tezos.balance/1mutez;
+
+    (* The next condition should not be true because withdrawable liquidity
+        formed from payments that increased Tezos.balance, but it is good to
+        check this case: *)
+    if store.withdrawableLiquidity < natBalance
+    then failwith(Errors.wrongState)
+    else skip;
+
     const totalLiquidity = abs(
-        Tezos.balance/1mutez
+        natBalance
         - store.withdrawableLiquidity
         - store.entryLiquidity
         + store.activeLiquidity);
