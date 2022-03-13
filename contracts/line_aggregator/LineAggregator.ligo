@@ -351,6 +351,7 @@ block {
     const leftShares = abs(position.shares - params.shares);
     var providedLiquiditySum := 0n;
 
+    (* TODO: refactor this loop and simplify this code *)
     for eventId -> _lineId in map store.activeEvents block {
         const key = record [
             eventId = eventId;
@@ -371,19 +372,24 @@ block {
             provider = position.provider;
         ];
 
-        if position.addedCounter < event.createdCounter then block {
-            if params.shares > 0n
-            then store.claims := Big_map.update(key, Some(updatedClaim), store.claims)
-            else skip;
+        const isImpactedEvent = position.addedCounter < event.createdCounter;
+        const isHaveShares = params.shares > 0n;
+
+        if isImpactedEvent and isHaveShares
+        then block {
+            store.claims := Big_map.update(key, Some(updatedClaim), store.claims);
 
             const providedLiquidity = params.shares * event.provided / event.totalShares;
             providedLiquiditySum := providedLiquiditySum + providedLiquidity;
+
+            event.lockedShares := event.lockedShares + params.shares;
+
+            if event.lockedShares > event.totalShares
+            then failwith(Errors.wrongState)
+            else skip;
         }
         else skip;
 
-        event.lockedShares := event.lockedShares + params.shares;
-        (* TODO: assert that event.lockedShares < event.totalShares ?
-            this is wrongState but feels that it is better to assert it *)
         store.events := Big_map.update(eventId, Some(event), store.events);
     };
 
