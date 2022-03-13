@@ -375,7 +375,7 @@
                      CAR ;
                      COMPARE ;
                      LT ;
-                     IF { DIG 2 ; CDR ; FAILWITH } { DIG 2 ; DROP } ;
+                     IF { DUP 3 ; CDR ; FAILWITH } {} ;
                      DUP ;
                      CDR ;
                      SWAP ;
@@ -452,6 +452,16 @@
                      CDR ;
                      ADD ;
                      SUB ;
+                     SWAP ;
+                     DUP ;
+                     DUG 2 ;
+                     INT ;
+                     SWAP ;
+                     DUP ;
+                     DUG 2 ;
+                     COMPARE ;
+                     LT ;
+                     IF { DIG 4 ; CDR ; FAILWITH } { DIG 4 ; DROP } ;
                      SWAP ;
                      DUP ;
                      DUG 2 ;
