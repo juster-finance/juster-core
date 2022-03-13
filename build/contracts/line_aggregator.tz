@@ -40,19 +40,21 @@
                          nat
                          (pair (pair (nat %addedCounter) (address %provider)) (nat %shares))))
                 (pair (nat %totalShares) (nat %withdrawableLiquidity)))) ;
-  code { PUSH string "Not a contract manager" ;
+  code { PUSH string "Wrong state" ;
+         PUSH string "Not a contract manager" ;
          PUSH string "Including tez using this entrypoint call is not allowed" ;
+         PAIR ;
          PAIR ;
          DUP ;
          LAMBDA
-           (pair (pair string string) unit)
+           (pair (pair (pair string string) string) unit)
            unit
            { CAR ;
              PUSH mutez 0 ;
              AMOUNT ;
              COMPARE ;
              GT ;
-             IF { CAR ; FAILWITH } { DROP ; UNIT } } ;
+             IF { CAR ; CAR ; FAILWITH } { DROP ; UNIT } } ;
          SWAP ;
          APPLY ;
          LAMBDA
@@ -129,7 +131,7 @@
                      SENDER ;
                      COMPARE ;
                      NEQ ;
-                     IF { DIG 2 ; CDR ; FAILWITH } { DIG 2 ; DROP } ;
+                     IF { DIG 2 ; CAR ; CDR ; FAILWITH } { DIG 2 ; DROP } ;
                      SWAP ;
                      DUP ;
                      DUG 2 ;
@@ -295,9 +297,7 @@
                      PAIR ;
                      NIL operation ;
                      PAIR }
-                   { DIG 4 ;
-                     DROP ;
-                     UNIT ;
+                   { UNIT ;
                      DIG 4 ;
                      SWAP ;
                      EXEC ;
@@ -360,6 +360,22 @@
                      LT ;
                      IF { PUSH string "Cannot approve liquidity before acceptAfter" ; FAILWITH }
                         {} ;
+                     SWAP ;
+                     DUP ;
+                     DUG 2 ;
+                     CAR ;
+                     CDR ;
+                     SWAP ;
+                     DUP ;
+                     DUG 2 ;
+                     CAR ;
+                     CAR ;
+                     CDR ;
+                     CAR ;
+                     CAR ;
+                     COMPARE ;
+                     LT ;
+                     IF { DIG 2 ; CDR ; FAILWITH } { DIG 2 ; DROP } ;
                      DUP ;
                      CDR ;
                      SWAP ;
