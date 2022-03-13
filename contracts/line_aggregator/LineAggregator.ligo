@@ -237,7 +237,8 @@ block {
     if Tezos.now < entryPosition.acceptAfter
         then failwith("Cannot approve liquidity before acceptAfter") else skip;
 
-    (* The following condition should not be true but it is better to check *)
+    (* store.entryLiquidity is the sum of all entryPositions, so the following
+        condition should not be true but it is better to check *)
     if store.entryLiquidity < entryPosition.amount
     then failwith(Errors.wrongState)
     else skip;
@@ -254,11 +255,14 @@ block {
     const provided = entryPosition.amount;
     const totalLiquidity =
         store.activeLiquidity + Tezos.balance/1mutez - store.entryLiquidity;
-    (* TODO: is it possible to have totalLiquidity < 0? again check and raise Errors.wrong_state *)
+
+    (* totalLiquidity includes provided liquidity so the following condition
+        should not be true but it is better to check *)
+    if totalLiquidity < int(provided)
+    then failwith(Errors.wrongState)
+    else skip;
 
     const liquidityBeforeDeposit = abs(totalLiquidity - provided);
-    (* TODO: provided liquidity should be included in store.entryLiquidity but it is better to
-        check that totalLiquidity > provided too *)
 
     const shares = if store.totalShares = 0n
         then provided
