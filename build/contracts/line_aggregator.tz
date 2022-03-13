@@ -40,7 +40,22 @@
                          nat
                          (pair (pair (nat %addedCounter) (address %provider)) (nat %shares))))
                 (pair (nat %totalShares) (nat %withdrawableLiquidity)))) ;
-  code { LAMBDA
+  code { PUSH string "Not a contract manager" ;
+         PUSH string "Including tez using this entrypoint call is not allowed" ;
+         PAIR ;
+         DUP ;
+         LAMBDA
+           (pair (pair string string) unit)
+           unit
+           { CAR ;
+             PUSH mutez 0 ;
+             AMOUNT ;
+             COMPARE ;
+             GT ;
+             IF { CAR ; FAILWITH } { DROP ; UNIT } } ;
+         SWAP ;
+         APPLY ;
+         LAMBDA
            (pair (pair nat (big_map nat (pair (pair timestamp nat) address))) string)
            (pair (pair timestamp nat) address)
            { UNPAIR ; UNPAIR ; GET ; IF_NONE { FAILWITH } { SWAP ; DROP } } ;
@@ -87,7 +102,7 @@
              COMPARE ;
              GE ;
              IF { ABS } { DROP ; PUSH nat 0 } } ;
-         DIG 4 ;
+         DIG 6 ;
          UNPAIR ;
          IF_LEFT
            { IF_LEFT
@@ -98,6 +113,23 @@
                  IF_LEFT
                    { DIG 2 ;
                      DROP ;
+                     UNIT ;
+                     DIG 3 ;
+                     SWAP ;
+                     EXEC ;
+                     DROP ;
+                     SWAP ;
+                     DUP ;
+                     DUG 2 ;
+                     CAR ;
+                     CDR ;
+                     CAR ;
+                     CDR ;
+                     CAR ;
+                     SENDER ;
+                     COMPARE ;
+                     NEQ ;
+                     IF { DIG 2 ; CDR ; FAILWITH } { DIG 2 ; DROP } ;
                      SWAP ;
                      DUP ;
                      DUG 2 ;
@@ -263,7 +295,14 @@
                      PAIR ;
                      NIL operation ;
                      PAIR }
-                   { PUSH string "Entry position is not found" ;
+                   { DIG 4 ;
+                     DROP ;
+                     UNIT ;
+                     DIG 4 ;
+                     SWAP ;
+                     EXEC ;
+                     DROP ;
+                     PUSH string "Entry position is not found" ;
                      DUP 3 ;
                      CAR ;
                      CAR ;
@@ -578,10 +617,17 @@
                      PAIR ;
                      NIL operation ;
                      PAIR } }
-               { IF_LEFT
+               { DIG 7 ;
+                 DROP ;
+                 IF_LEFT
                    { DIG 2 ;
                      DIG 3 ;
                      DROP 2 ;
+                     UNIT ;
+                     DIG 5 ;
+                     SWAP ;
+                     EXEC ;
+                     DROP ;
                      PUSH string "Entry position is not found" ;
                      DUP 3 ;
                      CAR ;
@@ -697,6 +743,11 @@
                         { SWAP ; DIG 2 ; DROP 2 ; NIL operation } ;
                      PAIR }
                    { DIG 5 ;
+                     DROP ;
+                     UNIT ;
+                     DIG 6 ;
+                     SWAP ;
+                     EXEC ;
                      DROP ;
                      DUP ;
                      CAR ;
@@ -1137,14 +1188,20 @@
                         { SWAP ; DIG 2 ; DROP 2 ; NIL operation } ;
                      PAIR } } }
            { DIG 5 ;
-             DROP ;
+             DIG 7 ;
+             DROP 2 ;
              IF_LEFT
                { DIG 2 ;
                  DIG 3 ;
                  DIG 4 ;
                  DROP 3 ;
                  IF_LEFT
-                   { SWAP ;
+                   { UNIT ;
+                     DIG 3 ;
+                     SWAP ;
+                     EXEC ;
+                     DROP ;
+                     SWAP ;
                      DUP ;
                      DUG 2 ;
                      CAR ;
@@ -1636,7 +1693,8 @@
                      DIG 2 ;
                      CONS ;
                      PAIR }
-                   { DROP ;
+                   { DIG 2 ;
+                     DROP 2 ;
                      PUSH mutez 1 ;
                      AMOUNT ;
                      EDIV ;
@@ -1780,7 +1838,8 @@
                      PAIR } }
                { IF_LEFT
                    { DIG 4 ;
-                     DROP ;
+                     DIG 5 ;
+                     DROP 2 ;
                      PUSH mutez 1 ;
                      AMOUNT ;
                      EDIV ;
@@ -2029,6 +2088,11 @@
                      NIL operation ;
                      PAIR }
                    { DIG 2 ;
+                     DROP ;
+                     UNIT ;
+                     DIG 5 ;
+                     SWAP ;
+                     EXEC ;
                      DROP ;
                      EMPTY_MAP address nat ;
                      DIG 2 ;
