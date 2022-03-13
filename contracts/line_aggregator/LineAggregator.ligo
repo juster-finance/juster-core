@@ -321,7 +321,7 @@ block {
     const entryPosition = getEntry(entryId, store);
     store.entryPositions := Big_map.remove(entryId, store.entryPositions);
 
-    checkSenderIs(entryPosition.provider, Errors.notPositionOwner);
+    checkSenderIs(entryPosition.provider, Errors.notEntryOwner);
 
     store.entryLiquidity := abs(store.entryLiquidity - entryPosition.amount);
 
@@ -330,12 +330,6 @@ block {
     else (nil: list(operation));
 
 } with (operations, store)
-
-
-(* TODO: use helper checkSenderIs *)
-function checkPositionProviderIsSender(const position : positionType) : unit is
-if (position.provider =/= Tezos.sender) then failwith("Not position owner")
-else Unit;
 
 
 function absPositive(const value : int) is if value >= 0 then abs(value) else 0n
@@ -349,7 +343,7 @@ block {
     checkNoAmountIncluded(unit);
 
     const position = getPosition(params.positionId, store);
-    checkPositionProviderIsSender(position);
+    checkSenderIs(position.provider, Errors.notPositionOwner);
 
     if params.shares > position.shares then
         failwith("Claim shares is exceed position shares")
