@@ -71,3 +71,22 @@ class ApproveLiquidityTestCase(LineAggregatorBaseTestCase):
         # approving with B:
         self.approve_liquidity(sender=self.b, entry_position_id=0)
 
+    def test_should_fail_if_approved_liquidity_amount_more_than_entry_liquidity(self):
+        # NOTE: this scenario should not happen under normal conditions
+        # but there are wrong state check in approve_liquidity entrypoint
+
+        # creating default event:
+        self.add_line()
+
+        # providing liquidity with A:
+        self.deposit_liquidity(sender=self.a, amount=2_000_000)
+
+        # modifying contract state:
+        self.storage['entryLiquidity'] = 1_000_000
+
+        # approving:
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.approve_liquidity(entry_position_id=0)
+        msg = 'Wrong state'
+        self.assertTrue(msg in str(cm.exception))
+
