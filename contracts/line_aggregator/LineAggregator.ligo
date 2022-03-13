@@ -194,7 +194,6 @@ block {
     onlyManager(store.manager);
 
     (* TODO: consider lines to be list {but then it will be harder to stop them?} *)
-    (* TODO: assert that this line is not repeating another one? *)
 
     store.lines[store.nextLineId] := line;
     store.nextLineId := store.nextLineId + 1n;
@@ -225,17 +224,6 @@ block {
 } with ((nil: list(operation)), store)
 
 
-(* TODO: move to helpers.ligo *)
-function getOrFail(
-    const key : _key;
-    const ledger : big_map(_key, _value);
-    const failwithMsg : string) : _value is
-case Big_map.find_opt(key, ledger) of
-| Some(value) -> value
-| None -> (failwith(failwithMsg) : _value)
-end;
-
-
 function approveLiquidity(
     const entryPositionId : nat; var store : storage) : (list(operation) * storage) is
 block {
@@ -249,11 +237,11 @@ block {
     if Tezos.now < entryPosition.acceptAfter
         then failwith("Cannot approve liquidity before acceptAfter") else skip;
 
-    (* TODO: is it possible to have store.entryLiquidity < entryPosition.amount?
-        maybe need to check & failwith then?
-        - and add special Errors.wrong_state error for this cases that should
-            not happen, but they `can` happen if something will be hacked
-    *)
+    (* The following condition should not be true but it is better to check *)
+    if store.entryLiquidity < entryPosition.amount
+    then failwith(Errors.wrongState)
+    else skip;
+
     store.entryLiquidity := abs(store.entryLiquidity - entryPosition.amount);
 
     (* if there are no lines, then it is impossible to calculate providedPerEvent

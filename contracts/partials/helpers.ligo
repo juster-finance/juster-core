@@ -11,3 +11,12 @@ function onlyManager(const manager : address) : unit is
     else unit;
 
 
+function getOrFail(
+    const key : _key;
+    const ledger : big_map(_key, _value);
+    const failwithMsg : string) : _value is
+case Big_map.find_opt(key, ledger) of
+| Some(value) -> value
+| None -> (failwith(failwithMsg) : _value)
+end;
+
