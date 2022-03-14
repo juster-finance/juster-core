@@ -71,6 +71,7 @@ class ApproveLiquidityTestCase(LineAggregatorBaseTestCase):
         # approving with B:
         self.approve_liquidity(sender=self.b, entry_id=0)
 
+
     def test_should_fail_if_approved_liquidity_amount_more_than_entry_liquidity(self):
         # NOTE: this scenario should not happen under normal conditions
         # but there are wrong state check in approve_liquidity entrypoint
@@ -89,4 +90,21 @@ class ApproveLiquidityTestCase(LineAggregatorBaseTestCase):
             self.approve_liquidity(entry_id=0)
         msg = 'Wrong state'
         self.assertTrue(msg in str(cm.exception))
+
+
+    def test_should_not_include_withdrawable_liquidity_in_share_calculation(self):
+        # scenario with running event where provider decides to go out:
+        self.add_line()
+        self.deposit_liquidity(sender=self.a, amount=1_000)
+        self.approve_liquidity(entry_id=0)
+        self.create_event()
+        self.claim_liquidity(sender=self.a, shares=500)
+        self.wait(3600)
+        self.pay_reward(event_id=0, amount=500)
+
+        # another provider adds 500 mutez and should receive 500 shares:
+        self.deposit_liquidity(sender=self.b, amount=500)
+        self.approve_liquidity(entry_id=1)
+        received_shares = self.storage['positions'][1]['shares']
+        self.assertEqual(received_shares, 500)
 
