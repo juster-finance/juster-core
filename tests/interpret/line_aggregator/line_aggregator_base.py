@@ -80,8 +80,9 @@ class LineAggregatorBaseTestCase(TestCase):
             sender=sender
         )
 
+        line_id = self.storage['nextLineId']
         self.assertEqual(
-            self.storage['nextLineId'] + 1,
+            line_id + 1,
             result.storage['nextLineId']
         )
 
@@ -92,6 +93,7 @@ class LineAggregatorBaseTestCase(TestCase):
         self.assertEqual(added_line['lastBetsCloseTime'], last_bets_close_time)
 
         self.storage = result.storage
+        return line_id
 
 
     def deposit_liquidity(self, sender=None, amount=1_000_000):
@@ -142,7 +144,8 @@ class LineAggregatorBaseTestCase(TestCase):
         self.assertTrue(result.storage['entries'][entry_id] is None)
         result.storage['entries'].pop(entry_id)
 
-        added_position = result.storage['positions'][self.storage['nextPositionId']]
+        position_id = self.storage['nextPositionId']
+        added_position = result.storage['positions'][position_id]
         self.assertEqual(added_position['addedCounter'], self.storage['counter'])
         self.assertEqual(result.storage['counter'], self.storage['counter'] + 1)
 
@@ -170,6 +173,7 @@ class LineAggregatorBaseTestCase(TestCase):
         self.assertEqual(entry_liquidity_diff, amount)
 
         self.storage = result.storage
+        return position_id
 
 
     def cancel_liquidity(self, sender=None, entry_id=0, amount=0):
