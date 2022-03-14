@@ -199,6 +199,14 @@ function checkHasActiveEvents(const store : storage) : unit is
     then failwith(Errors.noActiveEvents)
     else unit;
 
+function calculateTotalLiquidity(const store : storage) : int is
+    Tezos.balance/1mutez
+    - store.withdrawableLiquidity
+    - store.entryLiquidity
+    + store.activeLiquidity;
+
+function absPositive(const value : int) is if value >= 0 then abs(value) else 0n
+
 
 function addLine(
     const line : lineType;
@@ -265,8 +273,7 @@ block {
 
     (* calculating shares *)
     const provided = entry.amount;
-    const totalLiquidity =
-        store.activeLiquidity + Tezos.balance/1mutez - store.entryLiquidity;
+    const totalLiquidity = calculateTotalLiquidity(store);
 
     (* totalLiquidity includes provided liquidity so the following condition
         should not be true but it is better to check *)
@@ -327,9 +334,6 @@ block {
     else (nil: list(operation));
 
 } with (operations, store)
-
-
-function absPositive(const value : int) is if value >= 0 then abs(value) else 0n
 
 
 function claimLiquidity(
@@ -399,12 +403,7 @@ block {
     then Big_map.update(params.positionId, Some(updatedPosition), store.positions);
     else Big_map.remove(params.positionId, store.positions);
 
-    const totalLiquidity =
-        Tezos.balance/1mutez
-        - store.withdrawableLiquidity
-        - store.entryLiquidity
-        + store.activeLiquidity;
-
+    const totalLiquidity = calculateTotalLiquidity(store);
     const participantLiquidity = params.shares * totalLiquidity / store.totalShares;
     const payoutValue = participantLiquidity - providedLiquiditySum;
 
@@ -540,14 +539,13 @@ block {
         to make sure
     *)
 
+    (* Part of activeLiquidity was already excluded if there was some claims *)
     const claimedLiquidity = event.provided * event.lockedShares / event.totalShares;
     const remainedLiquidity = event.provided - claimedLiquidity;
-    (* TODO: assert that remainedLiquidity >= store.activeLiquidity *)
-    (* TODO: why does only remainedLiquidity excluded from activeLiquidity and
-        not all event.provided? was claimedLiquidity already excluded during claim?
-        looks like it is. Would it better to exclude all event.provided here and
-        not split it in two parts? Need to understand make this logic more clear *)
-    store.activeLiquidity := abs(store.activeLiquidity - remainedLiquidity);
+
+    (* remainedLiquidity should always be less than store.activeLiquidity but
+        it is better to cap it on zero if it somehow goes negative: *)
+    store.activeLiquidity := absPositive(store.activeLiquidity - remainedLiquidity);
     const profitLossPerEvent = (reward - event.provided) / store.maxActiveEvents;
 
     (* TODO: is it possible to make newNextEventLiquidity < 0? when liquidity withdrawn
@@ -555,8 +553,8 @@ block {
     (* TODO: need to find this test cases if it is possible or find some proof that it is not *)
     store.nextEventLiquidity :=
         absPositive(store.nextEventLiquidity + profitLossPerEvent);
-    (* TODO: is it better to have failwith here? don't want to have possibility
-        to block contract communications *)
+    (* TODO: consider failwith here instead of absPositive
+        the same for store.activeLiquidity, but don't want to block this entrypoint *)
 
 } with ((nil: list(operation)), store)
 
@@ -680,7 +678,7 @@ block {
         - abs(freeEventSlots)*store.newEventFee/1mutez);
 
     (* TODO: is it really required to remove all freeEventSlots newEventFees or it
-        will be enough to just remove it once? *)
+        will be enough to just remove it just for one event? *)
 
     if freeLiquidity < liquidityAmount then liquidityAmount := freeLiquidity
     else skip;
