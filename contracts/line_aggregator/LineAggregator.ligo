@@ -681,14 +681,12 @@ block {
 
     (* This case is possible when added new line and free liquidity is not
         enough to run all events for some time *)
-    (* TODO: need to have test case where this error arises *)
     if freeLiquidity < int(store.nextEventLiquidity)
     then failwith(Errors.noLiquidity)
     else skip;
 
     var liquidityAmount := store.nextEventLiquidity - store.newEventFee/1mutez;
 
-    (* TODO: is this case with 0 liquidity presented in tests? *)
     if liquidityAmount <= 0
     then failwith(Errors.noLiquidity)
     else skip;
