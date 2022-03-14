@@ -29,17 +29,17 @@ class ClaimLiquidityTestCase(LineAggregatorBaseTestCase):
 
         self.claim_liquidity(sender=self.a, position_id=0, shares=100)
         target_claims = {
-            (0, 0): {'shares': 100, 'totalShares': 400, 'provider': self.a},
-            (1, 0): {'shares': 100, 'totalShares': 400, 'provider': self.a}
+            (0, 0): {'shares': 100, 'provider': self.a},
+            (1, 0): {'shares': 100, 'provider': self.a}
         }
         self.assertDictEqual(self.storage['claims'], target_claims)
 
         self.claim_liquidity(sender=self.b, position_id=1, shares=100)
         target_claims = {
-            (0, 0): {'shares': 100, 'totalShares': 400, 'provider': self.a},
-            (1, 0): {'shares': 100, 'totalShares': 400, 'provider': self.a},
-            (0, 1): {'shares': 100, 'totalShares': 400, 'provider': self.b},
-            (1, 1): {'shares': 100, 'totalShares': 400, 'provider': self.b}
+            (0, 0): {'shares': 100, 'provider': self.a},
+            (1, 0): {'shares': 100, 'provider': self.a},
+            (0, 1): {'shares': 100, 'provider': self.b},
+            (1, 1): {'shares': 100, 'provider': self.b}
         }
         self.assertDictEqual(self.storage['claims'], target_claims)
 
@@ -107,8 +107,8 @@ class ClaimLiquidityTestCase(LineAggregatorBaseTestCase):
         target_claims = {
             (0, 0): {
                 'shares': 100,
-                'provider': self.a,
-                'totalShares': 100},
+                'provider': self.a
+            },
         }
 
         self.assertDictEqual(self.storage['claims'], target_claims)
