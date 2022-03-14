@@ -53,9 +53,6 @@ type claimKey is record [
 
 type claimParams is record [
     shares : nat;
-    (* TODO: is it required to record this totalShares here, they already
-        recorded in event ledger *)
-    totalShares : nat;
     provider : address;
 ]
 
@@ -368,7 +365,6 @@ block {
 
         const updatedClaim = record [
             shares = alreadyClaimedShares + params.shares;
-            totalShares = event.totalShares;
             provider = position.provider;
         ];
 
@@ -475,9 +471,7 @@ block {
         | None -> (failwith("Claim is not found") : claimParams)
         end;
 
-        (* TODO: is it required to record totalShares in claim or it is enough
-            to have this totalShares in the event ledger? *)
-        const eventReward = eventResult * claim.shares / claim.totalShares;
+        const eventReward = eventResult * claim.shares / event.totalShares;
 
         const updatedSum = case Map.find_opt(claim.provider, withdrawalSums) of
         | Some(sum) -> sum + eventReward
