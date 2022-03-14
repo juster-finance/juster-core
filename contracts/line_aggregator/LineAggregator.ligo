@@ -199,6 +199,7 @@ function checkHasActiveEvents(const store : storage) : unit is
     then failwith(Errors.noActiveEvents)
     else unit;
 
+(* TODO: rename to calcTotalLiquidity *)
 function calculateTotalLiquidity(const store : storage) : int is
     Tezos.balance/1mutez
     - store.withdrawableLiquidity
@@ -206,6 +207,9 @@ function calculateTotalLiquidity(const store : storage) : int is
     + store.activeLiquidity;
 
 function absPositive(const value : int) is if value >= 0 then abs(value) else 0n
+
+function calcFreeEventSlots(const store : storage) is
+    store.maxActiveEvents - Map.size(store.activeEvents)
 
 
 function addLine(
@@ -584,7 +588,8 @@ block {
 
     checkNoAmountIncluded(unit);
 
-    const freeEventSlots = store.maxActiveEvents - Map.size(store.activeEvents);
+    (* TODO: checkHaveFreeEventSlots *)
+    const freeEventSlots = calcFreeEventSlots(store);
     if freeEventSlots <= 0 then failwith("Max active events limit reached")
     else skip;
 
@@ -669,22 +674,23 @@ block {
         maxSlippage = 0n;
     ];
 
-    var liquidityAmount := store.nextEventLiquidity - store.newEventFee/1mutez;
-
     const freeLiquidity = (
         Tezos.balance/1mutez
         - store.withdrawableLiquidity
-        - store.entryLiquidity
-        - abs(freeEventSlots)*store.newEventFee/1mutez);
+        - store.entryLiquidity);
 
-    (* TODO: is it really required to remove all freeEventSlots newEventFees or it
-        will be enough to just remove it just for one event? *)
-
-    if freeLiquidity < liquidityAmount then liquidityAmount := freeLiquidity
+    (* This case is possible when added new line and free liquidity is not
+        enough to run all events for some time *)
+    (* TODO: need to have test case where this error arises *)
+    if freeLiquidity < int(store.nextEventLiquidity)
+    then failwith(Errors.noLiquidity)
     else skip;
 
+    var liquidityAmount := store.nextEventLiquidity - store.newEventFee/1mutez;
+
     (* TODO: is this case with 0 liquidity presented in tests? *)
-    if liquidityAmount <= 0 then failwith("Not enough liquidity to run event")
+    if liquidityAmount <= 0
+    then failwith(Errors.noLiquidity)
     else skip;
 
     const liquidityPayout = abs(liquidityAmount) * 1mutez;

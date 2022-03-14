@@ -10,4 +10,5 @@ module Errors is {
     const earlyApprove : string = "Cannot approve liquidity before acceptAfter";
     const noActiveEvents : string = "Need to have at least one line";
     const notPositionOwner : string = "Not position owner";
+    const noLiquidity : string = "Not enough liquidity to run event";
 }
