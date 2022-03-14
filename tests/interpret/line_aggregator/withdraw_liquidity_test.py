@@ -22,9 +22,9 @@ class WithdrawLiquidityTestCase(LineAggregatorBaseTestCase):
     def test_should_fail_if_trying_to_withdraw_position_with_no_claim(self):
         self.add_line()
         self.deposit_liquidity(sender=self.a)
-        self.approve_liquidity(entry_position_id=0)
+        self.approve_liquidity(entry_id=0)
         self.deposit_liquidity(sender=self.b)
-        self.approve_liquidity(entry_position_id=1)
+        self.approve_liquidity(entry_id=1)
         self.create_event(next_event_id=0)
         self.claim_liquidity(position_id=0)
         self.pay_reward(event_id=0)
@@ -55,9 +55,9 @@ class WithdrawLiquidityTestCase(LineAggregatorBaseTestCase):
     def test_multiple_withdraw_should_be_possible(self):
         self.add_line(max_active_events=5)
         self.deposit_liquidity(sender=self.a)
-        self.approve_liquidity(entry_position_id=0)
+        self.approve_liquidity(entry_id=0)
         self.deposit_liquidity(sender=self.b)
-        self.approve_liquidity(entry_position_id=1)
+        self.approve_liquidity(entry_id=1)
 
         for _ in range(5):
             self.create_event()

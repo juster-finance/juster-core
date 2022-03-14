@@ -104,13 +104,13 @@ class LineAggregatorBaseTestCase(TestCase):
             balance=self.balances[self.address] + amount
         )
 
-        entry_position_id = self.storage['nextEntryPositionId']
+        entry_id = self.storage['nextEntryId']
         self.assertEqual(
-            entry_position_id + 1,
-            result.storage['nextEntryPositionId']
+            entry_id + 1,
+            result.storage['nextEntryId']
         )
 
-        added_position = result.storage['entryPositions'][entry_position_id]
+        added_position = result.storage['entries'][entry_id]
         expected_unlock_time = self.storage['entryLockPeriod'] + self.current_time
         self.assertEqual(added_position['acceptAfter'], expected_unlock_time)
         self.assertEqual(added_position['amount'], amount)
@@ -126,12 +126,12 @@ class LineAggregatorBaseTestCase(TestCase):
         self.update_balance(self.address, amount)
         self.update_balance(sender, -amount)
 
-        return entry_position_id
+        return entry_id
 
 
-    def approve_liquidity(self, sender=None, entry_position_id=0, amount=0):
+    def approve_liquidity(self, sender=None, entry_id=0, amount=0):
         sender = sender or self.manager
-        call = self.aggregator.approveLiquidity(entry_position_id)
+        call = self.aggregator.approveLiquidity(entry_id)
         result = call.with_amount(amount).interpret(
             storage=self.storage,
             now=self.current_time,
@@ -139,17 +139,17 @@ class LineAggregatorBaseTestCase(TestCase):
             balance=self.balances[self.address]
         )
 
-        self.assertTrue(result.storage['entryPositions'][entry_position_id] is None)
-        result.storage['entryPositions'].pop(entry_position_id)
+        self.assertTrue(result.storage['entries'][entry_id] is None)
+        result.storage['entries'].pop(entry_id)
 
         added_position = result.storage['positions'][self.storage['nextPositionId']]
         self.assertEqual(added_position['addedCounter'], self.storage['counter'])
         self.assertEqual(result.storage['counter'], self.storage['counter'] + 1)
 
-        entry_position = self.storage['entryPositions'][entry_position_id]
-        self.assertEqual(added_position['provider'], entry_position['provider'])
+        entry = self.storage['entries'][entry_id]
+        self.assertEqual(added_position['provider'], entry['provider'])
 
-        amount = entry_position['amount']
+        amount = entry['amount']
         total_shares = self.storage['totalShares']
         total_liquidity = (
             self.balances['contract']
@@ -172,9 +172,9 @@ class LineAggregatorBaseTestCase(TestCase):
         self.storage = result.storage
 
 
-    def cancel_liquidity(self, sender=None, entry_position_id=0, amount=0):
+    def cancel_liquidity(self, sender=None, entry_id=0, amount=0):
         sender = sender or self.manager
-        call = self.aggregator.cancelLiquidity(entry_position_id)
+        call = self.aggregator.cancelLiquidity(entry_id)
         result = call.with_amount(amount).interpret(
             storage=self.storage,
             now=self.current_time,
@@ -182,20 +182,20 @@ class LineAggregatorBaseTestCase(TestCase):
             balance=self.balances[self.address]
         )
 
-        position = self.storage['entryPositions'][entry_position_id]
+        position = self.storage['entries'][entry_id]
         self.assertEqual(position['provider'], sender)
         liquidity_diff = (
             self.storage['entryLiquidity'] - result.storage['entryLiquidity'])
         self.assertEqual(liquidity_diff, position['amount'])
 
-        self.assertTrue(result.storage['entryPositions'][entry_position_id] is None)
-        result.storage['entryPositions'].pop(entry_position_id)
+        self.assertTrue(result.storage['entries'][entry_id] is None)
+        result.storage['entries'].pop(entry_id)
 
-        entry_position = self.storage['entryPositions'][entry_position_id]
+        entry = self.storage['entries'][entry_id]
         self.assertEqual(len(result.operations), 1)
         op = result.operations[0]
         self.assertEqual(op['destination'], sender)
-        self.assertEqual(op['amount'], str(entry_position['amount']))
+        self.assertEqual(op['amount'], str(entry['amount']))
 
         self.storage = result.storage
 

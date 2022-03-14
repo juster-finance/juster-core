@@ -25,7 +25,7 @@ class CancelLiquidityTestCase(LineAggregatorBaseTestCase):
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.cancel_liquidity()
-        msg = 'Entry position is not found'
+        msg = 'Entry is not found'
         self.assertTrue(msg in str(cm.exception))
 
 
@@ -36,6 +36,6 @@ class CancelLiquidityTestCase(LineAggregatorBaseTestCase):
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.approve_liquidity()
-        msg = 'Entry position is not found'
+        msg = 'Entry is not found'
         self.assertTrue(msg in str(cm.exception))
 

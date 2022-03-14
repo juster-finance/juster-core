@@ -12,12 +12,12 @@ class FeeEventCreationTestCase(LineAggregatorBaseTestCase):
 
         # providing liquidity:
         self.deposit_liquidity(self.a, amount=4_500_000)
-        self.approve_liquidity(self.a, entry_position_id=0)
+        self.approve_liquidity(self.a, entry_id=0)
         self.assertEqual(self.storage['nextEventLiquidity'], 1_500_000)
 
         # second provider adds the same amount of liquidity:
         self.deposit_liquidity(self.b, amount=4_500_000)
-        self.approve_liquidity(self.a, entry_position_id=1)
+        self.approve_liquidity(self.a, entry_id=1)
 
         # and all of this liquidity should go to the events:
         self.assertEqual(self.storage['nextEventLiquidity'], 3_000_000)
@@ -58,7 +58,7 @@ class FeeEventCreationTestCase(LineAggregatorBaseTestCase):
 
         # providing liquidity that only covers new event fees:
         self.deposit_liquidity(self.a, amount=1_500_000)
-        self.approve_liquidity(self.a, entry_position_id=0)
+        self.approve_liquidity(self.a, entry_id=0)
         self.assertEqual(self.storage['nextEventLiquidity'], 500_000)
 
         with self.assertRaises(MichelsonRuntimeError) as cm:

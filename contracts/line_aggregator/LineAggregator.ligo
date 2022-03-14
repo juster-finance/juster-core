@@ -59,9 +59,9 @@ type claimParams is record [
     provider : address;
 ]
 
-(*  entryPosition is not accepted yet position including provider address,
+(*  entry is not accepted yet position including provider address,
     timestamp when liquidity can be accepted and amount of this liquidity *)
-type entryPositionType is record [
+type entryType is record [
     provider : address;
     acceptAfter : timestamp;
     amount : nat;
@@ -94,8 +94,8 @@ type storage is record [
     entryLockPeriod : nat;
     (* TODO: ^^ consider moving this to `configs` and having configs ledger *)
 
-    entryPositions : big_map(nat, entryPositionType);
-    nextEntryPositionId : nat;
+    entries : big_map(nat, entryType);
+    nextEntryId : nat;
 
     claims : big_map(claimKey, claimParams);
 
@@ -188,8 +188,8 @@ type action is
 
 
 (* Some helpers, TODO: move to some separate .ligo *)
-function getEntry(const entryId : nat; const store : storage) : entryPositionType is
-    getOrFail(entryId, store.entryPositions, Errors.entryNotFound)
+function getEntry(const entryId : nat; const store : storage) : entryType is
+    getOrFail(entryId, store.entries, Errors.entryNotFound)
 
 function getPosition(const positionId : nat; const store : storage) : positionType is
     getOrFail(positionId, store.positions, Errors.positionNotFound)
@@ -229,13 +229,13 @@ block {
     const providedAmount = Tezos.amount / 1mutez;
     if providedAmount = 0n then failwith("Should provide tez") else skip;
 
-    const newEntryPosition = record[
+    const newEntry = record[
         provider = Tezos.sender;
         acceptAfter = Tezos.now + int(store.entryLockPeriod);
         amount = providedAmount;
     ];
-    store.entryPositions[store.nextEntryPositionId] := newEntryPosition;
-    store.nextEntryPositionId := store.nextEntryPositionId + 1n;
+    store.entries[store.nextEntryId] := newEntry;
+    store.nextEntryId := store.nextEntryId + 1n;
     store.entryLiquidity := store.entryLiquidity + providedAmount;
 
 } with ((nil: list(operation)), store)
@@ -247,27 +247,27 @@ block {
 
     checkNoAmountIncluded(unit);
 
-    const entryPosition = getEntry(entryId, store);
-    store.entryPositions := Big_map.remove(entryId, store.entryPositions);
+    const entry = getEntry(entryId, store);
+    store.entries := Big_map.remove(entryId, store.entries);
 
-    if Tezos.now < entryPosition.acceptAfter
+    if Tezos.now < entry.acceptAfter
     then failwith(Errors.earlyApprove)
     else skip;
 
-    (* store.entryLiquidity is the sum of all entryPositions, so the following
+    (* store.entryLiquidity is the sum of all entries, so the following
         condition should not be true but it is better to check *)
-    if store.entryLiquidity < entryPosition.amount
+    if store.entryLiquidity < entry.amount
     then failwith(Errors.wrongState)
     else skip;
 
-    store.entryLiquidity := abs(store.entryLiquidity - entryPosition.amount);
+    store.entryLiquidity := abs(store.entryLiquidity - entry.amount);
 
     (* if there are no lines, then it is impossible to calculate providedPerEvent
         and there would be DIV/0 error *)
     checkHasActiveEvents(store);
 
     (* calculating shares *)
-    const provided = entryPosition.amount;
+    const provided = entry.amount;
     const totalLiquidity =
         store.activeLiquidity + Tezos.balance/1mutez - store.entryLiquidity;
 
@@ -284,7 +284,7 @@ block {
         else provided * store.totalShares / liquidityBeforeDeposit;
 
     const newPosition = record [
-        provider = entryPosition.provider;
+        provider = entry.provider;
         shares = shares;
         addedCounter = store.counter;
     ];
@@ -318,15 +318,15 @@ block {
 
     checkNoAmountIncluded(unit);
 
-    const entryPosition = getEntry(entryId, store);
-    store.entryPositions := Big_map.remove(entryId, store.entryPositions);
+    const entry = getEntry(entryId, store);
+    store.entries := Big_map.remove(entryId, store.entries);
 
-    checkSenderIs(entryPosition.provider, Errors.notEntryOwner);
+    checkSenderIs(entry.provider, Errors.notEntryOwner);
 
-    store.entryLiquidity := abs(store.entryLiquidity - entryPosition.amount);
+    store.entryLiquidity := abs(store.entryLiquidity - entry.amount);
 
-    const operations = if entryPosition.amount > 0n then
-        list[prepareOperation(Tezos.sender, entryPosition.amount * 1mutez)]
+    const operations = if entry.amount > 0n then
+        list[prepareOperation(Tezos.sender, entry.amount * 1mutez)]
     else (nil: list(operation));
 
 } with (operations, store)

@@ -10,7 +10,7 @@ class MultipleProvidersResultsTestCase(LineAggregatorBaseTestCase):
         # providing liquidity:
         provided_amount = 10_000_000
         self.deposit_liquidity(self.a, amount=provided_amount)
-        self.approve_liquidity(self.a, entry_position_id=0)
+        self.approve_liquidity(self.a, entry_id=0)
 
         # creating event where provider have 100% of the liquidity:
         # as far as max_active_events is 2: this event should receive 5xtz:
@@ -18,7 +18,7 @@ class MultipleProvidersResultsTestCase(LineAggregatorBaseTestCase):
 
         # second provider adds liquidity with the same amount:
         self.deposit_liquidity(self.b, amount=provided_amount)
-        self.approve_liquidity(self.a, entry_position_id=1)
+        self.approve_liquidity(self.a, entry_id=1)
 
         # should receive the same amount of shares:
         self.assertEqual(

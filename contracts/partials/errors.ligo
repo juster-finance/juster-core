@@ -4,7 +4,7 @@ module Errors is {
     const notManager : string = "Not a contract manager";
     const wrongState : string = "Wrong state";
     const notEntryOwner : string = "Not entry position owner";
-    const entryNotFound : string = "Entry position is not found";
+    const entryNotFound : string = "Entry is not found";
     const positionNotFound : string = "Position is not found";
     const eventNotFound : string = "Event is not found";
     const earlyApprove : string = "Cannot approve liquidity before acceptAfter";

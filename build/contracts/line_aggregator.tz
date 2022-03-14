@@ -15,10 +15,11 @@
                                      (pair (nat %eventId) (nat %positionId))
                                      (pair (pair (address %provider) (nat %shares)) (nat %totalShares)))
                                   (nat %counter)))
-                      (pair (pair (nat %entryLiquidity) (nat %entryLockPeriod))
-                            (pair (big_map %entryPositions
+                      (pair (pair (big_map %entries
                                      nat
                                      (pair (pair (timestamp %acceptAfter) (nat %amount)) (address %provider)))
+                                  (nat %entryLiquidity))
+                            (pair (nat %entryLockPeriod)
                                   (big_map %events
                                      nat
                                      (pair (pair (pair (nat %createdCounter) (nat %lockedShares))
@@ -33,7 +34,7 @@
                                                        (pair (nat %rateAboveEq) (nat %rateBelow))))
                                            (nat %targetDynamics))))
                             (pair (address %manager) (nat %maxActiveEvents)))
-                      (pair (pair (mutez %newEventFee) (nat %nextEntryPositionId))
+                      (pair (pair (mutez %newEventFee) (nat %nextEntryId))
                             (pair (nat %nextEventLiquidity) (nat %nextLineId)))))
           (pair (pair (nat %nextPositionId)
                       (big_map %positions
@@ -51,7 +52,7 @@
          PAIR ;
          PAIR ;
          PUSH string "Event is not found" ;
-         PUSH string "Entry position is not found" ;
+         PUSH string "Entry is not found" ;
          PAIR ;
          PUSH string "Cannot approve liquidity before acceptAfter" ;
          PUSH string "Including tez using this entrypoint call is not allowed" ;
@@ -86,9 +87,8 @@
                  (pair nat
                        (pair (pair (pair (pair (pair (map nat nat) nat)
                                                (pair (big_map (pair nat nat) (pair (pair address nat) nat)) nat))
-                                         (pair (pair nat nat)
-                                               (pair (big_map nat (pair (pair timestamp nat) address))
-                                                     (big_map nat (pair (pair (pair nat nat) (pair nat (option nat))) nat)))))
+                                         (pair (pair (big_map nat (pair (pair timestamp nat) address)) nat)
+                                               (pair nat (big_map nat (pair (pair (pair nat nat) (pair nat (option nat))) nat)))))
                                    (pair (pair (pair address
                                                      (map nat
                                                           (pair (pair (pair (pair nat string) (pair timestamp nat)) (pair (pair nat nat) (pair nat nat)))
@@ -109,7 +109,7 @@
              CAR ;
              CAR ;
              CDR ;
-             CDR ;
+             CAR ;
              CAR ;
              DIG 2 ;
              GET ;
@@ -124,9 +124,8 @@
                  (pair nat
                        (pair (pair (pair (pair (pair (map nat nat) nat)
                                                (pair (big_map (pair nat nat) (pair (pair address nat) nat)) nat))
-                                         (pair (pair nat nat)
-                                               (pair (big_map nat (pair (pair timestamp nat) address))
-                                                     (big_map nat (pair (pair (pair nat nat) (pair nat (option nat))) nat)))))
+                                         (pair (pair (big_map nat (pair (pair timestamp nat) address)) nat)
+                                               (pair nat (big_map nat (pair (pair (pair nat nat) (pair nat (option nat))) nat)))))
                                    (pair (pair (pair address
                                                      (map nat
                                                           (pair (pair (pair (pair nat string) (pair timestamp nat)) (pair (pair nat nat) (pair nat nat)))
@@ -397,23 +396,23 @@
                      CAR ;
                      CDR ;
                      CDR ;
-                     CDR ;
                      DUP 6 ;
                      CAR ;
                      CAR ;
                      CDR ;
+                     CAR ;
+                     CDR ;
+                     DUP 7 ;
+                     CAR ;
+                     CAR ;
                      CDR ;
                      CAR ;
-                     DIG 5 ;
+                     CAR ;
+                     DIG 6 ;
                      NONE (pair (pair timestamp nat) address) ;
                      SWAP ;
                      UPDATE ;
                      PAIR ;
-                     DUP 5 ;
-                     CAR ;
-                     CAR ;
-                     CDR ;
-                     CAR ;
                      PAIR ;
                      DIG 4 ;
                      CAR ;
@@ -443,7 +442,7 @@
                      CAR ;
                      CDR ;
                      CAR ;
-                     CAR ;
+                     CDR ;
                      COMPARE ;
                      LT ;
                      IF { DUP 3 ; CDR ; CDR ; FAILWITH } {} ;
@@ -459,23 +458,23 @@
                      CAR ;
                      CDR ;
                      CDR ;
-                     DUP 4 ;
+                     DUP 5 ;
+                     CAR ;
+                     CDR ;
+                     DUP 5 ;
                      CAR ;
                      CAR ;
                      CDR ;
                      CAR ;
                      CDR ;
-                     DUP 6 ;
-                     CAR ;
-                     CDR ;
-                     DUP 6 ;
-                     CAR ;
-                     CAR ;
-                     CDR ;
-                     CAR ;
-                     CAR ;
                      SUB ;
                      ABS ;
+                     DUP 5 ;
+                     CAR ;
+                     CAR ;
+                     CDR ;
+                     CAR ;
+                     CAR ;
                      PAIR ;
                      PAIR ;
                      DIG 3 ;
@@ -509,7 +508,7 @@
                      CAR ;
                      CDR ;
                      CAR ;
-                     CAR ;
+                     CDR ;
                      PUSH mutez 1 ;
                      BALANCE ;
                      EDIV ;
@@ -743,23 +742,23 @@
                      CAR ;
                      CDR ;
                      CDR ;
-                     CDR ;
                      DUP 6 ;
                      CAR ;
                      CAR ;
                      CDR ;
+                     CAR ;
+                     CDR ;
+                     DUP 7 ;
+                     CAR ;
+                     CAR ;
                      CDR ;
                      CAR ;
-                     DIG 5 ;
+                     CAR ;
+                     DIG 6 ;
                      NONE (pair (pair timestamp nat) address) ;
                      SWAP ;
                      UPDATE ;
                      PAIR ;
-                     DUP 5 ;
-                     CAR ;
-                     CAR ;
-                     CDR ;
-                     CAR ;
                      PAIR ;
                      DIG 4 ;
                      CAR ;
@@ -792,23 +791,23 @@
                      CAR ;
                      CDR ;
                      CDR ;
-                     DUP 4 ;
+                     DUP 5 ;
+                     CAR ;
+                     CDR ;
+                     DUP 5 ;
                      CAR ;
                      CAR ;
                      CDR ;
                      CAR ;
                      CDR ;
-                     DUP 6 ;
-                     CAR ;
-                     CDR ;
-                     DUP 6 ;
-                     CAR ;
-                     CAR ;
-                     CDR ;
-                     CAR ;
-                     CAR ;
                      SUB ;
                      ABS ;
+                     DUP 5 ;
+                     CAR ;
+                     CAR ;
+                     CDR ;
+                     CAR ;
+                     CAR ;
                      PAIR ;
                      PAIR ;
                      DIG 3 ;
@@ -1171,7 +1170,7 @@
                      CAR ;
                      CDR ;
                      CAR ;
-                     CAR ;
+                     CDR ;
                      DUP 3 ;
                      CDR ;
                      CDR ;
@@ -1634,7 +1633,7 @@
                      CAR ;
                      CDR ;
                      CAR ;
-                     CAR ;
+                     CDR ;
                      DUP 7 ;
                      CDR ;
                      CDR ;
@@ -1887,8 +1886,8 @@
                      CAR ;
                      CAR ;
                      CDR ;
-                     CAR ;
                      CDR ;
+                     CAR ;
                      INT ;
                      NOW ;
                      ADD ;
@@ -1904,15 +1903,20 @@
                      CAR ;
                      CDR ;
                      CDR ;
-                     CDR ;
                      DUP 6 ;
                      CAR ;
                      CAR ;
                      CDR ;
+                     CAR ;
+                     CDR ;
+                     DUP 7 ;
+                     CAR ;
+                     CAR ;
                      CDR ;
                      CAR ;
-                     DIG 4 ;
-                     DUP 7 ;
+                     CAR ;
+                     DIG 5 ;
+                     DUP 8 ;
                      CAR ;
                      CDR ;
                      CDR ;
@@ -1923,11 +1927,6 @@
                      SWAP ;
                      UPDATE ;
                      PAIR ;
-                     DUP 5 ;
-                     CAR ;
-                     CAR ;
-                     CDR ;
-                     CAR ;
                      PAIR ;
                      DIG 4 ;
                      CAR ;
@@ -1983,20 +1982,20 @@
                      CAR ;
                      CDR ;
                      CDR ;
-                     DUP 4 ;
+                     DIG 4 ;
+                     DUP 5 ;
                      CAR ;
                      CAR ;
                      CDR ;
                      CAR ;
                      CDR ;
-                     DIG 5 ;
-                     DUP 6 ;
-                     CAR ;
-                     CAR ;
-                     CDR ;
-                     CAR ;
-                     CAR ;
                      ADD ;
+                     DUP 5 ;
+                     CAR ;
+                     CAR ;
+                     CDR ;
+                     CAR ;
+                     CAR ;
                      PAIR ;
                      PAIR ;
                      DIG 3 ;

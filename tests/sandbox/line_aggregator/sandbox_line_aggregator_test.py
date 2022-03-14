@@ -39,9 +39,9 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
         return opg
 
 
-    def _approve_liquidity(self, user, entry_position_id):
+    def _approve_liquidity(self, user, entry_id):
         opg = (user.contract(self.line_aggregator.address)
-            .approveLiquidity(entry_position_id)
+            .approveLiquidity(entry_id)
             .send()
         )
 
@@ -205,7 +205,7 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
         self.bake_block()
 
         self.assertEqual(
-            self.line_aggregator.storage['nextEntryPositionId'](), PROVIDERS)
+            self.line_aggregator.storage['nextEntryId'](), PROVIDERS)
 
         for entry_id in range(PROVIDERS):
             self._approve_liquidity(self.a, entry_id)

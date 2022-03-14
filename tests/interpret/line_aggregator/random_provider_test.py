@@ -20,13 +20,13 @@ class RandomProviderTestCase(LineAggregatorBaseTestCase):
             shares = 90_000_000
             total_liquidity = 90_000_000
             self.deposit_liquidity(self.a, amount=total_liquidity)
-            self.approve_liquidity(self.a, entry_position_id=0)
+            self.approve_liquidity(self.a, entry_id=0)
 
             for step in range(STEPS):
 
                 if step == ENTER_STEP:
                     self.deposit_liquidity(self.b, amount=total_liquidity)
-                    self.approve_liquidity(self.b, entry_position_id=1)
+                    self.approve_liquidity(self.b, entry_id=1)
 
                 created_id = self.create_event()
                 self.wait(3600)

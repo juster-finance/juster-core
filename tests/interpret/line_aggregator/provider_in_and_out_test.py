@@ -9,8 +9,8 @@ class ProviderInAndOutTestCase(LineAggregatorBaseTestCase):
 
         # providing liquidity:
         provided_amount = 80_000_000
-        entry_position_id = self.deposit_liquidity(self.a, amount=provided_amount)
-        self.approve_liquidity(self.a, entry_position_id=entry_position_id)
+        entry_id = self.deposit_liquidity(self.a, amount=provided_amount)
+        self.approve_liquidity(self.a, entry_id=entry_id)
 
         # creating 9 events:
         for next_event_id in range(9):
@@ -18,8 +18,8 @@ class ProviderInAndOutTestCase(LineAggregatorBaseTestCase):
             self.wait(3600)
 
         # second provider adds some liquidity with 20% shares:
-        entry_position_id = self.deposit_liquidity(self.b, amount=20_000_000)
-        self.approve_liquidity(self.a, entry_position_id=entry_position_id)
+        entry_id = self.deposit_liquidity(self.b, amount=20_000_000)
+        self.approve_liquidity(self.a, entry_id=entry_id)
 
         # creating 10th event: 8xtz + 2xtz should be provided:
         self.create_event(event_line_id=0, next_event_id=9)
@@ -29,8 +29,8 @@ class ProviderInAndOutTestCase(LineAggregatorBaseTestCase):
             self.a, position_id=0, shares=80_000_000)
         self.assertEqual(withdrawn_amount, 0)
 
-        entry_position_id = self.deposit_liquidity(self.a, amount=provided_amount)
-        self.approve_liquidity(self.a, entry_position_id=entry_position_id)
+        entry_id = self.deposit_liquidity(self.a, amount=provided_amount)
+        self.approve_liquidity(self.a, entry_id=entry_id)
 
         # should receive the same amount of shares:
         self.assertEqual(self.storage['positions'][2]['shares'], provided_amount)

@@ -22,8 +22,8 @@ class ClaimLiquidityTestCase(LineAggregatorBaseTestCase):
         self.add_line()
         self.deposit_liquidity(sender=self.a, amount=100)
         self.deposit_liquidity(sender=self.b, amount=300)
-        self.approve_liquidity(entry_position_id=0)
-        self.approve_liquidity(entry_position_id=1)
+        self.approve_liquidity(entry_id=0)
+        self.approve_liquidity(entry_id=1)
         self.create_event(event_line_id=0)
         self.create_event(event_line_id=1)
 
@@ -47,7 +47,7 @@ class ClaimLiquidityTestCase(LineAggregatorBaseTestCase):
     def test_should_return_unused_liquidity_amount(self):
         self.add_line(max_active_events=2)
         self.deposit_liquidity(sender=self.a, amount=100)
-        self.approve_liquidity(entry_position_id=0)
+        self.approve_liquidity(entry_id=0)
         self.assertEqual(self.balances[self.a], -100)
 
         # 50 mutez used in the first event (100 / 2 max active events):
@@ -127,11 +127,11 @@ class ClaimLiquidityTestCase(LineAggregatorBaseTestCase):
     def test_should_not_increase_claimed_shares_for_not_affected_events(self):
         self.add_line(max_active_events=2)
         self.deposit_liquidity(amount=100, sender=self.a)
-        self.approve_liquidity(entry_position_id=0)
+        self.approve_liquidity(entry_id=0)
         self.create_event(event_line_id=0)
 
         self.deposit_liquidity(amount=100, sender=self.b)
-        self.approve_liquidity(entry_position_id=1)
+        self.approve_liquidity(entry_id=1)
 
         self.claim_liquidity(position_id=1, shares=100, sender=self.b)
         self.assertEqual(self.storage['events'][0]['lockedShares'], 0)

@@ -10,11 +10,11 @@ class ApproveLiquidityTestCase(LineAggregatorBaseTestCase):
 
         # providing liquidity:
         self.deposit_liquidity()
-        self.approve_liquidity(entry_position_id=0)
+        self.approve_liquidity(entry_id=0)
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.approve_liquidity(entry_position_id=0)
-        msg = 'Entry position is not found'
+            self.approve_liquidity(entry_id=0)
+        msg = 'Entry is not found'
         self.assertTrue(msg in str(cm.exception))
 
 
@@ -27,8 +27,8 @@ class ApproveLiquidityTestCase(LineAggregatorBaseTestCase):
         self.deposit_liquidity()
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.approve_liquidity(entry_position_id=12)
-        msg = 'Entry position is not found'
+            self.approve_liquidity(entry_id=12)
+        msg = 'Entry is not found'
         self.assertTrue(msg in str(cm.exception))
 
 
@@ -44,7 +44,7 @@ class ApproveLiquidityTestCase(LineAggregatorBaseTestCase):
         self.deposit_liquidity()
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.approve_liquidity(entry_position_id=0)
+            self.approve_liquidity(entry_id=0)
         msg = 'Cannot approve liquidity before acceptAfter'
         self.assertTrue(msg in str(cm.exception))
 
@@ -52,13 +52,13 @@ class ApproveLiquidityTestCase(LineAggregatorBaseTestCase):
         self.wait(3599)
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.approve_liquidity(entry_position_id=0)
+            self.approve_liquidity(entry_id=0)
         msg = 'Cannot approve liquidity before acceptAfter'
         self.assertTrue(msg in str(cm.exception))
 
         # waiting 1 second more and succeed to approve:
         self.wait(1)
-        self.approve_liquidity(entry_position_id=0)
+        self.approve_liquidity(entry_id=0)
 
 
     def test_that_anyone_can_approve_others_liquidity(self):
@@ -69,7 +69,7 @@ class ApproveLiquidityTestCase(LineAggregatorBaseTestCase):
         self.deposit_liquidity(sender=self.a)
 
         # approving with B:
-        self.approve_liquidity(sender=self.b, entry_position_id=0)
+        self.approve_liquidity(sender=self.b, entry_id=0)
 
     def test_should_fail_if_approved_liquidity_amount_more_than_entry_liquidity(self):
         # NOTE: this scenario should not happen under normal conditions
@@ -86,7 +86,7 @@ class ApproveLiquidityTestCase(LineAggregatorBaseTestCase):
 
         # approving:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.approve_liquidity(entry_position_id=0)
+            self.approve_liquidity(entry_id=0)
         msg = 'Wrong state'
         self.assertTrue(msg in str(cm.exception))
 
