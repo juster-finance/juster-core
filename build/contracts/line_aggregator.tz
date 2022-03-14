@@ -1354,13 +1354,13 @@
                      PAIR } } }
            { DIG 5 ;
              DIG 6 ;
-             DIG 8 ;
-             DROP 3 ;
+             DROP 2 ;
              IF_LEFT
                { DIG 2 ;
                  DIG 3 ;
                  DIG 4 ;
-                 DROP 3 ;
+                 DIG 6 ;
+                 DROP 4 ;
                  IF_LEFT
                    { UNIT ;
                      DIG 3 ;
@@ -2005,7 +2005,8 @@
                { IF_LEFT
                    { DIG 3 ;
                      DIG 5 ;
-                     DROP 2 ;
+                     DIG 6 ;
+                     DROP 3 ;
                      PUSH mutez 1 ;
                      AMOUNT ;
                      EDIV ;
@@ -2389,6 +2390,14 @@
                             GT ;
                             IF { DIG 2 ; SWAP ; DIG 4 ; CDR ; CAR ; PAIR ; DUP 5 ; SWAP ; EXEC ; CONS }
                                { DIG 4 ; DROP 2 ; SWAP } ;
+                            DUP 3 ;
+                            CDR ;
+                            CDR ;
+                            CDR ;
+                            DUP 3 ;
+                            COMPARE ;
+                            GT ;
+                            IF { DUP 5 ; CDR ; CDR ; FAILWITH } {} ;
                             SWAP ;
                             DUP 3 ;
                             CDR ;
@@ -2411,6 +2420,7 @@
                             SWAP ;
                             PAIR } ;
                      SWAP ;
-                     DROP } } } } ;
+                     DIG 2 ;
+                     DROP 2 } } } } ;
   view "getBalance" unit mutez { DROP ; BALANCE } }
 
