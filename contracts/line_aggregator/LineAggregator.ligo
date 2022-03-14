@@ -490,8 +490,13 @@ block {
         then operations := prepareOperation(participant, payout) # operations
         else skip;
 
-        (* TODO: assert that store.withdrawableLiquidity <= payout ? *)
-        (* TODO: need to find this test cases if it is possible or find some proof that it is not *)
+        (* withdrawableLiquidity forms from Juster payments as a percentage for
+            all locked claims so it should not be less than withdrawSum, so
+            next case should not be possible: *)
+        if withdrawSum > store.withdrawableLiquidity
+        then failwith(Errors.wrongState)
+        else skip;
+
         store.withdrawableLiquidity := abs(store.withdrawableLiquidity - withdrawSum);
     }
 
