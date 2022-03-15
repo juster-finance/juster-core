@@ -1,4 +1,4 @@
-#include "../partials/types.ligo"
+#include "../partial/juster/juster_types.ligo"
 
 type oracleAction is
 | Get of oracleParam

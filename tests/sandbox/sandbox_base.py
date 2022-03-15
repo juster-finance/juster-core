@@ -17,7 +17,7 @@ from tests.test_data import (
 
 
 JUSTER_FN = '../../build/contracts/juster.tz'
-LINE_AGGREGATOR_FN = '../../build/contracts/line_aggregator.tz'
+POOL_FN = '../../build/contracts/pool.tz'
 ORACLE_MOCK_FN = '../../build/mocks/oracle_mock.tz'
 REWARD_PROGRAM_FN = '../../build/contracts/reward_program.tz'
 
@@ -88,7 +88,7 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
     def _deploy_line_aggregator(self, client, juster_address):
         """ Deploys Line Aggregator """
 
-        filename = join(dirname(__file__), LINE_AGGREGATOR_FN)
+        filename = join(dirname(__file__), POOL_FN)
         contract = ContractInterface.from_file(filename)
         contract = contract.using(shell=client.shell, key=client.key)
 

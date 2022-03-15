@@ -1,5 +1,5 @@
 (* Sets all new event config parameters to default *)
-#include "../../partials/types.ligo"
+#include "../../partial/juster/juster_types.ligo"
 
 const oneHour : nat = 60n*60n;
 const oneDay : nat = oneHour*24n;

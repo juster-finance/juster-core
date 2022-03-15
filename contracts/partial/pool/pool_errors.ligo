@@ -1,7 +1,6 @@
 (* TODO: move all errors here *)
-module Errors is {
-    const disallowAmount : string = "Including tez using this entrypoint call is not allowed";
-    const notManager : string = "Not a contract manager";
+(* TODO: rename to AggregatorErrors *)
+module PoolErrors is {
     const wrongState : string = "Wrong state";
     const notEntryOwner : string = "Not entry position owner";
     const entryNotFound : string = "Entry is not found";

@@ -1,14 +1,14 @@
+(* TODO: refactor to harbingerGet: *)
 type callbackReturnedValue is [@layout:comb] record [
     currencyPair : string;
     lastUpdate : timestamp;
     rate : nat
-]
+];
 
+(* TODO: rename to getEntry *)
 type callbackEntrypoint is contract(callbackReturnedValue)
 
 type oracleParam is string * contract(callbackReturnedValue)
-
-type eventIdType is option(nat)
 
 type betType is
 | AboveEq of unit
@@ -20,61 +20,41 @@ type betParams is record [
     minimalWinAmount : tez;
 ]
 
-type ledgerKey is (address*nat)
-
-(* ledger key is address and event ID *)
-type ledgerType is big_map(ledgerKey, tez)
-
-(* another ledger, used to calculate shares: *)
-type ledgerNatType is big_map(ledgerKey, nat)
-
-(* another ledger, used to track withdrawals *)
-type ledgerUnitType is big_map(ledgerKey, unit)
-
-
-(* params that used in new event creation that can be configured by
-    contract manager (changing this params would not affect existing events
-    and would only applied to future events): *)
-type configType is record [
-
-    (* Fees, that should be provided during contract origination *)
-    measureStartFee : tez;
-    expirationFee : tez;
-
-    (* Fees, that taken from participants if they doesn't withdraw in time *)
-    rewardCallFee : tez;
-
-    (* oracle in florencenet: KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn *)
-    (* oracle in edo2net:     KT1RCNpUEDjZAYhabjzgz1ZfxQijCDVMEaTZ *)
-    oracleAddress : address;
-
-    minMeasurePeriod : nat;
-    maxMeasurePeriod : nat;
-
-    (* min/max allowed window that limits betsCloseTime *)
-    minPeriodToBetsClose : nat;
-    maxPeriodToBetsClose : nat;
-
-    (* min/max allowed window that limits liquidityPercent *)
-    minLiquidityPercent : nat;
-    maxLiquidityPercent : nat;
-
-    (* Time window when startMeasurement / close should be called
-        (or it would considered as Force Majeure) *)
-    maxAllowedMeasureLag : nat;
-
-    (* Period following the close in seconds after which rewardFee is activated *)
-    rewardFeeSplitAfter : nat;
-
-    (* Amount of profits that cutted from provider and that
-        go to the community fond: *)
-    providerProfitFee : nat;
-
-    (* Flag that used to pause event creation: *)
-    isEventCreationPaused : bool;
+type newEventParams is record [
+    currencyPair : string;
+    targetDynamics : nat;
+    betsCloseTime : timestamp;
+    measurePeriod : nat;
+    liquidityPercent : nat;
 ]
 
-type updateConfigParam is configType -> configType
+type provideLiquidityParams is record [
+    eventId : nat;
+
+    (* Expected distribution / ratio of the event *)
+    expectedRatioAboveEq : nat;
+    expectedRatioBelow : nat;
+
+    (* Max Slippage value in ratioPrecision. if 0n - ratio should be equal to expected,
+        if equals K*ratioPrecision, ratio can diff not more than in (K-1) times *)
+    maxSlippage : nat;
+]
+
+type withdrawParams is record [
+    eventId : nat;
+    participantAddress : address;
+]
+
+type positionType is record [
+    providedLiquidityAboveEq : tez;
+    providedLiquidityBelow : tez;
+    betsAboveEq : tez;
+    betsBelow : tez;
+    liquidityShares : nat;
+    depositedLiquidity : tez;
+    depositedBets : tez;
+    isWithdrawn : bool;
+];
 
 type eventType is record [
     currencyPair : string;
@@ -129,34 +109,62 @@ type eventType is record [
     creator : address;
 ]
 
+(* params that used in new event creation that can be configured by
+    contract manager (changing this params would not affect existing events
+    and would only applied to future events): *)
+type configType is record [
 
-type newEventParams is record [
-    currencyPair : string;
-    targetDynamics : nat;
-    betsCloseTime : timestamp;
-    measurePeriod : nat;
-    liquidityPercent : nat;
+    (* Fees, that should be provided during contract origination *)
+    measureStartFee : tez;
+    expirationFee : tez;
+
+    (* Fees, that taken from participants if they doesn't withdraw in time *)
+    rewardCallFee : tez;
+
+    (* oracle in florencenet: KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn *)
+    (* oracle in edo2net:     KT1RCNpUEDjZAYhabjzgz1ZfxQijCDVMEaTZ *)
+    oracleAddress : address;
+
+    minMeasurePeriod : nat;
+    maxMeasurePeriod : nat;
+
+    (* min/max allowed window that limits betsCloseTime *)
+    minPeriodToBetsClose : nat;
+    maxPeriodToBetsClose : nat;
+
+    (* min/max allowed window that limits liquidityPercent *)
+    minLiquidityPercent : nat;
+    maxLiquidityPercent : nat;
+
+    (* Time window when startMeasurement / close should be called
+        (or it would considered as Force Majeure) *)
+    maxAllowedMeasureLag : nat;
+
+    (* Period following the close in seconds after which rewardFee is activated *)
+    rewardFeeSplitAfter : nat;
+
+    (* Amount of profits that cutted from provider and that
+        go to the community fond: *)
+    providerProfitFee : nat;
+
+    (* Flag that used to pause event creation: *)
+    isEventCreationPaused : bool;
 ]
 
+type updateConfigParam is configType -> configType
 
-type provideLiquidityParams is record [
-    eventId : nat;
+type eventIdType is option(nat)
 
-    (* Expected distribution / ratio of the event *)
-    expectedRatioAboveEq : nat;
-    expectedRatioBelow : nat;
+type ledgerKey is (address*nat)
 
-    (* Max Slippage value in ratioPrecision. if 0n - ratio should be equal to expected,
-        if equals K*ratioPrecision, ratio can diff not more than in (K-1) times *)
-    maxSlippage : nat;
-]
+(* ledger key is address and event ID *)
+type ledgerType is big_map(ledgerKey, tez)
 
+(* another ledger, used to calculate shares: *)
+type ledgerNatType is big_map(ledgerKey, nat)
 
-type withdrawParams is record [
-    eventId : nat;
-    participantAddress : address;
-]
-
+(* another ledger, used to track withdrawals *)
+type ledgerUnitType is big_map(ledgerKey, unit)
 
 type action is
 | NewEvent of newEventParams
@@ -222,15 +230,4 @@ type storage is record [
 
     metadata : big_map (string, bytes);
 ]
-
-type positionType is record [
-    providedLiquidityAboveEq : tez;
-    providedLiquidityBelow : tez;
-    betsAboveEq : tez;
-    betsBelow : tez;
-    liquidityShares : nat;
-    depositedLiquidity : tez;
-    depositedBets : tez;
-    isWithdrawn : bool;
-];
 

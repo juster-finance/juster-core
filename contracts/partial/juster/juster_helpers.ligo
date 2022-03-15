@@ -1,7 +1,3 @@
-(* Here collected various functions that are used by smart contract
-    in different entrypoints, so it is not clear, where they should be placed
-*)
-
 function tezToNat(const t : tez) : nat is t / 1mutez;
 
 
@@ -131,4 +127,5 @@ function isParticipant(
     Big_map.mem(key, store.betsAboveEq)
     or Big_map.mem(key, store.betsBelow)
     or Big_map.mem(key, store.liquidityShares)
+
 

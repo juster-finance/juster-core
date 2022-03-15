@@ -41,47 +41,47 @@
                          nat
                          (pair (pair (nat %addedCounter) (address %provider)) (nat %shares))))
                 (pair (nat %totalShares) (nat %withdrawableLiquidity)))) ;
-  code { PUSH string "Wrong state" ;
-         PUSH string "Position is not found" ;
-         PUSH string "Not position owner" ;
-         PAIR ;
-         PAIR ;
-         PUSH string "Not a contract manager" ;
-         PUSH string "Not entry position owner" ;
-         PAIR ;
-         PUSH string "Not enough liquidity to run event" ;
-         PUSH string "Need to have at least one line" ;
-         PAIR ;
-         PAIR ;
-         PUSH string "Event is not found" ;
-         PUSH string "Entry is not found" ;
-         PAIR ;
-         PUSH string "Cannot approve liquidity before acceptAfter" ;
+  code { PUSH string "Not a contract manager" ;
          PUSH string "Including tez using this entrypoint call is not allowed" ;
-         PAIR ;
-         PAIR ;
-         PAIR ;
          PAIR ;
          DUP ;
          LAMBDA
-           (pair (pair (pair (pair (pair string string) (pair string string))
-                             (pair (pair string string) (pair string string)))
-                       (pair (pair string string) string))
-                 unit)
+           (pair (pair string string) unit)
            unit
            { CAR ;
              PUSH mutez 0 ;
              AMOUNT ;
              COMPARE ;
              GT ;
-             IF { CAR ; CAR ; CAR ; CAR ; FAILWITH } { DROP ; UNIT } } ;
+             IF { CAR ; FAILWITH } { DROP ; UNIT } } ;
          SWAP ;
          APPLY ;
          LAMBDA
            (pair address string)
            unit
            { UNPAIR ; SENDER ; COMPARE ; NEQ ; IF { FAILWITH } { DROP ; UNIT } } ;
-         DUP 3 ;
+         PUSH string "Wrong state" ;
+         PUSH string "Position is not found" ;
+         PUSH string "Not position owner" ;
+         PAIR ;
+         PAIR ;
+         PUSH string "Not entry position owner" ;
+         PUSH string "Not enough liquidity to run event" ;
+         PAIR ;
+         PUSH string "Max active events limit reached" ;
+         PUSH string "Need to have at least one line" ;
+         PAIR ;
+         PAIR ;
+         PUSH string "Line is not found" ;
+         PUSH string "Event is not found" ;
+         PAIR ;
+         PUSH string "Entry is not found" ;
+         PUSH string "Cannot approve liquidity before acceptAfter" ;
+         PAIR ;
+         PAIR ;
+         PAIR ;
+         PAIR ;
+         DUP ;
          LAMBDA
            (pair (pair (pair (pair (pair string string) (pair string string))
                              (pair (pair string string) (pair string string)))
@@ -104,8 +104,8 @@
              DIG 2 ;
              CAR ;
              CAR ;
-             CDR ;
              CAR ;
+             CDR ;
              DIG 2 ;
              CAR ;
              CAR ;
@@ -117,7 +117,9 @@
              IF_NONE { FAILWITH } { SWAP ; DROP } } ;
          SWAP ;
          APPLY ;
-         DUP 4 ;
+         SWAP ;
+         DUP ;
+         DUG 2 ;
          LAMBDA
            (pair (pair (pair (pair (pair string string) (pair string string))
                              (pair (pair string string) (pair string string)))
@@ -141,7 +143,7 @@
              CAR ;
              CAR ;
              CDR ;
-             CDR ;
+             CAR ;
              DIG 2 ;
              CAR ;
              CAR ;
@@ -210,7 +212,7 @@
              SWAP ;
              UNIT ;
              TRANSFER_TOKENS } ;
-         DIG 8 ;
+         DIG 9 ;
          UNPAIR ;
          IF_LEFT
            { IF_LEFT
@@ -221,16 +223,14 @@
                  IF_LEFT
                    { DIG 2 ;
                      DIG 3 ;
-                     DROP 2 ;
+                     DIG 4 ;
+                     DROP 3 ;
                      UNIT ;
                      DIG 4 ;
                      SWAP ;
                      EXEC ;
                      DROP ;
                      DIG 3 ;
-                     CAR ;
-                     CDR ;
-                     CDR ;
                      CDR ;
                      DUP 3 ;
                      CAR ;
@@ -408,10 +408,11 @@
                      PAIR ;
                      NIL operation ;
                      PAIR }
-                   { DIG 4 ;
-                     DROP ;
+                   { DIG 5 ;
+                     DIG 7 ;
+                     DROP 2 ;
                      UNIT ;
-                     DIG 5 ;
+                     DIG 6 ;
                      SWAP ;
                      EXEC ;
                      DROP ;
@@ -468,7 +469,7 @@
                      NOW ;
                      COMPARE ;
                      LT ;
-                     IF { DUP 4 ; CAR ; CAR ; CAR ; CDR ; FAILWITH } {} ;
+                     IF { DUP 4 ; CAR ; CAR ; CAR ; CAR ; FAILWITH } {} ;
                      SWAP ;
                      DUP ;
                      DUG 2 ;
@@ -737,13 +738,15 @@
                      PAIR ;
                      NIL operation ;
                      PAIR } }
-               { IF_LEFT
+               { DIG 10 ;
+                 DROP ;
+                 IF_LEFT
                    { DIG 3 ;
                      DIG 4 ;
                      DIG 5 ;
                      DROP 3 ;
                      UNIT ;
-                     DIG 6 ;
+                     DIG 7 ;
                      SWAP ;
                      EXEC ;
                      DROP ;
@@ -792,11 +795,11 @@
                      PAIR ;
                      PAIR ;
                      PAIR ;
-                     DIG 4 ;
+                     DIG 3 ;
                      CAR ;
                      CDR ;
                      CDR ;
-                     CAR ;
+                     CDR ;
                      DUP 3 ;
                      CDR ;
                      PAIR ;
@@ -865,7 +868,7 @@
                    { DIG 6 ;
                      DROP ;
                      UNIT ;
-                     DIG 8 ;
+                     DIG 9 ;
                      SWAP ;
                      EXEC ;
                      DROP ;
@@ -876,7 +879,7 @@
                      DUP ;
                      DUG 2 ;
                      CAR ;
-                     DUP 10 ;
+                     DUP 9 ;
                      CDR ;
                      CAR ;
                      CDR ;
@@ -887,7 +890,7 @@
                      DIG 2 ;
                      GET ;
                      IF_NONE { FAILWITH } { SWAP ; DROP } ;
-                     DUP 9 ;
+                     DUP 8 ;
                      CDR ;
                      CAR ;
                      CAR ;
@@ -897,7 +900,7 @@
                      CAR ;
                      CDR ;
                      PAIR ;
-                     DIG 8 ;
+                     DIG 9 ;
                      SWAP ;
                      EXEC ;
                      DROP ;
@@ -1359,8 +1362,9 @@
                      PAIR } } }
            { DIG 4 ;
              DIG 6 ;
-             DIG 7 ;
-             DROP 3 ;
+             DIG 8 ;
+             DIG 10 ;
+             DROP 4 ;
              IF_LEFT
                { DIG 2 ;
                  DIG 3 ;
@@ -1368,44 +1372,43 @@
                  DROP 3 ;
                  IF_LEFT
                    { UNIT ;
-                     DIG 3 ;
+                     DIG 4 ;
                      SWAP ;
                      EXEC ;
                      DROP ;
-                     SWAP ;
-                     DUP ;
-                     DUG 2 ;
+                     PUSH int 0 ;
+                     DUP 3 ;
                      CAR ;
                      CAR ;
                      CAR ;
                      CAR ;
                      CAR ;
                      SIZE ;
-                     DUP 3 ;
+                     DUP 4 ;
                      CAR ;
                      CDR ;
                      CAR ;
                      CDR ;
                      CDR ;
                      SUB ;
-                     PUSH int 0 ;
-                     SWAP ;
                      COMPARE ;
                      LE ;
-                     IF { PUSH string "Max active events limit reached" ; FAILWITH } {} ;
+                     IF { DUP 3 ; CAR ; CDR ; CAR ; CDR ; FAILWITH } {} ;
                      SWAP ;
                      DUP ;
                      DUG 2 ;
+                     SWAP ;
+                     DUP ;
+                     DUG 2 ;
+                     SWAP ;
                      CAR ;
                      CDR ;
                      CAR ;
                      CAR ;
                      CDR ;
                      SWAP ;
-                     DUP ;
-                     DUG 2 ;
                      GET ;
-                     IF_NONE { PUSH string "Line is not found" ; FAILWITH } {} ;
+                     IF_NONE { DUP 3 ; CAR ; CAR ; CDR ; CDR ; FAILWITH } {} ;
                      PUSH nat 0 ;
                      DUP 4 ;
                      CAR ;
@@ -1602,11 +1605,18 @@
                      IF_NONE { PUSH string "Juster.provideLiquidity is not found" ; FAILWITH } {} ;
                      DUP 4 ;
                      CAR ;
-                     CAR ;
+                     CDR ;
+                     CDR ;
                      CDR ;
                      CAR ;
-                     CDR ;
+                     INT ;
                      DUP 5 ;
+                     CAR ;
+                     CAR ;
+                     CDR ;
+                     CAR ;
+                     CDR ;
+                     DUP 6 ;
                      CDR ;
                      CDR ;
                      CDR ;
@@ -1617,17 +1627,9 @@
                      CAR ;
                      SUB ;
                      SUB ;
-                     DUP 5 ;
-                     CAR ;
-                     CDR ;
-                     CDR ;
-                     CDR ;
-                     CAR ;
-                     INT ;
-                     SWAP ;
                      COMPARE ;
                      LT ;
-                     IF { DUP 7 ; CAR ; CDR ; CAR ; CDR ; FAILWITH } {} ;
+                     IF { DUP 7 ; CAR ; CDR ; CDR ; CAR ; FAILWITH } {} ;
                      PUSH mutez 1 ;
                      DUP 5 ;
                      CAR ;
@@ -1651,7 +1653,7 @@
                      DUG 2 ;
                      COMPARE ;
                      LE ;
-                     IF { DIG 7 ; CAR ; CDR ; CAR ; CDR ; FAILWITH } { DIG 7 ; DROP } ;
+                     IF { DIG 7 ; CAR ; CDR ; CDR ; CAR ; FAILWITH } { DIG 7 ; DROP } ;
                      PUSH mutez 1 ;
                      SWAP ;
                      ABS ;
@@ -2253,7 +2255,7 @@
                    { DIG 3 ;
                      DROP ;
                      UNIT ;
-                     DIG 5 ;
+                     DIG 6 ;
                      SWAP ;
                      EXEC ;
                      DROP ;

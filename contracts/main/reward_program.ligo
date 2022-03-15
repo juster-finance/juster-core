@@ -7,7 +7,7 @@
     executed when program executed with True (user satisfies conditions) *)
 
 
-#include "../partials/types.ligo"
+#include "../partial/juster/juster_types.ligo"
 
 type rewardProgramStorage is record [
     juster : address;

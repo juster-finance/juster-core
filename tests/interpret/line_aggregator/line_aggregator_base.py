@@ -9,10 +9,11 @@ from tests.test_data import (
     generate_line_params
 )
 
-LINE_AGGREGATOR_FN = '../../../build/contracts/line_aggregator.tz'
+POOL_FN = '../../../build/contracts/pool.tz'
 RUN_TIME = int(time.time())
 
 
+# TODO: rename LineAggregatorBaseTestCase -> PoolBaseTestCase
 class LineAggregatorBaseTestCase(TestCase):
     """ Methods used to check different state transformations for Line Aggregator
         Each check method runs one transaction and then compare storage
@@ -22,7 +23,7 @@ class LineAggregatorBaseTestCase(TestCase):
 
     def setUp(self):
         self.aggregator = ContractInterface.from_file(
-            join(dirname(__file__), LINE_AGGREGATOR_FN))
+            join(dirname(__file__), POOL_FN))
 
         # four participants and their pk hashes:
         self.a = 'tz1iQE8ijR5xVPffBUPFubwB9XQJuyD9qsoJ'

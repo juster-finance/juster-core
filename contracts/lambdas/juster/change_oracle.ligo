@@ -1,4 +1,4 @@
-#include "../../partials/types.ligo"
+#include "../../partial/juster/juster_types.ligo"
 
 (* Changing oracle to florencenet: *)
 function lambda (var config : configType) : configType is
