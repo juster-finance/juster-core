@@ -48,13 +48,6 @@ case Big_map.find_opt(eventId, s.events) of
 end;
 
 
-function getReceiver(const a : address) : contract(unit) is
-    case (Tezos.get_contract_opt(a): option(contract(unit))) of
-    | Some (con) -> con
-    | None -> (failwith ("Not a contract") : (contract(unit)))
-    end;
-
-
 (* TODO: make one func using polymorphism *)
 (* Returns current amount of tez in ledger, if key is not in ledger return 0tez *)
 function getLedgerAmount(const k : ledgerKey; const l : ledgerType) : tez is
@@ -96,12 +89,6 @@ block {
         0tez,
         callToOracle);
 } with list[callback]
-
-
-function prepareOperation(
-    const addressTo : address;
-    const payout : tez
-) : operation is Tezos.transaction(unit, payout, getReceiver(addressTo));
 
 
 (* Creates operation list with one operation if payout > 0tez, else returns

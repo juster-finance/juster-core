@@ -102,6 +102,11 @@
          SWAP ;
          APPLY ;
          LAMBDA
+           address
+           (contract unit)
+           { CONTRACT unit ;
+             IF_NONE { PUSH string "Not a contract" ; FAILWITH } {} } ;
+         LAMBDA
            mutez
            nat
            { PUSH mutez 1 ;
@@ -173,11 +178,6 @@
              GET ;
              IF_NONE { PUSH string "Event is not found" ; FAILWITH } {} } ;
          LAMBDA
-           address
-           (contract unit)
-           { CONTRACT unit ;
-             IF_NONE { PUSH string "Not a contract" ; FAILWITH } {} } ;
-         LAMBDA
            (pair (pair address nat) (big_map (pair address nat) mutez))
            mutez
            { UNPAIR ; GET ; IF_NONE { PUSH mutez 0 } {} } ;
@@ -185,7 +185,7 @@
            (pair (pair address nat) (big_map (pair address nat) nat))
            nat
            { UNPAIR ; GET ; IF_NONE { PUSH nat 0 } {} } ;
-         DUP 4 ;
+         DUP 3 ;
          LAMBDA
            (pair (lambda
                     (pair (pair (pair (pair (pair (pair mutez (big_map (pair address nat) mutez))
@@ -268,7 +268,7 @@
              CONS } ;
          SWAP ;
          APPLY ;
-         DUP 4 ;
+         DUP 8 ;
          LAMBDA
            (pair (lambda address (contract unit)) (pair address mutez))
            (list operation)
@@ -284,7 +284,7 @@
                 { SWAP ; DIG 2 ; DIG 3 ; DROP 3 } } ;
          SWAP ;
          APPLY ;
-         DUP 5 ;
+         DUP 9 ;
          LAMBDA
            (pair (lambda address (contract unit)) (pair (pair mutez address) nat))
            operation
@@ -314,8 +314,8 @@
          IF_LEFT
            { DIG 2 ;
              DIG 5 ;
-             DIG 7 ;
-             DIG 9 ;
+             DIG 8 ;
+             DIG 11 ;
              DROP 4 ;
              IF_LEFT
                { DIG 3 ;
@@ -1514,7 +1514,7 @@
            { IF_LEFT
                { DIG 2 ;
                  DIG 3 ;
-                 DIG 7 ;
+                 DIG 11 ;
                  DROP 3 ;
                  IF_LEFT
                    { DIG 2 ;
@@ -2405,18 +2405,18 @@
                          SWAP ;
                          PAIR } } }
                { DIG 4 ;
-                 DIG 9 ;
+                 DIG 8 ;
                  DROP 2 ;
                  IF_LEFT
                    { DIG 2 ;
                      DIG 4 ;
                      DIG 5 ;
+                     DIG 7 ;
                      DIG 8 ;
-                     DIG 9 ;
                      DIG 10 ;
                      DROP 6 ;
                      IF_LEFT
-                       { DIG 3 ;
+                       { DIG 4 ;
                          DROP ;
                          UNIT ;
                          DIG 5 ;
@@ -2673,7 +2673,7 @@
                          DUP ;
                          DUP 3 ;
                          PAIR ;
-                         DIG 4 ;
+                         DIG 3 ;
                          SWAP ;
                          EXEC ;
                          DUP ;
@@ -3016,7 +3016,7 @@
                          CAR ;
                          DUP 3 ;
                          PAIR ;
-                         DIG 7 ;
+                         DIG 6 ;
                          SWAP ;
                          EXEC ;
                          SWAP ;
@@ -3111,7 +3111,7 @@
                               DUP 11 ;
                               SWAP ;
                               EXEC ;
-                              DUP 14 ;
+                              DUP 13 ;
                               SWAP ;
                               EXEC ;
                               SWAP ;
@@ -3127,7 +3127,7 @@
                               DUP 12 ;
                               SWAP ;
                               EXEC ;
-                              DUP 15 ;
+                              DUP 14 ;
                               SWAP ;
                               EXEC ;
                               DUP 4 ;
@@ -3158,7 +3158,7 @@
                               DUP 14 ;
                               SWAP ;
                               EXEC ;
-                              DUP 17 ;
+                              DUP 16 ;
                               SWAP ;
                               EXEC ;
                               DUP 6 ;
@@ -3171,7 +3171,7 @@
                               DUP 15 ;
                               SWAP ;
                               EXEC ;
-                              DUP 18 ;
+                              DUP 17 ;
                               SWAP ;
                               EXEC ;
                               DUP 7 ;
@@ -3185,7 +3185,7 @@
                               DIG 14 ;
                               SWAP ;
                               EXEC ;
-                              DUP 17 ;
+                              DUP 16 ;
                               SWAP ;
                               EXEC ;
                               DUP 9 ;
@@ -3193,7 +3193,7 @@
                               CAR ;
                               CAR ;
                               CDR ;
-                              DUP 18 ;
+                              DUP 17 ;
                               SWAP ;
                               EXEC ;
                               DUP 10 ;
@@ -3201,7 +3201,7 @@
                               CAR ;
                               CDR ;
                               CAR ;
-                              DIG 18 ;
+                              DIG 17 ;
                               SWAP ;
                               EXEC ;
                               DIG 10 ;
@@ -3301,7 +3301,7 @@
                               DUP 3 ;
                               CAR ;
                               CDR ;
-                              DUP 11 ;
+                              DUP 10 ;
                               SWAP ;
                               EXEC ;
                               DUP 8 ;
@@ -3327,7 +3327,7 @@
                               CAR ;
                               CAR ;
                               ADD ;
-                              DIG 7 ;
+                              DIG 6 ;
                               SWAP ;
                               EXEC ;
                               DIG 3 ;
