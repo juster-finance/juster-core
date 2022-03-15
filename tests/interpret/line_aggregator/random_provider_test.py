@@ -42,3 +42,77 @@ class RandomProviderTestCase(LineAggregatorBaseTestCase):
             provider_profit_loss = (EXIT_STEP - ENTER_STEP + 1) * PROFIT_LOSS / 2
             self.assertEqual(self.balances[self.b], provider_profit_loss)
 
+    def test_all_providers_should_have_zero_balance_at_the_end(self):
+        STEPS = 20
+        AMOUNT = 100
+        EVENTS_COUNT = 5
+        EVENT_DURATION = 3600
+        STEP_DURATION = 600
+
+        enter_steps = {
+            self.a: 0,
+            self.b: randint(0, STEPS-1),
+            self.c: randint(0, STEPS-1),
+            self.d: randint(0, STEPS-1)
+        }
+
+        exit_steps = {
+            self.a: STEPS-1,
+            self.b: randint(enter_steps[self.b], STEPS-1),
+            self.c: randint(enter_steps[self.c], STEPS-1),
+            self.d: randint(enter_steps[self.d], STEPS-1),
+        }
+
+        event_create_steps = {
+            line_id: randint(0, STEPS-7) for line_id in range(EVENTS_COUNT)
+        }
+
+        [self.add_line(max_active_events=1) for _ in event_create_steps]
+
+        close_event_times = {}
+        position_ids = {}
+
+        for step in range(STEPS):
+            for user, enter_step in enter_steps.items():
+                if step == enter_step:
+                    entry_id = self.deposit_liquidity(user, amount=AMOUNT)
+                    pos_id = self.approve_liquidity(user, entry_id=entry_id)
+                    position_ids[user] = pos_id
+
+            for line_id, event_create_step in event_create_steps.items():
+                if step == event_create_step:
+                    created_id = self.create_event(event_line_id=line_id)
+                    close_event_times[created_id] = self.current_time + EVENT_DURATION
+
+            self.wait(STEP_DURATION)
+
+            close_events = [
+                event_id for event_id, close_time in close_event_times.items()
+                if close_time <= self.current_time
+            ]
+
+            for event_id in close_events:
+                provided_amount = self.storage['events'][event_id]['provided']
+                self.pay_reward(
+                    event_id=event_id,
+                    amount=provided_amount
+                )
+                close_event_times.pop(event_id)
+
+            for user, exit_step in exit_steps.items():
+                if step == exit_step:
+                    pos_id = position_ids[user]
+                    shares = self.storage['positions'][pos_id]['shares']
+                    self.claim_liquidity(user, position_id=pos_id, shares=shares)
+
+        positions = [
+            dict(positionId=claim[1], eventId=claim[0])
+            for claim in self.storage['claims']
+        ]
+
+        self.withdraw_liquidity(positions=positions)
+
+        self.assertTrue(
+            all(balance == 0 for balance in self.balances.values())
+        )
+
