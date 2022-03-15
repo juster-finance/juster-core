@@ -11,4 +11,6 @@ module Errors is {
     const noActiveEvents : string = "Need to have at least one line";
     const notPositionOwner : string = "Not position owner";
     const noLiquidity : string = "Not enough liquidity to run event";
+    const noFreeEventSlots : string = "Max active events limit reached";
+    const lineNotFound : string = "Line is not found";
 }

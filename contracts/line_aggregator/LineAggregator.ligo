@@ -194,6 +194,12 @@ function getPosition(const positionId : nat; const store : storage) : positionTy
 function getEvent(const eventId : nat; const store : storage) : eventType is
     getOrFail(eventId, store.events, Errors.eventNotFound)
 
+function getLine(const lineId : nat; const store : storage) : lineType is
+    case Map.find_opt(lineId, store.lines) of
+    | Some(line) -> line
+    | None -> (failwith(Errors.lineNotFound) : lineType)
+    end;
+
 function checkHasActiveEvents(const store : storage) : unit is
     if store.maxActiveEvents = 0n
     then failwith(Errors.noActiveEvents)
@@ -210,6 +216,11 @@ function absPositive(const value : int) is if value >= 0 then abs(value) else 0n
 
 function calcFreeEventSlots(const store : storage) is
     store.maxActiveEvents - Map.size(store.activeEvents)
+
+function checkHaveFreeEventSlots(const store : storage) is
+    if calcFreeEventSlots(store) <= 0
+    then failwith(Errors.noFreeEventSlots)
+    else unit;
 
 
 function addLine(
@@ -587,16 +598,9 @@ function createEvent(
 block {
 
     checkNoAmountIncluded(unit);
+    checkHaveFreeEventSlots(store);
 
-    (* TODO: checkHaveFreeEventSlots *)
-    const freeEventSlots = calcFreeEventSlots(store);
-    if freeEventSlots <= 0 then failwith("Max active events limit reached")
-    else skip;
-
-    var line := case Map.find_opt(lineId, store.lines) of
-    | Some(line) -> line
-    | None -> (failwith("Line is not found") : lineType)
-    end;
+    var line := getLine(lineId, store);
 
     (* checking how much events already runned in the line *)
     function countEvents (const count : nat; const ids : nat*nat) : nat is
