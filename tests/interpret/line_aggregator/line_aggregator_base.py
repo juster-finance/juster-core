@@ -294,7 +294,8 @@ class LineAggregatorBaseTestCase(TestCase):
 
     def withdraw_liquidity(self, sender=None, positions=None, amount=0):
         sender = sender or self.manager
-        positions = positions or [dict(positionId=0, eventId=0)]
+        default_positions = [dict(positionId=0, eventId=0)]
+        positions = default_positions if positions is None else positions
 
         call = self.aggregator.withdrawLiquidity(positions)
         result = call.with_amount(amount).interpret(
