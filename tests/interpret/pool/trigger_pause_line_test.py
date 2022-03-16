@@ -38,3 +38,21 @@ class TriggerPauseTestCase(PoolBaseTestCase):
         self.assertTrue(self.storage['lines'][line_id]['isPaused'])
         self.assertTrue(liquidity_after > liquidity_before)
 
+    def test_double_trigger_pause_should_not_change_state(self):
+        self.add_line(sender=self.manager, max_active_events=10)
+        line_id = self.add_line(sender=self.manager, max_active_events=2)
+        entry_id = self.deposit_liquidity(amount=1200)
+        self.approve_liquidity(entry_id = entry_id)
+
+        liquidity_before = self.storage['nextEventLiquidity']
+        events_before = self.storage['maxActiveEvents']
+
+        self.trigger_pause_line(line_id=line_id, sender=self.manager)
+        self.trigger_pause_line(line_id=line_id, sender=self.manager)
+
+        liquidity_after = self.storage['nextEventLiquidity']
+        events_after = self.storage['maxActiveEvents']
+
+        self.assertEqual(liquidity_before, liquidity_after)
+        self.assertEqual(events_before, events_after)
+

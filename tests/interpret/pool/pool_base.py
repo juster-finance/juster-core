@@ -449,11 +449,12 @@ class PoolBaseTestCase(TestCase):
             result.storage['nextEventLiquidity']
             - self.storage['nextEventLiquidity']
         )
+
         calculated_diff = int(
-            - active_events_diff
-            / self.storage['maxActiveEvents']
-            * result.storage['nextEventLiquidity']
-        )
+            self.storage['nextEventLiquidity']
+            * self.storage['maxActiveEvents']
+            / result.storage['maxActiveEvents']
+        ) - self.storage['nextEventLiquidity']
 
         self.assertEqual(next_event_liquidity_diff, calculated_diff)
 
