@@ -56,3 +56,20 @@ class TriggerPauseTestCase(PoolBaseTestCase):
         self.assertEqual(liquidity_before, liquidity_after)
         self.assertEqual(events_before, events_after)
 
+    def test_update_line_should_not_change_next_event_liquidity(self):
+
+        # adding line:
+        line_id = self.add_line(sender=self.manager, max_active_events=10)
+        entry_id = self.deposit_liquidity(amount=100)
+        self.approve_liquidity(entry_id = entry_id)
+        next_event_liquidity_before = self.storage['nextEventLiquidity']
+
+        # updating line:
+        new_line_id = self.add_line(sender=self.manager, max_active_events=10)
+        self.trigger_pause_line(line_id=line_id, sender=self.manager)
+
+        self.assertEqual(
+            next_event_liquidity_before,
+            self.storage['nextEventLiquidity']
+        )
+
