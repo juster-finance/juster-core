@@ -20,7 +20,7 @@ type lineType is record [
     (* TODO: consider having min time delta before next betsCloseTime to prevent
         possibility of event creation with very small period until betsClose *)
 
-    (* TODO: consider having isPaused field *)
+    isPaused : bool;
     (* TODO: consider having Juster address in line instead of storage
         (easier to update and possibility to have multiple juster contracts) *)
 ]
@@ -138,6 +138,7 @@ type withdrawLiquidityParams is list(claimKey)
     - withdrawLiquidity: withdraws claimed events
     - payReward: callback that receives withdraws from Juster
     - createEvent: creates new event in line, anyone can call this
+    - triggerPauseLine: pauses/unpauses given line by lineId
 *)
 
 type action is
@@ -149,24 +150,15 @@ type action is
 | WithdrawLiquidity of withdrawLiquidityParams
 | PayReward of nat
 | CreateEvent of nat
-(* TODO: consider having CreateEvents of list(nat) *)
-(* TODO: removeLine?
-        1) consider to have at least one line to support nextEventLiquidity
-        2) it is better to stopLine / pauseLine / triggerPauseLine instead so the info can be used in views later
-*)
-(* TODO: updateLine? to change ratios for example, only manager can call
-        2022-03-11: it is better to have just stopLine/pauseLine + addLine so any updates would
-            require both removing and adding line (this will allow use this data in the
-            reward programs in the future, updating lines will remove info about this lines
-*)
+| TriggerPauseLine of nat
+
+(* TODO: pauseDepositLiquidity *)
 (* TODO: updateNewEventFee if it changed in Juster, only manager can call
     - it is better read config from Juster views
     - maybe it would be good to have here some kind of config too (with juster address etc)
     - and lines can be binded to different configs
 *)
 (* TODO: updateEntryLockPeriod {or move this to updateConfig} *)
-(* TODO: pauseEvents *)
-(* TODO: pauseDepositLiquidity *)
 (* TODO: views: getLineOfEvent, getNextEventLiquidity, getWithdrawableLiquidity,
     getNextPositionId, getNextEntryPositionId, getNextClaimId,
     getConfig, getWithdrawalStat ... etc *)
@@ -178,5 +170,5 @@ type action is
 (* TODO: change manager entrypoints handshake
         - reuse Juster code
 *)
-
+(* TODO: consider having CreateEvents of list(nat) *)
 

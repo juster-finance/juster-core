@@ -56,3 +56,24 @@ function checkHaveFreeEventSlots(const store : storage) is
     then failwith(PoolErrors.noFreeEventSlots)
     else unit;
 
+function increaseMaxActiveEvents(const count : nat; var store : storage) is
+block {
+    const newMaxActiveEvents = store.maxActiveEvents + count;
+    store.nextEventLiquidity :=
+        store.nextEventLiquidity * store.maxActiveEvents / newMaxActiveEvents;
+    store.maxActiveEvents := newMaxActiveEvents;
+} with store
+
+function decreaseMaxActiveEvents(const count : nat; var store : storage) is
+block {
+    if count >= store.maxActiveEvents
+    then failwith(PoolErrors.noActiveEvents)
+    else skip;
+
+    const newMaxActiveEvents = abs(store.maxActiveEvents - count);
+
+    store.nextEventLiquidity :=
+        store.nextEventLiquidity * store.maxActiveEvents / newMaxActiveEvents;
+    store.maxActiveEvents := newMaxActiveEvents;
+} with store
+

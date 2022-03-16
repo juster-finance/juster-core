@@ -17,10 +17,7 @@ block {
 
     store.lines[store.nextLineId] := line;
     store.nextLineId := store.nextLineId + 1n;
-    const newMaxActiveEvents = store.maxActiveEvents + line.maxActiveEvents;
-    store.nextEventLiquidity :=
-        store.nextEventLiquidity * store.maxActiveEvents / newMaxActiveEvents;
-    store.maxActiveEvents := newMaxActiveEvents;
+    store := increaseMaxActiveEvents(line.maxActiveEvents, store);
 
 } with ((nil: list(operation)), store)
 
@@ -354,6 +351,7 @@ block {
     checkHaveFreeEventSlots(store);
 
     var line := getLine(lineId, store);
+    (* TODO: checkLineIsNotPaused *)
 
     (* checking how much events already runned in the line *)
     function countEvents (const count : nat; const ids : nat*nat) : nat is
@@ -472,6 +470,22 @@ block {
 *)
 
 
+function triggerPauseLine(const lineId : nat; var store : storage) is
+block {
+    checkNoAmountIncluded(unit);
+    onlyManager(store.manager);
+
+    const line = getLine(lineId, store);
+
+    store := if line.isPaused
+        then increaseMaxActiveEvents(line.maxActiveEvents, store);
+        else decreaseMaxActiveEvents(line.maxActiveEvents, store);
+
+    store.lines[lineId] := line with record [isPaused = not line.isPaused];
+
+} with ((nil: list(operation)), store)
+
+
 function main (const params : action; var s : storage) : (list(operation) * storage) is
 case params of
 | AddLine(p) -> addLine(p, s)
@@ -482,6 +496,7 @@ case params of
 | WithdrawLiquidity(p) -> withdrawLiquidity(p, s)
 | PayReward(p) -> payReward(p, s)
 | CreateEvent(p) -> createEvent(p, s)
+| TriggerPauseLine(p) -> triggerPauseLine(p, s)
 end
 
 [@view] function getBalance (const _ : unit ; const _s: storage) : tez is Tezos.balance
