@@ -25,3 +25,16 @@ class TriggerPauseTestCase(PoolBaseTestCase):
             self.trigger_pause_line(line_id=line_id, sender=self.c)
         self.assertTrue('Not a contract manager' in str(cm.exception))
 
+    def test_should_increase_next_event_liquidity_on_pause(self):
+        line_id = self.add_line(sender=self.manager, max_active_events=10)
+        self.add_line(sender=self.manager, max_active_events=10)
+        entry_id = self.deposit_liquidity(amount=1000)
+        self.approve_liquidity(entry_id = entry_id)
+
+        liquidity_before = self.storage['nextEventLiquidity']
+        self.trigger_pause_line(line_id=line_id, sender=self.manager)
+        liquidity_after = self.storage['nextEventLiquidity']
+
+        self.assertTrue(self.storage['lines'][line_id]['isPaused'])
+        self.assertTrue(liquidity_after > liquidity_before)
+
