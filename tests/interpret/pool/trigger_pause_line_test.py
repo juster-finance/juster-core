@@ -73,3 +73,18 @@ class TriggerPauseTestCase(PoolBaseTestCase):
             self.storage['nextEventLiquidity']
         )
 
+    def test_should_fail_if_try_to_run_paused_line(self):
+        self.add_line(sender=self.manager, max_active_events=10)
+        line_id = self.add_line(sender=self.manager, max_active_events=10)
+        entry_id = self.deposit_liquidity(amount=1000)
+        self.approve_liquidity(entry_id = entry_id)
+        self.trigger_pause_line(line_id=line_id, sender=self.manager)
+
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.create_event(event_line_id=line_id)
+        self.assertTrue('Line is paused' in str(cm.exception))
+
+        # test that line can be runned if triggered pause again:
+        self.trigger_pause_line(line_id=line_id, sender=self.manager)
+        self.create_event(event_line_id=line_id)
+
