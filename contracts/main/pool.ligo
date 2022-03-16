@@ -206,7 +206,8 @@ block {
     *)
     const liquidityPerEvent = participantLiquidity / store.maxActiveEvents;
 
-    (* TODO: is it possible to have liquidityPerEvent > store.nextEventLiquidity ? *)
+    (* TODO: is it possible to have liquidityPerEvent > store.nextEventLiquidity ?
+        - is it better to failwith here with wrongState? *)
     store.nextEventLiquidity :=
         absPositive(store.nextEventLiquidity - liquidityPerEvent);
 
@@ -430,6 +431,8 @@ block {
         maxSlippage = 0n;
     ];
 
+    (* TODO: is it possible to have some hook (view) to adjust payout?
+        so it will allow to change line priorities and reallocate funds using token *)
     const liquidityPayout = calcLiquidityPayout(store);
     const provideLiquidityOperation = Tezos.transaction(
         provideLiquidity, liquidityPayout, provideLiquidityEntrypoint);
