@@ -1,8 +1,8 @@
-from tests.interpret.line_aggregator.line_aggregator_base import LineAggregatorBaseTestCase
+from tests.interpret.pool.pool_base import PoolBaseTestCase
 from pytezos import MichelsonRuntimeError
 
 
-class WithdrawLiquidityTestCase(LineAggregatorBaseTestCase):
+class WithdrawLiquidityTestCase(PoolBaseTestCase):
     def test_should_fail_if_trying_to_withdraw_not_finished_event(self):
         self.add_line()
         self.deposit_liquidity(sender=self.a)

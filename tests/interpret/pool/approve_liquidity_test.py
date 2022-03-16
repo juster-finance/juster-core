@@ -1,8 +1,8 @@
 from pytezos import MichelsonRuntimeError
-from tests.interpret.line_aggregator.line_aggregator_base import LineAggregatorBaseTestCase
+from tests.interpret.pool.pool_base import PoolBaseTestCase
 
 
-class ApproveLiquidityTestCase(LineAggregatorBaseTestCase):
+class ApproveLiquidityTestCase(PoolBaseTestCase):
     def test_should_fail_when_try_to_approve_liquidity_twice(self):
 
         # creating default event:

@@ -4,8 +4,8 @@ from pytezos.rpc.errors import MichelsonError
 from tests.test_data import generate_line_params
 
 
-# TODO: split into SandboxLineAggregatorBaseTestCase and others?
-class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
+# TODO: split into SandboxPoolBaseTestCase and others?
+class SandboxPoolTestCase(SandboxedJusterTestCase):
 
     def _add_line(
             self,
@@ -21,7 +21,7 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
             max_active_events=max_active_events,
             target_dynamics=target_dynamics)
 
-        opg = (user.contract(self.line_aggregator.address)
+        opg = (user.contract(self.pool.address)
             .addLine(line_params)
             .send()
         )
@@ -30,7 +30,7 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
 
 
     def _deposit_liquidity(self, user, amount):
-        opg = (user.contract(self.line_aggregator.address)
+        opg = (user.contract(self.pool.address)
             .depositLiquidity()
             .with_amount(amount)
             .send()
@@ -40,7 +40,7 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
 
 
     def _approve_liquidity(self, user, entry_id):
-        opg = (user.contract(self.line_aggregator.address)
+        opg = (user.contract(self.pool.address)
             .approveLiquidity(entry_id)
             .send()
         )
@@ -48,8 +48,8 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
         return opg
 
 
-    def _aggregator_create_event(self, user, line_id=0):
-        opg = (user.contract(self.line_aggregator.address)
+    def _pool_create_event(self, user, line_id=0):
+        opg = (user.contract(self.pool.address)
             .createEvent(line_id)
             .send()
         )
@@ -58,7 +58,7 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
 
 
     def _claim_liquidity(self, user, position_id=0, shares=0):
-        opg = (user.contract(self.line_aggregator.address)
+        opg = (user.contract(self.pool.address)
             .claimLiquidity(positionId=position_id, shares=shares)
             .send()
         )
@@ -66,13 +66,13 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
         return opg
 
 
-    def _aggregator_withdraw(self, user, event_id=0, position_id=0):
+    def _pool_withdraw(self, user, event_id=0, position_id=0):
         claims = [{
             'positionId': position_id,
             'eventId': event_id
         }]
 
-        opg = (user.contract(self.line_aggregator.address)
+        opg = (user.contract(self.pool.address)
             .withdrawLiquidity(claims)
             .send()
         )
@@ -80,12 +80,12 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
         return opg
 
 
-    def test_line_aggregator(self):
+    def test_pool(self):
         self._add_line(self.manager)
         self.bake_block()
 
         # A deposits 10 tez + fees to create two events in line:
-        event_creation_fee = self.line_aggregator.storage['newEventFee']()
+        event_creation_fee = self.pool.storage['newEventFee']()
         shares = 10_000_000 + event_creation_fee*2
         self._deposit_liquidity(self.a, shares)
         self.bake_block()
@@ -94,7 +94,7 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
         self.bake_block()
 
         # A runs event:
-        opg = self._aggregator_create_event(self.a)
+        opg = self._pool_create_event(self.a)
         self.bake_block()
 
         # as far as two event in line are supposed, amount of provided liquidity
@@ -125,12 +125,12 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
         [self.bake_block() for _ in range(30)]
         self._run_measurements()
 
-        # withdrawing for line aggregator (should be 10 tez):
-        self._withdraw(participant_address=self.line_aggregator.address)
+        # withdrawing for pool (should be 10 tez):
+        self._withdraw(participant_address=self.pool.address)
         self.bake_block()
 
         # withdrawing for claimed position for A, should be 40% of 10 tez:
-        opg = self._aggregator_withdraw(self.a, 0, 0)
+        opg = self._pool_withdraw(self.a, 0, 0)
         self.bake_block()
         result = self._find_call_result_by_hash(self.a, opg.hash())
         op = result.operations[0]
@@ -149,7 +149,7 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
         self.assertEqual(int(op['amount']), 0.6*shares/2 + 6_000_000)
 
         # nothing should be left on the contract:
-        self.assertEqual(self.line_aggregator.getBalance().storage_view(), 0)
+        self.assertEqual(self.pool.getBalance().storage_view(), 0)
 
 
     def test_double_liquidity_provided_the_same_amount(self):
@@ -164,7 +164,7 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
         self._approve_liquidity(self.a, 0)
         self.bake_block()
 
-        shares = self.line_aggregator.storage['positions'][0]()['shares']
+        shares = self.pool.storage['positions'][0]()['shares']
         self.assertEqual(shares, 10_000_000)
 
         # providing liquidity second time, nohting else changed:
@@ -174,12 +174,12 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
         self._approve_liquidity(self.a, 1)
         self.bake_block()
 
-        shares = self.line_aggregator.storage['positions'][1]()['shares']
+        shares = self.pool.storage['positions'][1]()['shares']
         self.assertEqual(shares, 10_000_000)
 
 
     @unittest.skip("this test require 2 minutes to complete, so it is skipped now")
-    def test_line_aggregator_load(self):
+    def test_pool_load(self):
         # TODO: really want to split this test into multiple but then I got
         # pytezos.rpc.node.RpcError (node.validator.checkpoint_error)
 
@@ -198,25 +198,25 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
                 max_active_events=3)
 
         self.bake_block()
-        self.assertEqual(len(self.line_aggregator.storage['lines']()), LINES)
+        self.assertEqual(len(self.pool.storage['lines']()), LINES)
 
         for entry_id in range(PROVIDERS):
             self._deposit_liquidity(self.a, 10_000_000)
         self.bake_block()
 
         self.assertEqual(
-            self.line_aggregator.storage['nextEntryId'](), PROVIDERS)
+            self.pool.storage['nextEntryId'](), PROVIDERS)
 
         for entry_id in range(PROVIDERS):
             self._approve_liquidity(self.a, entry_id)
         self.bake_block()
 
         self.assertEqual(
-            self.line_aggregator.storage['nextPositionId'](), PROVIDERS)
+            self.pool.storage['nextPositionId'](), PROVIDERS)
 
         # creating events (1):
         for line_id in range(LINES):
-            opg = self._aggregator_create_event(self.a, line_id=line_id)
+            opg = self._pool_create_event(self.a, line_id=line_id)
             if (line_id % 100 == 1):
                 self.bake_block()
 
@@ -224,14 +224,14 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
 
         # creating events (2):
         for line_id in range(LINES):
-            opg = self._aggregator_create_event(self.a, line_id=line_id)
+            opg = self._pool_create_event(self.a, line_id=line_id)
             if (line_id % 100 == 1):
                 self.bake_block()
 
         self.bake_block()
 
         # claiming some liquitidy (there should be internal loop for all events):
-        # (this is the most gas consuming operation in line_aggregator)
+        # (this is the most gas consuming operation in pool)
         # for 300 lines x2 events gas_limit: 671280 and storage_limit: 48697
         opg = self._claim_liquidity(self.a, 0, 10_000_000)
         opg = self._claim_liquidity(self.a, 1, 5_000_000)
@@ -246,22 +246,22 @@ class SandboxLineAggregatorTestCase(SandboxedJusterTestCase):
         for event_id in range(LINES):
             self._withdraw(
                 event_id=event_id,
-                participant_address=self.line_aggregator.address
+                participant_address=self.pool.address
             )
 
         self.bake_block()
 
         # withdrawing for participant:
         for event_id in range(LINES):
-            opg = self._aggregator_withdraw(self.a, event_id, 0)
-            opg = self._aggregator_withdraw(self.a, event_id, 1)
+            opg = self._pool_withdraw(self.a, event_id, 0)
+            opg = self._pool_withdraw(self.a, event_id, 1)
 
         self.bake_block()
 
         # checking that withdrawal amount for the last event and participant
         # who withdrawn 5/100 shares is calculated properly:
         result = self._find_call_result_by_hash(self.a, opg.hash())
-        event_result = self.line_aggregator.storage['events'][event_id]()['result']
+        event_result = self.pool.storage['events'][event_id]()['result']
         self.assertEqual(
             int(result.operations[0]['amount']),
             int(event_result * 5 / 100)

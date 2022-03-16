@@ -1,7 +1,7 @@
-from tests.interpret.line_aggregator.line_aggregator_base import LineAggregatorBaseTestCase
+from tests.interpret.pool.pool_base import PoolBaseTestCase
 
 
-class MultipleEventsAndProvidersTest(LineAggregatorBaseTestCase):
+class MultipleEventsAndProvidersTest(PoolBaseTestCase):
     def test_multiple_events_and_providers(self):
 
         # creating multiple lines with different pairs:

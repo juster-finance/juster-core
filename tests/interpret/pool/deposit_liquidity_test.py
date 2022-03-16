@@ -1,8 +1,8 @@
-from tests.interpret.line_aggregator.line_aggregator_base import LineAggregatorBaseTestCase
+from tests.interpret.pool.pool_base import PoolBaseTestCase
 from pytezos import MichelsonRuntimeError
 
 
-class DepositLiquidityTestCase(LineAggregatorBaseTestCase):
+class DepositLiquidityTestCase(PoolBaseTestCase):
     def test_should_fail_if_added_zero_liquidity(self):
         self.add_line()
 

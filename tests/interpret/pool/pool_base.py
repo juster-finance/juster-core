@@ -5,7 +5,7 @@ from pytezos import ContractInterface, pytezos, MichelsonRuntimeError
 from tests.test_data import (
     ONE_HOUR,
     ONE_DAY,
-    generate_line_aggregator_storage,
+    generate_pool_storage,
     generate_line_params
 )
 
@@ -13,16 +13,15 @@ POOL_FN = '../../../build/contracts/pool.tz'
 RUN_TIME = int(time.time())
 
 
-# TODO: rename LineAggregatorBaseTestCase -> PoolBaseTestCase
-class LineAggregatorBaseTestCase(TestCase):
-    """ Methods used to check different state transformations for Line Aggregator
+class PoolBaseTestCase(TestCase):
+    """ Methods used to check different state transformations for Pool
         Each check method runs one transaction and then compare storage
         before and after transaction execution. At the end each check
         method returns new storage
     """
 
     def setUp(self):
-        self.aggregator = ContractInterface.from_file(
+        self.pool = ContractInterface.from_file(
             join(dirname(__file__), POOL_FN))
 
         # four participants and their pk hashes:
@@ -37,7 +36,7 @@ class LineAggregatorBaseTestCase(TestCase):
         self.juster_address = 'KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn'
         self.current_time = RUN_TIME
 
-        self.init_storage = generate_line_aggregator_storage(
+        self.init_storage = generate_pool_storage(
             manager=self.manager,
             juster_address=self.juster_address
         )
@@ -74,7 +73,7 @@ class LineAggregatorBaseTestCase(TestCase):
             last_bets_close_time=last_bets_close_time
         )
 
-        call = self.aggregator.addLine(line_params)
+        call = self.pool.addLine(line_params)
         result = call.with_amount(amount).interpret(
             storage=self.storage,
             now=self.current_time,
@@ -99,7 +98,7 @@ class LineAggregatorBaseTestCase(TestCase):
 
     def deposit_liquidity(self, sender=None, amount=1_000_000):
         sender = sender or self.manager
-        call = self.aggregator.depositLiquidity()
+        call = self.pool.depositLiquidity()
         result = call.with_amount(amount).interpret(
             storage=self.storage,
             now=self.current_time,
@@ -134,7 +133,7 @@ class LineAggregatorBaseTestCase(TestCase):
 
     def approve_liquidity(self, sender=None, entry_id=0, amount=0):
         sender = sender or self.manager
-        call = self.aggregator.approveLiquidity(entry_id)
+        call = self.pool.approveLiquidity(entry_id)
         result = call.with_amount(amount).interpret(
             storage=self.storage,
             now=self.current_time,
@@ -179,7 +178,7 @@ class LineAggregatorBaseTestCase(TestCase):
 
     def cancel_liquidity(self, sender=None, entry_id=0, amount=0):
         sender = sender or self.manager
-        call = self.aggregator.cancelLiquidity(entry_id)
+        call = self.pool.cancelLiquidity(entry_id)
         result = call.with_amount(amount).interpret(
             storage=self.storage,
             now=self.current_time,
@@ -212,7 +211,7 @@ class LineAggregatorBaseTestCase(TestCase):
             'shares': shares
         }
 
-        call = self.aggregator.claimLiquidity(params)
+        call = self.pool.claimLiquidity(params)
         result = call.with_amount(amount).interpret(
             storage=self.storage,
             now=self.current_time,
@@ -298,7 +297,7 @@ class LineAggregatorBaseTestCase(TestCase):
         default_positions = [dict(positionId=0, eventId=0)]
         positions = default_positions if positions is None else positions
 
-        call = self.aggregator.withdrawLiquidity(positions)
+        call = self.pool.withdrawLiquidity(positions)
         result = call.with_amount(amount).interpret(
             storage=self.storage,
             now=self.current_time,
@@ -345,7 +344,7 @@ class LineAggregatorBaseTestCase(TestCase):
     def pay_reward(self, sender=None, event_id=0, amount=1_000_000):
         sender = sender or self.juster_address
 
-        call = self.aggregator.payReward(event_id)
+        call = self.pool.payReward(event_id)
         result = call.with_amount(amount).interpret(
             storage=self.storage,
             now=self.current_time,
@@ -373,7 +372,7 @@ class LineAggregatorBaseTestCase(TestCase):
         sender = sender or self.manager
         next_event_id = next_event_id or self.next_event_id
 
-        contract_call = self.aggregator.createEvent(event_line_id)
+        contract_call = self.pool.createEvent(event_line_id)
         result = contract_call.with_amount(amount).interpret(
             storage=self.storage,
             now=self.current_time,

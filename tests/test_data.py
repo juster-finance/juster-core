@@ -54,7 +54,7 @@ def generate_juster_storage(manager, oracle_address):
     return storage
 
 
-def generate_line_aggregator_storage(manager, juster_address, new_event_fee=0):
+def generate_pool_storage(manager, juster_address, new_event_fee=0):
     return {
         'nextLineId': 0,
         'lines': {},

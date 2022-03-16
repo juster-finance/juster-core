@@ -1,7 +1,7 @@
-from tests.interpret.line_aggregator.line_aggregator_base import LineAggregatorBaseTestCase
+from tests.interpret.pool.pool_base import PoolBaseTestCase
 
 
-class MultipleProvidersResultsTestCase(LineAggregatorBaseTestCase):
+class MultipleProvidersResultsTestCase(PoolBaseTestCase):
     def test_provider_should_get_all_rewards_from_the_event(self):
 
         # creating default event:

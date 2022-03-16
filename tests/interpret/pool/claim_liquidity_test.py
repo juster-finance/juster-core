@@ -1,10 +1,10 @@
 import unittest
-from tests.interpret.line_aggregator.line_aggregator_base import LineAggregatorBaseTestCase
+from tests.interpret.pool.pool_base import PoolBaseTestCase
 from pytezos import MichelsonRuntimeError
 from random import randint
 
 
-class ClaimLiquidityTestCase(LineAggregatorBaseTestCase):
+class ClaimLiquidityTestCase(PoolBaseTestCase):
     def test_should_not_allow_claim_more_shares_that_in_position(self):
 
         self.add_line()

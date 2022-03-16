@@ -1,8 +1,8 @@
-from tests.interpret.line_aggregator.line_aggregator_base import LineAggregatorBaseTestCase
+from tests.interpret.pool.pool_base import PoolBaseTestCase
 from random import randint
 
 
-class NextEventLiquidityTestCase(LineAggregatorBaseTestCase):
+class NextEventLiquidityTestCase(PoolBaseTestCase):
     def test_that_next_event_liquidity_amount_calculated_properly(self):
 
         # creating default event:

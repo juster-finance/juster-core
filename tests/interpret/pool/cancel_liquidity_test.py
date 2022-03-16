@@ -1,8 +1,8 @@
-from tests.interpret.line_aggregator.line_aggregator_base import LineAggregatorBaseTestCase
+from tests.interpret.pool.pool_base import PoolBaseTestCase
 from pytezos import MichelsonRuntimeError
 
 
-class CancelLiquidityTestCase(LineAggregatorBaseTestCase):
+class CancelLiquidityTestCase(PoolBaseTestCase):
     def test_should_allow_to_cancel_liquidity_after_it_was_added(self):
         self.add_line()
         self.deposit_liquidity()

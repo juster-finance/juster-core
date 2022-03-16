@@ -1,7 +1,7 @@
-from tests.interpret.line_aggregator.line_aggregator_base import LineAggregatorBaseTestCase
+from tests.interpret.pool.pool_base import PoolBaseTestCase
 
 
-class SimpleProvideAndExitTest(LineAggregatorBaseTestCase):
+class SimpleProvideAndExitTest(PoolBaseTestCase):
     def test_simple_provide_and_exit(self):
 
         # creating default event:
@@ -16,6 +16,6 @@ class SimpleProvideAndExitTest(LineAggregatorBaseTestCase):
         withdrawn_amount = self.claim_liquidity(
             self.a, position_id=0, shares=provided_amount)
 
-        # checking that line_aggregator contract balance not changed
+        # checking that pool contract balance not changed
         self.assertEqual(withdrawn_amount, provided_amount)
 

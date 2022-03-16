@@ -1,8 +1,8 @@
-from tests.interpret.line_aggregator.line_aggregator_base import LineAggregatorBaseTestCase
+from tests.interpret.pool.pool_base import PoolBaseTestCase
 from pytezos import MichelsonRuntimeError
 
 
-class DoubleEventsTest(LineAggregatorBaseTestCase):
+class DoubleEventsTest(PoolBaseTestCase):
     def test_double_event_should_fail(self):
 
         PERIOD = 5*60

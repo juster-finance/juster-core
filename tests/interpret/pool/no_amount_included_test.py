@@ -1,8 +1,8 @@
-from tests.interpret.line_aggregator.line_aggregator_base import LineAggregatorBaseTestCase
+from tests.interpret.pool.pool_base import PoolBaseTestCase
 from pytezos import MichelsonRuntimeError
 
 
-class NoAmountIncludedTestCase(LineAggregatorBaseTestCase):
+class NoAmountIncludedTestCase(PoolBaseTestCase):
 
     def test_entrypoints_should_not_allow_to_send_any_xtz(self):
         calls = [

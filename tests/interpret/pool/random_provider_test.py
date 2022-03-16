@@ -1,8 +1,8 @@
-from tests.interpret.line_aggregator.line_aggregator_base import LineAggregatorBaseTestCase
+from tests.interpret.pool.pool_base import PoolBaseTestCase
 from random import randint
 
 
-class RandomProviderTestCase(LineAggregatorBaseTestCase):
+class RandomProviderTestCase(PoolBaseTestCase):
     def test_provider_should_get_calculated_reward_in_multiple_events(self):
 
         ITERATIONS = 5

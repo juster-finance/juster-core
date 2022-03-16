@@ -1,8 +1,8 @@
-from tests.interpret.line_aggregator.line_aggregator_base import LineAggregatorBaseTestCase
+from tests.interpret.pool.pool_base import PoolBaseTestCase
 from pytezos import MichelsonRuntimeError
 
 
-class LateEventTestCase(LineAggregatorBaseTestCase):
+class LateEventTestCase(PoolBaseTestCase):
     def test_that_event_should_be_created_in_the_future_when_late(self):
 
         PERIOD = 5*60

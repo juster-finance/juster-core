@@ -1,19 +1,19 @@
 import unittest
 from random import randint
-from tests.interpret.line_aggregator.line_aggregator_base import LineAggregatorBaseTestCase
+from tests.interpret.pool.pool_base import PoolBaseTestCase
 
 
-class PayRewardTestCase(LineAggregatorBaseTestCase):
+class PayRewardTestCase(PoolBaseTestCase):
 
     @unittest.skip("Need to decide what logic should be implemented in contract")
-    def test_pay_reward_for_event_that_was_not_created_by_aggregator(self):
+    def test_pay_reward_for_event_that_was_not_created_by_pool(self):
         # TODO: need to decide what is the best practice to do in this case
         # option 1: block this action, because this is definitely wrong state
         # but then it will freeze withdrawals
         # option 2: allow this action, because it can't harm (or can it?)
         # maybe allow this action and act as if it was added to `default`?
 
-        # 2022-02-15: it is a lot easier in the code that aggregator fails if
+        # 2022-02-15: it is a lot easier in the code that pool fails if
         # event is not found. And I am seeing no case when Juster can make this
         # payReward with not created event_id
         pass
@@ -29,7 +29,7 @@ class PayRewardTestCase(LineAggregatorBaseTestCase):
         # 2022-02-15: it is important to make impossible event creation if this
         # id was already used before (nextEventId). There is possible case when
         # Juster contract is updated and its eventIds interlapse with previous.
-        # This is wrong setup and aggregator should fail to work with this.
+        # This is wrong setup and pool should fail to work with this.
         # But event finished twice shouldn't be possible, Juster should fail
         pass
 

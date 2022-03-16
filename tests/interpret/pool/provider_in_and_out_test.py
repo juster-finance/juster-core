@@ -1,7 +1,7 @@
-from tests.interpret.line_aggregator.line_aggregator_base import LineAggregatorBaseTestCase
+from tests.interpret.pool.pool_base import PoolBaseTestCase
 
 
-class ProviderInAndOutTestCase(LineAggregatorBaseTestCase):
+class ProviderInAndOutTestCase(PoolBaseTestCase):
     def test_provider_should_have_the_same_shares_if_decided_to_reenter(self):
 
         # creating default event:

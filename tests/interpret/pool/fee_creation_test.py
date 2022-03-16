@@ -1,8 +1,8 @@
-from tests.interpret.line_aggregator.line_aggregator_base import LineAggregatorBaseTestCase
+from tests.interpret.pool.pool_base import PoolBaseTestCase
 from pytezos import MichelsonRuntimeError
 
 
-class FeeEventCreationTestCase(LineAggregatorBaseTestCase):
+class FeeEventCreationTestCase(PoolBaseTestCase):
     def test_next_event_liquidity_should_include_future_fees(self):
 
         self.storage['newEventFee'] = 500_000

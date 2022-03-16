@@ -1,8 +1,8 @@
-from tests.interpret.line_aggregator.line_aggregator_base import LineAggregatorBaseTestCase
+from tests.interpret.pool.pool_base import PoolBaseTestCase
 from pytezos import MichelsonRuntimeError
 
 
-class CreateEventTestCase(LineAggregatorBaseTestCase):
+class CreateEventTestCase(PoolBaseTestCase):
     def test_should_fail_if_free_liquidity_is_less_than_next_event_liquidity(self):
         self.add_line(max_active_events=10)
         self.deposit_liquidity(amount=100)

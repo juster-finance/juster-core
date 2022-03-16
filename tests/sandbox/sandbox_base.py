@@ -12,7 +12,7 @@ from os.path import dirname, join
 import json
 from tests.test_data import (
     generate_juster_storage,
-    generate_line_aggregator_storage
+    generate_pool_storage
 )
 
 
@@ -85,8 +85,8 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
         self.oracle_mock = self._find_contract_by_hash(client, result.hash())
 
 
-    def _deploy_line_aggregator(self, client, juster_address):
-        """ Deploys Line Aggregator """
+    def _deploy_pool(self, client, juster_address):
+        """ Deploys Pool """
 
         filename = join(dirname(__file__), POOL_FN)
         contract = ContractInterface.from_file(filename)
@@ -97,7 +97,7 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
             + self.juster.storage['config']['measureStartFee']()
         )
 
-        storage = generate_line_aggregator_storage(
+        storage = generate_pool_storage(
             manager=pkh(self.manager),
             juster_address=juster_address,
             new_event_fee=new_event_fee
@@ -107,7 +107,7 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
         result = opg.send()
         self.bake_block()
 
-        self.line_aggregator = self._find_contract_by_hash(client, result.hash())
+        self.pool = self._find_contract_by_hash(client, result.hash())
 
 
     def _deploy_reward_program(self, client, juster_address):
@@ -252,5 +252,5 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
         self._activate_accs()
         self._deploy_oracle_mock(self.manager)
         self._deploy_juster(self.manager, self.oracle_mock.address)
-        self._deploy_line_aggregator(self.manager, self.juster.address)
+        self._deploy_pool(self.manager, self.juster.address)
 

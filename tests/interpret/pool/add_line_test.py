@@ -1,8 +1,8 @@
-from tests.interpret.line_aggregator.line_aggregator_base import LineAggregatorBaseTestCase
+from tests.interpret.pool.pool_base import PoolBaseTestCase
 from pytezos import MichelsonRuntimeError
 
 
-class AddLineTestCase(LineAggregatorBaseTestCase):
+class AddLineTestCase(PoolBaseTestCase):
 
     def test_should_allow_admin_to_add_new_lines(self):
         self.add_line(sender=self.manager)
