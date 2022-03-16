@@ -12,4 +12,5 @@ module PoolErrors is {
     const noLiquidity : string = "Not enough liquidity to run event";
     const noFreeEventSlots : string = "Max active events limit reached";
     const lineNotFound : string = "Line is not found";
+    const lineIsPaused : string = "Line is paused"
 }

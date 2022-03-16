@@ -77,3 +77,8 @@ block {
     store.maxActiveEvents := newMaxActiveEvents;
 } with store
 
+function checkLineIsNotPaused(const line : lineType) is
+    if line.isPaused
+    then failwith(PoolErrors.lineIsPaused)
+    else unit
+

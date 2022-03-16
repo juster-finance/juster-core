@@ -351,7 +351,7 @@ block {
     checkHaveFreeEventSlots(store);
 
     var line := getLine(lineId, store);
-    (* TODO: checkLineIsNotPaused *)
+    checkLineIsNotPaused(line);
 
     (* checking how much events already runned in the line *)
     function countEvents (const count : nat; const ids : nat*nat) : nat is
