@@ -96,6 +96,7 @@ def generate_line_params(
         'measurePeriod': measure_period,
         'betsPeriod': bets_period,
         'lastBetsCloseTime': last_bets_close_time,
-        'maxActiveEvents': max_active_events
+        'maxActiveEvents': max_active_events,
+        'isPaused': False
     }
 
