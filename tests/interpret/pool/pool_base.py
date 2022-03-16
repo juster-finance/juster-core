@@ -421,6 +421,45 @@ class PoolBaseTestCase(TestCase):
         return next_event_id
 
 
+    def trigger_pause_line(self, sender=None, line_id=0, amount=0):
+        sender = sender or self.manager
+
+        contract_call = self.pool.triggerPauseLine(line_id)
+        result = contract_call.with_amount(amount).interpret(
+            storage=self.storage,
+            now=self.current_time,
+            sender=sender,
+            balance=self.balances[self.address]
+        )
+
+        init_state = self.storage['lines'][line_id]['isPaused']
+        result_state = result.storage['lines'][line_id]['isPaused']
+        self.assertEqual(init_state, not result_state)
+
+        active_events_diff = (
+            result.storage['maxActiveEvents']
+            - self.storage['maxActiveEvents']
+        )
+
+        self.assertEqual(
+            abs(active_events_diff),
+            self.storage['lines'][line_id]['maxActiveEvents'])
+
+        next_event_liquidity_diff = (
+            result.storage['nextEventLiquidity']
+            - self.storage['nextEventLiquidity']
+        )
+        calculated_diff = int(
+            active_events_diff
+            / self.storage['maxActiveEvents']
+        )
+
+        self.assertEqual(next_event_liquidity_diff, calculated_diff)
+
+        self.storage = result.storage
+        return result.storage['lines'][line_id]['isPaused']
+
+
     def wait(self, wait_time=0):
         self.current_time += wait_time
 
