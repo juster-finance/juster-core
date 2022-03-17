@@ -82,3 +82,8 @@ function checkLineIsNotPaused(const line : lineType) is
     then failwith(PoolErrors.lineIsPaused)
     else unit
 
+function checkLineValid(const line : lineType) is
+    if line.maxActiveEvents = 0n
+    then failwith(PoolErrors.emptyLine)
+    else unit
+

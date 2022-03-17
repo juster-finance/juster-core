@@ -12,6 +12,7 @@ function addLine(
 block {
     checkNoAmountIncluded(unit);
     onlyManager(store.manager);
+    checkLineValid(line);
 
     (* TODO: consider lines to be list {but then it will be harder to stop them?} *)
 
