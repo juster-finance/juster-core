@@ -49,7 +49,6 @@ function approveLiquidity(
 block {
 
     checkNoAmountIncluded(unit);
-    checkDepositIsNotPaused(store);
 
     const entry = getEntry(entryId, store);
     store.entries := Big_map.remove(entryId, store.entries);
