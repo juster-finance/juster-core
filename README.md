@@ -18,7 +18,7 @@ There are some mock contracts and lambdas that used in tests, so it is required 
 ## Deploying
 To deploy Juster contract it is required to have `python 3.10` or higher version in your system with [PyTezos 3.2.11](https://pytezos.org/quick_start.html#installation) or higher library installed. There are python script in the `scripts` directory that allows to run contract deployment:
 ```console
-python scripts/deploy.py
+python scripts/deploy_juster.py
 ```
 
 Note that you need to have `key.json` key file in your project root directory that will be used to deploy the contract. You can get one for test networks [here](https://faucet.tzalpha.net/)
