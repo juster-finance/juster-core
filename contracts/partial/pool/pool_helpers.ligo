@@ -87,3 +87,8 @@ function checkLineValid(const line : lineType) is
     then failwith(PoolErrors.emptyLine)
     else unit
 
+function checkDepositIsNotPaused(const store : storage) is
+    if store.isDepositPaused
+    then failwith(PoolErrors.depositIsPaused)
+    else unit
+

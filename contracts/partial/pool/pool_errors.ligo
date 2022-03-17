@@ -14,4 +14,5 @@ module PoolErrors is {
     const lineNotFound : string = "Line is not found";
     const lineIsPaused : string = "Line is paused";
     const emptyLine : string = "Line should have at least one event";
+    const depositIsPaused : string = "Deposit is paused"
 }

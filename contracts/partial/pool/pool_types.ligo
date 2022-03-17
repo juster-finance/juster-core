@@ -111,6 +111,8 @@ type storage is record [
 
     nextEventLiquidity : nat;
 
+    isDepositPaused : bool;
+
     (* TODO: condider having withdrawStats ledger with some data that can be
         used in reward programs *)
     (* TODO: to calculate withdrawalStats it might be good to have
@@ -139,6 +141,7 @@ type withdrawLiquidityParams is list(claimKey)
     - payReward: callback that receives withdraws from Juster
     - createEvent: creates new event in line, anyone can call this
     - triggerPauseLine: pauses/unpauses given line by lineId
+    - triggerPauseDeposit: pauses/unpauses deposit & approve liquidity entrypoints
 *)
 
 type action is
@@ -151,8 +154,8 @@ type action is
 | PayReward of nat
 | CreateEvent of nat
 | TriggerPauseLine of nat
+| TriggerPauseDeposit of unit
 
-(* TODO: pauseDepositLiquidity *)
 (* TODO: updateNewEventFee if it changed in Juster, only manager can call
     - it is better read config from Juster views
     - maybe it would be good to have here some kind of config too (with juster address etc)

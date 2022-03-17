@@ -27,6 +27,8 @@ function depositLiquidity(
     var store : storage) : (list(operation) * storage) is
 block {
 
+    checkDepositIsNotPaused(store);
+
     const providedAmount = Tezos.amount / 1mutez;
     if providedAmount = 0n then failwith("Should provide tez") else skip;
 
@@ -47,6 +49,7 @@ function approveLiquidity(
 block {
 
     checkNoAmountIncluded(unit);
+    checkDepositIsNotPaused(store);
 
     const entry = getEntry(entryId, store);
     store.entries := Big_map.remove(entryId, store.entries);
@@ -487,6 +490,14 @@ block {
 } with ((nil: list(operation)), store)
 
 
+function triggerPauseDeposit(var store : storage) is
+block {
+    checkNoAmountIncluded(unit);
+    onlyManager(store.manager);
+    store.isDepositPaused := not store.isDepositPaused;
+} with ((nil: list(operation)), store)
+
+
 function main (const params : action; var s : storage) : (list(operation) * storage) is
 case params of
 | AddLine(p) -> addLine(p, s)
@@ -498,6 +509,7 @@ case params of
 | PayReward(p) -> payReward(p, s)
 | CreateEvent(p) -> createEvent(p, s)
 | TriggerPauseLine(p) -> triggerPauseLine(p, s)
+| TriggerPauseDeposit -> triggerPauseDeposit(s)
 end
 
 [@view] function getBalance (const _ : unit ; const _s: storage) : tez is Tezos.balance
