@@ -2,7 +2,7 @@ from tests.interpret.pool.pool_base import PoolBaseTestCase
 from pytezos import MichelsonRuntimeError
 
 
-class TriggerPauseTestCase(PoolBaseTestCase):
+class TriggerPauseLineTestCase(PoolBaseTestCase):
 
     def test_should_not_allow_to_pause_last_line(self):
         self.add_line(sender=self.manager)

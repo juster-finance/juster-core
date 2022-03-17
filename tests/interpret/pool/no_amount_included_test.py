@@ -13,6 +13,7 @@ class NoAmountIncludedTestCase(PoolBaseTestCase):
             lambda: self.withdraw_liquidity(sender=self.manager, amount=100),
             lambda: self.create_event(sender=self.manager, amount=100),
             lambda: self.trigger_pause_line(sender=self.manager, amount=100),
+            lambda: self.trigger_pause_deposit(sender=self.manager, amount=100),
         ]
 
         for call in calls:

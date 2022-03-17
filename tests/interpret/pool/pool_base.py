@@ -459,7 +459,27 @@ class PoolBaseTestCase(TestCase):
         self.assertEqual(next_event_liquidity_diff, calculated_diff)
 
         self.storage = result.storage
-        return result.storage['lines'][line_id]['isPaused']
+        return result_state
+
+
+    def trigger_pause_deposit(self, sender=None, amount=0):
+        sender = sender or self.manager
+
+        contract_call = self.pool.triggerPauseDeposit()
+        result = contract_call.with_amount(amount).interpret(
+            storage=self.storage,
+            now=self.current_time,
+            sender=sender,
+            balance=self.balances[self.address]
+        )
+
+        init_state = self.storage['isDepositPaused']
+        result_state = result.storage['isDepositPaused']
+        self.assertEqual(init_state, not result_state)
+
+        self.storage = result.storage
+
+        return result_state
 
 
     def wait(self, wait_time=0):
