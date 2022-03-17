@@ -27,3 +27,10 @@ class CreateEventTestCase(PoolBaseTestCase):
         err_text = 'Not enough liquidity to run event'
         self.assertTrue(err_text in str(cm.exception))
 
+
+    def test_should_fail_if_zero_events_in_line_added(self):
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.add_line(max_active_events=0)
+        err_text = 'Line should have at least one event'
+        self.assertTrue(err_text in str(cm.exception))
+
