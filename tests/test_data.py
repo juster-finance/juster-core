@@ -76,7 +76,8 @@ def generate_pool_storage(manager, juster_address, new_event_fee=0):
         'entryLockPeriod': 0,
         'entries': {},
         'nextEntryId': 0,
-        'isDepositPaused': False
+        'isDepositPaused': False,
+        'metadata': {'': ''}
     }
 
 
