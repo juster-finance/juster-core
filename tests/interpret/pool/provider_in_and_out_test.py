@@ -35,5 +35,5 @@ class ProviderInAndOutTestCase(PoolBaseTestCase):
         # should receive the same amount of shares:
         self.assertEqual(self.storage['positions'][2]['shares'], provided_amount)
         self.assertEqual(self.storage['totalShares'], 100_000_000)
-        self.assertEqual(self.storage['nextEventLiquidity'], 10_000_000)
+        self.assertEqual(self.get_next_liquidity(), 10_000_000)
 

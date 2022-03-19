@@ -55,6 +55,11 @@ class PoolBaseTestCase(TestCase):
         self.balances[address] = self.balances.get(address, 0) + amount
 
 
+    def get_next_liquidity(self):
+        """ Returns next event liquidity value in int """
+        return int(
+            self.storage['nextEventLiquidity'] / self.storage['precision'])
+
     def add_line(
             self,
             sender=None,
@@ -388,13 +393,13 @@ class PoolBaseTestCase(TestCase):
             result.storage['activeLiquidity']
             - self.storage['activeLiquidity']
         )
-        self.assertEqual(active_liquidity_diff, self.storage['nextEventLiquidity'])
+        self.assertEqual(active_liquidity_diff, self.get_next_liquidity())
         added_event = result.storage['events'][next_event_id]
 
         target_event = {
             'createdCounter': self.storage['counter'],
             'lockedShares': 0,
-            'provided': self.storage['nextEventLiquidity'],
+            'provided': self.get_next_liquidity(),
             'result': None,
             'totalShares': self.storage['totalShares']
         }
@@ -412,7 +417,7 @@ class PoolBaseTestCase(TestCase):
         amount = event_fee + provide_op
 
         self.assertEqual(event_fee, self.storage['newEventFee'])
-        expected_provided = self.storage['nextEventLiquidity'] - event_fee
+        expected_provided = self.get_next_liquidity() - event_fee
         self.assertEqual(provide_op, expected_provided)
 
         self.update_balance(self.address, -amount)
@@ -446,15 +451,15 @@ class PoolBaseTestCase(TestCase):
             self.storage['lines'][line_id]['maxActiveEvents'])
 
         next_event_liquidity_diff = (
-            result.storage['nextEventLiquidity']
-            - self.storage['nextEventLiquidity']
+            result.storage['nextEventLiquidity'] / result.storage['precision']
+            - self.get_next_liquidity()
         )
 
         calculated_diff = int(
-            self.storage['nextEventLiquidity']
+            self.get_next_liquidity()
             * self.storage['maxActiveEvents']
             / result.storage['maxActiveEvents']
-        ) - self.storage['nextEventLiquidity']
+        ) - self.get_next_liquidity()
 
         self.assertEqual(next_event_liquidity_diff, calculated_diff)
 

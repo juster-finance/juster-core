@@ -12,10 +12,10 @@ class CreateEventTestCase(PoolBaseTestCase):
             self.create_event(event_line_id=0)
             self.wait(3600)
 
-        self.assertEqual(self.storage['nextEventLiquidity'], 10)
+        self.assertEqual(self.get_next_liquidity(), 10)
 
         self.add_line(max_active_events=10)
-        self.assertEqual(self.storage['nextEventLiquidity'], 5)
+        self.assertEqual(self.get_next_liquidity(), 5)
 
         for event_id in range(2):
             self.create_event(event_line_id=1)

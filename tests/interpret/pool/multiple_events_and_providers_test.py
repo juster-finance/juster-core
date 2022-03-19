@@ -12,7 +12,7 @@ class MultipleEventsAndProvidersTest(PoolBaseTestCase):
         # providing liquidity with first provider:
         self.deposit_liquidity(self.a, amount=3_000_000)
         self.approve_liquidity(self.a, entry_id=0)
-        self.assertEqual(self.storage['nextEventLiquidity'], 1_000_000)
+        self.assertEqual(self.get_next_liquidity(), 1_000_000)
 
         # running two events, in each should be added 1xtz:
         self.create_event(event_line_id=0, next_event_id=0)
@@ -21,7 +21,7 @@ class MultipleEventsAndProvidersTest(PoolBaseTestCase):
         # second provider adds the same amount of liquidity:
         self.deposit_liquidity(self.b, amount=3_000_000)
         self.approve_liquidity(self.a, entry_id=1)
-        self.assertEqual(self.storage['nextEventLiquidity'], 2_000_000)
+        self.assertEqual(self.get_next_liquidity(), 2_000_000)
 
         # running last event with 2xtz liquidity:
         self.create_event(event_line_id=2, next_event_id=2)
@@ -30,14 +30,14 @@ class MultipleEventsAndProvidersTest(PoolBaseTestCase):
 
         # let first two events be profitable (+0.9 xtz):
         self.pay_reward(event_id=0, amount=1_900_000)
-        self.assertEqual(self.storage['nextEventLiquidity'], 2_300_000)
+        self.assertEqual(self.get_next_liquidity(), 2_300_000)
 
         self.pay_reward(event_id=1, amount=1_900_000)
-        self.assertEqual(self.storage['nextEventLiquidity'], 2_600_000)
+        self.assertEqual(self.get_next_liquidity(), 2_600_000)
 
         # and last one is not (-1.8 xtz):
         self.pay_reward(event_id=2, amount=200_000)
-        self.assertEqual(self.storage['nextEventLiquidity'], 2_000_000)
+        self.assertEqual(self.get_next_liquidity(), 2_000_000)
 
         # The second cycle both providers in place:
         self.create_event(event_line_id=0, next_event_id=3)

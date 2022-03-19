@@ -32,7 +32,7 @@ class RandomProviderTestCase(PoolBaseTestCase):
                 self.wait(3600)
                 self.pay_reward(
                     event_id=created_id,
-                    amount=self.storage['nextEventLiquidity'] + PROFIT_LOSS
+                    amount=self.get_next_liquidity() + PROFIT_LOSS
                 )
                 total_liquidity += PROFIT_LOSS
 

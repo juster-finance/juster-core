@@ -11,12 +11,12 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
         # providing liquidity:
         self.deposit_liquidity(self.a, amount=80_000_000)
         self.approve_liquidity(self.a, entry_id=0)
-        self.assertEqual(self.storage['nextEventLiquidity'], 8_000_000)
+        self.assertEqual(self.get_next_liquidity(), 8_000_000)
 
         # second provider adds some liquidity with 20% shares:
         self.deposit_liquidity(self.b, amount=20_000_000)
         self.approve_liquidity(self.a, entry_id=1)
-        self.assertEqual(self.storage['nextEventLiquidity'], 10_000_000)
+        self.assertEqual(self.get_next_liquidity(), 10_000_000)
 
         # creating one event:
         self.create_event(event_line_id=0, next_event_id=0)
@@ -25,19 +25,19 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
         # A decided to remove liquidity and then redeposit it back:
         withdrawn_amount = self.claim_liquidity(
             self.a, position_id=0, shares=80_000_000)
-        self.assertEqual(self.storage['nextEventLiquidity'], 2_000_000)
+        self.assertEqual(self.get_next_liquidity(), 2_000_000)
 
         # Run and finish event with profit 2xtz:
         self.create_event(event_line_id=0, next_event_id=1)
         self.wait(3600)
         self.pay_reward(event_id=1, amount=4_000_000)
-        self.assertEqual(self.storage['nextEventLiquidity'], 2_200_000)
+        self.assertEqual(self.get_next_liquidity(), 2_200_000)
 
         # Run and finish event with loss 1xtz:
         self.create_event(event_line_id=0, next_event_id=2)
         self.wait(3600)
         self.pay_reward(event_id=2, amount=1_200_000)
-        self.assertEqual(self.storage['nextEventLiquidity'], 2_100_000)
+        self.assertEqual(self.get_next_liquidity(), 2_100_000)
 
 
     def test_next_event_liquidity_cant_be_emptied_when_all_events_are_lose(self):
@@ -56,7 +56,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
         for event_id in range(5):
             self.pay_reward(event_id=event_id, amount=0)
 
-        self.assertEqual(self.storage['nextEventLiquidity'], 0)
+        self.assertEqual(self.get_next_liquidity(), 0)
 
 
     def test_next_event_liquidity_shoul_be_equal_to_events_result_mean(self):
@@ -81,7 +81,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
             self.pay_reward(event_id=1, amount=amount)
             mean_amount += amount / 5
 
-        self.assertEqual(self.storage['nextEventLiquidity'], mean_amount)
+        self.assertEqual(self.get_next_liquidity(), mean_amount)
 
 
     def test_next_event_liquidity_with_two_lines_and_one_emptied(self):
@@ -93,7 +93,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
         # providing liquidity:
         self.deposit_liquidity(self.a, amount=10_000_000)
         self.approve_liquidity(self.a, entry_id=0)
-        self.assertEqual(self.storage['nextEventLiquidity'], 1_000_000)
+        self.assertEqual(self.get_next_liquidity(), 1_000_000)
 
         # creating events for only one line:
         second_line_event_ids = []
@@ -105,7 +105,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
             self.pay_reward(event_id=event_id, amount=0)
 
         # there are should be liquidity for the second line:
-        self.assertEqual(self.storage['nextEventLiquidity'], 500_000)
+        self.assertEqual(self.get_next_liquidity(), 500_000)
 
 
     def test_next_event_liquidity_cant_be_emptied_when_provider_goes_out(self):
@@ -123,7 +123,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
 
         self.pay_reward(event_id=0, amount=0)
 
-        self.assertEqual(self.storage['nextEventLiquidity'], 0)
+        self.assertEqual(self.get_next_liquidity(), 0)
 
 
     def test_event_creation_fees_included_in_costs(self):
@@ -136,12 +136,12 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
         self.approve_liquidity(self.a, entry_id=0)
 
         self.create_event()
-        self.assertEqual(self.storage['nextEventLiquidity'], 500_000)
+        self.assertEqual(self.get_next_liquidity(), 500_000)
         self.assertEqual(self.storage['events'][0]['provided'], 500_000)
         self.wait(3600)
 
         self.pay_reward(event_id=0, amount=200_000)
-        self.assertEqual(self.storage['nextEventLiquidity'], 350_000)
+        self.assertEqual(self.get_next_liquidity(), 350_000)
 
         self.create_event()
         self.assertEqual(self.storage['events'][1]['provided'], 350_000)
@@ -161,12 +161,12 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
 
         self.create_event()
         self.claim_liquidity(self.a, shares=2_000_000)
-        self.assertEqual(self.storage['nextEventLiquidity'], 0)
+        self.assertEqual(self.get_next_liquidity(), 0)
 
         self.wait(3600)
         self.pay_reward(event_id=0, amount=4_000_000)
 
         self.withdraw_liquidity(positions=[{'eventId': 0, 'positionId': 0}])
 
-        self.assertEqual(self.storage['nextEventLiquidity'], 0)
+        self.assertEqual(self.get_next_liquidity(), 0)
 

@@ -31,9 +31,9 @@ class TriggerPauseLineTestCase(PoolBaseTestCase):
         entry_id = self.deposit_liquidity(amount=1000)
         self.approve_liquidity(entry_id = entry_id)
 
-        liquidity_before = self.storage['nextEventLiquidity']
+        liquidity_before = self.get_next_liquidity()
         self.trigger_pause_line(line_id=line_id, sender=self.manager)
-        liquidity_after = self.storage['nextEventLiquidity']
+        liquidity_after = self.get_next_liquidity()
 
         self.assertTrue(self.storage['lines'][line_id]['isPaused'])
         self.assertTrue(liquidity_after > liquidity_before)
@@ -44,13 +44,13 @@ class TriggerPauseLineTestCase(PoolBaseTestCase):
         entry_id = self.deposit_liquidity(amount=1200)
         self.approve_liquidity(entry_id = entry_id)
 
-        liquidity_before = self.storage['nextEventLiquidity']
+        liquidity_before = self.get_next_liquidity()
         events_before = self.storage['maxActiveEvents']
 
         self.trigger_pause_line(line_id=line_id, sender=self.manager)
         self.trigger_pause_line(line_id=line_id, sender=self.manager)
 
-        liquidity_after = self.storage['nextEventLiquidity']
+        liquidity_after = self.get_next_liquidity()
         events_after = self.storage['maxActiveEvents']
 
         self.assertEqual(liquidity_before, liquidity_after)
@@ -62,7 +62,7 @@ class TriggerPauseLineTestCase(PoolBaseTestCase):
         line_id = self.add_line(sender=self.manager, max_active_events=10)
         entry_id = self.deposit_liquidity(amount=100)
         self.approve_liquidity(entry_id = entry_id)
-        next_event_liquidity_before = self.storage['nextEventLiquidity']
+        next_event_liquidity_before = self.get_next_liquidity()
 
         # updating line:
         new_line_id = self.add_line(sender=self.manager, max_active_events=10)
@@ -70,7 +70,7 @@ class TriggerPauseLineTestCase(PoolBaseTestCase):
 
         self.assertEqual(
             next_event_liquidity_before,
-            self.storage['nextEventLiquidity']
+            self.get_next_liquidity()
         )
 
     def test_should_fail_if_try_to_run_paused_line(self):

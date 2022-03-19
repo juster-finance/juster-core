@@ -57,7 +57,7 @@ class PayRewardTestCase(PoolBaseTestCase):
         self.approve_liquidity()
 
         # as far as there are only one event it should receive all of the liquidity
-        self.assertEqual(self.storage['nextEventLiquidity'], random_amount)
+        self.assertEqual(self.get_next_liquidity(), random_amount)
         self.create_event()
         self.wait(3600)
 
@@ -65,5 +65,5 @@ class PayRewardTestCase(PoolBaseTestCase):
         # should be consideread as nextEventLiquidity:
         random_amount = randint(10, 20) * 100_000
         self.pay_reward(event_id=0, amount=random_amount)
-        self.assertEqual(self.storage['nextEventLiquidity'], random_amount)
+        self.assertEqual(self.get_next_liquidity(), random_amount)
 
