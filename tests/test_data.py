@@ -78,7 +78,8 @@ def generate_pool_storage(manager, juster_address, new_event_fee=0):
         'nextEntryId': 0,
         'isDepositPaused': False,
         'metadata': {'': ''},
-        'precision': 1_000_000
+        'precision': 1_000_000,
+        'proposedManager': manager,
     }
 
 
