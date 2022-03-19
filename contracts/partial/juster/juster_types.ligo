@@ -166,25 +166,6 @@ type ledgerNatType is big_map(ledgerKey, nat)
 (* another ledger, used to track withdrawals *)
 type ledgerUnitType is big_map(ledgerKey, unit)
 
-type action is
-| NewEvent of newEventParams
-| ProvideLiquidity of provideLiquidityParams
-| Bet of betParams
-| StartMeasurement of nat
-| StartMeasurementCallback of callbackReturnedValue
-| Close of nat
-| CloseCallback of callbackReturnedValue
-| Withdraw of withdrawParams
-| UpdateConfig of updateConfigParam
-| TriggerForceMajeure of nat
-| SetDelegate of option (key_hash)
-| Default of unit
-| ClaimBakingRewards of unit
-| ClaimRetainedProfits of unit
-| ChangeManager of address
-| AcceptOwnership of unit
-
-
 type storage is record [
     events : big_map(nat, eventType);
 

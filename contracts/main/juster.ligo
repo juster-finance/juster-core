@@ -21,6 +21,25 @@
 #include "../partial/juster/entrypoints/accept_ownership.ligo"
 
 
+type action is
+| NewEvent of newEventParams
+| ProvideLiquidity of provideLiquidityParams
+| Bet of betParams
+| StartMeasurement of nat
+| StartMeasurementCallback of callbackReturnedValue
+| Close of nat
+| CloseCallback of callbackReturnedValue
+| Withdraw of withdrawParams
+| UpdateConfig of updateConfigParam
+| TriggerForceMajeure of nat
+| SetDelegate of option (key_hash)
+| Default of unit
+| ClaimBakingRewards of unit
+| ClaimRetainedProfits of unit
+| ChangeManager of address
+| AcceptOwnership of unit
+
+
 function main (const params : action; var s : storage) : (list(operation) * storage) is
 case params of
 | NewEvent(p)                 -> newEvent(p, s)
