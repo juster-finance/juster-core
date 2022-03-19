@@ -170,3 +170,25 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
 
         self.assertEqual(self.get_next_liquidity(), 0)
 
+    def test_should_not_change_next_event_liquidity_after_update(self):
+        # this case tests liquidity precision
+
+        # creating 9x2 event lines:
+        for _ in range(9):
+            self.add_line(max_active_events=2)
+
+        self.deposit_liquidity(self.a, amount=18_000_000)
+        self.approve_liquidity(self.a, entry_id=0)
+
+        self.assertEqual(self.get_next_liquidity(), 1_000_000)
+
+        # updating lines:
+        for _ in range(9):
+            self.add_line(max_active_events=2)
+        for line_id in range(9):
+            self.trigger_pause_line(line_id=line_id)
+
+        # anyway int round 9.9999 to 9, so there will be little differences:
+        difference = self.get_next_liquidity() - 1_000_000
+        self.assertTrue(difference <= 1)
+

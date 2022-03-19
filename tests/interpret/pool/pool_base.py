@@ -451,17 +451,20 @@ class PoolBaseTestCase(TestCase):
             self.storage['lines'][line_id]['maxActiveEvents'])
 
         next_event_liquidity_diff = (
-            result.storage['nextEventLiquidity'] / result.storage['precision']
-            - self.get_next_liquidity()
+            result.storage['nextEventLiquidity']
+            - self.storage['nextEventLiquidity']
         )
 
-        calculated_diff = int(
-            self.get_next_liquidity()
+        calculated_diff = (
+            self.storage['nextEventLiquidity']
             * self.storage['maxActiveEvents']
             / result.storage['maxActiveEvents']
-        ) - self.get_next_liquidity()
+        ) - self.storage['nextEventLiquidity']
 
-        self.assertEqual(next_event_liquidity_diff, calculated_diff)
+        self.assertEqual(
+            int(next_event_liquidity_diff / self.storage['precision']),
+            int(calculated_diff / self.storage['precision'])
+        )
 
         self.storage = result.storage
         return result_state
