@@ -198,12 +198,6 @@ block {
     then failwith(PoolErrors.wrongState)
     else skip;
 
-    (* TODO: make you sure that it is required to distribute
-        participantLiquidity and not payoutValue instead
-        {is there any tests for this difference?}
-        payoutValue is part of liquidity that user can withdraw right now,
-        but next event liquidity should be reduced with all removed liquidity
-    *)
     const liquidityPerEvent = participantLiquidity / store.maxActiveEvents;
 
     (* TODO: is it possible to have liquidityPerEvent > store.nextEventLiquidity ?
@@ -333,12 +327,14 @@ block {
         it is better to cap it on zero if it somehow goes negative: *)
     store.activeLiquidity := absPositive(store.activeLiquidity - remainedLiquidity);
     const profitLossPerEvent = (reward - event.provided) / store.maxActiveEvents;
+    const lockedProfit = profitLossPerEvent * event.lockedShares / event.totalShares;
+    const remainedProfit = profitLossPerEvent - lockedProfit;
 
     (* TODO: is it possible to make newNextEventLiquidity < 0? when liquidity withdrawn
         for example and then failed event? Its good to be sure that it is impossible *)
     (* TODO: need to find this test cases if it is possible or find some proof that it is not *)
     store.nextEventLiquidity :=
-        absPositive(store.nextEventLiquidity + profitLossPerEvent);
+        absPositive(store.nextEventLiquidity + remainedProfit);
     (* TODO: consider failwith here instead of absPositive
         the same for store.activeLiquidity, but don't want to block this entrypoint *)
 
