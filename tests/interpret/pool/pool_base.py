@@ -490,6 +490,22 @@ class PoolBaseTestCase(TestCase):
         return result_state
 
 
+    def set_entry_lock_period(self, sender=None, amount=0, new_period=0):
+        sender = sender or self.manager
+
+        contract_call = self.pool.setEntryLockPeriod(new_period)
+        result = contract_call.with_amount(amount).interpret(
+            storage=self.storage,
+            now=self.current_time,
+            sender=sender,
+            balance=self.balances[self.address]
+        )
+
+        self.assertEqual(result.storage['entryLockPeriod'], new_period)
+
+        self.storage = result.storage
+
+
     def wait(self, wait_time=0):
         self.current_time += wait_time
 
