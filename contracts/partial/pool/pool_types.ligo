@@ -64,7 +64,7 @@ type storage is record [
     nextLineId: nat;
 
     (* lines is ledger with all possible event lines that can be created *)
-    lines : map(nat, lineType);
+    lines : big_map(nat, lineType);
 
     (* active lines is mapping between eventId and lineId *)
     activeEvents : map(nat, nat);

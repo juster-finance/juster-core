@@ -32,10 +32,7 @@ function getEvent(const eventId : nat; const store : storage) : eventType is
     getOrFail(eventId, store.events, PoolErrors.eventNotFound)
 
 function getLine(const lineId : nat; const store : storage) : lineType is
-    case Map.find_opt(lineId, store.lines) of
-    | Some(line) -> line
-    | None -> (failwith(PoolErrors.lineNotFound) : lineType)
-    end;
+    getOrFail(lineId, store.lines, PoolErrors.lineNotFound)
 
 function checkHasActiveEvents(const store : storage) : unit is
     if store.maxEvents = 0n
