@@ -14,7 +14,7 @@ class RandomProviderTestCase(PoolBaseTestCase):
             EXIT_STEP = randint(ENTER_STEP, STEPS-1)
             PROFIT_LOSS = randint(-10, 10) * 300_000
 
-            self.add_line(max_active_events=3)
+            self.add_line(max_events=3)
 
             # A is core provider:
             shares = 90_000_000
@@ -67,7 +67,7 @@ class RandomProviderTestCase(PoolBaseTestCase):
             line_id: randint(0, STEPS-7) for line_id in range(EVENTS_COUNT)
         }
 
-        [self.add_line(max_active_events=1) for _ in event_create_steps]
+        [self.add_line(max_events=1) for _ in event_create_steps]
 
         close_event_times = {}
         position_ids = {}

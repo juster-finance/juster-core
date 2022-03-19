@@ -6,7 +6,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
     def test_that_next_event_liquidity_amount_calculated_properly(self):
 
         # creating default event:
-        self.add_line(max_active_events=10)
+        self.add_line(max_events=10)
 
         # providing liquidity:
         self.deposit_liquidity(self.a, amount=80_000_000)
@@ -43,7 +43,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
     def test_next_event_liquidity_cant_be_emptied_when_all_events_are_lose(self):
 
         # creating default event line:
-        self.add_line(max_active_events=5)
+        self.add_line(max_events=5)
 
         # providing liquidity:
         self.deposit_liquidity(self.a, amount=5_000_000)
@@ -65,7 +65,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
             return randint(1, 20) * 100_000
 
         # creating event line:
-        self.add_line(max_active_events=5)
+        self.add_line(max_events=5)
 
         # providing liquidity, value should not matter:
         self.deposit_liquidity(self.a, amount=random_amount()*5)
@@ -87,8 +87,8 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
     def test_next_event_liquidity_with_two_lines_and_one_emptied(self):
 
         # creating default event line:
-        self.add_line(max_active_events=5)
-        self.add_line(max_active_events=5)
+        self.add_line(max_events=5)
+        self.add_line(max_events=5)
 
         # providing liquidity:
         self.deposit_liquidity(self.a, amount=10_000_000)
@@ -111,7 +111,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
     def test_next_event_liquidity_cant_be_emptied_when_provider_goes_out(self):
 
         # creating default event line:
-        self.add_line(max_active_events=2)
+        self.add_line(max_events=2)
 
         # providing liquidity:
         self.deposit_liquidity(self.a, amount=2_000_000)
@@ -129,7 +129,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
     def test_event_creation_fees_included_in_costs(self):
 
         self.storage['newEventFee'] = 300_000
-        self.add_line(max_active_events=2)
+        self.add_line(max_events=2)
 
         # providing liquidity:
         self.deposit_liquidity(self.a, amount=1_000_000)
@@ -153,7 +153,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
         # locked profits/losses that should not be distributed
 
         # creating default event line:
-        self.add_line(max_active_events=2)
+        self.add_line(max_events=2)
 
         # providing liquidity:
         self.deposit_liquidity(self.a, amount=2_000_000)
@@ -175,7 +175,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
 
         # creating 9x2 event lines:
         for _ in range(9):
-            self.add_line(max_active_events=2)
+            self.add_line(max_events=2)
 
         self.deposit_liquidity(self.a, amount=18_000_000)
         self.approve_liquidity(self.a, entry_id=0)
@@ -184,7 +184,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
 
         # updating lines:
         for _ in range(9):
-            self.add_line(max_active_events=2)
+            self.add_line(max_events=2)
         for line_id in range(9):
             self.trigger_pause_line(line_id=line_id)
 

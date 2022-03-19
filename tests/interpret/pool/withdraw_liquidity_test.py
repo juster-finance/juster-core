@@ -53,7 +53,7 @@ class WithdrawLiquidityTestCase(PoolBaseTestCase):
 
 
     def test_multiple_withdraw_should_be_possible(self):
-        self.add_line(max_active_events=5)
+        self.add_line(max_events=5)
         self.deposit_liquidity(sender=self.a)
         self.approve_liquidity(entry_id=0)
         self.deposit_liquidity(sender=self.b)

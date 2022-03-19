@@ -8,7 +8,7 @@ class FeeEventCreationTestCase(PoolBaseTestCase):
         self.storage['newEventFee'] = 500_000
 
         # creating default event:
-        self.add_line(max_active_events=3)
+        self.add_line(max_events=3)
 
         # providing liquidity:
         self.deposit_liquidity(self.a, amount=4_500_000)
@@ -45,7 +45,7 @@ class FeeEventCreationTestCase(PoolBaseTestCase):
 
         # Creating another line that should increase next event creation reserves:
         # 2.5 * 3 / (3+2) = 1.5
-        self.add_line(max_active_events=2)
+        self.add_line(max_events=2)
         self.assertEqual(self.get_next_liquidity(), 1_500_000)
 
 
@@ -54,7 +54,7 @@ class FeeEventCreationTestCase(PoolBaseTestCase):
         self.storage['newEventFee'] = 500_000
 
         # creating default event:
-        self.add_line(max_active_events=3)
+        self.add_line(max_events=3)
 
         # providing liquidity that only covers new event fees:
         self.deposit_liquidity(self.a, amount=1_500_000)

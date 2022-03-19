@@ -5,7 +5,7 @@ class ProviderInAndOutTestCase(PoolBaseTestCase):
     def test_provider_should_have_the_same_shares_if_decided_to_reenter(self):
 
         # creating default event:
-        self.add_line(max_active_events=10)
+        self.add_line(max_events=10)
 
         # providing liquidity:
         provided_amount = 80_000_000

@@ -69,9 +69,9 @@ def generate_pool_storage(manager, juster_address, new_event_fee=0):
         'manager': manager,
         'juster': juster_address,
         'newEventFee': new_event_fee,
-        'maxActiveEvents': 0,
+        'maxEvents': 0,
         'counter': 0,
-        'nextEventLiquidity': 0,
+        'nextLiquidity': 0,
         'entryLiquidity': 0,
         'entryLockPeriod': 0,
         'entries': {},
@@ -86,7 +86,7 @@ def generate_line_params(
         bets_period=3600,
         measure_period=3600,
         currency_pair='XTZ_USD',
-        max_active_events=2,
+        max_events=2,
         target_dynamics=1_000_000,
         last_bets_close_time=0
     ):
@@ -99,7 +99,7 @@ def generate_line_params(
         'measurePeriod': measure_period,
         'betsPeriod': bets_period,
         'lastBetsCloseTime': last_bets_close_time,
-        'maxActiveEvents': max_active_events,
+        'maxEvents': max_events,
         'isPaused': False
     }
 

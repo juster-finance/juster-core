@@ -5,9 +5,9 @@ class MultipleEventsAndProvidersTest(PoolBaseTestCase):
     def test_multiple_events_and_providers(self):
 
         # creating multiple lines with different pairs:
-        self.add_line(currency_pair='XTZ-USD', max_active_events=1)
-        self.add_line(currency_pair='ETH-USD', max_active_events=1)
-        self.add_line(currency_pair='BTC-USD', max_active_events=1)
+        self.add_line(currency_pair='XTZ-USD', max_events=1)
+        self.add_line(currency_pair='ETH-USD', max_events=1)
+        self.add_line(currency_pair='BTC-USD', max_events=1)
 
         # providing liquidity with first provider:
         self.deposit_liquidity(self.a, amount=3_000_000)

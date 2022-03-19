@@ -10,7 +10,7 @@ class DoubleEventsTest(PoolBaseTestCase):
         # creating line with a lot of possible events and bets period 5 min:
         self.add_line(
             currency_pair='XTZ-USD',
-            max_active_events=10,
+            max_events=10,
             bets_period=PERIOD
         )
 

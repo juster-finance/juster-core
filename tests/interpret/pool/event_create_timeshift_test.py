@@ -10,7 +10,7 @@ class EventCreateTimeshiftTestCase(PoolBaseTestCase):
         # creating line with two events and period 5 min that should be shifted
         # for 42 seconds:
         self.add_line(
-            max_active_events=2,
+            max_events=2,
             bets_period=PERIOD,
             last_bets_close_time=42
         )

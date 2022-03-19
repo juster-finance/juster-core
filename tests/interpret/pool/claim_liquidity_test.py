@@ -45,7 +45,7 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
 
 
     def test_should_return_unused_liquidity_amount(self):
-        self.add_line(max_active_events=2)
+        self.add_line(max_events=2)
         self.deposit_liquidity(sender=self.a, amount=100)
         self.approve_liquidity(entry_id=0)
         self.assertEqual(self.balances[self.a], -100)
@@ -125,7 +125,7 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
 
 
     def test_should_not_increase_claimed_shares_for_not_affected_events(self):
-        self.add_line(max_active_events=2)
+        self.add_line(max_events=2)
         self.deposit_liquidity(amount=100, sender=self.a)
         self.approve_liquidity(entry_id=0)
         self.create_event(event_line_id=0)

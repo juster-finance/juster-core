@@ -5,7 +5,7 @@ class MultipleProvidersResultsTestCase(PoolBaseTestCase):
     def test_provider_should_get_all_rewards_from_the_event(self):
 
         # creating default event:
-        self.add_line(max_active_events=2)
+        self.add_line(max_events=2)
 
         # providing liquidity:
         provided_amount = 10_000_000
@@ -13,7 +13,7 @@ class MultipleProvidersResultsTestCase(PoolBaseTestCase):
         self.approve_liquidity(self.a, entry_id=0)
 
         # creating event where provider have 100% of the liquidity:
-        # as far as max_active_events is 2: this event should receive 5xtz:
+        # as far as max_events is 2: this event should receive 5xtz:
         self.create_event(event_line_id=0, next_event_id=0)
 
         # second provider adds liquidity with the same amount:

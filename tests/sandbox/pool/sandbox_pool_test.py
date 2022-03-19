@@ -13,12 +13,12 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
             measure_period=1,
             currency_pair='XTZ-USD',
             target_dynamics=1_000_000,
-            max_active_events=2):
+            max_events=2):
 
         line_params = generate_line_params(
             bets_period=20,
             measure_period=measure_period,
-            max_active_events=max_active_events,
+            max_events=max_events,
             target_dynamics=target_dynamics)
 
         opg = (user.contract(self.pool.address)
@@ -195,7 +195,7 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
                 self.manager,
                 target_dynamics=1_000_000 + line,
                 measure_period=1,
-                max_active_events=3)
+                max_events=3)
 
         self.bake_block()
         self.assertEqual(len(self.pool.storage['lines']()), LINES)

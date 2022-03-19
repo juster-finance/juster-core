@@ -51,7 +51,7 @@ class PayRewardTestCase(PoolBaseTestCase):
 
     def test_pay_reward_changes_next_event_liquidity_amount(self):
         # creating simple line with one event that should receive random amount of tez
-        self.add_line(max_active_events=1)
+        self.add_line(max_events=1)
         random_amount = randint(10, 20) * 100_000
         self.deposit_liquidity(amount=random_amount)
         self.approve_liquidity()
