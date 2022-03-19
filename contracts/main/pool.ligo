@@ -494,6 +494,14 @@ block {
 } with ((nil: list(operation)), store)
 
 
+function setEntryLockPeriod(const newPeriod : nat; var store : storage) is
+block {
+    checkNoAmountIncluded(unit);
+    onlyManager(store.manager);
+    store.entryLockPeriod := newPeriod;
+} with ((nil: list(operation)), store)
+
+
 function main (const params : action; var s : storage) : (list(operation) * storage) is
 case params of
 | AddLine(p) -> addLine(p, s)
@@ -506,6 +514,7 @@ case params of
 | CreateEvent(p) -> createEvent(p, s)
 | TriggerPauseLine(p) -> triggerPauseLine(p, s)
 | TriggerPauseDeposit -> triggerPauseDeposit(s)
+| SetEntryLockPeriod(p) -> setEntryLockPeriod(p, s)
 end
 
 [@view] function getBalance (const _ : unit ; const _s: storage) : tez is Tezos.balance

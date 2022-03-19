@@ -158,12 +158,8 @@ type action is
 | CreateEvent of nat
 | TriggerPauseLine of nat
 | TriggerPauseDeposit of unit
+| SetEntryLockPeriod of nat
 
-(* TODO: updateNewEventFee if it changed in Juster, only manager can call
-    - it is better read config from Juster views
-    - maybe it would be good to have here some kind of config too (with juster address etc)
-    - and lines can be binded to different configs
-*)
 (* TODO: updateEntryLockPeriod {or move this to updateConfig} *)
 (* TODO: views: getLineOfEvent, getNextEventLiquidity, getWithdrawableLiquidity,
     getNextPositionId, getNextEntryPositionId, getNextClaimId,
