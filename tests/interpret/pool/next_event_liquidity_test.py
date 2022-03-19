@@ -147,3 +147,26 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
         self.assertEqual(self.storage['events'][1]['provided'], 350_000)
         self.wait(3600)
 
+
+    def test_next_event_liquidity_should_not_be_changed_by_locked_liquidity(self):
+        # This is case catched in hanzhounet, error was in payReward with
+        # locked profits/losses that should not be distributed
+
+        # creating default event line:
+        self.add_line(max_active_events=2)
+
+        # providing liquidity:
+        self.deposit_liquidity(self.a, amount=2_000_000)
+        self.approve_liquidity(self.a, entry_id=0)
+
+        self.create_event()
+        self.claim_liquidity(self.a, shares=2_000_000)
+        self.assertEqual(self.storage['nextEventLiquidity'], 0)
+
+        self.wait(3600)
+        self.pay_reward(event_id=0, amount=4_000_000)
+
+        self.withdraw_liquidity(positions=[{'eventId': 0, 'positionId': 0}])
+
+        self.assertEqual(self.storage['nextEventLiquidity'], 0)
+
