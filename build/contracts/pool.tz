@@ -28,7 +28,7 @@
                                                  (pair (nat %provided) (option %result nat)))
                                            (nat %totalShares))))))
                 (pair (pair (pair (bool %isDepositPaused) (address %juster))
-                            (pair (map %lines
+                            (pair (big_map %lines
                                      nat
                                      (pair (pair (pair (pair (nat %betsPeriod) (string %currencyPair))
                                                        (pair (bool %isPaused) (timestamp %lastBetsCloseTime)))
@@ -120,9 +120,10 @@
                                          (pair (pair (big_map nat (pair (pair timestamp nat) address)) nat)
                                                (pair nat (big_map nat (pair (pair (pair nat nat) (pair nat (option nat))) nat)))))
                                    (pair (pair (pair bool address)
-                                               (pair (map nat
-                                                          (pair (pair (pair (pair nat string) (pair bool timestamp)) (pair (pair nat nat) (pair nat nat)))
-                                                                (pair nat nat)))
+                                               (pair (big_map
+                                                        nat
+                                                        (pair (pair (pair (pair nat string) (pair bool timestamp)) (pair (pair nat nat) (pair nat nat)))
+                                                              (pair nat nat)))
                                                      address))
                                          (pair (pair nat (big_map string bytes)) (pair mutez nat))))
                              (pair (pair (pair nat nat) (pair nat (big_map nat (pair (pair nat address) nat))))
@@ -159,9 +160,10 @@
                                          (pair (pair (big_map nat (pair (pair timestamp nat) address)) nat)
                                                (pair nat (big_map nat (pair (pair (pair nat nat) (pair nat (option nat))) nat)))))
                                    (pair (pair (pair bool address)
-                                               (pair (map nat
-                                                          (pair (pair (pair (pair nat string) (pair bool timestamp)) (pair (pair nat nat) (pair nat nat)))
-                                                                (pair nat nat)))
+                                               (pair (big_map
+                                                        nat
+                                                        (pair (pair (pair (pair nat string) (pair bool timestamp)) (pair (pair nat nat) (pair nat nat)))
+                                                              (pair nat nat)))
                                                      address))
                                          (pair (pair nat (big_map string bytes)) (pair mutez nat))))
                              (pair (pair (pair nat nat) (pair nat (big_map nat (pair (pair nat address) nat))))
@@ -196,9 +198,10 @@
                                          (pair (pair (big_map nat (pair (pair timestamp nat) address)) nat)
                                                (pair nat (big_map nat (pair (pair (pair nat nat) (pair nat (option nat))) nat)))))
                                    (pair (pair (pair bool address)
-                                               (pair (map nat
-                                                          (pair (pair (pair (pair nat string) (pair bool timestamp)) (pair (pair nat nat) (pair nat nat)))
-                                                                (pair nat nat)))
+                                               (pair (big_map
+                                                        nat
+                                                        (pair (pair (pair (pair nat string) (pair bool timestamp)) (pair (pair nat nat) (pair nat nat)))
+                                                              (pair nat nat)))
                                                      address))
                                          (pair (pair nat (big_map string bytes)) (pair mutez nat))))
                              (pair (pair (pair nat nat) (pair nat (big_map nat (pair (pair nat address) nat))))
@@ -208,15 +211,20 @@
            { UNPAIR ;
              SWAP ;
              UNPAIR ;
-             SWAP ;
+             DIG 2 ;
+             CAR ;
+             CDR ;
+             CDR ;
+             CAR ;
+             DIG 2 ;
              CAR ;
              CDR ;
              CAR ;
              CDR ;
              CAR ;
-             SWAP ;
+             DIG 2 ;
              GET ;
-             IF_NONE { CAR ; CDR ; CDR ; CAR ; FAILWITH } { SWAP ; DROP } } ;
+             IF_NONE { FAILWITH } { SWAP ; DROP } } ;
          SWAP ;
          APPLY ;
          LAMBDA
@@ -224,9 +232,10 @@
                              (pair (pair (big_map nat (pair (pair timestamp nat) address)) nat)
                                    (pair nat (big_map nat (pair (pair (pair nat nat) (pair nat (option nat))) nat)))))
                        (pair (pair (pair bool address)
-                                   (pair (map nat
-                                              (pair (pair (pair (pair nat string) (pair bool timestamp)) (pair (pair nat nat) (pair nat nat)))
-                                                    (pair nat nat)))
+                                   (pair (big_map
+                                            nat
+                                            (pair (pair (pair (pair nat string) (pair bool timestamp)) (pair (pair nat nat) (pair nat nat)))
+                                                  (pair nat nat)))
                                          address))
                              (pair (pair nat (big_map string bytes)) (pair mutez nat))))
                  (pair (pair (pair nat nat) (pair nat (big_map nat (pair (pair nat address) nat))))
@@ -274,9 +283,10 @@
                                    (pair (pair (big_map nat (pair (pair timestamp nat) address)) nat)
                                          (pair nat (big_map nat (pair (pair (pair nat nat) (pair nat (option nat))) nat)))))
                              (pair (pair (pair bool address)
-                                         (pair (map nat
-                                                    (pair (pair (pair (pair nat string) (pair bool timestamp)) (pair (pair nat nat) (pair nat nat)))
-                                                          (pair nat nat)))
+                                         (pair (big_map
+                                                  nat
+                                                  (pair (pair (pair (pair nat string) (pair bool timestamp)) (pair (pair nat nat) (pair nat nat)))
+                                                        (pair nat nat)))
                                                address))
                                    (pair (pair nat (big_map string bytes)) (pair mutez nat))))
                        (pair (pair (pair nat nat) (pair nat (big_map nat (pair (pair nat address) nat))))
@@ -285,9 +295,10 @@
                              (pair (pair (big_map nat (pair (pair timestamp nat) address)) nat)
                                    (pair nat (big_map nat (pair (pair (pair nat nat) (pair nat (option nat))) nat)))))
                        (pair (pair (pair bool address)
-                                   (pair (map nat
-                                              (pair (pair (pair (pair nat string) (pair bool timestamp)) (pair (pair nat nat) (pair nat nat)))
-                                                    (pair nat nat)))
+                                   (pair (big_map
+                                            nat
+                                            (pair (pair (pair (pair nat string) (pair bool timestamp)) (pair (pair nat nat) (pair nat nat)))
+                                                  (pair nat nat)))
                                          address))
                              (pair (pair nat (big_map string bytes)) (pair mutez nat))))
                  (pair (pair (pair nat nat) (pair nat (big_map nat (pair (pair nat address) nat))))
