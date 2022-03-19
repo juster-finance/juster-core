@@ -4,7 +4,7 @@ function calcFreeLiquidity(const store : storage) : int is
     - store.entryLiquidity
 
 function checkIsEnoughLiquidity(const store : storage) : unit is
-    if calcFreeLiquidity(store) < int(store.nextEventLiquidity / store.precision)
+    if calcFreeLiquidity(store) < int(store.nextLiquidity / store.precision)
     then failwith(PoolErrors.noLiquidity)
     else unit;
 
@@ -13,7 +13,7 @@ function calcLiquidityPayout(const store : storage) : tez is
         checkIsEnoughLiquidity(store);
 
         var liquidityAmount :=
-            store.nextEventLiquidity / store.precision
+            store.nextLiquidity / store.precision
             - store.newEventFee/1mutez;
 
         if liquidityAmount <= 0
@@ -38,7 +38,7 @@ function getLine(const lineId : nat; const store : storage) : lineType is
     end;
 
 function checkHasActiveEvents(const store : storage) : unit is
-    if store.maxActiveEvents = 0n
+    if store.maxEvents = 0n
     then failwith(PoolErrors.noActiveEvents)
     else unit;
 
@@ -51,7 +51,7 @@ function calcTotalLiquidity(const store : storage) : int is
 function absPositive(const value : int) is if value >= 0 then abs(value) else 0n
 
 function calcFreeEventSlots(const store : storage) is
-    store.maxActiveEvents - Map.size(store.activeEvents)
+    store.maxEvents - Map.size(store.activeEvents)
 
 function checkHaveFreeEventSlots(const store : storage) is
     if calcFreeEventSlots(store) <= 0
@@ -60,23 +60,23 @@ function checkHaveFreeEventSlots(const store : storage) is
 
 function increaseMaxActiveEvents(const count : nat; var store : storage) is
 block {
-    const newMaxActiveEvents = store.maxActiveEvents + count;
-    store.nextEventLiquidity :=
-        store.nextEventLiquidity * store.maxActiveEvents / newMaxActiveEvents;
-    store.maxActiveEvents := newMaxActiveEvents;
+    const newMaxActiveEvents = store.maxEvents + count;
+    store.nextLiquidity :=
+        store.nextLiquidity * store.maxEvents / newMaxActiveEvents;
+    store.maxEvents := newMaxActiveEvents;
 } with store
 
 function decreaseMaxActiveEvents(const count : nat; var store : storage) is
 block {
-    if count >= store.maxActiveEvents
+    if count >= store.maxEvents
     then failwith(PoolErrors.noActiveEvents)
     else skip;
 
-    const newMaxActiveEvents = abs(store.maxActiveEvents - count);
+    const newMaxActiveEvents = abs(store.maxEvents - count);
 
-    store.nextEventLiquidity :=
-        store.nextEventLiquidity * store.maxActiveEvents / newMaxActiveEvents;
-    store.maxActiveEvents := newMaxActiveEvents;
+    store.nextLiquidity :=
+        store.nextLiquidity * store.maxEvents / newMaxActiveEvents;
+    store.maxEvents := newMaxActiveEvents;
 } with store
 
 function checkLineIsNotPaused(const line : lineType) is
@@ -85,7 +85,7 @@ function checkLineIsNotPaused(const line : lineType) is
     else unit
 
 function checkLineValid(const line : lineType) is
-    if line.maxActiveEvents = 0n
+    if line.maxEvents = 0n
     then failwith(PoolErrors.emptyLine)
     else unit
 

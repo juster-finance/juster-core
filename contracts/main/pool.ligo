@@ -18,7 +18,7 @@ block {
 
     store.lines[store.nextLineId] := line;
     store.nextLineId := store.nextLineId + 1n;
-    store := increaseMaxActiveEvents(line.maxActiveEvents, store);
+    store := increaseMaxActiveEvents(line.maxEvents, store);
 
 } with ((nil: list(operation)), store)
 
@@ -95,8 +95,8 @@ block {
     store.nextPositionId := store.nextPositionId + 1n;
     store.totalShares := store.totalShares + shares;
     store.counter := store.counter + 1n;
-    const providedPerEvent = provided * store.precision / store.maxActiveEvents;
-    store.nextEventLiquidity := store.nextEventLiquidity + providedPerEvent;
+    const providedPerEvent = provided * store.precision / store.maxEvents;
+    store.nextLiquidity := store.nextLiquidity + providedPerEvent;
 
 } with ((nil: list(operation)), store)
 
@@ -198,12 +198,12 @@ block {
     then failwith(PoolErrors.wrongState)
     else skip;
 
-    const liquidityPerEvent = userLiquidity * store.precision / store.maxActiveEvents;
+    const liquidityPerEvent = userLiquidity * store.precision / store.maxEvents;
 
-    (* TODO: is it possible to have liquidityPerEvent > store.nextEventLiquidity ?
+    (* TODO: is it possible to have liquidityPerEvent > store.nextLiquidity ?
         - is it better to failwith here with wrongState? *)
-    store.nextEventLiquidity :=
-        absPositive(store.nextEventLiquidity - liquidityPerEvent);
+    store.nextLiquidity :=
+        absPositive(store.nextLiquidity - liquidityPerEvent);
 
     (* Another impossible condition that is better to check: *)
     if store.totalShares < params.shares
@@ -327,15 +327,15 @@ block {
         it is better to cap it on zero if it somehow goes negative: *)
     store.activeLiquidity := absPositive(store.activeLiquidity - remainedLiquidity);
 
-    const profitLossPerEvent = (reward - event.provided) * store.precision / store.maxActiveEvents;
+    const profitLossPerEvent = (reward - event.provided) * store.precision / store.maxEvents;
     const lockedProfit = profitLossPerEvent * event.lockedShares / event.totalShares;
     const remainedProfit = profitLossPerEvent - lockedProfit;
 
     (* TODO: is it possible to make newNextEventLiquidity < 0? when liquidity withdrawn
         for example and then failed event? Its good to be sure that it is impossible *)
     (* TODO: need to find this test cases if it is possible or find some proof that it is not *)
-    store.nextEventLiquidity :=
-        absPositive(store.nextEventLiquidity + remainedProfit);
+    store.nextLiquidity :=
+        absPositive(store.nextLiquidity + remainedProfit);
     (* TODO: consider failwith here instead of absPositive
         the same for store.activeLiquidity, but don't want to block this entrypoint *)
 
@@ -357,7 +357,7 @@ block {
     function countEvents (const count : nat; const ids : nat*nat) : nat is
         if ids.1 = lineId then count + 1n else count;
     const activeEventsInLine = Map.fold(countEvents, store.activeEvents, 0n);
-    if activeEventsInLine > line.maxActiveEvents
+    if activeEventsInLine > line.maxEvents
         then failwith("Max active events limit reached")
         else skip;
 
@@ -478,8 +478,8 @@ block {
     const line = getLine(lineId, store);
 
     store := if line.isPaused
-        then increaseMaxActiveEvents(line.maxActiveEvents, store);
-        else decreaseMaxActiveEvents(line.maxActiveEvents, store);
+        then increaseMaxActiveEvents(line.maxEvents, store);
+        else decreaseMaxActiveEvents(line.maxEvents, store);
 
     store.lines[lineId] := line with record [isPaused = not line.isPaused];
 

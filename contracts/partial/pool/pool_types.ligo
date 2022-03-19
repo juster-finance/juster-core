@@ -13,7 +13,7 @@ type lineType is record [
     lastBetsCloseTime : timestamp;
 
     (* maxEvents is amount of events that can be runned in parallel for the line? *)
-    maxActiveEvents : nat;
+    maxEvents : nat;
     (* TODO: consider having advanceTime that allows to create new event before
         lastBetsCloseTime
         {2022-03-11: but this is not very effective liquidity use} *)
@@ -101,7 +101,7 @@ type storage is record [
     newEventFee : tez;
 
     (* aggregated max active events required to calculate liquidity amount *)
-    maxActiveEvents : nat;
+    maxEvents : nat;
 
     (* As far as liquidity can be added in the same block as a new event created
         it is required to understand if this liquidity was added before or
@@ -109,7 +109,7 @@ type storage is record [
         using time/level *)
     counter : nat;
 
-    nextEventLiquidity : nat;
+    nextLiquidity : nat;
 
     isDepositPaused : bool;
 
