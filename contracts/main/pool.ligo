@@ -502,6 +502,49 @@ block {
 } with ((nil: list(operation)), store)
 
 
+function proposeManager(
+    const proposedManager : address;
+    var store : storage) is
+block {
+    checkNoAmountIncluded(unit);
+    onlyManager(store.manager);
+    store.proposedManager := proposedManager;
+} with ((nil: list(operation)), store)
+
+
+function acceptOwnership(var store : storage) is
+block {
+    checkNoAmountIncluded(unit);
+    checkSenderIs(store.proposedManager, Errors.notProposedManager);
+    store.manager := store.proposedManager;
+} with ((nil: list(operation)), store)
+
+
+type action is
+| AddLine of lineType
+| DepositLiquidity of unit
+| ApproveLiquidity of nat
+| CancelLiquidity of nat
+| ClaimLiquidity of claimLiquidityParams
+| WithdrawLiquidity of withdrawLiquidityParams
+| PayReward of nat
+| CreateEvent of nat
+| TriggerPauseLine of nat
+| TriggerPauseDeposit of unit
+| SetEntryLockPeriod of nat
+| ProposeManager of address
+| AcceptOwnership of unit
+
+(* TODO: views: getLineOfEvent, getNextEventLiquidity, getWithdrawableLiquidity,
+    getNextPositionId, getNextEntryPositionId, getNextClaimId,
+    getConfig, getWithdrawalStat ... etc *)
+(* TODO: views: getPosition(id), getClaim(id), getEvent? *)
+(* TODO: default entrypoint for baking rewards *)
+(* TODO: entrypoint to change delegator
+        - reuse Juster code
+*)
+(* TODO: consider having CreateEvents of list(nat) *)
+
 function main (const params : action; var s : storage) : (list(operation) * storage) is
 case params of
 | AddLine(p) -> addLine(p, s)
@@ -515,6 +558,8 @@ case params of
 | TriggerPauseLine(p) -> triggerPauseLine(p, s)
 | TriggerPauseDeposit -> triggerPauseDeposit(s)
 | SetEntryLockPeriod(p) -> setEntryLockPeriod(p, s)
+| ProposeManager(p) -> proposeManager(p, s)
+| AcceptOwnership -> acceptOwnership(s)
 end
 
 [@view] function getBalance (const _ : unit ; const _s: storage) : tez is Tezos.balance

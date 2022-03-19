@@ -116,6 +116,7 @@ type storage is record [
     metadata : big_map (string, bytes);
     precision : nat;
 
+    proposedManager : address;
     (* TODO: condider having withdrawStats ledger with some data that can be
         used in reward programs *)
     (* TODO: to calculate withdrawalStats it might be good to have
@@ -146,31 +147,4 @@ type withdrawLiquidityParams is list(claimKey)
     - triggerPauseLine: pauses/unpauses given line by lineId
     - triggerPauseDeposit: pauses/unpauses deposit & approve liquidity entrypoints
 *)
-
-type action is
-| AddLine of lineType
-| DepositLiquidity of unit
-| ApproveLiquidity of nat
-| CancelLiquidity of nat
-| ClaimLiquidity of claimLiquidityParams
-| WithdrawLiquidity of withdrawLiquidityParams
-| PayReward of nat
-| CreateEvent of nat
-| TriggerPauseLine of nat
-| TriggerPauseDeposit of unit
-| SetEntryLockPeriod of nat
-
-(* TODO: updateEntryLockPeriod {or move this to updateConfig} *)
-(* TODO: views: getLineOfEvent, getNextEventLiquidity, getWithdrawableLiquidity,
-    getNextPositionId, getNextEntryPositionId, getNextClaimId,
-    getConfig, getWithdrawalStat ... etc *)
-(* TODO: views: getPosition(id), getClaim(id), getEvent? *)
-(* TODO: default entrypoint for baking rewards *)
-(* TODO: entrypoint to change delegator
-        - reuse Juster code
-*)
-(* TODO: change manager entrypoints handshake
-        - reuse Juster code
-*)
-(* TODO: consider having CreateEvents of list(nat) *)
 
