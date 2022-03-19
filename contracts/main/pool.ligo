@@ -221,7 +221,7 @@ block {
     (* activeLiquidity cannot be less than providedLiquidity because it is
         provided liquidity that used in evetns (so it is part of activeLiquidity
         but it is better to check: *)
-    if store.activeLiquidity < store.activeLiquidity
+    if store.activeLiquidity < providedLiquiditySum
     then failwith(PoolErrors.wrongState)
     else skip;
 
