@@ -95,7 +95,7 @@ block {
     store.nextPositionId := store.nextPositionId + 1n;
     store.totalShares := store.totalShares + shares;
     store.counter := store.counter + 1n;
-    const providedPerEvent = provided / store.maxActiveEvents;
+    const providedPerEvent = provided * store.precision / store.maxActiveEvents;
     store.nextEventLiquidity := store.nextEventLiquidity + providedPerEvent;
 
 } with ((nil: list(operation)), store)
@@ -135,7 +135,7 @@ block {
         failwith("Claim shares is exceed position shares")
     else skip;
     const leftShares = abs(position.shares - params.shares);
-    var providedLiquiditySum := 0n;
+    var providedSum := 0n;
 
     (* TODO: refactor this loop and simplify this code *)
     for eventId -> _lineId in map store.activeEvents block {
@@ -165,7 +165,7 @@ block {
             store.claims := Big_map.update(key, Some(updatedClaim), store.claims);
 
             const providedLiquidity = params.shares * event.provided / event.totalShares;
-            providedLiquiditySum := providedLiquiditySum + providedLiquidity;
+            providedSum := providedSum + providedLiquidity;
 
             event.lockedShares := event.lockedShares + params.shares;
 
@@ -189,8 +189,8 @@ block {
     else Big_map.remove(params.positionId, store.positions);
 
     const totalLiquidity = calcTotalLiquidity(store);
-    const participantLiquidity = params.shares * totalLiquidity / store.totalShares;
-    const payoutValue = participantLiquidity - providedLiquiditySum;
+    const userLiquidity = params.shares * totalLiquidity / store.totalShares;
+    const payoutValue = userLiquidity - providedSum;
 
     (* Having negative payoutValue should not be possible,
         but it is better to check: *)
@@ -198,7 +198,7 @@ block {
     then failwith(PoolErrors.wrongState)
     else skip;
 
-    const liquidityPerEvent = participantLiquidity / store.maxActiveEvents;
+    const liquidityPerEvent = userLiquidity * store.precision / store.maxActiveEvents;
 
     (* TODO: is it possible to have liquidityPerEvent > store.nextEventLiquidity ?
         - is it better to failwith here with wrongState? *)
@@ -215,11 +215,11 @@ block {
     (* activeLiquidity cannot be less than providedLiquidity because it is
         provided liquidity that used in evetns (so it is part of activeLiquidity
         but it is better to check: *)
-    if store.activeLiquidity < providedLiquiditySum
+    if store.activeLiquidity < providedSum
     then failwith(PoolErrors.wrongState)
     else skip;
 
-    store.activeLiquidity := abs(store.activeLiquidity - providedLiquiditySum);
+    store.activeLiquidity := abs(store.activeLiquidity - providedSum);
 
     const operations = if payoutValue > 0 then
         list[prepareOperation(Tezos.sender, abs(payoutValue) * 1mutez)]
@@ -326,7 +326,8 @@ block {
     (* remainedLiquidity should always be less than store.activeLiquidity but
         it is better to cap it on zero if it somehow goes negative: *)
     store.activeLiquidity := absPositive(store.activeLiquidity - remainedLiquidity);
-    const profitLossPerEvent = (reward - event.provided) / store.maxActiveEvents;
+
+    const profitLossPerEvent = (reward - event.provided) * store.precision / store.maxActiveEvents;
     const lockedProfit = profitLossPerEvent * event.lockedShares / event.totalShares;
     const remainedProfit = profitLossPerEvent - lockedProfit;
 

@@ -114,6 +114,7 @@ type storage is record [
     isDepositPaused : bool;
 
     metadata : big_map (string, bytes);
+    precision : nat;
 
     (* TODO: condider having withdrawStats ledger with some data that can be
         used in reward programs *)
