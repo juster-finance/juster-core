@@ -4,6 +4,8 @@ function acceptOwnership(
 block {
 
     checkNoAmountIncluded(unit);
+    (* TODO: proposedManager can be just address that in not-proposed case
+        is equal to the store.manager *)
     const proposedManager : address = case store.proposedManager of
     | Some(proposed) -> proposed
     | None -> (failwith("Not allowed to accept ownership") : address)
