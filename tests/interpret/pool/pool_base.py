@@ -551,6 +551,27 @@ class PoolBaseTestCase(TestCase):
         self.assertEqual(op['delegate'], new_delegate)
 
 
+    def default(self, sender=None, amount=0):
+        sender = sender or self.manager
+
+        call = self.pool.default().with_amount(amount)
+        result = call.interpret(
+            now=self.current_time,
+            storage=self.storage,
+            sender=sender)
+        self.assertEqual(len(result.operations), 0)
+        liquidity_diff = int(
+            (result.storage['nextLiquidity'] - self.storage['nextLiquidity'])
+            / self.storage['precision'])
+
+        calc_diff = amount / self.storage['maxEvents']
+        self.assertTrue(abs(liquidity_diff - calc_diff) <= 1)
+        self.storage = result.storage
+
+        self.balances[sender] = self.balances.get(sender, 0) - amount
+        self.balances['contract'] = self.balances.get('contract', 0) + amount
+
+
     def wait(self, wait_time=0):
         self.current_time += wait_time
 
