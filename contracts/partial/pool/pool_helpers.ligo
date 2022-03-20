@@ -91,3 +91,23 @@ function checkDepositIsNotPaused(const store : storage) is
     then failwith(PoolErrors.depositIsPaused)
     else unit
 
+function getNewEventEntry(const justerAddress : address) is
+    case (Tezos.get_entrypoint_opt("%newEvent", justerAddress)
+          : option(contract(newEventParams))) of
+    | None -> (failwith(PoolErrors.justerNewEventNotFound) : contract(newEventParams))
+    | Some(entry) -> entry
+    end
+
+function getNextEventId(const justerAddress : address) is
+    case (Tezos.call_view("getNextEventId", Unit, justerAddress) : option(nat)) of
+    | Some(id) -> id
+    | None -> (failwith(PoolErrors.justerGetNextEventIdNotFound) : nat)
+    end
+
+function getProvideLiquidityEntry(const justerAddress : address) is
+    case (Tezos.get_entrypoint_opt("%provideLiquidity", justerAddress)
+          : option(contract(provideLiquidityParams))) of
+    | None -> (failwith(PoolErrors.justerProvideLiquidityNotFound) : contract(provideLiquidityParams))
+    | Some(con) -> con
+    end
+

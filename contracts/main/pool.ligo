@@ -384,13 +384,7 @@ block {
     store.lines[lineId] := line;
 
     (* newEvent transaction *)
-    (* TODO: store juster address in line instead of storage? *)
-    const newEventEntrypoint =
-        case (Tezos.get_entrypoint_opt("%newEvent", store.juster)
-              : option(contract(newEventParams))) of
-        | None -> (failwith("Juster.newEvent is not found") : contract(newEventParams))
-        | Some(con) -> con
-        end;
+    const newEventEntrypoint = getNewEventEntry(line.juster);
 
     const newEvent = record [
         currencyPair = line.currencyPair;
@@ -404,21 +398,8 @@ block {
     const newEventOperation = Tezos.transaction(
         newEvent, store.newEventFee, newEventEntrypoint);
 
-    (* getting nextEventId from Juster *)
-    const nextEventIdOption : option(nat) = Tezos.call_view
-        ("getNextEventId", Unit, store.juster);
-    const nextEventId = case nextEventIdOption of
-    | Some(id) -> id
-    | None -> (failwith("Juster.getNextEventId view is not found") : nat)
-    end;
-
-    (* provideLiquidity transaction *)
-    const provideLiquidityEntrypoint =
-        case (Tezos.get_entrypoint_opt("%provideLiquidity", store.juster)
-              : option(contract(provideLiquidityParams))) of
-        | None -> (failwith("Juster.provideLiquidity is not found") : contract(provideLiquidityParams))
-        | Some(con) -> con
-        end;
+    const nextEventId = getNextEventId(line.juster);
+    const provideLiquidityEntrypoint = getProvideLiquidityEntry(line.juster);
 
     (* TODO: is it possible to have some hook (view) to calculate line ratios?
         using data from another contract? *)

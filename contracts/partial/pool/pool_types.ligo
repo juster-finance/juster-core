@@ -21,8 +21,7 @@ type lineType is record [
         possibility of event creation with very small period until betsClose *)
 
     isPaused : bool;
-    (* TODO: consider having Juster address in line instead of storage
-        (easier to update and possibility to have multiple juster contracts) *)
+    juster : address;
 ]
 
 type positionType is record [
@@ -93,8 +92,6 @@ type storage is record [
     claims : big_map(claimKey, claimParams);
 
     manager : address;
-
-    juster : address;
 
     (* TODO: remove newEventFee and use config view instead
             (require Juster redeploying in hangzhounet) *)

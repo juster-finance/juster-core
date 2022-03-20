@@ -13,5 +13,8 @@ module PoolErrors is {
     const lineNotFound : string = "Line is not found";
     const lineIsPaused : string = "Line is paused";
     const emptyLine : string = "Line should have at least one event";
-    const depositIsPaused : string = "Deposit is paused"
+    const depositIsPaused : string = "Deposit is paused";
+    const justerNewEventNotFound : string = "Juster.newEvent is not found";
+    const justerGetNextEventIdNotFound : string = "Juster.getNextEventId view is not found";
+    const justerProvideLiquidityNotFound : string = "Juster.provideLiquidity is not found";
 }
