@@ -1,6 +1,7 @@
 import unittest
 from random import randint
 from tests.interpret.pool.pool_base import PoolBaseTestCase
+from pytezos import MichelsonRuntimeError
 
 
 class PayRewardTestCase(PoolBaseTestCase):
@@ -66,4 +67,17 @@ class PayRewardTestCase(PoolBaseTestCase):
         random_amount = randint(10, 20) * 100_000
         self.pay_reward(event_id=0, amount=random_amount)
         self.assertEqual(self.get_next_liquidity(), random_amount)
+
+
+    def test_should_fail_if_wrong_address_tries_to_payout(self):
+        # creating simple line with one event that should receive random amount of tez
+        self.add_line(max_events=1)
+        self.deposit_liquidity(amount=100)
+        self.approve_liquidity()
+        self.create_event()
+
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.pay_reward(event_id=0, amount=100, sender=self.c)
+        msg = 'Address is not expected'
+        self.assertTrue(msg in str(cm.exception))
 
