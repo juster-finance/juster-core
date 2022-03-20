@@ -34,3 +34,17 @@ class CreateEventTestCase(PoolBaseTestCase):
         err_text = 'Line should have at least one event'
         self.assertTrue(err_text in str(cm.exception))
 
+
+    def test_should_fail_if_next_event_id_is_already_was_an_event_before(self):
+        self.add_line(max_events=2)
+        self.deposit_liquidity(amount=100)
+        self.approve_liquidity()
+        self.create_event(event_line_id=0, next_event_id=42)
+        self.wait(3600)
+
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.create_event(event_line_id=0, next_event_id=42)
+
+        err_text = 'Event id is already taken'
+        self.assertTrue(err_text in str(cm.exception))
+
