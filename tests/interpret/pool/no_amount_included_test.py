@@ -5,6 +5,8 @@ from pytezos import MichelsonRuntimeError
 class NoAmountIncludedTestCase(PoolBaseTestCase):
 
     def test_entrypoints_should_not_allow_to_send_any_xtz(self):
+        self.add_line()
+
         calls = [
             lambda: self.add_line(sender=self.manager, amount=100),
             lambda: self.approve_liquidity(sender=self.manager, amount=100),
