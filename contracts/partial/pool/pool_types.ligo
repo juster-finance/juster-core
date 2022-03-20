@@ -20,6 +20,7 @@ type positionType is record [
     provider : address;
     shares : nat;
     addedCounter : nat;
+    entryLiquidityUnits : nat;
 ]
 
 type eventType is record [
@@ -48,6 +49,16 @@ type entryType is record [
     provider : address;
     acceptAfter : timestamp;
     amount : nat;
+]
+
+type withdrawalType is record [
+    liquidityUnits : nat;
+    positionId : nat;
+    shares : nat;
+    (* TODO: consider adding:
+        - added/withdrawn block/time?
+        - createdEventsCount?
+    *)
 ]
 
 type storage is record [
@@ -105,14 +116,11 @@ type storage is record [
     precision : nat;
 
     proposedManager : address;
-    (* TODO: condider having withdrawStats ledger with some data that can be
-        used in reward programs *)
-    (* TODO: to calculate withdrawalStats it might be good to have
-        - createdEventsCount
-        - providedPerShare
-        - maybe something else
-        - it might be in some kind of stats record
-    *)
+
+    (* liquidityUnits is amount of liquidity provided multiplied by locked time per share: *)
+    liquidityUnits : nat;
+    withdrawals : big_map (nat, withdrawalType);
+    nextWithdrawalId : nat;
 ]
 
 

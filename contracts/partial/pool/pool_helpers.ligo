@@ -159,3 +159,15 @@ block {
     else skip;
 } with nextBetsCloseTime
 
+function calcDuration(const line : lineType) is
+block {
+    const duration =
+        int(line.measurePeriod)
+        + line.lastBetsCloseTime
+        - Tezos.now;
+
+    if duration <= 0
+    then failwith(PoolErrors.wrongState)
+    else skip;
+} with abs(duration);
+

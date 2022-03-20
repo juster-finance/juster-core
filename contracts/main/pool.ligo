@@ -89,6 +89,7 @@ block {
         provider = entry.provider;
         shares = shares;
         addedCounter = store.counter;
+        entryLiquidityUnits = store.liquidityUnits;
     ];
 
     store.positions[store.nextPositionId] := newPosition;
@@ -182,6 +183,7 @@ block {
         provider = position.provider;
         shares = leftShares;
         addedCounter = position.addedCounter;
+        entryLiquidityUnits = position.entryLiquidityUnits;
     ];
 
     store.positions := if leftShares > 0n
@@ -225,7 +227,13 @@ block {
         list[prepareOperation(Tezos.sender, abs(payoutValue) * 1mutez)]
     else (nil: list(operation));
 
-    (* TODO: add new withdrawalStat position with data that can be used in reward programs? *)
+    const newWithdrawal = record [
+        liquidityUnits = abs(store.liquidityUnits - position.entryLiquidityUnits);
+        positionId = params.positionId;
+        shares = params.shares;
+    ];
+    store.withdrawals[store.nextWithdrawalId] := newWithdrawal;
+    store.nextWithdrawalId := store.nextWithdrawalId + 1n;
 
 } with (operations, store)
 
@@ -403,6 +411,9 @@ block {
     store.events[nextEventId] := event;
     store.activeEvents := Map.add(nextEventId, lineId, store.activeEvents);
     store.activeLiquidity := store.activeLiquidity + eventCosts;
+
+    const newUnits = eventCosts * calcDuration(line) / store.totalShares;
+    store.liquidityUnits := store.liquidityUnits + newUnits;
     store.counter := store.counter + 1n;
 
 } with (operations, store)
