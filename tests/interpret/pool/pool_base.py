@@ -535,6 +535,22 @@ class PoolBaseTestCase(TestCase):
         self.storage = result.storage
 
 
+    def set_delegate(self, sender=None, new_delegate=None, amount=0):
+        sender = sender or self.manager
+        new_delegate = new_delegate or self.c
+
+        call = self.pool.setDelegate(new_delegate).with_amount(amount)
+        result = call.interpret(
+            now=self.current_time,
+            storage=self.storage,
+            sender=sender)
+        self.assertEqual(len(result.operations), 1)
+        op = result.operations[0]
+
+        self.assertEqual(op['kind'], 'delegation')
+        self.assertEqual(op['delegate'], new_delegate)
+
+
     def wait(self, wait_time=0):
         self.current_time += wait_time
 
