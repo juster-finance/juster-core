@@ -10,3 +10,6 @@ class SetDelegateTestCase(PoolBaseTestCase):
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.set_delegate(sender=self.c)
 
+        msg = 'Not a contract manager'
+        self.assertTrue(msg in str(cm.exception))
+
