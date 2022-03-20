@@ -117,3 +117,8 @@ function getLineIdByEventId(const eventId : nat; const store : storage) is
     | None -> (failwith(PoolErrors.activeNotFound) : nat)
     end
 
+function checkHaveNoEvent(const eventId : nat; const store : storage) is
+    if Big_map.mem(eventId, store.events)
+    then failwith(PoolErrors.eventIdTaken)
+    else unit
+

@@ -332,8 +332,7 @@ block {
     (* TODO: is it possible to make newNextEventLiquidity < 0? when liquidity withdrawn
         for example and then failed event? Its good to be sure that it is impossible *)
     (* TODO: need to find this test cases if it is possible or find some proof that it is not *)
-    store.nextLiquidity :=
-        absPositive(store.nextLiquidity + remainedProfit);
+    store.nextLiquidity := absPositive(store.nextLiquidity + remainedProfit);
     (* TODO: consider failwith here instead of absPositive
         the same for store.activeLiquidity, but don't want to block this entrypoint *)
 
@@ -350,6 +349,9 @@ block {
 
     var line := getLine(lineId, store);
     checkLineIsNotPaused(line);
+
+    const nextEventId = getNextEventId(line.juster);
+    checkHaveNoEvent(nextEventId, store);
 
     (* checking how much events already runned in the line *)
     function countEvents (const count : nat; const ids : nat*nat) : nat is
@@ -395,8 +397,6 @@ block {
     (* TODO: make call to juster.getConfig view instead of using store.newEventFee *)
     const newEventOperation = Tezos.transaction(
         newEvent, store.newEventFee, newEventEntrypoint);
-
-    const nextEventId = getNextEventId(line.juster);
     const provideLiquidityEntrypoint = getProvideLiquidityEntry(line.juster);
 
     (* TODO: is it possible to have some hook (view) to calculate line ratios?

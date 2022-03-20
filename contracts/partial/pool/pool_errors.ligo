@@ -19,4 +19,5 @@ module PoolErrors is {
     const justerProvideLiquidityNotFound : string = "Juster.provideLiquidity is not found";
     const activeNotFound : string = "Active event is not found";
     const notExpectedAddress : string = "Address is not expected";
+    const eventIdTaken : string = "Event id is already taken";
 }
