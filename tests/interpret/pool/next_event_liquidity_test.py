@@ -78,7 +78,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
         mean_amount = 0
         for event_id in range(5):
             amount = random_amount()
-            self.pay_reward(event_id=1, amount=amount)
+            self.pay_reward(event_id=event_id, amount=amount)
             mean_amount += amount / 5
 
         self.assertEqual(self.get_next_liquidity(), mean_amount)
