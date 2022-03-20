@@ -455,21 +455,6 @@ block {
 } with (operations, store)
 
 
-(*
-function createEvents(
-    const lineIds : list(nat);
-    var store : storage) : (list(operation) * storage) is
-block {
-    var operations := (nil : list(operation));
-    for lineId in list lineIds block {
-        const (newEventOperation, provideLiquidityOperation, updatedStore) = createEvent(lineId, store);
-        operations := newEventOperation # provideLiquidityOperation # operations;
-        store := updatedStore
-    }
-} with (operations, store)
-*)
-
-
 function triggerPauseLine(const lineId : nat; var store : storage) is
 block {
     checkNoAmountIncluded(unit);
@@ -579,7 +564,6 @@ type action is
     getNextPositionId, getNextEntryPositionId, getNextClaimId,
     getConfig, getWithdrawalStat ... etc *)
 (* TODO: views: getPosition(id), getClaim(id), getEvent? *)
-(* TODO: consider having CreateEvents of list(nat) *)
 
 function main (const params : action; var s : storage) : (list(operation) * storage) is
 case params of

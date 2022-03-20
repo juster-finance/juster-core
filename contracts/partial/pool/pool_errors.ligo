@@ -1,5 +1,4 @@
 (* TODO: move all errors here *)
-(* TODO: rename to AggregatorErrors *)
 module PoolErrors is {
     const wrongState : string = "Wrong state";
     const notEntryOwner : string = "Not entry position owner";
