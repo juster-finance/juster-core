@@ -17,6 +17,7 @@ class NoAmountIncludedTestCase(PoolBaseTestCase):
             lambda: self.set_entry_lock_period(sender=self.manager, amount=100),
             lambda: self.propose_manager(sender=self.manager, amount=100),
             lambda: self.accept_ownership(sender=self.manager, amount=100),
+            lambda: self.set_delegate(sender=self.manager, amount=100),
         ]
 
         for call in calls:
