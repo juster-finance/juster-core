@@ -66,7 +66,8 @@ class PoolBaseTestCase(TestCase):
             last_bets_close_time=0,
             amount=0,
             juster_address=None,
-            min_betting_period=0
+            min_betting_period=0,
+            advance_time=0
         ):
 
         sender = sender or self.manager
@@ -78,7 +79,8 @@ class PoolBaseTestCase(TestCase):
             bets_period=bets_period,
             last_bets_close_time=last_bets_close_time,
             juster_address=juster_address,
-            min_betting_period=min_betting_period
+            min_betting_period=min_betting_period,
+            advance_time=advance_time
         )
 
         call = self.pool.addLine(line_params)

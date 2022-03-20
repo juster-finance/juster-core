@@ -65,3 +65,26 @@ class CreateEventTestCase(PoolBaseTestCase):
         event_id = self.create_event()
         self.assertEqual(self.storage['lines'][line_id]['lastBetsCloseTime'], 300)
 
+
+    def test_should_allow_to_run_event_if_have_advance_time(self):
+        line_id = self.add_line(max_events=2, bets_period=100, advance_time=10)
+        self.deposit_liquidity(amount=100)
+        self.approve_liquidity()
+
+        # current time with 1 sec > than min_betting_period allows:
+        self.current_time = 0
+        event_id = self.create_event()
+        self.assertEqual(self.storage['lines'][line_id]['lastBetsCloseTime'], 100)
+
+        # too early to run event:
+        self.current_time = 80
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.create_event()
+        err_text = 'Event cannot be created until previous event betsCloseTime'
+        self.assertTrue(err_text in str(cm.exception))
+
+        # good time:
+        self.current_time = 91
+        self.create_event()
+        self.assertEqual(self.storage['lines'][line_id]['lastBetsCloseTime'], 200)
+
