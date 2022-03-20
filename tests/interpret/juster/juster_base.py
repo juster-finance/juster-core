@@ -418,6 +418,35 @@ class JusterBaseTestCase(TestCase):
         self.storage = result.storage
 
 
+    def change_manager(self, sender=None, new_manager=None, amount=0):
+        sender = sender or self.manager
+        new_manager = new_manager or self.manager
+
+        call = self.contract.changeManager(new_manager).with_amount(amount)
+        result = call.interpret(
+            now=self.current_time,
+            storage=self.storage,
+            sender=sender)
+        self.assertEqual(len(result.operations), 0)
+        self.assertEqual(result.storage['proposedManager'], new_manager)
+
+        self.storage = result.storage
+
+
+    def accept_ownership(self, sender=None, amount=0):
+        sender = sender or self.manager
+
+        call = self.contract.acceptOwnership().with_amount(amount)
+        result = call.interpret(
+            now=self.current_time,
+            storage=self.storage,
+            sender=sender)
+        self.assertEqual(len(result.operations), 0)
+        self.assertEqual(result.storage['manager'], sender)
+
+        self.storage = result.storage
+
+
     def setUp(self):
 
         self.contract = ContractInterface.from_file(join(dirname(__file__), CONTRACT_FN))
