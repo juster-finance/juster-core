@@ -506,6 +506,35 @@ class PoolBaseTestCase(TestCase):
         self.storage = result.storage
 
 
+    def propose_manager(self, sender=None, proposed_manager=None, amount=0):
+        sender = sender or self.manager
+        proposed_manager = proposed_manager or self.manager
+
+        call = self.pool.proposeManager(proposed_manager).with_amount(amount)
+        result = call.interpret(
+            now=self.current_time,
+            storage=self.storage,
+            sender=sender)
+        self.assertEqual(len(result.operations), 0)
+        self.assertEqual(result.storage['proposedManager'], proposed_manager)
+
+        self.storage = result.storage
+
+
+    def accept_ownership(self, sender=None, amount=0):
+        sender = sender or self.manager
+
+        call = self.pool.acceptOwnership().with_amount(amount)
+        result = call.interpret(
+            now=self.current_time,
+            storage=self.storage,
+            sender=sender)
+        self.assertEqual(len(result.operations), 0)
+        self.assertEqual(result.storage['manager'], sender)
+
+        self.storage = result.storage
+
+
     def wait(self, wait_time=0):
         self.current_time += wait_time
 
