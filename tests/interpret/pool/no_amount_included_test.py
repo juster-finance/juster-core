@@ -15,6 +15,8 @@ class NoAmountIncludedTestCase(PoolBaseTestCase):
             lambda: self.trigger_pause_line(sender=self.manager, amount=100),
             lambda: self.trigger_pause_deposit(sender=self.manager, amount=100),
             lambda: self.set_entry_lock_period(sender=self.manager, amount=100),
+            lambda: self.propose_manager(sender=self.manager, amount=100),
+            lambda: self.accept_ownership(sender=self.manager, amount=100),
         ]
 
         for call in calls:
