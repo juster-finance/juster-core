@@ -79,6 +79,9 @@ def generate_pool_storage(manager, new_event_fee=0):
         'metadata': {'': ''},
         'precision': 1_000_000,
         'proposedManager': manager,
+        'liquidityUnits': 0,
+        'withdrawals': {},
+        'nextWithdrawalId': 0
     }
 
 
