@@ -520,6 +520,19 @@ block {
 } with ((nil: list(operation)), store)
 
 
+(* entrypoints:
+    - addLine: adding new line of typical events, only manager can add new lines
+    - depositLiquidity: creating request for adding new liquidity
+    - approveLiquidity: adds requested liquidity to the aggregator
+    - cancelLiquidity: cancels request for adding new liquidity
+    - claimLiquidity: creates request for withdraw liquidity from all current events
+    - withdrawLiquidity: withdraws claimed events
+    - payReward: callback that receives withdraws from Juster
+    - createEvent: creates new event in line, anyone can call this
+    - triggerPauseLine: pauses/unpauses given line by lineId
+    - triggerPauseDeposit: pauses/unpauses deposit & approve liquidity entrypoints
+*)
+
 type action is
 | AddLine of lineType
 | DepositLiquidity of unit
