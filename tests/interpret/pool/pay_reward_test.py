@@ -71,3 +71,18 @@ class PayRewardTestCase(PoolBaseTestCase):
         msg = 'Address is not expected'
         self.assertTrue(msg in str(cm.exception))
 
+
+    def test_should_allow_to_run_two_justers_in_different_lines(self):
+        self.add_line(max_events=1, juster_address=self.c)
+        self.add_line(max_events=1, juster_address=self.d)
+        self.deposit_liquidity(amount=100)
+        self.approve_liquidity()
+        self.create_event(event_line_id=0)
+        self.create_event(event_line_id=1)
+
+        self.pay_reward(event_id=0, amount=50, sender=self.c)
+        self.pay_reward(event_id=1, amount=50, sender=self.d)
+
+        self.claim_liquidity(position_id=0, shares=100)
+        self.assertTrue(all(balance == 0 for balance in self.balances.values()))
+

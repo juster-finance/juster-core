@@ -379,12 +379,13 @@ class PoolBaseTestCase(TestCase):
         next_event_id = next_event_id or self.next_event_id
 
         contract_call = self.pool.createEvent(event_line_id)
+        juster_address = self.storage['lines'][event_line_id]['juster']
         result = contract_call.with_amount(amount).interpret(
             storage=self.storage,
             now=self.current_time,
             sender=sender,
             view_results={
-                f'{self.juster_address}%getNextEventId': next_event_id
+                f'{juster_address}%getNextEventId': next_event_id
             },
             balance=self.balances[self.address]
         )
@@ -421,8 +422,11 @@ class PoolBaseTestCase(TestCase):
         expected_provided = self.get_next_liquidity() - event_fee
         self.assertEqual(provide_op, expected_provided)
 
+        self.assertEqual(result.operations[0]['destination'], juster_address)
+        self.assertEqual(result.operations[1]['destination'], juster_address)
+
         self.update_balance(self.address, -amount)
-        self.update_balance(self.juster_address, amount)
+        self.update_balance(juster_address, amount)
         self.next_event_id += 1
         return next_event_id
 
