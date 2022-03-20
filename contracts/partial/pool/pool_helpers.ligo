@@ -82,6 +82,7 @@ function checkLineIsNotPaused(const line : lineType) is
     else unit
 
 function checkLineValid(const line : lineType) is
+    (* TODO: add check that betsPeriod > 0? *)
     if line.maxEvents = 0n
     then failwith(PoolErrors.emptyLine)
     else unit
@@ -117,7 +118,7 @@ function getLineIdByEventId(const eventId : nat; const store : storage) is
     | None -> (failwith(PoolErrors.activeNotFound) : nat)
     end
 
-function checkHaveNoEvent(const eventId : nat; const store : storage) is
+function checkEventNotDuplicated(const eventId : nat; const store : storage) is
     if Big_map.mem(eventId, store.events)
     then failwith(PoolErrors.eventIdTaken)
     else unit
@@ -143,12 +144,11 @@ function checkReadyToEmitEvent(const line : lineType) is
 function calcBetsCloseTime(const line : lineType) is
 block {
     const periods = (Tezos.now - line.lastBetsCloseTime) / line.betsPeriod + 1n;
-    const nextBetsCloseTime = line.lastBetsCloseTime + line.betsPeriod*periods;
+    var nextBetsCloseTime := line.lastBetsCloseTime + line.betsPeriod*periods;
     const timeToEvent = Tezos.now - nextBetsCloseTime;
-    (*
-    if timeToEvent < line.minBettingTime
-    then nextBetsCloseTime = nextBetsCloseTime + line.betsPeriod
+
+    if abs(timeToEvent) < line.minBettingPeriod
+    then nextBetsCloseTime := nextBetsCloseTime + int(line.betsPeriod)
     else skip;
-    *)
 } with nextBetsCloseTime
 

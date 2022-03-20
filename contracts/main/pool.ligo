@@ -350,25 +350,13 @@ block {
     checkNoAmountIncluded(unit);
     checkHaveFreeEventSlots(store);
     checkLineIsNotPaused(line);
-    checkHaveNoEvent(nextEventId, store);
+    checkEventNotDuplicated(nextEventId, store);
     checkLineHaveFreeSlots(lineId, line, store);
     checkReadyToEmitEvent(line);
 
     const nextBetsCloseTime = calcBetsCloseTime(line);
-
-    (* TODO: it is good to move nextBetsCloseTime in time for one more period
-        if time that left is less than 30 minutes (or some const provided in
-        event line params) *)
-    (* TODO {the same}: maybe this is good to have some logic that shifts nextBetsCloseTime
-        for one more period if there are not enough time left for the bets
-        (for example if this is less than a half of the betsPeriod) *)
-
-    (* Updating line *)
     line.lastBetsCloseTime := nextBetsCloseTime;
     store.lines[lineId] := line;
-
-    (* newEvent transaction *)
-    const newEventEntrypoint = getNewEventEntry(line.juster);
 
     const newEvent = record [
         currencyPair = line.currencyPair;
@@ -380,8 +368,9 @@ block {
 
     (* TODO: make call to juster.getConfig view instead of using store.newEventFee *)
     const newEventOperation = Tezos.transaction(
-        newEvent, store.newEventFee, newEventEntrypoint);
-    const provideLiquidityEntrypoint = getProvideLiquidityEntry(line.juster);
+        newEvent,
+        store.newEventFee,
+        getNewEventEntry(line.juster));
 
     (* TODO: is it possible to have some hook (view) to calculate line ratios?
         using data from another contract? *)
@@ -396,13 +385,13 @@ block {
         so it will allow to change line priorities and reallocate funds using token *)
     const liquidityPayout = calcLiquidityPayout(store);
     const provideLiquidityOperation = Tezos.transaction(
-        provideLiquidity, liquidityPayout, provideLiquidityEntrypoint);
+        provideLiquidity,
+        liquidityPayout,
+        getProvideLiquidityEntry(line.juster));
 
     const operations = list[newEventOperation; provideLiquidityOperation];
-
     const eventCosts = (liquidityPayout + store.newEventFee)/1mutez;
 
-    (* adding new activeEvent: *)
     const event = record [
         createdCounter = store.counter;
         totalShares = store.totalShares;
@@ -410,6 +399,7 @@ block {
         result = (None : option(nat));
         provided = eventCosts;
     ];
+
     store.events[nextEventId] := event;
     store.activeEvents := Map.add(nextEventId, lineId, store.activeEvents);
     store.activeLiquidity := store.activeLiquidity + eventCosts;

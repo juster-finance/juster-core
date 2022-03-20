@@ -17,11 +17,9 @@ type lineType is record [
     (* TODO: consider having advanceTime that allows to create new event before
         lastBetsCloseTime
         {2022-03-11: but this is not very effective liquidity use} *)
-    (* TODO: consider having min time delta before next betsCloseTime to prevent
-        possibility of event creation with very small period until betsClose *)
-
     isPaused : bool;
     juster : address;
+    minBettingPeriod : nat;
 ]
 
 type positionType is record [
