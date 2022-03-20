@@ -122,3 +122,33 @@ function checkHaveNoEvent(const eventId : nat; const store : storage) is
     then failwith(PoolErrors.eventIdTaken)
     else unit
 
+function checkLineHaveFreeSlots(
+    const lineId : nat;
+    const line : lineType;
+    const store : storage) is
+block {
+    function countEvents (const count : nat; const ids : nat*nat) : nat is
+        if ids.1 = lineId then count + 1n else count;
+    const activeEventsInLine = Map.fold(countEvents, store.activeEvents, 0n);
+} with if activeEventsInLine > line.maxEvents
+    then failwith(PoolErrors.noFreeEventSlots)
+    else unit;
+
+function checkReadyToEmitEvent(const line : lineType) is
+    (* TODO: consider having some 1-5 min advance for event creation? *)
+    if Tezos.now < line.lastBetsCloseTime
+    then failwith(PoolErrors.eventNotReady)
+    else unit;
+
+function calcBetsCloseTime(const line : lineType) is
+block {
+    const periods = (Tezos.now - line.lastBetsCloseTime) / line.betsPeriod + 1n;
+    const nextBetsCloseTime = line.lastBetsCloseTime + line.betsPeriod*periods;
+    const timeToEvent = Tezos.now - nextBetsCloseTime;
+    (*
+    if timeToEvent < line.minBettingTime
+    then nextBetsCloseTime = nextBetsCloseTime + line.betsPeriod
+    else skip;
+    *)
+} with nextBetsCloseTime
+

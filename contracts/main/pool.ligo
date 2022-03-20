@@ -344,33 +344,17 @@ function createEvent(
     var store : storage) : (list(operation) * storage) is
 block {
 
+    var line := getLine(lineId, store);
+    const nextEventId = getNextEventId(line.juster);
+
     checkNoAmountIncluded(unit);
     checkHaveFreeEventSlots(store);
-
-    var line := getLine(lineId, store);
     checkLineIsNotPaused(line);
-
-    const nextEventId = getNextEventId(line.juster);
     checkHaveNoEvent(nextEventId, store);
+    checkLineHaveFreeSlots(lineId, line, store);
+    checkReadyToEmitEvent(line);
 
-    (* checking how much events already runned in the line *)
-    function countEvents (const count : nat; const ids : nat*nat) : nat is
-        if ids.1 = lineId then count + 1n else count;
-    const activeEventsInLine = Map.fold(countEvents, store.activeEvents, 0n);
-    if activeEventsInLine > line.maxEvents
-        then failwith("Max active events limit reached")
-        else skip;
-
-    (* checking that event can be created *)
-    (* only one event in line can be opened for bets *)
-    (* TODO: consider having some 1-5 min advance for event creation? *)
-    if Tezos.now < line.lastBetsCloseTime then
-        failwith("Event cannot be created until previous event betsCloseTime")
-    else skip;
-
-    (* If there was some missed events, need to adjust nextBetsCloseTime *)
-    const periods = (Tezos.now - line.lastBetsCloseTime) / line.betsPeriod + 1n;
-    const nextBetsCloseTime = line.lastBetsCloseTime + line.betsPeriod*periods;
+    const nextBetsCloseTime = calcBetsCloseTime(line);
 
     (* TODO: it is good to move nextBetsCloseTime in time for one more period
         if time that left is less than 30 minutes (or some const provided in

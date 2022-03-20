@@ -20,4 +20,5 @@ module PoolErrors is {
     const activeNotFound : string = "Active event is not found";
     const notExpectedAddress : string = "Address is not expected";
     const eventIdTaken : string = "Event id is already taken";
+    const eventNotReady : string = "Event cannot be created until previous event betsCloseTime";
 }
