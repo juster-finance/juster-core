@@ -111,3 +111,9 @@ function getProvideLiquidityEntry(const justerAddress : address) is
     | Some(con) -> con
     end
 
+function getLineIdByEventId(const eventId : nat; const store : storage) is
+    case Map.find_opt(eventId, store.activeEvents) of
+    | Some(id) -> id
+    | None -> (failwith(PoolErrors.activeNotFound) : nat)
+    end
+

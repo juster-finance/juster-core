@@ -292,13 +292,11 @@ function payReward(
     const eventId : nat;
     var store : storage) : (list(operation) * storage) is
 block {
-    (* TODO: assert that Tezos.sender is store.juster {or one of possible justers}
-        maybe it is possible to keep juster address in line and get it using
-        eventId {but it might be confusing if two Juster contracts will have the
-        same ids: this might be solved if juster address added to eventId key}
-    *)
     (* NOTE: this method based on assumption that payReward only called by
         Juster when event is finished / canceled *)
+    const lineId = getLineIdByEventId(eventId, store);
+    const line = getLine(lineId, store);
+    checkSenderIs(line.juster, PoolErrors.notExpectedAddress);
 
     (* adding event result *)
     const reward = Tezos.amount / 1mutez;
