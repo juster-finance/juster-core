@@ -83,6 +83,7 @@ function checkLineIsNotPaused(const line : lineType) is
 
 function checkLineValid(const line : lineType) is
     (* TODO: add check that betsPeriod > 0? *)
+    (* TODO: check that advanceTime < minBettingPeriod? *)
     if line.maxEvents = 0n
     then failwith(PoolErrors.emptyLine)
     else unit
@@ -136,17 +137,23 @@ block {
     else unit;
 
 function checkReadyToEmitEvent(const line : lineType) is
-    (* TODO: consider having some 1-5 min advance for event creation? *)
-    if Tezos.now < line.lastBetsCloseTime
+    if Tezos.now < line.lastBetsCloseTime - int(line.advanceTime)
     then failwith(PoolErrors.eventNotReady)
     else unit;
 
 function calcBetsCloseTime(const line : lineType) is
 block {
-    const periods = (Tezos.now - line.lastBetsCloseTime) / line.betsPeriod + 1n;
-    var nextBetsCloseTime := line.lastBetsCloseTime + line.betsPeriod*periods;
-    const timeToEvent = Tezos.now - nextBetsCloseTime;
+    var periods := (Tezos.now - line.lastBetsCloseTime) / line.betsPeriod + 1n;
 
+    (* Case when event runs in advance: *)
+    if Tezos.now < line.lastBetsCloseTime
+    then periods := periods + 1n;
+    else skip;
+
+    var nextBetsCloseTime := line.lastBetsCloseTime + line.betsPeriod*periods;
+    const timeToEvent = nextBetsCloseTime - Tezos.now;
+
+    (* Case when event is late: *)
     if abs(timeToEvent) < line.minBettingPeriod
     then nextBetsCloseTime := nextBetsCloseTime + int(line.betsPeriod)
     else skip;

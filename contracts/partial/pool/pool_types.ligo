@@ -5,21 +5,14 @@ type lineType is record [
     liquidityPercent : nat;
     rateAboveEq : nat;
     rateBelow : nat;
-
     measurePeriod : nat;
     betsPeriod : nat;
-
-    (* parameters used to control events flow *)
     lastBetsCloseTime : timestamp;
-
-    (* maxEvents is amount of events that can be runned in parallel for the line? *)
     maxEvents : nat;
-    (* TODO: consider having advanceTime that allows to create new event before
-        lastBetsCloseTime
-        {2022-03-11: but this is not very effective liquidity use} *)
     isPaused : bool;
     juster : address;
     minBettingPeriod : nat;
+    advanceTime : nat;
 ]
 
 type positionType is record [
