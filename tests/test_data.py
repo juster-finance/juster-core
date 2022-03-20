@@ -54,7 +54,7 @@ def generate_juster_storage(manager, oracle_address):
     return storage
 
 
-def generate_pool_storage(manager, juster_address, new_event_fee=0):
+def generate_pool_storage(manager, new_event_fee=0):
     return {
         'nextLineId': 0,
         'lines': {},
@@ -67,7 +67,6 @@ def generate_pool_storage(manager, juster_address, new_event_fee=0):
         'withdrawableLiquidity': 0,
         'claims': {},
         'manager': manager,
-        'juster': juster_address,
         'newEventFee': new_event_fee,
         'maxEvents': 0,
         'counter': 0,
@@ -89,7 +88,8 @@ def generate_line_params(
         currency_pair='XTZ_USD',
         max_events=2,
         target_dynamics=1_000_000,
-        last_bets_close_time=0
+        last_bets_close_time=0,
+        juster_address='KT1D6XTy8oAHkUWdzuQrzySECCDMnANEchQq',
     ):
     return {
         'currencyPair': currency_pair,
@@ -101,6 +101,7 @@ def generate_line_params(
         'betsPeriod': bets_period,
         'lastBetsCloseTime': last_bets_close_time,
         'maxEvents': max_events,
-        'isPaused': False
+        'isPaused': False,
+        'juster': juster_address
     }
 

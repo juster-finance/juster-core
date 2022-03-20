@@ -36,10 +36,7 @@ class PoolBaseTestCase(TestCase):
         self.juster_address = 'KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn'
         self.current_time = RUN_TIME
 
-        self.init_storage = generate_pool_storage(
-            manager=self.manager,
-            juster_address=self.juster_address
-        )
+        self.init_storage = generate_pool_storage(manager=self.manager)
 
         self.drop_changes()
 
@@ -67,15 +64,19 @@ class PoolBaseTestCase(TestCase):
             max_events=2,
             bets_period=3600,
             last_bets_close_time=0,
-            amount=0
+            amount=0,
+            juster_address=None
         ):
 
         sender = sender or self.manager
+        juster_address = juster_address or self.juster_address
+
         line_params = generate_line_params(
             currency_pair=currency_pair,
             max_events=max_events,
             bets_period=bets_period,
-            last_bets_close_time=last_bets_close_time
+            last_bets_close_time=last_bets_close_time,
+            juster_address=juster_address
         )
 
         call = self.pool.addLine(line_params)
