@@ -520,6 +520,26 @@ block {
 } with ((nil: list(operation)), store)
 
 
+function setDelegate(
+    const newDelegate : option (key_hash);
+    var store : storage) is
+block {
+    checkNoAmountIncluded(unit);
+    onlyManager(store.manager);
+    const operations : list (operation) = list [Tezos.set_delegate(newDelegate)];
+} with (operations, store)
+
+
+function default(var store : storage) is
+block {
+    (* If there are no active lines this entrypoint is disabled *)
+    checkHasActiveEvents(store);
+    const distributedAmount =
+        Tezos.amount / 1mutez * store.precision / store.maxEvents;
+    store.nextLiquidity := store.nextLiquidity + distributedAmount;
+} with ((nil: list(operation)), store)
+
+
 (* entrypoints:
     - addLine: adding new line of typical events, only manager can add new lines
     - depositLiquidity: creating request for adding new liquidity
@@ -531,6 +551,11 @@ block {
     - createEvent: creates new event in line, anyone can call this
     - triggerPauseLine: pauses/unpauses given line by lineId
     - triggerPauseDeposit: pauses/unpauses deposit & approve liquidity entrypoints
+    - SetEntryLockPeriod: TODO
+    - ProposeManager: TODO
+    - AcceptOwnership: TODO
+    - SetDelegate: TODO
+    - Default: TODO
 *)
 
 type action is
@@ -547,15 +572,13 @@ type action is
 | SetEntryLockPeriod of nat
 | ProposeManager of address
 | AcceptOwnership of unit
+| SetDelegate of option (key_hash)
+| Default of unit
 
 (* TODO: views: getLineOfEvent, getNextEventLiquidity, getWithdrawableLiquidity,
     getNextPositionId, getNextEntryPositionId, getNextClaimId,
     getConfig, getWithdrawalStat ... etc *)
 (* TODO: views: getPosition(id), getClaim(id), getEvent? *)
-(* TODO: default entrypoint for baking rewards *)
-(* TODO: entrypoint to change delegator
-        - reuse Juster code
-*)
 (* TODO: consider having CreateEvents of list(nat) *)
 
 function main (const params : action; var s : storage) : (list(operation) * storage) is
@@ -573,6 +596,8 @@ case params of
 | SetEntryLockPeriod(p) -> setEntryLockPeriod(p, s)
 | ProposeManager(p) -> proposeManager(p, s)
 | AcceptOwnership -> acceptOwnership(s)
+| SetDelegate(p) -> setDelegate(p, s)
+| Default -> default(s)
 end
 
 [@view] function getBalance (const _ : unit ; const _s: storage) : tez is Tezos.balance
