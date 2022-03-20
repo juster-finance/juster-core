@@ -90,6 +90,7 @@ def generate_line_params(
         target_dynamics=1_000_000,
         last_bets_close_time=0,
         juster_address='KT1D6XTy8oAHkUWdzuQrzySECCDMnANEchQq',
+        min_betting_period=0
     ):
     return {
         'currencyPair': currency_pair,
@@ -102,6 +103,7 @@ def generate_line_params(
         'lastBetsCloseTime': last_bets_close_time,
         'maxEvents': max_events,
         'isPaused': False,
-        'juster': juster_address
+        'juster': juster_address,
+        'minBettingPeriod': min_betting_period
     }
 

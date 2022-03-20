@@ -48,3 +48,20 @@ class CreateEventTestCase(PoolBaseTestCase):
         err_text = 'Event id is already taken'
         self.assertTrue(err_text in str(cm.exception))
 
+
+    def test_should_reschedule_event_if_less_than_min_betting_time_left(self):
+        line_id = self.add_line(
+            max_events=2, bets_period=100, min_betting_period=40)
+        self.deposit_liquidity(amount=100)
+        self.approve_liquidity()
+
+        # current time with 1 sec > than min_betting_period allows:
+        self.current_time = 61
+        event_id = self.create_event()
+        self.assertEqual(self.storage['lines'][line_id]['lastBetsCloseTime'], 200)
+
+        # current time with 85 secs expected betting period:
+        self.current_time = 215
+        event_id = self.create_event()
+        self.assertEqual(self.storage['lines'][line_id]['lastBetsCloseTime'], 300)
+
