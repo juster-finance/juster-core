@@ -3554,5 +3554,11 @@
        nat
        (option (pair (pair (timestamp %acceptAfter) (nat %amount)) (address %provider)))
        { UNPAIR ; SWAP ; CAR ; CAR ; CDR ; CAR ; CAR ; SWAP ; GET } ;
-  view "getNextEntryId" unit nat { CDR ; CAR ; CDR ; CDR ; CDR ; CDR } }
+  view "getNextEntryId" unit nat { CDR ; CAR ; CDR ; CDR ; CDR ; CDR } ;
+  view "getPosition"
+       nat
+       (option
+          (pair (pair (nat %addedCounter) (nat %entryLiquidityUnits))
+                (pair (address %provider) (nat %shares))))
+       { UNPAIR ; SWAP ; CDR ; CAR ; CDR ; CAR ; CAR ; SWAP ; GET } }
 

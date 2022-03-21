@@ -557,9 +557,10 @@ end
 [@view] function getNextEntryId(const _ : unit; const s: storage) is
     s.nextEntryId
 
+[@view] function getPosition(const positionId : nat; const s: storage) is
+    Big_map.find_opt(positionId, s.positions)
 
 (* TODO: views:
-    - getPosition(const positionId : nat)
     - getNextPositionId(const _ : unit)
     - getClaim(const claimId : claimKey)
     - getNextClaimId(const _ : unit)

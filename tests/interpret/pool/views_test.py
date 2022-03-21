@@ -58,3 +58,23 @@ class PoolViewsTestCase(PoolBaseTestCase):
         self.deposit_liquidity(sender=self.a, amount=1000)
         self.assertEqual(self.get_next_entry_id(), 1)
 
+
+    def test_get_position_view(self):
+
+        self.add_line()
+        self.deposit_liquidity(sender=self.a, amount=1000)
+        self.approve_liquidity()
+
+        actual_position = self.get_position(0)
+        expected_position = {
+            'shares': 1000,
+            'addedCounter': 0,
+            'entryLiquidityUnits': 0,
+            'provider': self.a,
+        }
+
+        self.assertDictEqual(expected_position, actual_position)
+
+        # check requesting entry that not in contract does not fail:
+        self.assertTrue(self.get_position(42) is None)
+

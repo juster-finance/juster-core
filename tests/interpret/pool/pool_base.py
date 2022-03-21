@@ -649,6 +649,10 @@ class PoolBaseTestCase(TestCase):
         return self.pool.getNextEntryId().onchain_view(storage=self.storage)
 
 
+    def get_position(self, position_id):
+        return self.pool.getPosition(position_id).onchain_view(storage=self.storage)
+
+
     def wait(self, wait_time=0):
         self.current_time += wait_time
 
