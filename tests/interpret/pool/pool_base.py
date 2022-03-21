@@ -420,6 +420,28 @@ class PoolBaseTestCase(TestCase):
         self.assertEqual(liquidity_units_diff, expected_liquidity_units)
 
 
+    def _check_active_liquidity_calc(self, result):
+        active_liquidity_diff = (
+            result.storage['activeLiquidity']
+            - self.storage['activeLiquidity']
+        )
+        self.assertEqual(active_liquidity_diff, self.get_next_liquidity())
+
+
+    def _check_added_event(self, result, next_event_id):
+        added_event = result.storage['events'][next_event_id]
+
+        target_event = {
+            'createdCounter': self.storage['counter'],
+            'lockedShares': 0,
+            'provided': self.get_next_liquidity(),
+            'result': None,
+            'totalShares': self.storage['totalShares']
+        }
+
+        self.assertDictEqual(added_event, target_event)
+
+
     def create_event(self, sender=None, event_line_id=0, next_event_id=None, amount=0):
         sender = sender or self.manager
         next_event_id = next_event_id or self.next_event_id
@@ -437,45 +459,25 @@ class PoolBaseTestCase(TestCase):
         )
 
         self.assertTrue(next_event_id in result.storage['activeEvents'])
-        active_liquidity_diff = (
-            result.storage['activeLiquidity']
-            - self.storage['activeLiquidity']
-        )
-        self.assertEqual(active_liquidity_diff, self.get_next_liquidity())
-        added_event = result.storage['events'][next_event_id]
-
-        target_event = {
-            'createdCounter': self.storage['counter'],
-            'lockedShares': 0,
-            'provided': self.get_next_liquidity(),
-            'result': None,
-            'totalShares': self.storage['totalShares']
-        }
-
-        self.assertDictEqual(added_event, target_event)
-
+        self._check_active_liquidity_calc(result)
+        self._check_added_event(result, next_event_id)
         self.assertEqual(self.storage['counter'] + 1, result.storage['counter'])
-
         self._check_liquidity_units_calc(result, event_line_id=event_line_id)
-
-        self.storage = result.storage
-
-        # two operations: one with newEvent and one provideLiquidity:
-        self.assertEqual(len(result.operations), 2)
 
         event_fee = int(result.operations[0]['amount'])
         provide_op = int(result.operations[1]['amount'])
-        amount = event_fee + provide_op
+        provided_amount = event_fee + provide_op
 
+        self.assertEqual(len(result.operations), 2)
         self.assertEqual(event_fee, self.storage['newEventFee'])
         expected_provided = self.get_next_liquidity() - event_fee
         self.assertEqual(provide_op, expected_provided)
-
         self.assertEqual(result.operations[0]['destination'], juster_address)
         self.assertEqual(result.operations[1]['destination'], juster_address)
 
-        self.update_balance(self.address, -amount)
-        self.update_balance(juster_address, amount)
+        self.storage = result.storage
+        self.update_balance(self.address, -provided_amount)
+        self.update_balance(juster_address, provided_amount)
         self.next_event_id += 1
         return next_event_id
 
