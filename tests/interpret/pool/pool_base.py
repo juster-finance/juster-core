@@ -67,7 +67,8 @@ class PoolBaseTestCase(TestCase):
             amount=0,
             juster_address=None,
             min_betting_period=0,
-            advance_time=0
+            advance_time=0,
+            measure_period=3600
         ):
 
         sender = sender or self.manager
@@ -80,7 +81,8 @@ class PoolBaseTestCase(TestCase):
             last_bets_close_time=last_bets_close_time,
             juster_address=juster_address,
             min_betting_period=min_betting_period,
-            advance_time=advance_time
+            advance_time=advance_time,
+            measure_period=measure_period
         )
 
         call = self.pool.addLine(line_params)
@@ -214,6 +216,24 @@ class PoolBaseTestCase(TestCase):
         self.storage = result.storage
 
 
+    def _check_withdrawal_creation(self, result, position_id, shares):
+        next_id = self.storage['nextWithdrawalId']
+        self.assertEqual(result.storage['nextWithdrawalId'], next_id+1)
+        actual_withdrawal = result.storage['withdrawals'][next_id]
+        position = self.storage['positions'][position_id]
+
+        liquidity_units = (
+            self.storage['liquidityUnits'] - position['entryLiquidityUnits'])
+
+        expected_withdrawal = {
+            'liquidityUnits': liquidity_units,
+            'positionId': position_id,
+            'shares': shares
+        }
+
+        self.assertDictEqual(expected_withdrawal, actual_withdrawal)
+
+
     def claim_liquidity(self, sender=None, position_id=0, shares=1_000_000, amount=0):
         sender = sender or self.manager
         params = {
@@ -285,6 +305,8 @@ class PoolBaseTestCase(TestCase):
         )
 
         self.assertEqual(active_liquidity_diff, provided_liquidity_sum)
+
+        self._check_withdrawal_creation(result, position_id, shares)
 
         self.storage = result.storage
 
@@ -378,6 +400,26 @@ class PoolBaseTestCase(TestCase):
         self.update_balance(self.address, amount)
 
 
+    def _check_liquidity_units_calc(self, result, event_line_id):
+        line = result.storage['lines'][event_line_id]
+        liquidity_units_diff = (
+            result.storage['liquidityUnits']
+            - self.storage['liquidityUnits'])
+
+        duration = (
+            line['measurePeriod']
+            + line['lastBetsCloseTime']
+            - self.current_time)
+
+        expected_liquidity_units = int(
+            duration
+            * self.get_next_liquidity()
+            / self.storage['totalShares']
+        )
+
+        self.assertEqual(liquidity_units_diff, expected_liquidity_units)
+
+
     def create_event(self, sender=None, event_line_id=0, next_event_id=None, amount=0):
         sender = sender or self.manager
         next_event_id = next_event_id or self.next_event_id
@@ -413,6 +455,9 @@ class PoolBaseTestCase(TestCase):
         self.assertDictEqual(added_event, target_event)
 
         self.assertEqual(self.storage['counter'] + 1, result.storage['counter'])
+
+        self._check_liquidity_units_calc(result, event_line_id=event_line_id)
+
         self.storage = result.storage
 
         # two operations: one with newEvent and one provideLiquidity:
