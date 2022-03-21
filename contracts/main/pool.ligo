@@ -543,6 +543,7 @@ case params of
 end
 
 [@view] function getBalance (const _ : unit ; const _s: storage) : tez is Tezos.balance
+[@view] function getLine (const lineId : nat; const s: storage) is Big_map.find_opt(lineId, s.lines)
 
 (* TODO: views:
     - getLine(const lineId : nat)
