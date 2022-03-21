@@ -653,6 +653,61 @@ class PoolBaseTestCase(TestCase):
         return self.pool.getPosition(position_id).onchain_view(storage=self.storage)
 
 
+    def get_next_position_id(self):
+        return self.pool.getNextPositionId().onchain_view(storage=self.storage)
+
+
+    def get_claim(self, event_id, position_id):
+        key = {'eventId': event_id, 'positionId': position_id}
+        return self.pool.getClaim(key).onchain_view(storage=self.storage)
+
+
+    def get_withdrawal(self, withdrawal_id):
+        return self.pool.getWithdrawal(withdrawal_id).onchain_view(storage=self.storage)
+
+
+    def get_next_withdrawal_id(self):
+        return self.pool.getNextWithdrawalId().onchain_view(storage=self.storage)
+
+
+    def get_active_events(self):
+        return self.pool.getActiveEvents().onchain_view(storage=self.storage)
+
+
+    def get_event(self, event_id):
+        return self.pool.getEvent(event_id).onchain_view(storage=self.storage)
+
+
+    def is_deposit_paused(self):
+        return self.pool.isDepositPaused().onchain_view(storage=self.storage)
+
+
+    def get_entry_lock_period(self):
+        return self.pool.getEntryLockPeriod().onchain_view(storage=self.storage)
+
+
+    def get_manager(self):
+        return self.pool.getManager().onchain_view(storage=self.storage)
+
+
+    def get_total_shares(self):
+        return self.pool.getTotalShares().onchain_view(storage=self.storage)
+
+
+    def get_next_liquidity_view(self):
+        # TODO: this name conflicts with get_next_liquidity that uses storage
+        # value and excludes precision
+        return self.pool.getNextLiquidity().onchain_view(storage=self.storage)
+
+
+    def get_liquidity_units(self):
+        return self.pool.getLiquidityUnits().onchain_view(storage=self.storage)
+
+
+    def get_state_values(self):
+        return self.pool.getStateValues().onchain_view(storage=self.storage)
+
+
     def wait(self, wait_time=0):
         self.current_time += wait_time
 
