@@ -522,10 +522,6 @@ type action is
 | SetDelegate of option (key_hash)
 | Default of unit
 
-(* TODO: views: getLineOfEvent, getNextEventLiquidity, getWithdrawableLiquidity,
-    getNextPositionId, getNextEntryPositionId, getNextClaimId,
-    getConfig, getWithdrawalStat ... etc *)
-(* TODO: views: getPosition(id), getClaim(id), getEvent? *)
 
 function main (const params : action; var s : storage) : (list(operation) * storage) is
 case params of
@@ -547,4 +543,28 @@ case params of
 end
 
 [@view] function getBalance (const _ : unit ; const _s: storage) : tez is Tezos.balance
+
+(* TODO: views:
+    - getLine(const lineId : nat)
+    - getNextLineId(const _ : unit)
+    - getEntry(const entryId : nat)
+    - getNextEntryId(const _ : unit)
+    - getPosition(const positionId : nat)
+    - getNextPositionId(const _ : unit)
+    - getClaim(const claimId : claimKey)
+    - getNextClaimId(const _ : unit)
+    - getWithdrawal(const withdrawalId : nat)
+    - getNextWithdrawalId(const _ : nat)
+    - getActiveEvents(const _ : unit)
+    - getEvent(const eventId : nat)
+    - isDepositPaused(const _ : unit)
+    - getEntryLockPeriod(const _ : unit)
+    - getTotalShares(const _ : unit)
+    - getManager(const _ : unit)
+    - getNextLiquidity(const _ : unit)
+    - getLiquidityUnits(const _ : unit)
+    - getLiquidityValues(const _ : unit)
+        returns activeLiquidity, withdrawableLiquidity, entryLiquidity, balance
+        counter, maxEvents?
+*)
 
