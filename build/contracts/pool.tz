@@ -3560,5 +3560,69 @@
        (option
           (pair (pair (nat %addedCounter) (nat %entryLiquidityUnits))
                 (pair (address %provider) (nat %shares))))
-       { UNPAIR ; SWAP ; CDR ; CAR ; CDR ; CAR ; CAR ; SWAP ; GET } }
+       { UNPAIR ; SWAP ; CDR ; CAR ; CDR ; CAR ; CAR ; SWAP ; GET } ;
+  view "getNextPositionId" unit nat { CDR ; CDR ; CAR ; CAR ; CDR ; CAR } ;
+  view "getClaim"
+       (pair (nat %eventId) (nat %positionId))
+       (option (pair (address %provider) (nat %shares)))
+       { UNPAIR ; SWAP ; CAR ; CAR ; CAR ; CDR ; CAR ; SWAP ; GET } ;
+  view "getWithdrawal"
+       nat
+       (option (pair (pair (nat %liquidityUnits) (nat %positionId)) (nat %shares)))
+       { UNPAIR ; SWAP ; CDR ; CDR ; CDR ; SWAP ; GET } ;
+  view "getNextWithdrawalId" unit nat { CDR ; CDR ; CAR ; CAR ; CDR ; CDR } ;
+  view "getActiveEvents" unit (map nat nat) { CDR ; CAR ; CAR ; CAR ; CAR ; CAR } ;
+  view "getEvent"
+       nat
+       (option
+          (pair (pair (pair (nat %createdCounter) (nat %lockedShares))
+                      (pair (nat %provided) (option %result nat)))
+                (nat %totalShares)))
+       { UNPAIR ; SWAP ; CAR ; CAR ; CDR ; CDR ; CDR ; SWAP ; GET } ;
+  view "isDepositPaused" unit bool { CDR ; CAR ; CDR ; CAR ; CAR ; CAR } ;
+  view "getEntryLockPeriod" unit nat { CDR ; CAR ; CAR ; CDR ; CDR ; CAR } ;
+  view "getTotalShares" unit nat { CDR ; CDR ; CAR ; CDR ; CDR ; CDR } ;
+  view "getManager" unit address { CDR ; CAR ; CDR ; CAR ; CDR ; CDR } ;
+  view "getNextLiquidity" unit nat { CDR ; CDR ; CAR ; CAR ; CAR ; CDR } ;
+  view "getLiquidityUnits" unit nat { CDR ; CAR ; CDR ; CAR ; CDR ; CAR } ;
+  view "getStateValues"
+       unit
+       (pair (pair (pair (nat %activeLiquidity) (nat %counter))
+                   (pair (nat %entryLiquidity) (nat %maxEvents)))
+             (nat %withdrawableLiquidity))
+       { CDR ;
+         DUP ;
+         CDR ;
+         CDR ;
+         CAR ;
+         SWAP ;
+         DUP ;
+         DUG 2 ;
+         CAR ;
+         CDR ;
+         CDR ;
+         CAR ;
+         CAR ;
+         DUP 3 ;
+         CAR ;
+         CAR ;
+         CDR ;
+         CAR ;
+         CDR ;
+         PAIR ;
+         DUP 3 ;
+         CAR ;
+         CAR ;
+         CAR ;
+         CDR ;
+         CDR ;
+         DIG 3 ;
+         CAR ;
+         CAR ;
+         CAR ;
+         CAR ;
+         CDR ;
+         PAIR ;
+         PAIR ;
+         PAIR } }
 
