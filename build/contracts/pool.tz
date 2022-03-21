@@ -3537,5 +3537,16 @@
                      SWAP ;
                      DIG 2 ;
                      DROP 2 } } } } ;
-  view "getBalance" unit mutez { DROP ; BALANCE } }
+  view "getBalance" unit mutez { DROP ; BALANCE } ;
+  view "getLine"
+       nat
+       (option
+          (pair (pair (pair (pair (nat %advanceTime) (nat %betsPeriod))
+                            (pair (string %currencyPair) (bool %isPaused)))
+                      (pair (pair (address %juster) (timestamp %lastBetsCloseTime))
+                            (pair (nat %liquidityPercent) (nat %maxEvents))))
+                (pair (pair (pair (nat %measurePeriod) (nat %minBettingPeriod))
+                            (pair (nat %rateAboveEq) (nat %rateBelow)))
+                      (nat %targetDynamics))))
+       { UNPAIR ; SWAP ; CAR ; CDR ; CAR ; CAR ; CDR ; SWAP ; GET } }
 
