@@ -560,22 +560,48 @@ end
 [@view] function getPosition(const positionId : nat; const s: storage) is
     Big_map.find_opt(positionId, s.positions)
 
-(* TODO: views:
-    - getNextPositionId(const _ : unit)
-    - getClaim(const claimId : claimKey)
-    - getNextClaimId(const _ : unit)
-    - getWithdrawal(const withdrawalId : nat)
-    - getNextWithdrawalId(const _ : nat)
-    - getActiveEvents(const _ : unit)
-    - getEvent(const eventId : nat)
-    - isDepositPaused(const _ : unit)
-    - getEntryLockPeriod(const _ : unit)
-    - getTotalShares(const _ : unit)
-    - getManager(const _ : unit)
-    - getNextLiquidity(const _ : unit)
-    - getLiquidityUnits(const _ : unit)
-    - getLiquidityValues(const _ : unit)
-        returns activeLiquidity, withdrawableLiquidity, entryLiquidity, balance
-        counter, maxEvents?
-*)
+[@view] function getNextPositionId(const _ : unit; const s: storage) is
+    s.nextPositionId
+
+[@view] function getClaim(const claimId : claimKey; const s: storage) is
+    Big_map.find_opt(claimId, s.claims)
+
+[@view] function getWithdrawal(const withdrawalId : nat; const s: storage) is
+    Big_map.find_opt(withdrawalId, s.withdrawals)
+
+[@view] function getNextWithdrawalId(const _ : unit; const s: storage) is
+    s.nextWithdrawalId
+
+[@view] function getActiveEvents(const _ : unit; const s: storage) is
+    s.activeEvents
+
+[@view] function getEvent(const eventId : nat; const s: storage) is
+    Big_map.find_opt(eventId, s.events)
+
+[@view] function isDepositPaused(const _ : unit; const s: storage) is
+    s.isDepositPaused
+
+[@view] function getEntryLockPeriod(const _ : unit; const s: storage) is
+    s.entryLockPeriod
+
+[@view] function getTotalShares(const _ : unit; const s: storage) is
+    s.totalShares
+
+[@view] function getManager(const _ : unit; const s: storage) is
+    s.manager
+
+[@view] function getNextLiquidity(const _ : unit; const s: storage) is
+    s.nextLiquidity
+
+[@view] function getLiquidityUnits(const _ : unit; const s: storage) is
+    s.liquidityUnits
+
+[@view] function getStateValues(const _ : unit; const s: storage) is
+    record [
+        activeLiquidity = s.activeLiquidity;
+        withdrawableLiquidity = s.withdrawableLiquidity;
+        entryLiquidity = s.entryLiquidity;
+        counter = s.counter;
+        maxEvents = s.maxEvents
+    ]
 
