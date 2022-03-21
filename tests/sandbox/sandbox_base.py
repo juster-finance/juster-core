@@ -99,7 +99,6 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
 
         storage = generate_pool_storage(
             manager=pkh(self.manager),
-            juster_address=juster_address,
             new_event_fee=new_event_fee
         )
 

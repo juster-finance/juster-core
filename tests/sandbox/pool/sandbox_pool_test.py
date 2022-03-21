@@ -13,13 +13,17 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
             measure_period=1,
             currency_pair='XTZ-USD',
             target_dynamics=1_000_000,
-            max_events=2):
+            max_events=2,
+            juster_address=None
+        ):
 
+        juster_address = juster_address or self.juster.address
         line_params = generate_line_params(
             bets_period=20,
             measure_period=measure_period,
             max_events=max_events,
-            target_dynamics=target_dynamics)
+            target_dynamics=target_dynamics,
+            juster_address=juster_address)
 
         opg = (user.contract(self.pool.address)
             .addLine(line_params)
