@@ -274,19 +274,15 @@ class PoolBaseTestCase(TestCase):
         new_position = result.storage['positions'][position_id]
         is_should_be_removed = old_position['shares'] == shares
 
-        if is_should_be_removed:
-            self.assertTrue(new_position is None)
-            result.storage['positions'].pop(position_id)
-        else:
-            self.assertEqual(old_position['provider'], new_position['provider'])
-            self.assertEqual(new_position['provider'], sender)
-            shares_diff = old_position['shares'] - new_position['shares']
-            self.assertEqual(shares_diff, shares)
-            self.assertEqual(
-                new_position['addedCounter'], old_position['addedCounter'])
-            total_shares_diff = (
-                self.storage['totalShares'] - result.storage['totalShares'])
-            self.assertEqual(total_shares_diff, shares)
+        self.assertEqual(old_position['provider'], new_position['provider'])
+        self.assertEqual(new_position['provider'], sender)
+        shares_diff = old_position['shares'] - new_position['shares']
+        self.assertEqual(shares_diff, shares)
+        self.assertEqual(
+            new_position['addedCounter'], old_position['addedCounter'])
+        total_shares_diff = (
+            self.storage['totalShares'] - result.storage['totalShares'])
+        self.assertEqual(total_shares_diff, shares)
 
         total_liquidity = (
             self.balances['contract']

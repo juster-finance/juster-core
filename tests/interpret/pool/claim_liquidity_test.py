@@ -77,7 +77,7 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.claim_liquidity(position_id=0, shares=100)
-        msg = 'Position is not found'
+        msg = 'Claim shares is exceed position shares'
         self.assertTrue(msg in str(cm.exception))
 
 
