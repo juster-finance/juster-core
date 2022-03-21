@@ -3549,5 +3549,9 @@
                             (pair (nat %rateAboveEq) (nat %rateBelow)))
                       (nat %targetDynamics))))
        { UNPAIR ; SWAP ; CAR ; CDR ; CAR ; CAR ; CDR ; SWAP ; GET } ;
-  view "getNextLineId" unit nat { CDR ; CDR ; CAR ; CAR ; CAR ; CAR } }
+  view "getNextLineId" unit nat { CDR ; CDR ; CAR ; CAR ; CAR ; CAR } ;
+  view "getEntry"
+       nat
+       (option (pair (pair (timestamp %acceptAfter) (nat %amount)) (address %provider)))
+       { UNPAIR ; SWAP ; CAR ; CAR ; CDR ; CAR ; CAR ; SWAP ; GET } }
 
