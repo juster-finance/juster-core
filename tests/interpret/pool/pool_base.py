@@ -633,6 +633,14 @@ class PoolBaseTestCase(TestCase):
         self.balances['contract'] = self.balances.get('contract', 0) + amount
 
 
+    def get_line(self, line_id):
+        return self.pool.getLine(line_id).onchain_view(storage=self.storage)
+
+
+    def get_next_line_id(self):
+        return self.pool.getNextLineId().onchain_view(storage=self.storage)
+
+
     def wait(self, wait_time=0):
         self.current_time += wait_time
 

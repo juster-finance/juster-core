@@ -3548,5 +3548,6 @@
                 (pair (pair (pair (nat %measurePeriod) (nat %minBettingPeriod))
                             (pair (nat %rateAboveEq) (nat %rateBelow)))
                       (nat %targetDynamics))))
-       { UNPAIR ; SWAP ; CAR ; CDR ; CAR ; CAR ; CDR ; SWAP ; GET } }
+       { UNPAIR ; SWAP ; CAR ; CDR ; CAR ; CAR ; CDR ; SWAP ; GET } ;
+  view "getNextLineId" unit nat { CDR ; CDR ; CAR ; CAR ; CAR ; CAR } }
 

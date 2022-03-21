@@ -5,9 +5,6 @@ from tests.test_data import generate_line_params
 
 class PoolViewsTestCase(PoolBaseTestCase):
 
-    def get_line(self, line_id):
-        return self.pool.getLine(line_id).onchain_view(storage=self.storage)
-
     def test_get_line_view(self):
 
         line_params = dict(
@@ -29,4 +26,10 @@ class PoolViewsTestCase(PoolBaseTestCase):
 
         # check requesting line that not in contract does not fail:
         self.assertTrue(self.get_line(42) is None)
+
+
+    def test_get_next_line_id_view(self):
+        self.assertEqual(self.get_next_line_id(), 0)
+        self.add_line()
+        self.assertEqual(self.get_next_line_id(), 1)
 

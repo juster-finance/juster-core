@@ -544,10 +544,9 @@ end
 
 [@view] function getBalance (const _ : unit ; const _s: storage) : tez is Tezos.balance
 [@view] function getLine (const lineId : nat; const s: storage) is Big_map.find_opt(lineId, s.lines)
+[@view] function getNextLineId(const _ : unit; const s: storage) is s.nextLineId
 
 (* TODO: views:
-    - getLine(const lineId : nat)
-    - getNextLineId(const _ : unit)
     - getEntry(const entryId : nat)
     - getNextEntryId(const _ : unit)
     - getPosition(const positionId : nat)
