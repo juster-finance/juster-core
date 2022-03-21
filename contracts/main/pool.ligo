@@ -186,9 +186,7 @@ block {
         entryLiquidityUnits = position.entryLiquidityUnits;
     ];
 
-    store.positions := if leftShares > 0n
-    then Big_map.update(params.positionId, Some(updatedPosition), store.positions);
-    else Big_map.remove(params.positionId, store.positions);
+    store.positions[params.positionId] := updatedPosition;
 
     const totalLiquidity = calcTotalLiquidity(store);
     const userLiquidity = params.shares * totalLiquidity / store.totalShares;
