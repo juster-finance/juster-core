@@ -234,6 +234,73 @@ class PoolBaseTestCase(TestCase):
         self.assertDictEqual(expected_withdrawal, actual_withdrawal)
 
 
+    def _check_position_diff(self, result, position_id, shares):
+        old_position = self.storage['positions'][position_id]
+        new_position = result.storage['positions'][position_id]
+
+        self.assertEqual(old_position['provider'], new_position['provider'])
+        self.assertEqual(old_position['provider'], new_position['provider'])
+
+        shares_diff = old_position['shares'] - new_position['shares']
+        self.assertEqual(shares_diff, shares)
+
+        self.assertEqual(
+            new_position['addedCounter'], old_position['addedCounter'])
+        total_shares_diff = (
+            self.storage['totalShares'] - result.storage['totalShares'])
+        self.assertEqual(total_shares_diff, shares)
+
+
+    def _calc_and_check_claim_excpected_amount(self, result, position_id, shares):
+        position = self.storage['positions'][position_id]
+        provided_liquidity_sum = 0
+
+        for event_id in self.storage['activeEvents']:
+            event = self.storage['events'][event_id]
+            is_impacted = position['addedCounter'] < event['createdCounter']
+            have_shares = shares > 0
+
+            if is_impacted and have_shares:
+                key = (event_id, position_id)
+                default_claim = {'shares': 0}
+                old_claim = self.storage['claims'].get(key, default_claim)
+                new_claim = result.storage['claims'][key]
+
+                shares_diff = new_claim['shares'] - old_claim['shares']
+                self.assertEqual(shares_diff, shares)
+
+                provided_liquidity_sum += int(
+                    event['provided'] * shares / event['totalShares'])
+
+        active_liquidity_diff = (
+            self.storage['activeLiquidity']
+            - result.storage['activeLiquidity']
+        )
+
+        self.assertEqual(active_liquidity_diff, provided_liquidity_sum)
+
+        total_liquidity = (
+            self.balances['contract']
+            - self.storage['entryLiquidity']
+            - self.storage['withdrawableLiquidity']
+            + self.storage['activeLiquidity']
+        )
+
+        expected_amount = int(
+            total_liquidity * shares / self.storage['totalShares']
+            - provided_liquidity_sum)
+
+        return expected_amount
+
+
+    def _check_claim_amount(self, result, expected_amount):
+        if expected_amount:
+            self.assertTrue(len(result.operations) == 1)
+            op = result.operations[0]
+            amount = int(op['amount'])
+            self.assertEqual(expected_amount, amount)
+
+
     def claim_liquidity(self, sender=None, position_id=0, shares=1_000_000, amount=0):
         sender = sender or self.manager
         params = {
@@ -249,75 +316,17 @@ class PoolBaseTestCase(TestCase):
             balance=self.balances[self.address]
         )
 
-        position = self.storage['positions'][position_id]
-        provided_liquidity_sum = 0
-
-        for event_id in self.storage['activeEvents']:
-            event = self.storage['events'][event_id]
-
-            if position['addedCounter'] < event['createdCounter']:
-                key = (event_id, position_id)
-                default_claim = {'shares': 0}
-                old_claim = self.storage['claims'].get(key, default_claim)
-
-                if shares > 0:
-                    new_claim = result.storage['claims'][key]
-
-                    self.assertEqual(
-                        new_claim['shares'] - old_claim['shares'],
-                        shares)
-
-                    provided_liquidity_sum += int(
-                        event['provided'] * shares / event['totalShares'])
-
-        old_position = self.storage['positions'][position_id]
-        new_position = result.storage['positions'][position_id]
-        is_should_be_removed = old_position['shares'] == shares
-
-        self.assertEqual(old_position['provider'], new_position['provider'])
-        self.assertEqual(new_position['provider'], sender)
-        shares_diff = old_position['shares'] - new_position['shares']
-        self.assertEqual(shares_diff, shares)
-        self.assertEqual(
-            new_position['addedCounter'], old_position['addedCounter'])
-        total_shares_diff = (
-            self.storage['totalShares'] - result.storage['totalShares'])
-        self.assertEqual(total_shares_diff, shares)
-
-        total_liquidity = (
-            self.balances['contract']
-            - self.storage['entryLiquidity']
-            - self.storage['withdrawableLiquidity']
-            + self.storage['activeLiquidity']
-        )
-
-        expected_amount = int(
-            total_liquidity * shares / self.storage['totalShares']
-            - provided_liquidity_sum)
-
-        active_liquidity_diff = (
-            self.storage['activeLiquidity']
-            - result.storage['activeLiquidity']
-        )
-
-        self.assertEqual(active_liquidity_diff, provided_liquidity_sum)
-
+        self._check_position_diff(result, position_id, shares)
         self._check_withdrawal_creation(result, position_id, shares)
+        expected_amount = self._calc_and_check_claim_excpected_amount(
+            result, position_id, shares)
+        self._check_claim_amount(result, expected_amount)
 
         self.storage = result.storage
 
-        # extracting amount if there are operations:
-        if expected_amount:
-            self.assertTrue(len(result.operations) == 1)
-            op = result.operations[0]
-            amount = int(op['amount'])
-            self.assertEqual(expected_amount, amount)
-
-            self.update_balance(self.address, -amount)
-            self.update_balance(sender, amount)
-            return amount
-
-        return 0
+        self.update_balance(self.address, -expected_amount)
+        self.update_balance(sender, expected_amount)
+        return expected_amount
 
 
     def withdraw_liquidity(self, sender=None, positions=None, amount=0):
@@ -416,7 +425,7 @@ class PoolBaseTestCase(TestCase):
         self.assertEqual(liquidity_units_diff, expected_liquidity_units)
 
 
-    def _check_active_liquidity_calc(self, result):
+    def _check_create_event_active_liquidity_calc(self, result):
         active_liquidity_diff = (
             result.storage['activeLiquidity']
             - self.storage['activeLiquidity']
@@ -455,7 +464,7 @@ class PoolBaseTestCase(TestCase):
         )
 
         self.assertTrue(next_event_id in result.storage['activeEvents'])
-        self._check_active_liquidity_calc(result)
+        self._check_create_event_active_liquidity_calc(result)
         self._check_added_event(result, next_event_id)
         self.assertEqual(self.storage['counter'] + 1, result.storage['counter'])
         self._check_liquidity_units_calc(result, event_line_id=event_line_id)
