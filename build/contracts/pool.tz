@@ -3553,5 +3553,6 @@
   view "getEntry"
        nat
        (option (pair (pair (timestamp %acceptAfter) (nat %amount)) (address %provider)))
-       { UNPAIR ; SWAP ; CAR ; CAR ; CDR ; CAR ; CAR ; SWAP ; GET } }
+       { UNPAIR ; SWAP ; CAR ; CAR ; CDR ; CAR ; CAR ; SWAP ; GET } ;
+  view "getNextEntryId" unit nat { CDR ; CAR ; CDR ; CDR ; CDR ; CDR } }
 

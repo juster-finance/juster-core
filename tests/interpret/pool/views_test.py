@@ -51,3 +51,10 @@ class PoolViewsTestCase(PoolBaseTestCase):
         # check requesting entry that not in contract does not fail:
         self.assertTrue(self.get_entry(42) is None)
 
+
+    def test_get_next_entry_id_view(self):
+        self.add_line()
+        self.assertEqual(self.get_next_entry_id(), 0)
+        self.deposit_liquidity(sender=self.a, amount=1000)
+        self.assertEqual(self.get_next_entry_id(), 1)
+
