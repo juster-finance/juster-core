@@ -22,7 +22,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
         self.create_event(event_line_id=0, next_event_id=0)
         self.wait(3600)
 
-        # A decided to remove liquidity and then redeposit it back:
+        # A decided to remove liquidity:
         withdrawn_amount = self.claim_liquidity(
             self.a, position_id=0, shares=80_000_000)
         self.assertEqual(self.get_next_liquidity(), 2_000_000)
