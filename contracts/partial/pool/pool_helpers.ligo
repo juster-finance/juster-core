@@ -10,11 +10,15 @@ function checkIsEnoughLiquidity(const store : storage) : unit is
 
 function calcLiquidityPayout(const store : storage) : tez is
     block {
-        checkIsEnoughLiquidity(store);
 
-        var liquidityAmount :=
-            store.nextLiquidity / store.precision
-            - store.newEventFee/1mutez;
+        const maxLiquidity = int(store.nextLiquidity / store.precision);
+        const freeLiquidity = calcFreeLiquidity(store);
+
+        var liquidityAmount := if maxLiquidity > freeLiquidity
+            then freeLiquidity
+            else maxLiquidity;
+
+        var liquidityAmount := liquidityAmount - store.newEventFee/1mutez;
 
         if liquidityAmount <= 0
         then failwith(PoolErrors.noLiquidity)
