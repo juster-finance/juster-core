@@ -195,25 +195,16 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
 
     def test_next_event_liquidity_with_event_creation_fee(self):
         # this case represents case from testnet launch
-        PROVIDED = 1_000_000
-        REWARD   =   900_000
+        self.add_line(max_events=2, bets_period=100, measure_period=100)
 
-        # creating one long line and one fast line:
-        fast = self.add_line(max_events=2, bets_period=100, measure_period=100)
-        long = self.add_line(max_events=2, bets_period=200, measure_period=200)
-
-        self.deposit_liquidity(self.a, amount=4*PROVIDED)
+        self.deposit_liquidity(self.a, amount=2_000_000)
         self.approve_liquidity(self.a, entry_id=0)
 
-        fast_event_id_1 = self.create_event(event_line_id=fast)
-        long_event_id_1 = self.create_event(event_line_id=long)
+        event_0 = self.create_event()
+        self.wait(100)
+        event_1 = self.create_event()
         self.wait(100)
 
-        fast_event_id_2 = self.create_event(event_line_id=fast)
-        self.wait(100)
-
-        self.pay_reward(event_id=fast_event_id_1, amount=REWARD)
-        fast_event_id_1 = self.create_event(event_line_id=fast)
-        long_event_id_2 = self.create_event(event_line_id=long)
-        self.wait(100)
+        self.pay_reward(event_id=event_0, amount=900_000)
+        event_3 = self.create_event()
 
