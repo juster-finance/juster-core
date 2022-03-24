@@ -5,9 +5,7 @@
                        (mutez %minimalWinAmount)))
                 (or (address %changeManager) (unit %claimBakingRewards)))
             (or (or (unit %claimRetainedProfits) (nat %close))
-                (or (pair %closeCallback
-                       (string %currencyPair)
-                       (pair (timestamp %lastUpdate) (nat %rate)))
+                (or (pair %closeCallback (string %currencyPair) (timestamp %lastUpdate) (nat %rate))
                     (unit %default))))
         (or (or (or (pair %newEvent
                        (pair (pair (timestamp %betsCloseTime) (string %currencyPair))
@@ -19,7 +17,8 @@
                 (or (option %setDelegate key_hash) (nat %startMeasurement)))
             (or (or (pair %startMeasurementCallback
                        (string %currencyPair)
-                       (pair (timestamp %lastUpdate) (nat %rate)))
+                       (timestamp %lastUpdate)
+                       (nat %rate))
                     (nat %triggerForceMajeure))
                 (or (lambda %updateConfig
                        (pair (pair (pair (pair (mutez %expirationFee) (bool %isEventCreationPaused))
@@ -73,34 +72,26 @@
                       (pair (nat %providerProfitFeePrecision) (nat %ratioPrecision)))
                 (pair (pair (mutez %retainedProfits) (nat %sharePrecision))
                       (nat %targetDynamicsPrecision)))) ;
-  code { PUSH string "Not a contract manager" ;
-         PUSH string "Including tez using this entrypoint call is not allowed" ;
-         PAIR ;
-         DUP ;
-         LAMBDA
-           (pair (pair string string) unit)
+  code { LAMBDA
            unit
-           { CAR ;
+           unit
+           { DROP ;
              PUSH mutez 0 ;
              AMOUNT ;
              COMPARE ;
              GT ;
-             IF { CAR ; FAILWITH } { DROP ; UNIT } } ;
-         SWAP ;
-         APPLY ;
-         SWAP ;
+             IF { PUSH string "Including tez using this entrypoint call is not allowed" ;
+                  FAILWITH }
+                { UNIT } } ;
          LAMBDA
-           (pair (pair string string) address)
+           address
            unit
-           { UNPAIR ;
-             CDR ;
+           { PUSH string "Not a contract manager" ;
              SWAP ;
              SENDER ;
              COMPARE ;
              NEQ ;
              IF { FAILWITH } { DROP ; UNIT } } ;
-         SWAP ;
-         APPLY ;
          LAMBDA
            address
            (contract unit)
@@ -233,7 +224,7 @@
                                    (pair (pair (pair (big_map (pair address nat) mutez) (big_map (pair address nat) mutez))
                                                (pair nat nat))
                                          (pair (pair mutez nat) nat))))
-                       (contract (pair string (pair timestamp nat)))))
+                       (contract (pair string timestamp nat))))
            (list operation)
            { UNPAIR ;
              SWAP ;
@@ -251,7 +242,7 @@
              CAR ;
              CONTRACT %get
                (pair string
-                     (contract (pair (string %currencyPair) (pair (timestamp %lastUpdate) (nat %rate))))) ;
+                     (contract (pair (string %currencyPair) (timestamp %lastUpdate) (nat %rate)))) ;
              IF_NONE { PUSH string "No oracle found" ; FAILWITH } {} ;
              PUSH mutez 0 ;
              DIG 3 ;
@@ -674,6 +665,7 @@
                              SWAP ;
                              CAR ;
                              PAIR ;
+                             SWAP ;
                              PAIR }
                            { DROP ;
                              DUP 7 ;
@@ -771,9 +763,10 @@
                              SWAP ;
                              CAR ;
                              PAIR ;
+                             SWAP ;
                              PAIR } ;
                          DUP ;
-                         CDR ;
+                         CAR ;
                          DUP ;
                          CDR ;
                          SWAP ;
@@ -839,7 +832,7 @@
                          CDR ;
                          CDR ;
                          DIG 4 ;
-                         CAR ;
+                         CDR ;
                          DIG 5 ;
                          SWAP ;
                          SOME ;
@@ -2863,39 +2856,39 @@
                               CAR ;
                               PAIR ;
                               PAIR ;
+                              DUP ;
+                              CDR ;
+                              SWAP ;
+                              DUP ;
+                              DUG 2 ;
+                              CAR ;
+                              CDR ;
+                              PUSH mutez 0 ;
+                              DUP 4 ;
+                              CAR ;
+                              CAR ;
+                              CDR ;
+                              CDR ;
+                              CAR ;
+                              PAIR ;
+                              DUP 4 ;
+                              CAR ;
+                              CAR ;
+                              CDR ;
+                              CAR ;
+                              PAIR ;
+                              DIG 3 ;
+                              CAR ;
+                              CAR ;
+                              CAR ;
+                              PAIR ;
+                              PAIR ;
+                              PAIR ;
                               PUSH mutez 0 ;
                               DIG 3 ;
                               COMPARE ;
                               GT ;
                               IF { DUG 2 ; CONS } { SWAP ; DROP ; SWAP } ;
-                              SWAP ;
-                              DUP ;
-                              DUG 2 ;
-                              CDR ;
-                              DUP 3 ;
-                              CAR ;
-                              CDR ;
-                              PUSH mutez 0 ;
-                              DUP 5 ;
-                              CAR ;
-                              CAR ;
-                              CDR ;
-                              CDR ;
-                              CAR ;
-                              PAIR ;
-                              DUP 5 ;
-                              CAR ;
-                              CAR ;
-                              CDR ;
-                              CAR ;
-                              PAIR ;
-                              DIG 4 ;
-                              CAR ;
-                              CAR ;
-                              CAR ;
-                              PAIR ;
-                              PAIR ;
-                              PAIR ;
                               PAIR }
                             { DIG 4 ;
                               DROP ;
@@ -2913,7 +2906,7 @@
                          CDR ;
                          CDR ;
                          DUP 4 ;
-                         CAR ;
+                         CDR ;
                          DIG 5 ;
                          SWAP ;
                          SOME ;
@@ -2940,7 +2933,7 @@
                          PAIR ;
                          PAIR ;
                          SWAP ;
-                         CDR ;
+                         CAR ;
                          PAIR } }
                    { DIG 3 ;
                      DROP ;
@@ -3201,7 +3194,7 @@
                               CAR ;
                               CDR ;
                               CAR ;
-                              DIG 17 ;
+                              DUP 18 ;
                               SWAP ;
                               EXEC ;
                               DIG 10 ;
@@ -3327,9 +3320,6 @@
                               CAR ;
                               CAR ;
                               ADD ;
-                              DIG 6 ;
-                              SWAP ;
-                              EXEC ;
                               DIG 3 ;
                               PAIR ;
                               DIG 3 ;
@@ -3345,6 +3335,19 @@
                               DIG 3 ;
                               DIG 2 ;
                               UNPAIR ;
+                              DUP 3 ;
+                              CAR ;
+                              CAR ;
+                              CDR ;
+                              CAR ;
+                              CAR ;
+                              CDR ;
+                              CDR ;
+                              CAR ;
+                              DIG 11 ;
+                              SWAP ;
+                              EXEC ;
+                              SWAP ;
                               CAR ;
                               CAR ;
                               CAR ;
@@ -3354,7 +3357,7 @@
                                 { PUSH string "Wrong state: caulculating fee for unfinished event" ;
                                   FAILWITH }
                                 {} ;
-                              DUP 3 ;
+                              DIG 3 ;
                               CAR ;
                               CAR ;
                               CDR ;
@@ -3374,30 +3377,13 @@
                               COMPARE ;
                               NEQ ;
                               AND ;
-                              IF { SWAP ;
-                                   DUP ;
-                                   DUG 2 ;
-                                   CAR ;
-                                   CAR ;
-                                   CDR ;
-                                   CAR ;
-                                   CAR ;
-                                   CDR ;
-                                   CDR ;
-                                   CAR ;
-                                   SWAP ;
-                                   DUP ;
-                                   DUG 2 ;
-                                   COMPARE ;
-                                   LT ;
-                                   IF { SWAP ; DROP }
-                                      { DROP ; CAR ; CAR ; CDR ; CAR ; CAR ; CDR ; CDR ; CAR } }
-                                 { DROP 2 ; PUSH mutez 0 } ;
+                              IF { DUP ; DUP 3 ; COMPARE ; LT ; IF { DROP } { SWAP ; DROP } }
+                                 { DROP 2 ; PUSH nat 0 } ;
                               DUP ;
                               DIG 2 ;
                               SUB ;
                               NIL operation ;
-                              PUSH mutez 0 ;
+                              PUSH int 0 ;
                               DUP 3 ;
                               COMPARE ;
                               GT ;
@@ -3406,6 +3392,10 @@
                                    DIG 4 ;
                                    CDR ;
                                    DIG 3 ;
+                                   ABS ;
+                                   DUP 9 ;
+                                   SWAP ;
+                                   EXEC ;
                                    PAIR ;
                                    PAIR ;
                                    DIG 5 ;
@@ -3413,12 +3403,22 @@
                                    EXEC ;
                                    CONS }
                                  { SWAP ; DIG 3 ; DIG 6 ; DROP 3 } ;
-                              PUSH mutez 0 ;
+                              PUSH nat 0 ;
                               DUP 3 ;
                               COMPARE ;
                               GT ;
-                              IF { SENDER ; DIG 5 ; SWAP ; EXEC ; DIG 2 ; UNIT ; TRANSFER_TOKENS ; CONS }
-                                 { SWAP ; DIG 4 ; DROP 2 } ;
+                              IF { SENDER ;
+                                   DIG 6 ;
+                                   SWAP ;
+                                   EXEC ;
+                                   DIG 2 ;
+                                   DIG 5 ;
+                                   SWAP ;
+                                   EXEC ;
+                                   UNIT ;
+                                   TRANSFER_TOKENS ;
+                                   CONS }
+                                 { SWAP ; DIG 4 ; DIG 5 ; DROP 3 } ;
                               PAIR } ;
                          DUP ;
                          CDR ;
@@ -3506,7 +3506,73 @@
                          SWAP ;
                          CAR ;
                          PAIR } } } } } ;
-  view "getNextEventId" unit nat { CDR ; CAR ; CDR ; CDR ; CDR ; CAR } ;
+  view "getConfig"
+       unit
+       (pair (pair (pair (pair (mutez %expirationFee) (bool %isEventCreationPaused))
+                         (pair (nat %maxAllowedMeasureLag) (nat %maxLiquidityPercent)))
+                   (pair (pair (nat %maxMeasurePeriod) (nat %maxPeriodToBetsClose))
+                         (pair (mutez %measureStartFee) (nat %minLiquidityPercent))))
+             (pair (pair (pair (nat %minMeasurePeriod) (nat %minPeriodToBetsClose))
+                         (pair (address %oracleAddress) (nat %providerProfitFee)))
+                   (pair (mutez %rewardCallFee) (nat %rewardFeeSplitAfter))))
+       { CDR ; CAR ; CAR ; CDR ; CAR ; CAR } ;
+  view "isParticipatedInEvent"
+       (pair address nat)
+       bool
+       { UNPAIR ;
+         SWAP ;
+         DUP ;
+         CAR ;
+         CDR ;
+         CAR ;
+         CDR ;
+         CAR ;
+         DUP 3 ;
+         MEM ;
+         SWAP ;
+         DUP ;
+         DUG 2 ;
+         CAR ;
+         CAR ;
+         CAR ;
+         CDR ;
+         CAR ;
+         DUP 4 ;
+         MEM ;
+         DIG 2 ;
+         CAR ;
+         CAR ;
+         CAR ;
+         CAR ;
+         CDR ;
+         DIG 3 ;
+         MEM ;
+         OR ;
+         OR } ;
+  view "getEvent"
+       nat
+       (pair (pair (pair (pair (pair (timestamp %betsCloseTime) (option %closedDynamics nat))
+                               (pair (option %closedOracleTime timestamp) (option %closedRate nat)))
+                         (pair (pair (timestamp %createdTime) (address %creator))
+                               (pair (string %currencyPair) (mutez %expirationFee))))
+                   (pair (pair (pair (option %isBetsAboveEqWin bool) (bool %isClosed))
+                               (pair (bool %isForceMajeure) (nat %liquidityPercent)))
+                         (pair (pair (nat %maxAllowedMeasureLag) (option %measureOracleStartTime timestamp))
+                               (pair (nat %measurePeriod) (mutez %measureStartFee)))))
+             (pair (pair (pair (address %oracleAddress) (mutez %poolAboveEq))
+                         (pair (mutez %poolBelow) (mutez %rewardCallFee)))
+                   (pair (pair (option %startRate nat) (nat %targetDynamics))
+                         (nat %totalLiquidityShares))))
+       { UNPAIR ;
+         SWAP ;
+         CAR ;
+         CAR ;
+         CDR ;
+         CDR ;
+         CDR ;
+         SWAP ;
+         GET ;
+         IF_NONE { PUSH string "Event is not found" ; FAILWITH } {} } ;
   view "getPosition"
        (pair address nat)
        (pair (pair (pair (mutez %betsAboveEq) (mutez %betsBelow))
@@ -3642,71 +3708,5 @@
          PAIR ;
          PAIR ;
          PAIR } ;
-  view "getEvent"
-       nat
-       (pair (pair (pair (pair (pair (timestamp %betsCloseTime) (option %closedDynamics nat))
-                               (pair (option %closedOracleTime timestamp) (option %closedRate nat)))
-                         (pair (pair (timestamp %createdTime) (address %creator))
-                               (pair (string %currencyPair) (mutez %expirationFee))))
-                   (pair (pair (pair (option %isBetsAboveEqWin bool) (bool %isClosed))
-                               (pair (bool %isForceMajeure) (nat %liquidityPercent)))
-                         (pair (pair (nat %maxAllowedMeasureLag) (option %measureOracleStartTime timestamp))
-                               (pair (nat %measurePeriod) (mutez %measureStartFee)))))
-             (pair (pair (pair (address %oracleAddress) (mutez %poolAboveEq))
-                         (pair (mutez %poolBelow) (mutez %rewardCallFee)))
-                   (pair (pair (option %startRate nat) (nat %targetDynamics))
-                         (nat %totalLiquidityShares))))
-       { UNPAIR ;
-         SWAP ;
-         CAR ;
-         CAR ;
-         CDR ;
-         CDR ;
-         CDR ;
-         SWAP ;
-         GET ;
-         IF_NONE { PUSH string "Event is not found" ; FAILWITH } {} } ;
-  view "isParticipatedInEvent"
-       (pair address nat)
-       bool
-       { UNPAIR ;
-         SWAP ;
-         DUP ;
-         CAR ;
-         CDR ;
-         CAR ;
-         CDR ;
-         CAR ;
-         DUP 3 ;
-         MEM ;
-         SWAP ;
-         DUP ;
-         DUG 2 ;
-         CAR ;
-         CAR ;
-         CAR ;
-         CDR ;
-         CAR ;
-         DUP 4 ;
-         MEM ;
-         DIG 2 ;
-         CAR ;
-         CAR ;
-         CAR ;
-         CAR ;
-         CDR ;
-         DIG 3 ;
-         MEM ;
-         OR ;
-         OR } ;
-  view "getConfig"
-       unit
-       (pair (pair (pair (pair (mutez %expirationFee) (bool %isEventCreationPaused))
-                         (pair (nat %maxAllowedMeasureLag) (nat %maxLiquidityPercent)))
-                   (pair (pair (nat %maxMeasurePeriod) (nat %maxPeriodToBetsClose))
-                         (pair (mutez %measureStartFee) (nat %minLiquidityPercent))))
-             (pair (pair (pair (nat %minMeasurePeriod) (nat %minPeriodToBetsClose))
-                         (pair (address %oracleAddress) (nat %providerProfitFee)))
-                   (pair (mutez %rewardCallFee) (nat %rewardFeeSplitAfter))))
-       { CDR ; CAR ; CAR ; CDR ; CAR ; CAR } }
+  view "getNextEventId" unit nat { CDR ; CAR ; CDR ; CDR ; CDR ; CAR } }
 
