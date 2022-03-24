@@ -542,14 +542,8 @@ case params of [
 | Default -> default(s)
 ]
 
-[@view] function getBalance (const _ : unit ; const _s: storage) is
-    Tezos.balance
-
 [@view] function getLine (const lineId : nat; const s: storage) is
     Big_map.find_opt(lineId, s.lines)
-
-[@view] function getNextLineId(const _ : unit; const s: storage) is
-    s.nextLineId
 
 [@view] function getEntry(const entryId : nat; const s: storage) is
     Big_map.find_opt(entryId, s.entries)
@@ -572,20 +566,30 @@ case params of [
 [@view] function getNextWithdrawalId(const _ : unit; const s: storage) is
     s.nextWithdrawalId
 
+[@view] function getEvent(const eventId : nat; const s: storage) is
+    Big_map.find_opt(eventId, s.events)
+
+[@view] function getTotalShares(const _ : unit; const s: storage) is
+    s.totalShares
+
+(* TODO: the following views are commented out because LIGO 0.38.1 doesn't allow
+    to compile contract with > 10 views, issue 1388 *)
+
+(*
 [@view] function getActiveEvents(const _ : unit; const s: storage) is
     s.activeEvents
 
-[@view] function getEvent(const eventId : nat; const s: storage) is
-    Big_map.find_opt(eventId, s.events)
+[@view] function getNextLineId(const _ : unit; const s: storage) is
+    s.nextLineId
+
+[@view] function getBalance (const _ : unit ; const _s: storage) is
+    Tezos.balance
 
 [@view] function isDepositPaused(const _ : unit; const s: storage) is
     s.isDepositPaused
 
 [@view] function getEntryLockPeriod(const _ : unit; const s: storage) is
     s.entryLockPeriod
-
-[@view] function getTotalShares(const _ : unit; const s: storage) is
-    s.totalShares
 
 [@view] function getManager(const _ : unit; const s: storage) is
     s.manager
@@ -604,4 +608,4 @@ case params of [
         counter = s.counter;
         maxEvents = s.maxEvents
     ]
-
+*)
