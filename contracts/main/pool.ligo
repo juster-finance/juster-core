@@ -148,10 +148,10 @@ block {
         var event := getEvent(eventId, store);
 
         (* checking if this claim already have some shares: *)
-        const alreadyClaimedShares = case Big_map.find_opt(key, store.claims) of
+        const alreadyClaimedShares = case Big_map.find_opt(key, store.claims) of [
         | Some(claim) -> claim.shares
         | None -> 0n
-        end;
+        ];
 
         const updatedClaim = record [
             shares = alreadyClaimedShares + params.shares;
@@ -246,22 +246,22 @@ block {
     var withdrawalSums := (Map.empty : map(address, nat));
     for key in list withdrawRequests block {
         const event = getEvent(key.eventId, store);
-        const eventResult = case event.result of
+        const eventResult = case event.result of [
         | Some(result) -> result
         | None -> (failwith("Event result is not received yet") : nat)
-        end;
+        ];
 
-        const claim = case Big_map.find_opt(key, store.claims) of
+        const claim = case Big_map.find_opt(key, store.claims) of [
         | Some(claim) -> claim
         | None -> (failwith("Claim is not found") : claimParams)
-        end;
+        ];
 
         const eventReward = eventResult * claim.shares / event.totalShares;
 
-        const updatedSum = case Map.find_opt(claim.provider, withdrawalSums) of
+        const updatedSum = case Map.find_opt(claim.provider, withdrawalSums) of [
         | Some(sum) -> sum + eventReward
         | None -> eventReward
-        end;
+        ];
 
         withdrawalSums := Map.update(claim.provider, Some(updatedSum), withdrawalSums);
 
@@ -425,7 +425,7 @@ block {
     const line = getLine(lineId, store);
 
     store := if line.isPaused
-        then increaseMaxActiveEvents(line.maxEvents, store);
+        then increaseMaxActiveEvents(line.maxEvents, store)
         else decreaseMaxActiveEvents(line.maxEvents, store);
 
     store.lines[lineId] := line with record [isPaused = not line.isPaused];
@@ -524,7 +524,7 @@ type action is
 
 
 function main (const params : action; var s : storage) : (list(operation) * storage) is
-case params of
+case params of [
 | AddLine(p) -> addLine(p, s)
 | DepositLiquidity -> depositLiquidity(s)
 | ApproveLiquidity(p) -> approveLiquidity(p, s)
@@ -540,7 +540,7 @@ case params of
 | AcceptOwnership -> acceptOwnership(s)
 | SetDelegate(p) -> setDelegate(p, s)
 | Default -> default(s)
-end
+]
 
 [@view] function getBalance (const _ : unit ; const _s: storage) is
     Tezos.balance

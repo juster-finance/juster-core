@@ -99,29 +99,29 @@ function checkDepositIsNotPaused(const store : storage) is
 
 function getNewEventEntry(const justerAddress : address) is
     case (Tezos.get_entrypoint_opt("%newEvent", justerAddress)
-          : option(contract(newEventParams))) of
+          : option(contract(newEventParams))) of [
     | None -> (failwith(PoolErrors.justerNewEventNotFound) : contract(newEventParams))
     | Some(entry) -> entry
-    end
+    ]
 
 function getNextEventId(const justerAddress : address) is
-    case (Tezos.call_view("getNextEventId", Unit, justerAddress) : option(nat)) of
+    case (Tezos.call_view("getNextEventId", Unit, justerAddress) : option(nat)) of [
     | Some(id) -> id
     | None -> (failwith(PoolErrors.justerGetNextEventIdNotFound) : nat)
-    end
+    ]
 
 function getProvideLiquidityEntry(const justerAddress : address) is
     case (Tezos.get_entrypoint_opt("%provideLiquidity", justerAddress)
-          : option(contract(provideLiquidityParams))) of
+          : option(contract(provideLiquidityParams))) of [
     | None -> (failwith(PoolErrors.justerProvideLiquidityNotFound) : contract(provideLiquidityParams))
     | Some(con) -> con
-    end
+    ]
 
 function getLineIdByEventId(const eventId : nat; const store : storage) is
-    case Map.find_opt(eventId, store.activeEvents) of
+    case Map.find_opt(eventId, store.activeEvents) of [
     | Some(id) -> id
     | None -> (failwith(PoolErrors.activeNotFound) : nat)
-    end
+    ]
 
 function checkEventNotDuplicated(const eventId : nat; const store : storage) is
     if Big_map.mem(eventId, store.events)
@@ -151,7 +151,7 @@ block {
 
     (* Case when event runs in advance: *)
     if Tezos.now < line.lastBetsCloseTime
-    then periods := periods + 1n;
+    then periods := periods + 1n
     else skip;
 
     var nextBetsCloseTime := line.lastBetsCloseTime + line.betsPeriod*periods;
