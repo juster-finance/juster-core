@@ -4,17 +4,17 @@ from getpass import getpass
 
 ONE_HOUR = 60*60
 ONE_DAY = ONE_HOUR*24
-SHELL = 'https://rpc.tzkt.io/mainnet/'
+SHELL = 'https://rpc.tzkt.io/ithacanet/'
 KEY = getpass()
 CONTRACTS = {
     'juster': ContractInterface.from_file('build/contracts/juster.tz'),
 }
 
 # Hangzhou2 Harbinger normalizer address:
-ORACLE_ADDRESS = 'KT1AdbYiPYb5hDuEuVrfxmFehtnBCXv4Np7r'
+ORACLE_ADDRESS = 'KT1ENe4jbDE1QVG1euryp23GsAeWuEwJutQX'
 
 # URI to metadata:
-CONTRACT_METADATA_URI = 'ipfs://QmZ2Ub7cWYeuxCsd4YnM82czampX5kK1WUPD86Reid8yFG'
+CONTRACT_METADATA_URI = 'ipfs://QmYVr7eBFXkW9uaFWs1jAX2CwrSdwFyZYrpE3Z2AbZSYY5'
 
 
 def to_hex(string):
@@ -23,13 +23,13 @@ def to_hex(string):
 
 def generate_storage(manager, oracle_address):
     config = {
-        'expirationFee': 200_000,
+        'expirationFee': 100_000,
         'minLiquidityPercent': 0,
         'maxLiquidityPercent': 300_000,  # 30% for 1_000_000 liquidityPrecision
         'maxAllowedMeasureLag': 60*15,  # 15 minutes
         'maxMeasurePeriod': ONE_DAY*31,  # 31 day
         'maxPeriodToBetsClose': ONE_DAY*31,  # 31 day
-        'measureStartFee': 200_000,
+        'measureStartFee': 100_000,
         'minMeasurePeriod': 60*5,  # 5 min
         'minPeriodToBetsClose': 60*5,  # 5 min
         'oracleAddress': oracle_address,
