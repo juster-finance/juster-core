@@ -1,3 +1,4 @@
+from tests.test_data import generate_juster_config
 from tests.interpret.pool.pool_base import PoolBaseTestCase
 from random import randint
 
@@ -128,14 +129,17 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
 
     def test_event_creation_fees_included_in_costs(self):
 
-        self.storage['newEventFee'] = 300_000
+        custom_config = generate_juster_config(
+            measure_start_fee=200_000,
+            expiration_fee=100_000)
+
         self.add_line(max_events=2)
 
         # providing liquidity:
         self.deposit_liquidity(self.a, amount=1_000_000)
         self.approve_liquidity(self.a, entry_id=0)
 
-        self.create_event()
+        self.create_event(config=custom_config)
         self.assertEqual(self.get_next_liquidity(), 500_000)
         self.assertEqual(self.storage['events'][0]['provided'], 500_000)
         self.wait(3600)
@@ -143,7 +147,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
         self.pay_reward(event_id=0, amount=200_000)
         self.assertEqual(self.get_next_liquidity(), 350_000)
 
-        self.create_event()
+        self.create_event(config=custom_config)
         self.assertEqual(self.storage['events'][1]['provided'], 350_000)
         self.wait(3600)
 

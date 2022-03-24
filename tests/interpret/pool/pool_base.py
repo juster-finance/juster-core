@@ -6,7 +6,8 @@ from tests.test_data import (
     ONE_HOUR,
     ONE_DAY,
     generate_pool_storage,
-    generate_line_params
+    generate_line_params,
+    generate_juster_config
 )
 
 POOL_FN = '../../../build/contracts/pool.tz'
@@ -456,9 +457,18 @@ class PoolBaseTestCase(TestCase):
         )
 
 
-    def create_event(self, sender=None, event_line_id=0, next_event_id=None, amount=0):
+    def create_event(
+            self,
+            sender=None,
+            event_line_id=0,
+            next_event_id=None,
+            amount=0,
+            config=None):
+
         sender = sender or self.manager
         next_event_id = next_event_id or self.next_event_id
+        config = config or generate_juster_config(
+            expiration_fee=0, measure_start_fee=0)
 
         contract_call = self.pool.createEvent(event_line_id)
         juster_address = self.storage['lines'][event_line_id]['juster']
@@ -467,7 +477,8 @@ class PoolBaseTestCase(TestCase):
             now=self.current_time,
             sender=sender,
             view_results={
-                f'{juster_address}%getNextEventId': next_event_id
+                f'{juster_address}%getNextEventId': next_event_id,
+                f'{juster_address}%getConfig': config
             },
             balance=self.balances[self.address]
         )
@@ -485,7 +496,9 @@ class PoolBaseTestCase(TestCase):
             result, event_line_id=event_line_id, amount=provided_amount)
 
         self.assertEqual(len(result.operations), 2)
-        self.assertEqual(event_fee, self.storage['newEventFee'])
+
+        new_event_fee = config['expirationFee'] + config['measureStartFee']
+        self.assertEqual(event_fee, new_event_fee)
         expected_provided = min(
             self.get_next_liquidity(), self._calc_free_liquidity())
         self.assertEqual(provide_op + event_fee, expected_provided)

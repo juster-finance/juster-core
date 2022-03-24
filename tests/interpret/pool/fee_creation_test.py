@@ -1,11 +1,14 @@
 from tests.interpret.pool.pool_base import PoolBaseTestCase
+from tests.test_data import generate_juster_config
 from pytezos import MichelsonRuntimeError
 
 
 class FeeEventCreationTestCase(PoolBaseTestCase):
     def test_next_event_liquidity_should_include_future_fees(self):
 
-        self.storage['newEventFee'] = 500_000
+        custom_config = generate_juster_config(
+            measure_start_fee=200_000,
+            expiration_fee=300_000)
 
         # creating default event:
         self.add_line(max_events=3)
@@ -23,7 +26,7 @@ class FeeEventCreationTestCase(PoolBaseTestCase):
         self.assertEqual(self.get_next_liquidity(), 3_000_000)
 
         # creating one event:
-        self.create_event(event_line_id=0, next_event_id=0)
+        self.create_event(event_line_id=0, next_event_id=0, config=custom_config)
         self.wait(3600)
 
         # A decided to remove all liquidity so nextEventLiquidity should be /2:
@@ -33,7 +36,7 @@ class FeeEventCreationTestCase(PoolBaseTestCase):
         self.assertEqual(self.get_next_liquidity(), 1_500_000)
 
         # Run and finish event with profit 3xtz (provided 1xtz, 0.5xtz fee):
-        self.create_event(event_line_id=0, next_event_id=1)
+        self.create_event(event_line_id=0, next_event_id=1, config=custom_config)
         self.wait(3600)
         self.pay_reward(event_id=1, amount=4_500_000)
         self.assertEqual(self.get_next_liquidity(), 2_500_000)
@@ -51,7 +54,9 @@ class FeeEventCreationTestCase(PoolBaseTestCase):
 
     def test_should_fail_to_create_event_if_fee_more_than_next_event_liquidity(self):
 
-        self.storage['newEventFee'] = 500_000
+        custom_config = generate_juster_config(
+            measure_start_fee=200_000,
+            expiration_fee=300_000)
 
         # creating default event:
         self.add_line(max_events=3)
@@ -62,7 +67,10 @@ class FeeEventCreationTestCase(PoolBaseTestCase):
         self.assertEqual(self.get_next_liquidity(), 500_000)
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.create_event(event_line_id=0, next_event_id=1)
+            self.create_event(
+                event_line_id=0,
+                next_event_id=1,
+                config=custom_config)
         msg = 'Not enough liquidity to run event'
         self.assertTrue(msg in str(cm.exception))
 

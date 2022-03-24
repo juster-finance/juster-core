@@ -5,15 +5,19 @@ ONE_HOUR = 60*60
 ONE_DAY = ONE_HOUR*24
 
 
-def generate_juster_storage(manager, oracle_address):
-    config = {
-        'expirationFee': 100_000,
+def generate_juster_config(
+        oracle_address='KT1ENe4jbDE1QVG1euryp23GsAeWuEwJutQX',
+        expiration_fee=100_000,
+        measure_start_fee=200_000
+    ):
+    return {
+        'expirationFee': expiration_fee,
         'minLiquidityPercent': 0,
         'maxLiquidityPercent': 300_000,  # 30% for 1_000_000 liquidityPrecision
         'maxAllowedMeasureLag': ONE_HOUR*4,  # 4 hours
         'maxMeasurePeriod': ONE_DAY*31,  # 31 day
         'maxPeriodToBetsClose': ONE_DAY*31,  # 31 day
-        'measureStartFee': 200_000,
+        'measureStartFee': measure_start_fee,
         'minMeasurePeriod': 60*5,  # 5 min
         'minPeriodToBetsClose': 60*5,  # 5 min
         'oracleAddress': oracle_address,
@@ -23,6 +27,8 @@ def generate_juster_storage(manager, oracle_address):
         'isEventCreationPaused': False
     }
 
+
+def generate_juster_storage(manager, oracle_address):
     storage = {
         'events': {},
         'betsAboveEq': {},
@@ -35,7 +41,7 @@ def generate_juster_storage(manager, oracle_address):
         'nextEventId': 0,
         'closeCallId': None,
         'measurementStartCallId': None,
-        'config': config,
+        'config': generate_juster_config(oracle_address),
         'manager': manager,
 
         'liquidityPrecision': 1_000_000,
@@ -67,7 +73,6 @@ def generate_pool_storage(manager, new_event_fee=0):
         'withdrawableLiquidity': 0,
         'claims': {},
         'manager': manager,
-        'newEventFee': new_event_fee,
         'maxEvents': 0,
         'counter': 0,
         'nextLiquidity': 0,
