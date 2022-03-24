@@ -42,10 +42,10 @@ block {
 
 
 function getEvent(const s : storage; const eventId : nat) : eventType is
-case Big_map.find_opt(eventId, s.events) of
+case Big_map.find_opt(eventId, s.events) of [
 | Some(event) -> event
 | None -> (failwith("Event is not found") : eventType)
-end;
+]
 
 
 (* TODO: make one func using polymorphism *)
@@ -53,10 +53,10 @@ end;
 function getLedgerAmount(const k : ledgerKey; const l : ledgerType) : tez is
 block {
     var ledgerAmount : tez := 0tez;
-    case Big_map.find_opt(k, l) of
+    case Big_map.find_opt(k, l) of [
     | Some(value) -> ledgerAmount := value
     | None -> ledgerAmount := 0tez
-    end;
+    ]
 } with ledgerAmount
 
 
@@ -64,10 +64,10 @@ block {
 function getNatLedgerAmount(const k : ledgerKey; const l : ledgerNatType) : nat is
 block {
     var ledgerAmount : nat := 0n;
-    case Big_map.find_opt(k, l) of
+    case Big_map.find_opt(k, l) of [
     | Some(value) -> ledgerAmount := value
     | None -> ledgerAmount := 0n
-    end;
+    ]
 } with ledgerAmount
 
 
@@ -79,10 +79,10 @@ block {
 
     const event = getEvent(s, eventId);
     const callToOracle : contract(oracleParam) =
-        case (Tezos.get_entrypoint_opt("%get", event.oracleAddress) : option(contract(oracleParam))) of
+        case (Tezos.get_entrypoint_opt("%get", event.oracleAddress) : option(contract(oracleParam))) of [
         | None -> (failwith("No oracle found") : contract(oracleParam))
         | Some(con) -> con
-        end;
+        ];
 
     const callback : operation = Tezos.transaction(
         (event.currencyPair, entrypoint),

@@ -7,7 +7,7 @@ block {
     (* Slippage calculated in ratioPrecision values as multiplicative difference
         between bigger and smaller ratios: *)
     var slippage : nat := if expectedRatio > ratio
-        then precision * expectedRatio / ratio;
+        then precision * expectedRatio / ratio
         else precision * ratio / expectedRatio;
 
     (* At this point slippage is always >= store.ratioPrecision *)

@@ -5,11 +5,11 @@ block {
 
     checkNoAmountIncluded(unit);
 
-    case store.measurementStartCallId of
+    case store.measurementStartCallId of [
     | Some(_measurementStartCallId) ->
         failwith("Another call to oracle in process (should not be here)")
     | None -> skip
-    end;
+    ];
 
     const operations = makeCallToOracle(
         eventId,

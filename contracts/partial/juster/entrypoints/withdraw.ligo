@@ -17,11 +17,11 @@ block {
     const betA : nat = tezToNat(getLedgerAmount(key, store.betsAboveEq));
     const betB : nat = tezToNat(getLedgerAmount(key, store.betsBelow));
 
-    const isBetsAboveEqWin : bool = case event.isBetsAboveEqWin of
+    const isBetsAboveEqWin : bool = case event.isBetsAboveEqWin of [
     | Some(isWin) -> isWin
     (* should not be here: *)
     | None -> (failwith("Winner is undefined") : bool)
-    end;
+    ];
 
     const bet : nat = if isBetsAboveEqWin then betA else betB;
 
@@ -73,20 +73,21 @@ function calculateFee(
     const store : storage;
     const params : withdrawParams;
     const event : eventType;
-    const payout : tez) : tez is
+    const payout : nat) : nat is
 block {
     (* fee cannot exceed payout: *)
-    const fee = if payout < store.config.rewardCallFee
+    const maxFee = tezToNat(store.config.rewardCallFee);
+    const fee = if payout < maxFee
         then payout
-        else store.config.rewardCallFee;
+        else maxFee;
 
     (* fee can be extracted only if two conditions meet:
         - sender is not participant itself
         - after closing event timedelta was passed *)
-    const closedTime = case event.closedOracleTime of
+    const closedTime = case event.closedOracleTime of [
     | Some(time) -> time
     | None -> (failwith("Wrong state: caulculating fee for unfinished event"): timestamp)
-    end;
+    ];
 
     const feeTime : timestamp = closedTime + int(store.config.rewardFeeSplitAfter);
     const senderCanGetFee = Tezos.now >= feeTime;
@@ -94,40 +95,40 @@ block {
 
     const senderFee = if senderIsNotParticipant and senderCanGetFee
         then fee
-        else 0tez;
+        else 0n;
 } with senderFee
 
 
-function makeParticipantPayoutOperation(
+function makePayoutOp(
     const payout : tez;
     const destination : address;
     const eventId : nat) : operation is
-case (Tezos.get_entrypoint_opt("%payReward", destination) : option(contract(nat))) of
+case (Tezos.get_entrypoint_opt("%payReward", destination) : option(contract(nat))) of [
 | None -> Tezos.transaction(unit, payout, getReceiver(destination))
 | Some(receiver) -> Tezos.transaction(eventId, payout, receiver)
-end;
+];
 
 
 function makeWithdrawOperations(
     const store : storage;
     const params : withdrawParams;
     const event : eventType;
-    const payout : tez) : list(operation) is
+    const payout : nat) : list(operation) is
 block {
 
     const senderFee = calculateFee(store, params, event, payout);
-    const participantPayout = payout - senderFee;
+    const netPayout = payout - senderFee;
 
     var operations : list(operation) := nil;
 
-    if participantPayout > 0tez
-    then operations := makeParticipantPayoutOperation
-        (participantPayout, params.participantAddress, params.eventId) # operations
+    if netPayout > 0
+    then operations := makePayoutOp
+        (natToTez(abs(netPayout)), params.participantAddress, params.eventId) # operations
     else skip;
 
-    if senderFee > 0tez
+    if senderFee > 0n
     then operations := Tezos.transaction 
-        (unit, senderFee, getReceiver(Tezos.sender)) # operations
+        (unit, natToTez(senderFee), getReceiver(Tezos.sender)) # operations
     else skip;
 
 } with operations;
@@ -156,14 +157,14 @@ block {
         const payoutValue : tez = forceMajeureReturnPayout(store, key);
         operations := if payoutValue > 0tez
             then list[
-                makeParticipantPayoutOperation
+                makePayoutOp
                     (payoutValue, params.participantAddress, params.eventId)]
             else (nil: list(operation))
     }
     else block {
         const payout : payoutInfo = calculatePayout(store, event, key);
         store.retainedProfits := store.retainedProfits + natToTez(payout.fee);
-        const payoutValue : tez = natToTez(payout.bet + payout.provider);
+        const payoutValue : nat = payout.bet + payout.provider;
         operations := makeWithdrawOperations(store, params, event, payoutValue);
     };
 

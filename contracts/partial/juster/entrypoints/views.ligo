@@ -3,7 +3,7 @@
 [@view] function getPosition (const key : ledgerKey ; const s : storage) : positionType is
 block {
     if isParticipant(s, key)
-        then skip;
+        then skip
         else failwith("Position is not found");
 } with record [
     providedLiquidityAboveEq = getLedgerAmount(key, s.providedLiquidityAboveEq);

@@ -45,16 +45,16 @@ block {
     const key : ledgerKey = (Tezos.sender, eventId);
 
     (* poolTo is the pool where bet goes *)
-    var poolTo : nat := case params.bet of
+    var poolTo : nat := case params.bet of [
     | AboveEq -> tezToNat(event.poolAboveEq)
     | Below -> tezToNat(event.poolBelow)
-    end;
+    ];
 
     (* poolFrom is the pool where possible win earrings coming *)
-    var poolFrom : nat := case params.bet of
+    var poolFrom : nat := case params.bet of [
     | AboveEq -> tezToNat(event.poolBelow)
     | Below -> tezToNat(event.poolAboveEq)
-    end;
+    ];
 
     const betValue : nat = tezToNat(Tezos.amount);
 
@@ -75,7 +75,7 @@ block {
     else skip;
 
     (* Updating event and ledger: *)
-    case params.bet of
+    case params.bet of [
     | AboveEq -> block {
         store.betsAboveEq[key] :=
             getLedgerAmount(key, store.betsAboveEq) + possibleWinAmount;
@@ -88,7 +88,7 @@ block {
         event.poolAboveEq := natToTez(poolFrom);
         event.poolBelow := natToTez(poolTo);
     }
-    end;
+    ];
 
     (* Adding this bet into deposited bets ledger that tracks all bets
         regardless above / below: *)

@@ -34,16 +34,16 @@ block {
     var operations : list(operation) := nil;
 
     (* Force Majeure case 1: start measurement lag is too long: *)
-    const isStartMeasurementFailed : bool = case event.measureOracleStartTime of
+    const isStartMeasurementFailed : bool = case event.measureOracleStartTime of [
     | Some(_time) -> False
     | None -> isStartFailed(event)
-    end;
+    ];
 
     (* Force Majeure case 2: close lag is too long: *)
-    const isCloseFailed : bool = case event.closedOracleTime of
+    const isCloseFailed : bool = case event.closedOracleTime of [
     | Some(_time) -> False
     | None -> isCloseFailed(event)
-    end;
+    ];
 
     (* Triggering Force Majeure: *)
     if isStartMeasurementFailed or isCloseFailed then

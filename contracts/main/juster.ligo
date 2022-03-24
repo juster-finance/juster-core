@@ -41,7 +41,7 @@ type action is
 
 
 function main (const params : action; var s : storage) : (list(operation) * storage) is
-case params of
+case params of [
 | NewEvent(p)                 -> newEvent(p, s)
 | Bet(p)                      -> bet(p, s)
 | ProvideLiquidity(p)         -> provideLiquidity(p, s)
@@ -58,7 +58,7 @@ case params of
 | ClaimRetainedProfits(p)     -> claimRetainedProfits(p, s)
 | ChangeManager(p)            -> changeManager(p, s)
 | AcceptOwnership(p)          -> acceptOwnership(p, s)
-end
+]
 
 #include "../partial/juster/entrypoints/views.ligo"
 

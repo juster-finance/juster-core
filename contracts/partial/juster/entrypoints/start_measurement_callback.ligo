@@ -5,10 +5,10 @@ block {
 
     checkNoAmountIncluded(unit);
 
-    const eventId : nat = case store.measurementStartCallId of
+    const eventId : nat = case store.measurementStartCallId of [
     | Some(_measurementStartCallId) -> _measurementStartCallId
     | None -> (failwith("measurementStartCallId is empty") : nat)
-    end;
+    ];
 
     var event : eventType := getEvent(store, eventId);
 
@@ -19,10 +19,10 @@ block {
     if param.currencyPair =/= event.currencyPair
     then failwith("Unexpected currency pair") else skip;
 
-    case event.measureOracleStartTime of
+    case event.measureOracleStartTime of [
     | Some(_time) -> failwith("Measurement period already started")
     | None -> skip
-    end;
+    ];
 
     if event.betsCloseTime > param.lastUpdate
     then failwith("Can't start measurement untill oracle time > betsCloseTime")

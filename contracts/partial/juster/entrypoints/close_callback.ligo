@@ -5,10 +5,10 @@ block {
 
     checkNoAmountIncluded(unit);
 
-    const eventId : nat = case store.closeCallId of
+    const eventId : nat = case store.closeCallId of [
     | Some(closeCallId) -> closeCallId
     | None -> (failwith("closeCallId is empty") : nat)
-    end;
+    ];
 
     var event : eventType := getEvent(store, eventId);
 
@@ -19,10 +19,10 @@ block {
     if param.currencyPair =/= event.currencyPair
     then failwith("Unexpected currency pair") else skip;
 
-    const startedTime : timestamp = case event.measureOracleStartTime of
+    const startedTime : timestamp = case event.measureOracleStartTime of [
     | Some(time) -> time
     | None -> (failwith("Can't close event before measurement period started") : timestamp)
-    end;
+    ];
 
     const endTime : timestamp = startedTime + int(event.measurePeriod);
     if param.lastUpdate < endTime then
@@ -34,20 +34,20 @@ block {
     then failwith("Close failed: oracle time exceed maxAllowedMeasureLag")
     else skip;
 
-    case event.closedOracleTime of
+    case event.closedOracleTime of [
     | Some(_p) -> failwith("Event already closed. Can't close event twice")
     | None -> skip
-    end;
+    ];
 
     (* Closing event: *)
     event.closedOracleTime := Some(param.lastUpdate);
     event.closedRate := Some(param.rate);
 
-    const closeDynamics : nat = case event.startRate of
+    const closeDynamics : nat = case event.startRate of [
     | Some(startRate) -> param.rate * store.targetDynamicsPrecision / startRate
     (* should not be here: *)
     | None -> (failwith("event.startRate is empty") : nat)
-    end;
+    ];
 
     event.closedDynamics := Some(closeDynamics);
 
