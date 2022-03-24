@@ -29,19 +29,19 @@ function provideEvidence(
 ) : (list(operation)*rewardProgramStorage) is
 
 block {
-    const eventId = case List.head_opt(ids) of
+    const eventId = case List.head_opt(ids) of [
     | Some(id) -> id
     | None -> (failwith("No events provided") : nat)
-    end;
+    ];
 
     const key = (Tezos.sender, eventId);
 
     const positionOption : option(positionType) = Tezos.call_view
         ("getPosition", key, store.juster);
-    const position = case positionOption of
+    const position = case positionOption of [
     | Some(id) -> id
     | None -> (failwith("Juster.getPosition view is not found") : positionType)
-    end;
+    ];
 
     if position.depositedLiquidity >= 1_000_000mutez
         then store.result := True
@@ -51,8 +51,8 @@ block {
 
 
 function main(const params : action; const s : rewardProgramStorage) : (list(operation)*rewardProgramStorage) is
-case params of
+case params of [
 | ProvideEvidence(ids) -> provideEvidence(ids, s)
 | AddTez -> ((nil : list(operation)), s)
-end;
+];
 
