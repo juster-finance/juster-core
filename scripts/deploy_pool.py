@@ -4,14 +4,14 @@ from pytezos import ContractInterface, pytezos
 import time
 from getpass import getpass
 
-SHELL = 'https://rpc.tzkt.io/hangzhou2net/'
+SHELL = 'https://rpc.tzkt.io/ithacanet/'
 KEY = getpass()
 CONTRACTS = {
     'pool': ContractInterface.from_file('build/contracts/pool.tz'),
 }
 
 # Hangzhou2 Juster address:
-JUSTER_ADDRESS = 'KT197iHRJaAGw3oGpQj21YYV1vK9Fa5ShoMn'
+JUSTER_ADDRESS = 'KT1Feq9iRBBhpSBdPF1Y7Sd7iJu7uLqqRf1A'
 
 # URI to metadata:
 CONTRACT_METADATA_URI = 'ipfs://QmPC9ErX3VPa719nk3gJvRmoqdSo6KMAcnGeQ6BwvN8RML'
@@ -34,7 +34,6 @@ def generate_pool_storage(manager, juster_address):
         'withdrawableLiquidity': 0,
         'claims': {},
         'manager': manager,
-        'newEventFee': 400_000,
         'maxEvents': 0,
         'counter': 0,
         'nextLiquidity': 0,
