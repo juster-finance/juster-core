@@ -8,7 +8,7 @@ function checkIsEnoughLiquidity(const store : storage) : unit is
     then failwith(PoolErrors.noLiquidity)
     else unit;
 
-function calcLiquidityPayout(const store : storage) : tez is
+function calcLiquidityPayout(const store : storage; const newEventFee : tez) : tez is
     block {
 
         const maxLiquidity = int(store.nextLiquidity / store.precision);
@@ -18,7 +18,7 @@ function calcLiquidityPayout(const store : storage) : tez is
             then freeLiquidity
             else maxLiquidity;
 
-        var liquidityAmount := liquidityAmount - store.newEventFee/1mutez;
+        var liquidityAmount := liquidityAmount - newEventFee/1mutez;
 
         if liquidityAmount <= 0
         then failwith(PoolErrors.noLiquidity)
@@ -110,6 +110,12 @@ function getNextEventId(const justerAddress : address) is
     | None -> (failwith(PoolErrors.justerGetNextEventIdNotFound) : nat)
     ]
 
+function getConfig(const justerAddress : address) is
+    case (Tezos.call_view("getConfig", Unit, justerAddress) : option(configType)) of [
+    | Some(id) -> id
+    | None -> (failwith(PoolErrors.justerGetConfigNotFound) : configType)
+    ]
+
 function getProvideLiquidityEntry(const justerAddress : address) is
     case (Tezos.get_entrypoint_opt("%provideLiquidity", justerAddress)
           : option(contract(provideLiquidityParams))) of [
@@ -174,4 +180,9 @@ block {
     then failwith(PoolErrors.wrongState)
     else skip;
 } with abs(duration);
+
+function getNewEventFee(const justerAddress : address) is
+block {
+    const config = getConfig(justerAddress);
+} with config.expirationFee + config.measureStartFee
 

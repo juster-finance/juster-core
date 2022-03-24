@@ -372,10 +372,10 @@ block {
         liquidityPercent = line.liquidityPercent;
     ];
 
-    (* TODO: make call to juster.getConfig view instead of using store.newEventFee *)
+    const newEventFee = getNewEventFee(line.juster);
     const newEventOperation = Tezos.transaction(
         newEvent,
-        store.newEventFee,
+        newEventFee,
         getNewEventEntry(line.juster));
 
     (* TODO: is it possible to have some hook (view) to calculate line ratios?
@@ -389,14 +389,14 @@ block {
 
     (* TODO: is it possible to have some hook (view) to adjust payout?
         so it will allow to change line priorities and reallocate funds using token *)
-    const liquidityPayout = calcLiquidityPayout(store);
+    const liquidityPayout = calcLiquidityPayout(store, newEventFee);
     const provideLiquidityOperation = Tezos.transaction(
         provideLiquidity,
         liquidityPayout,
         getProvideLiquidityEntry(line.juster));
 
     const operations = list[newEventOperation; provideLiquidityOperation];
-    const eventCosts = (liquidityPayout + store.newEventFee)/1mutez;
+    const eventCosts = (liquidityPayout + newEventFee)/1mutez;
 
     const event = record [
         createdCounter = store.counter;

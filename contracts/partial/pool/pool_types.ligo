@@ -95,10 +95,6 @@ type storage is record [
 
     manager : address;
 
-    (* TODO: remove newEventFee and use config view instead
-            (require Juster redeploying in hangzhounet) *)
-    newEventFee : tez;
-
     (* aggregated max active events required to calculate liquidity amount *)
     maxEvents : nat;
 

@@ -17,6 +17,7 @@ module PoolErrors is {
     const justerNewEventNotFound : string = "Juster.newEvent is not found";
     const justerGetNextEventIdNotFound : string = "Juster.getNextEventId view is not found";
     const justerProvideLiquidityNotFound : string = "Juster.provideLiquidity is not found";
+    const justerGetConfigNotFound : string = "Juster.getConfig is not found";
     const activeNotFound : string = "Active event is not found";
     const notExpectedAddress : string = "Address is not expected";
     const eventIdTaken : string = "Event id is already taken";
