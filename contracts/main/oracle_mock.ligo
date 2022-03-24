@@ -33,10 +33,10 @@ function update(const newValue : nat; const _store : oracleStorage)
 
 function main (const params : oracleAction; var s : oracleStorage)
     : (list(operation) * oracleStorage) is
-case params of
+case params of [
 | Get(p) -> get(p, s)
 | Update(p) -> update(p, s)
-end
+]
 
 [@view] function getPrice(const _pair : string; var s : oracleStorage) : timestamp*nat is (Tezos.now, s)
 
