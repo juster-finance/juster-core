@@ -1,19 +1,18 @@
 { parameter
     (or (pair %get
            string
-           (contract (pair (string %currencyPair) (pair (timestamp %lastUpdate) (nat %rate)))))
+           (contract (pair (string %currencyPair) (timestamp %lastUpdate) (nat %rate))))
         (nat %update)) ;
   storage nat ;
   code { UNPAIR ;
          IF_LEFT
-           { DUP ;
-             CAR ;
+           { SWAP ;
+             DUP ;
+             DUG 2 ;
              NOW ;
-             DUP 4 ;
-             SWAP ;
-             PAIR ;
-             SWAP ;
-             PAIR ;
+             DUP 3 ;
+             CAR ;
+             PAIR 3 ;
              SWAP ;
              CDR ;
              PUSH mutez 0 ;
