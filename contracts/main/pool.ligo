@@ -285,12 +285,6 @@ block {
         store.withdrawableLiquidity := abs(store.withdrawableLiquidity - withdrawSum);
     }
 
-    (* TODO: consider removing events when they are fully withdrawn?
-        Alternative: moving event result to separate ledger and remove event
-        when payReward received
-        {2022-03-11: it might be good to keep events to use it in reward programs}
-    *)
-
 } with (operations, store)
 
 
@@ -316,13 +310,6 @@ block {
 
     store.withdrawableLiquidity := store.withdrawableLiquidity + newWithdrawable;
 
-    (* TODO: is it possible that this withdrawableLiquidity would be less than
-        the sum of the claims because of the nat divison?
-        for example totalShares == 3, liquidity amount is 100 mutez, two
-        claims for 1 share (each for 33 mutez), total 66... looks OK, but need
-        to make sure
-    *)
-
     (* Part of activeLiquidity was already excluded if there was some claims *)
     const claimedLiquidity = event.provided * event.lockedShares / event.totalShares;
     const remainedLiquidity = event.provided - claimedLiquidity;
@@ -335,7 +322,7 @@ block {
     const lockedProfit = profitLossPerEvent * event.lockedShares / event.totalShares;
     const remainedProfit = profitLossPerEvent - lockedProfit;
 
-    (* TODO: is it possible to make newNextEventLiquidity < 0? when liquidity withdrawn
+    (* TODO: is it possible to make nextLiquidity < 0? when liquidity withdrawn
         for example and then failed event? Its good to be sure that it is impossible *)
     (* TODO: need to find this test cases if it is possible or find some proof that it is not *)
     store.nextLiquidity := absPositive(store.nextLiquidity + remainedProfit);
@@ -498,11 +485,11 @@ block {
     - createEvent: creates new event in line, anyone can call this
     - triggerPauseLine: pauses/unpauses given line by lineId
     - triggerPauseDeposit: pauses/unpauses deposit & approve liquidity entrypoints
-    - SetEntryLockPeriod: TODO
-    - ProposeManager: TODO
-    - AcceptOwnership: TODO
-    - SetDelegate: TODO
-    - Default: TODO
+    - SetEntryLockPeriod: sets amount of seconds that required to approve liquidity
+    - ProposeManager: allows manager to propose new manager
+    - AcceptOwnership: allows proposed manager to accept given rights
+    - SetDelegate: allows to change delegate
+    - Default: allows to receive funds from delegate
 *)
 
 type action is
