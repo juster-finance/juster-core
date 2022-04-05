@@ -186,3 +186,22 @@ block {
     const config = getConfig(justerAddress);
 } with config.expirationFee + config.measureStartFee
 
+function getClaimedShares(const key : claimKey; const store : storage) is
+    case Big_map.find_opt(key, store.claims) of [
+    | Some(claim) -> claim.shares
+    | None -> 0n
+    ];
+
+function calcEventProvided(const shares : nat; const event : eventType) is
+    shares * event.provided / event.totalShares;
+
+function increaseLocked(const shares : nat; const event : eventType) is
+block {
+    const newLockedShares = event.lockedShares + shares;
+    if newLockedShares > event.totalShares
+    then failwith(PoolErrors.wrongState)
+    else skip;
+} with event with record [
+    lockedShares = newLockedShares;
+];
+

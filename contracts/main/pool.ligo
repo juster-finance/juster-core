@@ -136,47 +136,31 @@ block {
         failwith("Claim shares is exceed position shares")
     else skip;
     const leftShares = abs(position.shares - params.shares);
+
     var providedSum := 0n;
 
-    (* TODO: refactor this loop and simplify this code *)
     for eventId -> _lineId in map store.activeEvents block {
-        const key = record [
-            eventId = eventId;
-            positionId = params.positionId;
-        ];
-
-        var event := getEvent(eventId, store);
-
-        (* checking if this claim already have some shares: *)
-        const alreadyClaimedShares = case Big_map.find_opt(key, store.claims) of [
-        | Some(claim) -> claim.shares
-        | None -> 0n
-        ];
-
-        const updatedClaim = record [
-            shares = alreadyClaimedShares + params.shares;
-            provider = position.provider;
-        ];
-
+        const event = getEvent(eventId, store);
         const isImpactedEvent = position.addedCounter < event.createdCounter;
         const isHaveShares = params.shares > 0n;
 
+        // if isShouldBeClaimed(position, event, params)
         if isImpactedEvent and isHaveShares
         then block {
-            store.claims := Big_map.update(key, Some(updatedClaim), store.claims);
+            const key = record [
+                eventId = eventId;
+                positionId = params.positionId;
+            ];
 
-            const providedLiquidity = params.shares * event.provided / event.totalShares;
-            providedSum := providedSum + providedLiquidity;
+            store.claims[key] := record [
+                shares = getClaimedShares(key, store) + params.shares;
+                provider = position.provider;
+            ];
 
-            event.lockedShares := event.lockedShares + params.shares;
-
-            if event.lockedShares > event.totalShares
-            then failwith(PoolErrors.wrongState)
-            else skip;
+            providedSum := providedSum + calcEventProvided(params.shares, event);
+            store.events[eventId] := increaseLocked(params.shares, event);
         }
         else skip;
-
-        store.events := Big_map.update(eventId, Some(event), store.events);
     };
 
     const updatedPosition = record [
