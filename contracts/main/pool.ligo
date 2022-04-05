@@ -30,7 +30,7 @@ block {
     checkDepositIsNotPaused(store);
 
     const providedAmount = Tezos.amount / 1mutez;
-    if providedAmount = 0n then failwith("Should provide tez") else skip;
+    if providedAmount = 0n then failwith(PoolErrors.zeroAmount) else skip;
 
     const newEntry = record[
         provider = Tezos.sender;
@@ -132,8 +132,8 @@ block {
     const position = getPosition(params.positionId, store);
     checkSenderIs(position.provider, PoolErrors.notPositionOwner);
 
-    if params.shares > position.shares then
-        failwith("Claim shares is exceed position shares")
+    if params.shares > position.shares
+    then failwith(PoolErrors.exceedClaimShares)
     else skip;
     const leftShares = abs(position.shares - params.shares);
 
@@ -144,7 +144,6 @@ block {
         const isImpactedEvent = position.addedCounter < event.createdCounter;
         const isHaveShares = params.shares > 0n;
 
-        // if isShouldBeClaimed(position, event, params)
         if isImpactedEvent and isHaveShares
         then block {
             const key = record [
@@ -186,8 +185,7 @@ block {
 
     (* TODO: is it possible to have liquidityPerEvent > store.nextLiquidity ?
         - is it better to failwith here with wrongState? *)
-    store.nextLiquidity :=
-        absPositive(store.nextLiquidity - liquidityPerEvent);
+    store.nextLiquidity := absPositive(store.nextLiquidity - liquidityPerEvent);
 
     (* Another impossible condition that is better to check: *)
     if store.totalShares < params.shares
@@ -227,33 +225,23 @@ block {
 
     checkNoAmountIncluded(unit);
 
-    var withdrawalSums := (Map.empty : map(address, nat));
+    var sums := (Map.empty : map(address, nat));
     for key in list withdrawRequests block {
         const event = getEvent(key.eventId, store);
-        const eventResult = case event.result of [
-        | Some(result) -> result
-        | None -> (failwith("Event result is not received yet") : nat)
-        ];
-
-        const claim = case Big_map.find_opt(key, store.claims) of [
-        | Some(claim) -> claim
-        | None -> (failwith("Claim is not found") : claimParams)
-        ];
-
+        const eventResult = getEventResult(event);
+        const claim = getClaim(key, store);
         const eventReward = eventResult * claim.shares / event.totalShares;
 
-        const updatedSum = case Map.find_opt(claim.provider, withdrawalSums) of [
+        sums[claim.provider] := case Map.find_opt(claim.provider, sums) of [
         | Some(sum) -> sum + eventReward
         | None -> eventReward
         ];
-
-        withdrawalSums := Map.update(claim.provider, Some(updatedSum), withdrawalSums);
 
         store.claims := Big_map.remove(key, store.claims);
     };
 
     var operations := (nil : list(operation));
-    for participant -> withdrawSum in map withdrawalSums block {
+    for participant -> withdrawSum in map sums block {
         const payout = withdrawSum * 1mutez;
         if payout > 0tez
         then operations := prepareOperation(participant, payout) # operations

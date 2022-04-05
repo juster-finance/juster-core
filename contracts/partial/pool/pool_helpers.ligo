@@ -38,6 +38,9 @@ function getEvent(const eventId : nat; const store : storage) : eventType is
 function getLine(const lineId : nat; const store : storage) : lineType is
     getOrFail(lineId, store.lines, PoolErrors.lineNotFound)
 
+function getClaim(const key : claimKey; const store : storage) : claimParams is
+    getOrFail(key, store.claims, PoolErrors.claimNotFound)
+
 function checkHasActiveEvents(const store : storage) : unit is
     if store.maxEvents = 0n
     then failwith(PoolErrors.noActiveEvents)
@@ -204,4 +207,10 @@ block {
 } with event with record [
     lockedShares = newLockedShares;
 ];
+
+function getEventResult(const event : eventType) is
+    case event.result of [
+    | Some(result) -> result
+    | None -> (failwith(PoolErrors.eventNotFinished) : nat)
+    ];
 

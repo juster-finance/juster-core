@@ -22,4 +22,8 @@ module PoolErrors is {
     const notExpectedAddress : string = "Address is not expected";
     const eventIdTaken : string = "Event id is already taken";
     const eventNotReady : string = "Event cannot be created until previous event betsCloseTime";
+    const exceedClaimShares : string = "Claim shares is exceed position shares";
+    const zeroAmount : string = "Should provide tez";
+    const eventNotFinished : string = "Event result is not received yet";
+    const claimNotFound : string = "Claim is not found";
 }
