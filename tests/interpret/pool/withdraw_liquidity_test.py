@@ -1,3 +1,4 @@
+import unittest
 from tests.interpret.pool.pool_base import PoolBaseTestCase
 from pytezos import MichelsonRuntimeError
 
@@ -79,4 +80,36 @@ class WithdrawLiquidityTestCase(PoolBaseTestCase):
             positions=positions
         )
         self.assertEqual(len(amounts), 2)
+
+
+    @unittest.skip('this is known issue and test represents it:')
+    def test_withdrawable_liquidity_should_not_lock_funds_on_contract(self):
+        self.add_line(max_events=1)
+
+        self.deposit_liquidity(sender=self.a, amount=1000)
+        self.deposit_liquidity(sender=self.b, amount=1000)
+        self.deposit_liquidity(sender=self.c, amount=1000)
+        self.approve_liquidity(entry_id=0)
+        self.approve_liquidity(entry_id=1)
+        self.approve_liquidity(entry_id=2)
+
+        self.create_event()
+        self.claim_liquidity(position_id=0, sender=self.a, shares=1000)
+        self.claim_liquidity(position_id=1, sender=self.b, shares=1000)
+        self.claim_liquidity(position_id=2, sender=self.c, shares=1000)
+        self.pay_reward(event_id=0, amount=1000)
+
+        positions = [
+            {'eventId': 0, 'positionId': 0},
+            {'eventId': 0, 'positionId': 1},
+            {'eventId': 0, 'positionId': 2},
+        ]
+
+        amounts = self.withdraw_liquidity(
+            sender=self.a,
+            positions=positions
+        )
+
+        # This assert fails because there 1 mutez left in contract:
+        self.assertEqual(self.storage['withdrawableLiquidity'], 0)
 
