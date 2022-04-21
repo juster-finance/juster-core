@@ -194,14 +194,14 @@ block {
 
     store.totalShares := abs(store.totalShares - params.shares);
 
-    (* activeLiquidity cannot be less than providedLiquidity because it is
-        provided liquidity that used in evetns (so it is part of activeLiquidity
-        but it is better to check: *)
-    if store.activeLiquidity < providedSum
-    then failwith(PoolErrors.wrongState)
-    else skip;
-
-    store.activeLiquidity := abs(store.activeLiquidity - providedSum);
+    (* activeLiquidity might be less than providedSum due to ceil rounding of
+        the providedSum partials. In this case store.activeLiquidity should
+        equal to zero *)
+    (* TODO: is it possible to trick contract using this ceil rounding?
+        - max difference is limited to active events count
+        - this difference should only matter for the last provider (IS IT?)
+    *)
+    store.activeLiquidity := absPositive(store.activeLiquidity - providedSum);
 
     const operations = if payoutValue > 0 then
         list[prepareOperation(Tezos.sender, abs(payoutValue) * 1mutez)]

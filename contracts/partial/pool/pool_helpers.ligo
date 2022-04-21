@@ -195,8 +195,14 @@ function getClaimedShares(const key : claimKey; const store : storage) is
     | None -> 0n
     ];
 
+(* event provided calculation is rounded up: *)
 function calcEventProvided(const shares : nat; const event : eventType) is
-    shares * event.provided / event.totalShares;
+    case ediv(shares * event.provided, event.totalShares) of [
+    | Some(quotient, remainder) -> if remainder > 1n
+        then quotient + 1n
+        else quotient
+    | None -> failwith("DIV/0")
+    ];
 
 function increaseLocked(const shares : nat; const event : eventType) is
 block {
