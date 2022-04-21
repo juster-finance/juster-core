@@ -3461,6 +3461,56 @@
                      SWAP ;
                      DIG 2 ;
                      DROP 2 } } } } ;
+  view "getStateValues"
+       unit
+       (pair (pair (pair (nat %activeLiquidity) (nat %counter))
+                   (pair (nat %entryLiquidity) (nat %maxEvents)))
+             (nat %withdrawableLiquidity))
+       { CDR ;
+         DUP ;
+         CDR ;
+         CAR ;
+         CDR ;
+         CDR ;
+         CDR ;
+         SWAP ;
+         DUP ;
+         DUG 2 ;
+         CAR ;
+         CDR ;
+         CDR ;
+         CAR ;
+         CAR ;
+         DUP 3 ;
+         CAR ;
+         CAR ;
+         CDR ;
+         CAR ;
+         CDR ;
+         PAIR ;
+         DUP 3 ;
+         CAR ;
+         CAR ;
+         CAR ;
+         CDR ;
+         CDR ;
+         DIG 3 ;
+         CAR ;
+         CAR ;
+         CAR ;
+         CAR ;
+         CDR ;
+         PAIR ;
+         PAIR ;
+         PAIR } ;
+  view "getLiquidityUnits" unit nat { CDR ; CAR ; CDR ; CAR ; CDR ; CAR } ;
+  view "getNextLiquidity" unit nat { CDR ; CDR ; CAR ; CAR ; CAR ; CAR } ;
+  view "getManager" unit address { CDR ; CAR ; CDR ; CAR ; CDR ; CDR } ;
+  view "getEntryLockPeriod" unit nat { CDR ; CAR ; CAR ; CDR ; CDR ; CAR } ;
+  view "isDepositPaused" unit bool { CDR ; CAR ; CDR ; CAR ; CAR ; CAR } ;
+  view "getBalance" unit mutez { DROP ; BALANCE } ;
+  view "getNextLineId" unit nat { CDR ; CAR ; CDR ; CDR ; CDR ; CDR } ;
+  view "getActiveEvents" unit (map nat nat) { CDR ; CAR ; CAR ; CAR ; CAR ; CAR } ;
   view "getTotalShares" unit nat { CDR ; CDR ; CAR ; CDR ; CDR ; CAR } ;
   view "getEvent"
        nat
