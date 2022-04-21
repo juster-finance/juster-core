@@ -531,10 +531,6 @@ case params of [
 [@view] function getTotalShares(const _ : unit; const s: storage) is
     s.totalShares
 
-(* TODO: the following views are commented out because LIGO 0.38.1 doesn't allow
-    to compile contract with > 10 views, issue 1388 *)
-
-(*
 [@view] function getActiveEvents(const _ : unit; const s: storage) is
     s.activeEvents
 
@@ -567,4 +563,3 @@ case params of [
         counter = s.counter;
         maxEvents = s.maxEvents
     ]
-*)
