@@ -89,7 +89,8 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
         self.bake_block()
 
         # A deposits 10 tez + fees to create two events in line:
-        event_creation_fee = self.pool.storage['newEventFee']()
+        config = self.juster.getConfig().onchain_view()
+        event_creation_fee = config['measureStartFee'] + config['expirationFee']
         shares = 10_000_000 + event_creation_fee*2
         self._deposit_liquidity(self.a, shares)
         self.bake_block()
