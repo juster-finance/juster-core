@@ -1,4 +1,3 @@
-import unittest
 from tests.interpret.pool.pool_base import PoolBaseTestCase
 from pytezos import MichelsonRuntimeError
 from tests.test_data import generate_line_params
@@ -29,7 +28,6 @@ class PoolViewsTestCase(PoolBaseTestCase):
         self.assertTrue(self.get_line(42) is None)
 
 
-    @unittest.skip("view turned off due to LIGO 0.38.1 compile error")
     def test_get_next_line_id_view(self):
         self.assertEqual(self.get_next_line_id(), 0)
         self.add_line()
@@ -136,7 +134,6 @@ class PoolViewsTestCase(PoolBaseTestCase):
         self.assertEqual(self.get_next_withdrawal_id(), 1)
 
 
-    @unittest.skip("view turned off due to LIGO 0.38.1 compile error")
     def test_get_active_events_view(self):
         self.add_line()
         self.deposit_liquidity()
@@ -167,21 +164,18 @@ class PoolViewsTestCase(PoolBaseTestCase):
         self.assertTrue(self.get_event(event_id=42) is None)
 
 
-    @unittest.skip("view turned off due to LIGO 0.38.1 compile error")
     def test_is_deposit_paused_view(self):
         self.assertFalse(self.is_deposit_paused())
         self.trigger_pause_deposit()
         self.assertTrue(self.is_deposit_paused())
 
 
-    @unittest.skip("view turned off due to LIGO 0.38.1 compile error")
     def test_get_entry_lock_period_view(self):
         self.assertEqual(self.get_entry_lock_period(), 0)
         self.set_entry_lock_period(new_period=3600)
         self.assertEqual(self.get_entry_lock_period(), 3600)
 
 
-    @unittest.skip("view turned off due to LIGO 0.38.1 compile error")
     def test_get_manager_view(self):
         self.assertEqual(self.get_manager(), self.manager)
         self.propose_manager(proposed_manager=self.c)
@@ -197,7 +191,6 @@ class PoolViewsTestCase(PoolBaseTestCase):
         self.assertEqual(self.get_total_shares(), 100)
 
 
-    @unittest.skip("view turned off due to LIGO 0.38.1 compile error")
     def test_get_next_liquidity_view(self):
         self.add_line(max_events=10)
         self.deposit_liquidity(amount=100)
@@ -207,7 +200,6 @@ class PoolViewsTestCase(PoolBaseTestCase):
         self.assertEqual(self.get_next_liquidity_view(), expected_next_liquidity)
 
 
-    @unittest.skip("view turned off due to LIGO 0.38.1 compile error")
     def test_get_liquidity_units_view(self):
         self.current_time = 0
         self.add_line(max_events=4, measure_period=10, bets_period=10)
@@ -220,7 +212,6 @@ class PoolViewsTestCase(PoolBaseTestCase):
         self.assertEqual(self.get_liquidity_units(), expected_liquidity_units)
 
 
-    @unittest.skip("view turned off due to LIGO 0.38.1 compile error")
     def test_get_state_values_view(self):
         self.add_line(max_events=2)
         self.deposit_liquidity(amount=100)
