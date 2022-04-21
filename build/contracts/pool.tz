@@ -1263,8 +1263,14 @@
                                      DIG 2 ;
                                      MUL ;
                                      EDIV ;
-                                     IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
-                                     CAR ;
+                                     IF_NONE
+                                       { PUSH string "DIV/0" ; FAILWITH }
+                                       { UNPAIR ;
+                                         PUSH nat 1 ;
+                                         DIG 2 ;
+                                         COMPARE ;
+                                         GT ;
+                                         IF { PUSH nat 1 ; ADD } {} } ;
                                      DIG 4 ;
                                      ADD ;
                                      SWAP ;
@@ -1474,7 +1480,7 @@
                          CAR ;
                          CAR ;
                          SUB ;
-                         DIG 10 ;
+                         DUP 11 ;
                          SWAP ;
                          EXEC ;
                          PAIR ;
@@ -1496,7 +1502,7 @@
                          CAR ;
                          COMPARE ;
                          LT ;
-                         IF { DUP 6 ; FAILWITH } {} ;
+                         IF { DIG 6 ; FAILWITH } { DIG 6 ; DROP } ;
                          DUP ;
                          CDR ;
                          CDR ;
@@ -1534,18 +1540,6 @@
                          SWAP ;
                          CAR ;
                          PAIR ;
-                         DUP 3 ;
-                         SWAP ;
-                         DUP ;
-                         DUG 2 ;
-                         CAR ;
-                         CAR ;
-                         CAR ;
-                         CAR ;
-                         CDR ;
-                         COMPARE ;
-                         LT ;
-                         IF { DIG 5 ; FAILWITH } { DIG 5 ; DROP } ;
                          DUP ;
                          CDR ;
                          SWAP ;
@@ -1570,7 +1564,9 @@
                          CAR ;
                          CDR ;
                          SUB ;
-                         ABS ;
+                         DIG 9 ;
+                         SWAP ;
+                         EXEC ;
                          DIG 5 ;
                          CAR ;
                          CAR ;
