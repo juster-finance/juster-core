@@ -175,8 +175,9 @@ class PoolBaseTestCase(TestCase):
         )
 
         is_new = total_shares == 0
+        # TODO: replace calculations with decimals:
         expected_added_shares = int(
-            amount if is_new else amount / total_liquidity * total_shares)
+            amount if is_new else amount * total_shares / total_liquidity)
 
         self.assertEqual(added_position['shares'], expected_added_shares)
         entry_liquidity_diff = (
