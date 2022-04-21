@@ -20,7 +20,7 @@ block {
     then failwith("Unexpected currency pair") else skip;
 
     const startedTime : timestamp = case event.measureOracleStartTime of [
-    | Some(time) -> time
+    | Some(t) -> t
     | None -> (failwith("Can't close event before measurement period started") : timestamp)
     ];
 

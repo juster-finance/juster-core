@@ -85,7 +85,7 @@ block {
         - sender is not participant itself
         - after closing event timedelta was passed *)
     const closedTime = case event.closedOracleTime of [
-    | Some(time) -> time
+    | Some(t) -> t
     | None -> (failwith("Wrong state: caulculating fee for unfinished event"): timestamp)
     ];
 
