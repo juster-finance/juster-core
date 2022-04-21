@@ -1,5 +1,6 @@
 from unittest import TestCase
 import time
+import math
 from os.path import dirname, join
 from pytezos import ContractInterface, pytezos, MichelsonRuntimeError
 from tests.test_data import (
@@ -271,7 +272,7 @@ class PoolBaseTestCase(TestCase):
                 shares_diff = new_claim['shares'] - old_claim['shares']
                 self.assertEqual(shares_diff, shares)
 
-                provided_liquidity_sum += int(
+                provided_liquidity_sum += math.ceil(
                     event['provided'] * shares / event['totalShares'])
 
         active_liquidity_diff = (
@@ -279,7 +280,9 @@ class PoolBaseTestCase(TestCase):
             - result.storage['activeLiquidity']
         )
 
-        self.assertEqual(active_liquidity_diff, provided_liquidity_sum)
+        expected_liquidity_diff = min(
+            provided_liquidity_sum, self.storage['activeLiquidity'])
+        self.assertEqual(active_liquidity_diff, expected_liquidity_diff)
 
         total_liquidity = (
             self.balances['contract']
