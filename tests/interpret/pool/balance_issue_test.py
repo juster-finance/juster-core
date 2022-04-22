@@ -31,3 +31,15 @@ class BalanceIssueTestCase(PoolBaseTestCase):
             {'positionId': position_two, 'eventId': second_event}
         ])
 
+        # checing continuality:
+        entry_id = self.deposit_liquidity(amount=1_000_000)
+        new_position = self.approve_liquidity(entry_id=entry_id)
+        self.assertEqual(
+            self.storage['positions'][new_position]['shares'],
+            1_000_000
+        )
+
+        self.claim_liquidity(shares=1_000_000, position_id=new_position)
+        # NOTE: contract kept positive balance and positive withdrawableLiquidity sum
+        # positive balance is OK, but withdrawableLiquidity > 0 may bring some promlems
+
