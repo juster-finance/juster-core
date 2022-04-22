@@ -96,6 +96,7 @@ block {
     store.nextPositionId := store.nextPositionId + 1n;
     store.totalShares := store.totalShares + shares;
     store.counter := store.counter + 1n;
+    (* TODO: ediv and keep remainder? *)
     const providedPerEvent = provided * store.precision / store.maxEvents;
     store.nextLiquidity := store.nextLiquidity + providedPerEvent;
 
@@ -138,6 +139,7 @@ block {
     const leftShares = abs(position.shares - params.shares);
 
     var providedSum := 0n;
+    var remainders := 0n;
 
     for eventId -> _lineId in map store.activeEvents block {
         const event = getEvent(eventId, store);
@@ -156,7 +158,10 @@ block {
                 provider = position.provider;
             ];
 
-            providedSum := providedSum + calcEventProvided(params.shares, event);
+            const result = calcEventProvided(params.shares, event);
+            (* result.0 is provided amount, result.1 is remainder from div *)
+            providedSum := providedSum + result.0;
+            remainders := remainders + result.1;
             store.events[eventId] := increaseLocked(params.shares, event);
         }
         else skip;
@@ -173,7 +178,7 @@ block {
 
     const totalLiquidity = calcTotalLiquidity(store);
     const userLiquidity = params.shares * totalLiquidity / store.totalShares;
-    const payoutValue = userLiquidity - providedSum;
+    const payoutValue = userLiquidity - providedSum - remainders;
 
     (* Having negative payoutValue should not be possible,
         but it is better to check: *)
@@ -194,14 +199,13 @@ block {
 
     store.totalShares := abs(store.totalShares - params.shares);
 
-    (* activeLiquidity might be less than providedSum due to ceil rounding of
-        the providedSum partials. In this case store.activeLiquidity should
-        equal to zero *)
-    (* TODO: is it possible to trick contract using this ceil rounding?
-        - max difference is limited to active events count
-        - this difference should only matter for the last provider (IS IT?)
-    *)
-    store.activeLiquidity := absPositive(store.activeLiquidity - providedSum);
+    if store.activeLiquidity < providedSum
+    then failwith(PoolErrors.wrongState)
+    else skip;
+
+    (* providedSum excluded from active liquidity without remainders: *)
+    (* TODO: describe why *)
+    store.activeLiquidity := abs(store.activeLiquidity - providedSum);
 
     const operations = if payoutValue > 0 then
         list[prepareOperation(Tezos.sender, abs(payoutValue) * 1mutez)]

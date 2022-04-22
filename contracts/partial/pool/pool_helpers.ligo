@@ -199,8 +199,8 @@ function getClaimedShares(const key : claimKey; const store : storage) is
 function calcEventProvided(const shares : nat; const event : eventType) is
     case ediv(shares * event.provided, event.totalShares) of [
     | Some(quotient, remainder) -> if remainder > 1n
-        then quotient + 1n
-        else quotient
+        then (quotient, 1n)
+        else (quotient, 0n)
     | None -> failwith("DIV/0")
     ];
 
