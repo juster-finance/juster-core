@@ -257,6 +257,7 @@ class PoolBaseTestCase(TestCase):
     def _calc_and_check_claim_excpected_amount(self, result, position_id, shares):
         position = self.storage['positions'][position_id]
         provided_liquidity_sum = 0
+        remainders = 0
 
         for event_id in self.storage['activeEvents']:
             event = self.storage['events'][event_id]
@@ -272,8 +273,9 @@ class PoolBaseTestCase(TestCase):
                 shares_diff = new_claim['shares'] - old_claim['shares']
                 self.assertEqual(shares_diff, shares)
 
-                provided_liquidity_sum += math.ceil(
-                    event['provided'] * shares / event['totalShares'])
+                provided = event['provided'] * shares / event['totalShares']
+                provided_liquidity_sum += int(provided)
+                remainders += math.ceil(provided) - int(provided)
 
         active_liquidity_diff = (
             self.storage['activeLiquidity']
@@ -293,7 +295,7 @@ class PoolBaseTestCase(TestCase):
 
         expected_amount = int(
             total_liquidity * shares / self.storage['totalShares']
-            - provided_liquidity_sum)
+            - provided_liquidity_sum - remainders)
 
         return expected_amount
 

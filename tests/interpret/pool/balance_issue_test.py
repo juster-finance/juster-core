@@ -40,6 +40,7 @@ class BalanceIssueTestCase(PoolBaseTestCase):
         )
 
         self.claim_liquidity(shares=1_000_000, position_id=new_position)
-        # NOTE: contract kept positive balance and positive withdrawableLiquidity sum
-        # positive balance is OK, but withdrawableLiquidity > 0 may bring some promlems
+        # NOTE: this is known issue that contract locks 2 mutez of withdrawable
+        # liquidity that can't be withdrawn anymore. There are some solutions
+        # to this that require a lot of additional storage.
 
