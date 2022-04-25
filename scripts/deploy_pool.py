@@ -14,7 +14,7 @@ CONTRACTS = {
 JUSTER_ADDRESS = 'KT1Feq9iRBBhpSBdPF1Y7Sd7iJu7uLqqRf1A'
 
 # URI to metadata:
-CONTRACT_METADATA_URI = 'ipfs://QmPC9ErX3VPa719nk3gJvRmoqdSo6KMAcnGeQ6BwvN8RML'
+CONTRACT_METADATA_URI = 'ipfs://QmfNTj1qW3zCFcz9RjMKc8NYD5unXMsVDjHeeYdyEmpnyk'
 
 
 def to_hex(string):
