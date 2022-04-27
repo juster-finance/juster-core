@@ -138,7 +138,7 @@ block {
     else skip;
     const leftShares = abs(position.shares - params.shares);
 
-    var providedSumPrec := 0n;
+    var providedSumP := 0n;
 
     for eventId -> _lineId in map store.activeEvents block {
         const event = getEvent(eventId, store);
@@ -157,7 +157,7 @@ block {
                 provider = position.provider;
             ];
 
-            providedSumPrec := providedSumPrec + (
+            providedSumP := providedSumP + (
                 params.shares * event.provided * store.precision
                 / event.totalShares);
 
@@ -175,21 +175,9 @@ block {
 
     store.positions[params.positionId] := updatedPosition;
 
-    (* TODO: shouldn't this totalLiquidity & userLiquidity calculated in high prec too? *)
-    const totalLiquidity = calcTotalLiquidity(store);
-    const userLiquidity = params.shares * totalLiquidity / store.totalShares;
-
-    var providedSum := 0n;
-    var remainder := 0n;
-    case ediv(providedSumPrec, store.precision) of [
-    | Some(value, rem) -> block {
-        providedSum := value;
-        remainder := if rem > 0n then 1n else 0n;
-    }
-    | None -> failwith("DIV/0")
-    ];
-    (* Or it might be enough to add remainder to providedSum? *)
-    const payoutValue = userLiquidity - providedSum - remainder;
+    const totalLiquidityP = calcTotalLiquidity(store) * store.precision;
+    const userLiquidityP = params.shares * totalLiquidityP / store.totalShares;
+    const payoutValue = (userLiquidityP - providedSumP) / store.precision;
 
     (* Having negative payoutValue should not be possible,
         but it is better to check: *)
@@ -197,7 +185,7 @@ block {
     then failwith(PoolErrors.wrongState)
     else skip;
 
-    const liquidityPerEvent = userLiquidity * store.precision / store.maxEvents;
+    const liquidityPerEvent = userLiquidityP / store.maxEvents;
 
     (* TODO: is it possible to have liquidityPerEvent > store.nextLiquidity ?
         - is it better to failwith here with wrongState? *)
@@ -210,12 +198,17 @@ block {
 
     store.totalShares := abs(store.totalShares - params.shares);
 
+    (* TODO: Should activeLiquidity be stored with increased precision? *)
+    const providedSum = providedSumP / store.precision;
     if store.activeLiquidity < providedSum
     then failwith(PoolErrors.wrongState)
     else skip;
 
     (* providedSum excluded from active liquidity without remainders: *)
-    (* TODO: describe why *)
+    (* TODO: describe why: because providedSum might be less than calculated
+        usedLiquidity due to multiple roundings in each event. And activeLiquidity
+        should get this lesser values, it might lead to keeping extra activeLiquidity
+        units. Looks like increasing precision might help here *)
     store.activeLiquidity := abs(store.activeLiquidity - providedSum);
 
     const operations = if payoutValue > 0 then
