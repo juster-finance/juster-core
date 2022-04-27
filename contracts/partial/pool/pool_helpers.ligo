@@ -3,11 +3,6 @@ function calcFreeLiquidity(const store : storage) : int is
     - store.withdrawableLiquidity
     - store.entryLiquidity
 
-function checkIsEnoughLiquidity(const store : storage) : unit is
-    if calcFreeLiquidity(store) < int(store.nextLiquidity / store.precision)
-    then failwith(PoolErrors.noLiquidity)
-    else unit;
-
 function calcLiquidityPayout(const store : storage; const newEventFee : tez) : tez is
     block {
 
@@ -193,15 +188,6 @@ function getClaimedShares(const key : claimKey; const store : storage) is
     case Big_map.find_opt(key, store.claims) of [
     | Some(claim) -> claim.shares
     | None -> 0n
-    ];
-
-(* event provided calculation is rounded up: *)
-function calcEventProvided(const shares : nat; const event : eventType) is
-    case ediv(shares * event.provided, event.totalShares) of [
-    | Some(quotient, remainder) -> if remainder > 1n
-        then (quotient, 1n)
-        else (quotient, 0n)
-    | None -> failwith("DIV/0")
     ];
 
 function increaseLocked(const shares : nat; const event : eventType) is
