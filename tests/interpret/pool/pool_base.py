@@ -1,6 +1,7 @@
 from unittest import TestCase
 import time
 import math
+from decimal import Decimal
 from os.path import dirname, join
 from pytezos import ContractInterface, pytezos, MichelsonRuntimeError
 from tests.test_data import (
@@ -256,8 +257,8 @@ class PoolBaseTestCase(TestCase):
 
     def _calc_and_check_claim_excpected_amount(self, result, position_id, shares):
         position = self.storage['positions'][position_id]
-        provided_liquidity_sum = 0
-        remainders = 0
+        precision = Decimal(self.storage['precision'])
+        provided_liquidity_sum_prec = Decimal(0)
 
         for event_id in self.storage['activeEvents']:
             event = self.storage['events'][event_id]
@@ -274,17 +275,15 @@ class PoolBaseTestCase(TestCase):
                 self.assertEqual(shares_diff, shares)
 
                 provided = event['provided'] * shares / event['totalShares']
-                provided_liquidity_sum += int(provided)
-                remainders += math.ceil(provided) - int(provided)
+                provided_liquidity_sum_prec += Decimal(provided) * precision
 
         active_liquidity_diff = (
             self.storage['activeLiquidity']
             - result.storage['activeLiquidity']
         )
 
-        expected_liquidity_diff = min(
-            provided_liquidity_sum, self.storage['activeLiquidity'])
-        self.assertEqual(active_liquidity_diff, expected_liquidity_diff)
+        provided_liquidity_sum = int(provided_liquidity_sum_prec / precision)
+        self.assertEqual(active_liquidity_diff, provided_liquidity_sum)
 
         total_liquidity = (
             self.balances['contract']
@@ -293,9 +292,10 @@ class PoolBaseTestCase(TestCase):
             + self.storage['activeLiquidity']
         )
 
-        expected_amount = int(
-            total_liquidity * shares / self.storage['totalShares']
-            - provided_liquidity_sum - remainders)
+        expected_amount_prec = int(
+            total_liquidity * shares * precision / self.storage['totalShares']
+            - provided_liquidity_sum_prec)
+        expected_amount = int(expected_amount_prec / precision)
 
         return expected_amount
 
