@@ -138,8 +138,7 @@ block {
     else skip;
     const leftShares = abs(position.shares - params.shares);
 
-    var providedSum := 0n;
-    var remainders := 0n;
+    var providedSumPrec := 0n;
 
     for eventId -> _lineId in map store.activeEvents block {
         const event = getEvent(eventId, store);
@@ -158,10 +157,10 @@ block {
                 provider = position.provider;
             ];
 
-            const result = calcEventProvided(params.shares, event);
-            (* result.0 is provided amount, result.1 is remainder from div *)
-            providedSum := providedSum + result.0;
-            remainders := remainders + result.1;
+            providedSumPrec := providedSumPrec + (
+                params.shares * event.provided * store.precision
+                / event.totalShares);
+
             store.events[eventId] := increaseLocked(params.shares, event);
         }
         else skip;
@@ -176,9 +175,21 @@ block {
 
     store.positions[params.positionId] := updatedPosition;
 
+    (* TODO: shouldn't this totalLiquidity & userLiquidity calculated in high prec too? *)
     const totalLiquidity = calcTotalLiquidity(store);
     const userLiquidity = params.shares * totalLiquidity / store.totalShares;
-    const payoutValue = userLiquidity - providedSum - remainders;
+
+    var providedSum := 0n;
+    var remainder := 0n;
+    case ediv(providedSumPrec, store.precision) of [
+    | Some(value, rem) -> block {
+        providedSum := value;
+        remainder := if rem > 0n then 1n else 0n;
+    }
+    | None -> failwith("DIV/0")
+    ];
+    (* Or it might be enough to add remainder to providedSum? *)
+    const payoutValue = userLiquidity - providedSum - remainder;
 
     (* Having negative payoutValue should not be possible,
         but it is better to check: *)
