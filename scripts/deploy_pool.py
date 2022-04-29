@@ -14,7 +14,7 @@ CONTRACTS = {
 JUSTER_ADDRESS = 'KT1Feq9iRBBhpSBdPF1Y7Sd7iJu7uLqqRf1A'
 
 # URI to metadata:
-CONTRACT_METADATA_URI = 'ipfs://QmfNTj1qW3zCFcz9RjMKc8NYD5unXMsVDjHeeYdyEmpnyk'
+CONTRACT_METADATA_URI = 'ipfs://QmSQ6Qqb1Bu9MPQCq5TWy8cz3qXpianTjR9iStewjAfPp4'
 
 
 def to_hex(string):
@@ -30,14 +30,14 @@ def generate_pool_storage(manager, juster_address):
         'positions': {},
         'nextPositionId': 0,
         'totalShares': 0,
-        'activeLiquidity': 0,
-        'withdrawableLiquidity': 0,
         'claims': {},
         'manager': manager,
         'maxEvents': 0,
         'counter': 0,
-        'nextLiquidity': 0,
-        'entryLiquidity': 0,
+        'activeLiquidityF': 0,
+        'withdrawableLiquidityF': 0,
+        'nextLiquidityF': 0,
+        'entryLiquidityF': 0,
         'entryLockPeriod': 0,
         'entries': {},
         'nextEntryId': 0,
