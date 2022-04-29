@@ -1,3 +1,7 @@
+type lineIdT is nat;
+type eventIdT is nat;
+type positionIdT is nat;
+type entryIdT is nat;
 
 type lineType is record [
     currencyPair : string;
@@ -34,8 +38,8 @@ type eventType is record [
 ]
 
 type claimKey is record [
-    eventId : nat;
-    positionId : nat;
+    eventId : eventIdT;
+    positionId : positionIdT;
 ]
 
 type claimParams is record [
@@ -61,59 +65,48 @@ type withdrawalType is record [
     *)
 ]
 
-type storage is record [
-    nextLineId: nat;
+(*
+    lines - is ledger with all possible event lines that can be created
+    activeEvents - is mapping between eventId and lineId
+    activeLiquidity - aggregates all liquidity that are in activeEvents,
+        it is needed to calculate new share amount for new positions
+    entryLiquidity - is added liquidity that not recognized yet
+    entryLockPeriod - is amount of time before liquidity can be recognized
+    maxEvents - is aggregated max active events required to calculate liquidity amount
 
-    (* lines is ledger with all possible event lines that can be created *)
-    lines : big_map(nat, lineType);
-
-    (* active lines is mapping between eventId and lineId *)
-    activeEvents : map(nat, nat);
-    events : big_map(nat, eventType);
-
-    positions : big_map(nat, positionType);
-    nextPositionId : nat;
-    totalShares : nat;
-
-    (* activeLiquidity aggregates all liquidity that are in activeEvents,
-        it is needed to calculate new share amount for new positions *)
-    activeLiquidity : nat;
-
-    withdrawableLiquidity : nat;
-
-    (* added liquidity that not recognized yet *)
-    entryLiquidity : nat;
-
-    (* amount of time before liquidity can be recognized *)
-    entryLockPeriod : nat;
-    (* TODO: ^^ consider moving this to `configs` and having configs ledger *)
-
-    entries : big_map(nat, entryType);
-    nextEntryId : nat;
-
-    claims : big_map(claimKey, claimParams);
-
-    manager : address;
-
-    (* aggregated max active events required to calculate liquidity amount *)
-    maxEvents : nat;
-
-    (* As far as liquidity can be added in the same block as a new event created
+    counter - As far as liquidity can be added in the same block as a new event created
         it is required to understand if this liquidity was added before or
         after event creation. There is why special counter used instead of
-        using time/level *)
+        using time/level
+    liquidityUnits - is amount of liquidity provided multiplied by locked time per share
+    TODO: add description to other fields or remove it to docs
+
+*)
+(* TODO: consider moving `entryLockPeriod` to `configs` and having configs ledger *)
+
+type storage is record [
+    nextLineId: lineIdT;
+    lines : big_map(lineIdT, lineType);
+    activeEvents : map(eventIdT, lineIdT);
+    events : big_map(eventIdT, eventType);
+    positions : big_map(positionIdT, positionType);
+    nextPositionId : positionIdT;
+    totalShares : nat;
+    activeLiquidityF : nat;
+    withdrawableLiquidityF : nat;
+    entryLiquidityF : nat;
+    entryLockPeriod : nat;
+    entries : big_map(entryIdT, entryType);
+    nextEntryId : entryIdT;
+    claims : big_map(claimKey, claimParams);
+    manager : address;
+    maxEvents : nat;
     counter : nat;
-
-    nextLiquidity : nat;
-
+    nextLiquidityF : nat;
     isDepositPaused : bool;
-
     metadata : big_map (string, bytes);
     precision : nat;
-
     proposedManager : address;
-
-    (* liquidityUnits is amount of liquidity provided multiplied by locked time per share: *)
     liquidityUnits : nat;
     withdrawals : big_map (nat, withdrawalType);
     nextWithdrawalId : nat;
@@ -121,7 +114,7 @@ type storage is record [
 
 
 type claimLiquidityParams is record [
-    positionId : nat;
+    positionId : positionIdT;
     shares : nat;
 ]
 

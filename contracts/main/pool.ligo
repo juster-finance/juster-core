@@ -39,7 +39,7 @@ block {
     ];
     store.entries[store.nextEntryId] := newEntry;
     store.nextEntryId := store.nextEntryId + 1n;
-    store.entryLiquidity := store.entryLiquidity + providedAmount;
+    store.entryLiquidityF := store.entryLiquidityF + providedAmount * store.precision;
 
 } with ((nil: list(operation)), store)
 
@@ -52,6 +52,8 @@ block {
 
     const entry = getEntry(entryId, store);
     store.entries := Big_map.remove(entryId, store.entries);
+    const provided = entry.amount;
+    const providedF = entry.amount * store.precision;
 
     if Tezos.now < entry.acceptAfter
     then failwith(PoolErrors.earlyApprove)
@@ -59,31 +61,30 @@ block {
 
     (* store.entryLiquidity is the sum of all entries, so the following
         condition should not be true but it is better to check *)
-    if store.entryLiquidity < entry.amount
+    if store.entryLiquidityF < providedF
     then failwith(PoolErrors.wrongState)
     else skip;
 
-    store.entryLiquidity := abs(store.entryLiquidity - entry.amount);
+    store.entryLiquidityF := abs(store.entryLiquidityF - providedF);
 
     (* if there are no lines, then it is impossible to calculate providedPerEvent
         and there would be DIV/0 error *)
     checkHasActiveEvents(store);
 
     (* calculating shares *)
-    const provided = entry.amount;
-    const totalLiquidity = calcTotalLiquidity(store);
+    const totalLiquidityF = calcTotalLiquidity(store);
 
     (* totalLiquidity includes provided liquidity so the following condition
         should not be true but it is better to check *)
-    if totalLiquidity < int(provided)
+    if totalLiquidityF < int(providedF)
     then failwith(PoolErrors.wrongState)
     else skip;
 
-    const liquidityBeforeDeposit = abs(totalLiquidity - provided);
+    const liquidityBeforeDepositF = abs(totalLiquidityF - providedF);
 
     const shares = if store.totalShares = 0n
         then provided
-        else provided * store.totalShares / liquidityBeforeDeposit;
+        else providedF * store.totalShares / liquidityBeforeDepositF;
 
     const newPosition = record [
         provider = entry.provider;
@@ -96,9 +97,8 @@ block {
     store.nextPositionId := store.nextPositionId + 1n;
     store.totalShares := store.totalShares + shares;
     store.counter := store.counter + 1n;
-    (* TODO: ediv and keep remainder? *)
-    const providedPerEvent = provided * store.precision / store.maxEvents;
-    store.nextLiquidity := store.nextLiquidity + providedPerEvent;
+    const providedPerEventF = providedF / store.maxEvents;
+    store.nextLiquidityF := store.nextLiquidityF + providedPerEventF;
 
 } with ((nil: list(operation)), store)
 
@@ -114,7 +114,12 @@ block {
 
     checkSenderIs(entry.provider, PoolErrors.notEntryOwner);
 
-    store.entryLiquidity := abs(store.entryLiquidity - entry.amount);
+    const providedF = entry.amount * store.precision;
+    if store.entryLiquidityF < providedF
+    then failwith(PoolErrors.wrongState)
+    else skip;
+
+    store.entryLiquidityF := abs(store.entryLiquidityF - providedF);
 
     const operations = if entry.amount > 0n then
         list[prepareOperation(Tezos.sender, entry.amount * 1mutez)]
@@ -138,7 +143,7 @@ block {
     else skip;
     const leftShares = abs(position.shares - params.shares);
 
-    var providedSumP := 0n;
+    var providedSumF := 0n;
 
     for eventId -> _lineId in map store.activeEvents block {
         const event = getEvent(eventId, store);
@@ -157,7 +162,7 @@ block {
                 provider = position.provider;
             ];
 
-            providedSumP := providedSumP + (
+            providedSumF := providedSumF + (
                 params.shares * event.provided * store.precision
                 / event.totalShares);
 
@@ -175,9 +180,9 @@ block {
 
     store.positions[params.positionId] := updatedPosition;
 
-    const totalLiquidityP = calcTotalLiquidity(store) * store.precision;
-    const userLiquidityP = params.shares * totalLiquidityP / store.totalShares;
-    const payoutValue = (userLiquidityP - providedSumP) / store.precision;
+    const totalLiquidityF = calcTotalLiquidity(store);
+    const userLiquidityF = params.shares * totalLiquidityF / store.totalShares;
+    const payoutValue = (userLiquidityF - providedSumF) / store.precision;
 
     (* Having negative payoutValue should not be possible,
         but it is better to check: *)
@@ -185,11 +190,11 @@ block {
     then failwith(PoolErrors.wrongState)
     else skip;
 
-    const liquidityPerEvent = userLiquidityP / store.maxEvents;
+    const liquidityPerEventF = userLiquidityF / store.maxEvents;
 
     (* TODO: is it possible to have liquidityPerEvent > store.nextLiquidity ?
         - is it better to failwith here with wrongState? *)
-    store.nextLiquidity := absPositive(store.nextLiquidity - liquidityPerEvent);
+    store.nextLiquidityF := absPositive(store.nextLiquidityF - liquidityPerEventF);
 
     (* Another impossible condition that is better to check: *)
     if store.totalShares < params.shares
@@ -198,18 +203,11 @@ block {
 
     store.totalShares := abs(store.totalShares - params.shares);
 
-    (* TODO: Should activeLiquidity be stored with increased precision? *)
-    const providedSum = providedSumP / store.precision;
-    if store.activeLiquidity < providedSum
+    if store.activeLiquidityF < providedSumF
     then failwith(PoolErrors.wrongState)
     else skip;
 
-    (* providedSum excluded from active liquidity without remainders: *)
-    (* TODO: describe why: because providedSum might be less than calculated
-        usedLiquidity due to multiple roundings in each event. And activeLiquidity
-        should get this lesser values, it might lead to keeping extra activeLiquidity
-        units. Looks like increasing precision might help here *)
-    store.activeLiquidity := abs(store.activeLiquidity - providedSum);
+    store.activeLiquidityF := abs(store.activeLiquidityF - providedSumF);
 
     const operations = if payoutValue > 0 then
         list[prepareOperation(Tezos.sender, abs(payoutValue) * 1mutez)]
@@ -238,19 +236,19 @@ block {
         const event = getEvent(key.eventId, store);
         const eventResult = getEventResult(event);
         const claim = getClaim(key, store);
-        const eventReward = eventResult * claim.shares / event.totalShares;
+        const eventRewardF = eventResult * claim.shares * store.precision / event.totalShares;
 
         sums[claim.provider] := case Map.find_opt(claim.provider, sums) of [
-        | Some(sum) -> sum + eventReward
-        | None -> eventReward
+        | Some(sum) -> sum + eventRewardF
+        | None -> eventRewardF
         ];
 
         store.claims := Big_map.remove(key, store.claims);
     };
 
     var operations := (nil : list(operation));
-    for participant -> withdrawSum in map sums block {
-        const payout = withdrawSum * 1mutez;
+    for participant -> withdrawSumF in map sums block {
+        const payout = withdrawSumF / store.precision * 1mutez;
         if payout > 0tez
         then operations := prepareOperation(participant, payout) # operations
         else skip;
@@ -258,11 +256,11 @@ block {
         (* withdrawableLiquidity forms from Juster payments as a percentage for
             all locked claims so it should not be less than withdrawSum, so
             next case should not be possible: *)
-        if withdrawSum > store.withdrawableLiquidity
+        if withdrawSumF > store.withdrawableLiquidityF
         then failwith(PoolErrors.wrongState)
         else skip;
 
-        store.withdrawableLiquidity := abs(store.withdrawableLiquidity - withdrawSum);
+        store.withdrawableLiquidityF := abs(store.withdrawableLiquidityF - withdrawSumF);
     }
 
 } with (operations, store)
@@ -286,26 +284,27 @@ block {
     store.activeEvents := Map.remove(eventId, store.activeEvents);
 
     (* adding withdrawable liquidity to the pool: *)
-    const newWithdrawable = reward * event.lockedShares / event.totalShares;
+    const newWithdrawableF = reward * event.lockedShares * store.precision / event.totalShares;
 
-    store.withdrawableLiquidity := store.withdrawableLiquidity + newWithdrawable;
+    store.withdrawableLiquidityF := store.withdrawableLiquidityF + newWithdrawableF;
 
     (* Part of activeLiquidity was already excluded if there was some claims *)
-    const claimedLiquidity = event.provided * event.lockedShares / event.totalShares;
-    const remainedLiquidity = event.provided - claimedLiquidity;
+    const providedF = event.provided * store.precision;
+    const claimedLiquidityF = event.lockedShares * providedF / event.totalShares;
+    const remainedLiquidityF = providedF - claimedLiquidityF;
 
     (* remainedLiquidity should always be less than store.activeLiquidity but
         it is better to cap it on zero if it somehow goes negative: *)
-    store.activeLiquidity := absPositive(store.activeLiquidity - remainedLiquidity);
+    store.activeLiquidityF := absPositive(store.activeLiquidityF - remainedLiquidityF);
 
-    const profitLossPerEvent = (reward - event.provided) * store.precision / store.maxEvents;
-    const lockedProfit = profitLossPerEvent * event.lockedShares / event.totalShares;
-    const remainedProfit = profitLossPerEvent - lockedProfit;
+    const profitLossPerEventF = (reward - event.provided) * store.precision / store.maxEvents;
+    const lockedProfitF = profitLossPerEventF * event.lockedShares / event.totalShares;
+    const remainedProfitF = profitLossPerEventF - lockedProfitF;
 
     (* TODO: is it possible to make nextLiquidity < 0? when liquidity withdrawn
         for example and then failed event? Its good to be sure that it is impossible *)
     (* TODO: need to find this test cases if it is possible or find some proof that it is not *)
-    store.nextLiquidity := absPositive(store.nextLiquidity + remainedProfit);
+    store.nextLiquidityF := absPositive(store.nextLiquidityF + remainedProfitF);
     (* TODO: consider failwith here instead of absPositive
         the same for store.activeLiquidity, but don't want to block this entrypoint *)
 
@@ -375,7 +374,7 @@ block {
 
     store.events[nextEventId] := event;
     store.activeEvents := Map.add(nextEventId, lineId, store.activeEvents);
-    store.activeLiquidity := store.activeLiquidity + eventCosts;
+    store.activeLiquidityF := store.activeLiquidityF + eventCosts * store.precision;
 
     const newUnits = eventCosts * calcDuration(line) / store.totalShares;
     store.liquidityUnits := store.liquidityUnits + newUnits;
@@ -448,9 +447,9 @@ function default(var store : storage) is
 block {
     (* If there are no active lines this entrypoint is disabled *)
     checkHasActiveEvents(store);
-    const distributedAmount =
+    const distributedAmountF =
         Tezos.amount / 1mutez * store.precision / store.maxEvents;
-    store.nextLiquidity := store.nextLiquidity + distributedAmount;
+    store.nextLiquidityF := store.nextLiquidityF + distributedAmountF;
 } with ((nil: list(operation)), store)
 
 
@@ -557,17 +556,19 @@ case params of [
 [@view] function getManager(const _ : unit; const s: storage) is
     s.manager
 
-[@view] function getNextLiquidity(const _ : unit; const s: storage) is
-    s.nextLiquidity
+[@view] function getNextLiquidityF(const _ : unit; const s: storage) is
+    s.nextLiquidityF
 
 [@view] function getLiquidityUnits(const _ : unit; const s: storage) is
     s.liquidityUnits
 
+(* TODO: split this view or add here some info from other views: *)
 [@view] function getStateValues(const _ : unit; const s: storage) is
     record [
-        activeLiquidity = s.activeLiquidity;
-        withdrawableLiquidity = s.withdrawableLiquidity;
-        entryLiquidity = s.entryLiquidity;
+        precision = s.precision;
+        activeLiquidityF = s.activeLiquidityF;
+        withdrawableLiquidityF = s.withdrawableLiquidityF;
+        entryLiquidityF = s.entryLiquidityF;
         counter = s.counter;
         maxEvents = s.maxEvents
     ]

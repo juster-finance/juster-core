@@ -1,19 +1,22 @@
 function calcFreeLiquidity(const store : storage) : int is
-    Tezos.balance/1mutez
-    - store.withdrawableLiquidity
-    - store.entryLiquidity
+    Tezos.balance/1mutez * store.precision
+    - store.withdrawableLiquidityF
+    - store.entryLiquidityF
+
+function calcTotalLiquidity(const store : storage) : int is
+    calcFreeLiquidity(store) + store.activeLiquidityF;
 
 function calcLiquidityPayout(const store : storage; const newEventFee : tez) : tez is
     block {
 
-        const maxLiquidity = int(store.nextLiquidity / store.precision);
-        const freeLiquidity = calcFreeLiquidity(store);
+        const maxLiquidityF = int(store.nextLiquidityF);
+        const freeLiquidityF = calcFreeLiquidity(store);
 
-        var liquidityAmount := if maxLiquidity > freeLiquidity
-            then freeLiquidity
-            else maxLiquidity;
+        const liquidityAmountF = if maxLiquidityF > freeLiquidityF
+            then freeLiquidityF
+            else maxLiquidityF;
 
-        var liquidityAmount := liquidityAmount - newEventFee/1mutez;
+        const liquidityAmount = liquidityAmountF / store.precision - newEventFee/1mutez;
 
         if liquidityAmount <= 0
         then failwith(PoolErrors.noLiquidity)
@@ -41,12 +44,7 @@ function checkHasActiveEvents(const store : storage) : unit is
     then failwith(PoolErrors.noActiveEvents)
     else unit;
 
-function calcTotalLiquidity(const store : storage) : int is
-    Tezos.balance/1mutez
-    - store.withdrawableLiquidity
-    - store.entryLiquidity
-    + store.activeLiquidity;
-
+(* TODO: replace with absOr(const value : int; const default : nat) ? *)
 function absPositive(const value : int) is if value >= 0 then abs(value) else 0n
 
 function calcFreeEventSlots(const store : storage) is
@@ -60,8 +58,8 @@ function checkHaveFreeEventSlots(const store : storage) is
 function increaseMaxActiveEvents(const count : nat; var store : storage) is
 block {
     const newMaxActiveEvents = store.maxEvents + count;
-    store.nextLiquidity :=
-        store.nextLiquidity * store.maxEvents / newMaxActiveEvents;
+    store.nextLiquidityF :=
+        store.nextLiquidityF * store.maxEvents / newMaxActiveEvents;
     store.maxEvents := newMaxActiveEvents;
 } with store
 
@@ -73,8 +71,8 @@ block {
 
     const newMaxActiveEvents = abs(store.maxEvents - count);
 
-    store.nextLiquidity :=
-        store.nextLiquidity * store.maxEvents / newMaxActiveEvents;
+    store.nextLiquidityF :=
+        store.nextLiquidityF * store.maxEvents / newMaxActiveEvents;
     store.maxEvents := newMaxActiveEvents;
 } with store
 
