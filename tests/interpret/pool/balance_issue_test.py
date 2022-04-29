@@ -40,14 +40,7 @@ class BalanceIssueTestCase(PoolBaseTestCase):
         )
 
         self.claim_liquidity(shares=1_000_000, position_id=new_position)
-        # NOTE: this is known issue that contract locks 1 mutez of withdrawable
-        # liquidity that can't be withdrawn anymore. It will slightly reduce
-        # the amount of liquidity for the newly created events.
-
-        # NOTE: this is also 2 mutez left on activeLiquidity. This might lead that
-        # this liquidity will not be accessable in the future.
-
-        # TODO: use precision for this liquiditySum calcs might fix this issues
+        self.assertEqual(self.balances['contract'], 0)
 
 
     def test_participant_should_be_able_to_claim_liquidity_when_it_all_active(self):

@@ -83,7 +83,7 @@ class ApproveLiquidityTestCase(PoolBaseTestCase):
         self.deposit_liquidity(sender=self.a, amount=2_000_000)
 
         # modifying contract state:
-        self.storage['entryLiquidity'] = 1_000_000
+        self.storage['entryLiquidityF'] = 1_000_000
 
         # approving:
         with self.assertRaises(MichelsonRuntimeError) as cm:
