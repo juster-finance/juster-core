@@ -57,3 +57,23 @@ class BalanceIssueTestCase(PoolBaseTestCase):
         self.claim_liquidity(shares=1_000, position_id=pos_id)
         self.claim_liquidity(shares=1, position_id=pos_id)
 
+
+    def test_negative_payout_issue_when_provided_approved_during_loss_event(self):
+
+        self.add_line(max_events=2)
+        entry_id = self.deposit_liquidity(amount=1000)
+        pos_id = self.approve_liquidity(entry_id=entry_id)
+
+        first_event = self.create_event()
+        self.wait(3600)
+        second_event = self.create_event()
+        self.wait(3600)
+
+        entry_id = self.deposit_liquidity(amount=1000)
+        self.approve_liquidity(entry_id=entry_id)
+
+        self.pay_reward(event_id=first_event, amount=100)
+        self.create_event()
+
+        self.claim_liquidity(shares=1_000, position_id=pos_id)
+
