@@ -144,6 +144,7 @@ block {
     const leftShares = abs(position.shares - params.shares);
 
     var providedSumF := 0n;
+    var impactedCount := 0n;
 
     for eventId -> _lineId in map store.activeEvents block {
         const event = getEvent(eventId, store);
@@ -165,24 +166,25 @@ block {
             providedSumF := providedSumF + (
                 params.shares * event.provided * store.precision
                 / event.totalShares);
+            impactedCount := impactedCount + 1n;
 
             store.events[eventId] := increaseLocked(params.shares, event);
         }
         else skip;
     };
 
-    const updatedPosition = record [
-        provider = position.provider;
-        shares = leftShares;
-        addedCounter = position.addedCounter;
-        entryLiquidityUnits = position.entryLiquidityUnits;
-    ];
-
+    const updatedPosition = position with record [ shares = leftShares ];
     store.positions[params.positionId] := updatedPosition;
 
     const totalLiquidityF = calcTotalLiquidity(store);
     const userLiquidityF = params.shares * totalLiquidityF / store.totalShares;
-    const payoutValue = (userLiquidityF - providedSumF) / store.precision;
+    (* TODO: is it possible that here maxEvents will be zero?
+            - maxEvents can be changed if event is paused
+            - this should be replaced with logic where each event contains his maxEvents
+    *)
+    const providedEstimateF = impactedCount * userLiquidityF / store.maxEvents;
+
+    const payoutValue = (userLiquidityF - providedEstimateF) / store.precision;
 
     (* Having negative payoutValue should not be possible,
         but it is better to check: *)
