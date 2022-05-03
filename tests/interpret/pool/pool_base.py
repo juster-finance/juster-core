@@ -269,6 +269,7 @@ class PoolBaseTestCase(TestCase):
         precision = Decimal(self.storage['precision'])
         provided_liquidity_sum_f = Decimal(0)
         shares = Decimal(shares)
+        impacted_count = 0
 
         for event_id in self.storage['activeEvents']:
             event = self.storage['events'][event_id]
@@ -289,6 +290,8 @@ class PoolBaseTestCase(TestCase):
                 provided_f = int(provided * shares * precision / total_shares)
                 provided_liquidity_sum_f += provided_f
 
+                impacted_count += 1
+
         active_liquidity_diff_f = (
             self.storage['activeLiquidityF']
             - result.storage['activeLiquidityF']
@@ -298,10 +301,13 @@ class PoolBaseTestCase(TestCase):
 
         # TODO: make all tests internal calculations in Decimals
         total_liquidity_f = self._calc_total_liquidity()
+        user_liquidity_f = total_liquidity_f * shares / self.storage['totalShares']
 
-        expected_amount_f = int(
-            total_liquidity_f * shares / self.storage['totalShares']
-            - int(provided_liquidity_sum_f))
+        provided_estimate_f = (
+            user_liquidity_f * impacted_count
+            / self.storage['maxEvents'])
+
+        expected_amount_f = int(user_liquidity_f) - int(provided_estimate_f)
         expected_amount = int(expected_amount_f / precision)
 
         return expected_amount
