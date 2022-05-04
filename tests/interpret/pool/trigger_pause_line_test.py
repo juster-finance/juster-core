@@ -88,3 +88,23 @@ class TriggerPauseLineTestCase(PoolBaseTestCase):
         self.trigger_pause_line(line_id=line_id, sender=self.manager)
         self.create_event(event_line_id=line_id)
 
+    def test_add_line_while_all_events_are_run_and_claim(self):
+        line_one = self.add_line(sender=self.manager, max_events=1)
+        line_two = self.add_line(sender=self.manager, max_events=1)
+
+        entry_id = self.deposit_liquidity(amount=30, sender=self.a)
+        self.approve_liquidity(entry_id=entry_id)
+
+        self.create_event(event_line_id=line_one)
+        self.wait(3600)
+        self.create_event(event_line_id=line_two)
+
+        # the case with increased max events:
+        line_three = self.add_line(sender=self.manager, max_events=1)
+        self.claim_liquidity(sender=self.a, shares=15)
+
+        # the case with decreased max events:
+        self.trigger_pause_line(line_id=line_two, sender=self.manager)
+        self.trigger_pause_line(line_id=line_three, sender=self.manager)
+        self.claim_liquidity(sender=self.a, shares=15)
+
