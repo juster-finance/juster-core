@@ -53,6 +53,7 @@ class PoolBaseTestCase(TestCase):
     def update_balance(self, address, amount):
         """ Used to track balances of different users """
         self.balances[address] = self.balances.get(address, 0) + amount
+        self.assertTrue(self.balances['contract'] >= 0)
 
 
     def get_next_liquidity(self):
