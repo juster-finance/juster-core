@@ -29,6 +29,7 @@ type positionType is record [
 
 type eventType is record [
     createdCounter : nat;
+    shares : nat;
     totalShares : nat;
     lockedShares : nat;
     result : option(nat);

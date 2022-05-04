@@ -129,61 +129,64 @@ block {
 
 
 function claimLiquidity(
-    const params : claimLiquidityParams;
+    const claim : claimLiquidityParams;
     var store : storage) : (list(operation) * storage) is
 block {
 
     checkNoAmountIncluded(unit);
 
-    const position = getPosition(params.positionId, store);
+    const position = getPosition(claim.positionId, store);
     checkSenderIs(position.provider, PoolErrors.notPositionOwner);
 
-    if params.shares > position.shares
+    if claim.shares > position.shares
     then failwith(PoolErrors.exceedClaimShares)
     else skip;
-    const leftShares = abs(position.shares - params.shares);
+    const leftShares = abs(position.shares - claim.shares);
 
-    var providedSumF := 0n;
-    var impactedCount := 0n;
+    const totalLiquidityF = calcTotalLiquidity(store);
+
+    var providedInitialF := 0n;
+    var providedEstimateF := 0;
 
     for eventId -> _lineId in map store.activeEvents block {
         const event = getEvent(eventId, store);
         const isImpactedEvent = position.addedCounter < event.createdCounter;
-        const isHaveShares = params.shares > 0n;
+        const isHaveShares = claim.shares > 0n;
 
         if isImpactedEvent and isHaveShares
         then block {
             const key = record [
                 eventId = eventId;
-                positionId = params.positionId;
+                positionId = claim.positionId;
             ];
 
             store.claims[key] := record [
-                shares = getClaimedShares(key, store) + params.shares;
+                shares = getClaimedShares(key, store) + claim.shares;
                 provider = position.provider;
             ];
 
-            providedSumF := providedSumF + (
-                params.shares * event.provided * store.precision
+            (* TODO: is it possible to get rid of providedInitialF?
+                currently it required for activeLiquidityF calc that mihgt
+                required to be calculated with start event share price
+            *)
+            providedInitialF := providedInitialF + (
+                claim.shares * event.provided * store.precision
                 / event.totalShares);
-            impactedCount := impactedCount + 1n;
 
-            store.events[eventId] := increaseLocked(params.shares, event);
+            providedEstimateF := providedEstimateF + (
+                claim.shares * event.shares * totalLiquidityF
+                / store.totalShares / event.totalShares
+            );
+
+            store.events[eventId] := increaseLocked(claim.shares, event);
         }
         else skip;
     };
 
     const updatedPosition = position with record [ shares = leftShares ];
-    store.positions[params.positionId] := updatedPosition;
+    store.positions[claim.positionId] := updatedPosition;
 
-    const totalLiquidityF = calcTotalLiquidity(store);
-    const userLiquidityF = params.shares * totalLiquidityF / store.totalShares;
-    (* TODO: is it possible that here maxEvents will be zero?
-            - maxEvents can be changed if event is paused
-            - this should be replaced with logic where each event contains his maxEvents
-    *)
-    const providedEstimateF = impactedCount * userLiquidityF / store.maxEvents;
-
+    const userLiquidityF = claim.shares * totalLiquidityF / store.totalShares;
     const payoutValue = (userLiquidityF - providedEstimateF) / store.precision;
 
     (* Having negative payoutValue should not be possible,
@@ -199,17 +202,20 @@ block {
     store.nextLiquidityF := absPositive(store.nextLiquidityF - liquidityPerEventF);
 
     (* Another impossible condition that is better to check: *)
-    if store.totalShares < params.shares
+    if store.totalShares < claim.shares
     then failwith(PoolErrors.wrongState)
     else skip;
 
-    store.totalShares := abs(store.totalShares - params.shares);
+    store.totalShares := abs(store.totalShares - claim.shares);
 
-    if store.activeLiquidityF < providedSumF
+    if store.activeLiquidityF < providedInitialF
     then failwith(PoolErrors.wrongState)
     else skip;
 
-    store.activeLiquidityF := abs(store.activeLiquidityF - providedSumF);
+    (* Is it possible to exclide providedEsitmatedF?
+        the difference is that providedEstimatedF uses current share price
+        instead providedInitialF used share price at event creation moment *)
+    store.activeLiquidityF := abs(store.activeLiquidityF - providedInitialF);
 
     const operations = if payoutValue > 0 then
         list[prepareOperation(Tezos.sender, abs(payoutValue) * 1mutez)]
@@ -217,8 +223,8 @@ block {
 
     const newWithdrawal = record [
         liquidityUnits = abs(store.liquidityUnits - position.entryLiquidityUnits);
-        positionId = params.positionId;
-        shares = params.shares;
+        positionId = claim.positionId;
+        shares = claim.shares;
     ];
     store.withdrawals[store.nextWithdrawalId] := newWithdrawal;
     store.nextWithdrawalId := store.nextWithdrawalId + 1n;
@@ -292,6 +298,20 @@ block {
 
     (* Part of activeLiquidity was already excluded if there was some claims *)
     const providedF = event.provided * store.precision;
+    (* TODO: here claimde liquidity estimated by event creation price, but it
+        feels like it might be estimated by current share price with:
+        event.lockedShares * currentSharePrice()
+        wheren currentSharePrice() is calcTotalLiquidity() / store.totalShares
+
+        need to understand: is it required to estimate this shares by event creation price
+        which is not changed during time (valuable property)
+        or is it possible to use current share price?
+            currentSharePrice is changed over time and it might lead to
+            underestimated / overestimated activeLiquidity volume
+
+        also there is might be an alternative solution with activeShares
+            instead of activeLiquidity and this might simplify all the case
+    *)
     const claimedLiquidityF = event.lockedShares * providedF / event.totalShares;
     const remainedLiquidityF = providedF - claimedLiquidityF;
 
@@ -365,6 +385,8 @@ block {
 
     const operations = list[newEventOperation; provideLiquidityOperation];
     const eventCosts = (liquidityPayout + newEventFee)/1mutez;
+    const eventShares = store.totalShares / store.maxEvents;
+    (* TODO: use this eventShares to calculate nextLiquidity *)
 
     const event = record [
         createdCounter = store.counter;
@@ -372,6 +394,7 @@ block {
         lockedShares = 0n;
         result = (None : option(nat));
         provided = eventCosts;
+        shares = eventShares;
     ];
 
     store.events[nextEventId] := event;
