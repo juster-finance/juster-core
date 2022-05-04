@@ -1,5 +1,5 @@
-docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.40.0 compile contract contracts/main/reward_program.ligo -e main --protocol hangzhou > build/contracts/reward_program.tz
-docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.40.0 compile contract contracts/main/pool.ligo -e main --protocol hangzhou > build/contracts/pool.tz
+docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.40.0 compile contract contracts/main/reward_program.ligo -e main --protocol ithaca > build/contracts/reward_program.tz
+docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.40.0 compile contract contracts/main/pool.ligo -e main --protocol ithaca > build/contracts/pool.tz
 docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.40.0 compile contract contracts/main/oracle_mock.ligo -e main > build/mocks/oracle_mock.tz
 docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.40.0 compile contract contracts/main/juster.ligo -e main --protocol ithaca > build/contracts/juster.tz
 docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.40.0 compile expression pascaligo lambda --init-file "contracts/lambdas/juster/raise_liquidity_fee.ligo" > build/lambdas/raise_liq_fee.tz
