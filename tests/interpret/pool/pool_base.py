@@ -268,45 +268,45 @@ class PoolBaseTestCase(TestCase):
     def _calc_and_check_claim_excpected_amount(self, result, position_id, shares):
         position = self.storage['positions'][position_id]
         precision = Decimal(self.storage['precision'])
-        provided_liquidity_sum_f = Decimal(0)
-        shares = Decimal(shares)
-        impacted_count = 0
+        total_liquidity_f = self._calc_total_liquidity()
+        total_pool_shares = Decimal(self.storage['totalShares'])
+        claim_shares = Decimal(shares)
+        provided_initial_f = Decimal(0)
+        provided_estimate_f = 0
 
         for event_id in self.storage['activeEvents']:
             event = self.storage['events'][event_id]
             is_impacted = position['addedCounter'] < event['createdCounter']
-            have_shares = shares > 0
+            have_shares = claim_shares > 0
 
             if is_impacted and have_shares:
+                provided = Decimal(event['provided'])
+                total_event_shares = Decimal(event['totalShares'])
+
                 key = (event_id, position_id)
                 default_claim = {'shares': 0}
                 old_claim = self.storage['claims'].get(key, default_claim)
                 new_claim = result.storage['claims'][key]
 
                 shares_diff = new_claim['shares'] - old_claim['shares']
-                self.assertEqual(shares_diff, shares)
+                self.assertEqual(shares_diff, claim_shares)
 
-                provided = Decimal(event['provided'])
-                total_shares = Decimal(event['totalShares'])
-                provided_f = int(provided * shares * precision / total_shares)
-                provided_liquidity_sum_f += provided_f
+                provided_initial_f += int(
+                    provided * claim_shares * precision / total_event_shares)
 
-                impacted_count += 1
+                provided_estimate_f += int(
+                    total_liquidity_f * claim_shares * event['shares']
+                    / total_event_shares / total_pool_shares)
 
         active_liquidity_diff_f = (
             self.storage['activeLiquidityF']
             - result.storage['activeLiquidityF']
         )
 
-        self.assertEqual(active_liquidity_diff_f, provided_liquidity_sum_f)
+        self.assertEqual(active_liquidity_diff_f, provided_initial_f)
 
         # TODO: make all tests internal calculations in Decimals
-        total_liquidity_f = self._calc_total_liquidity()
-        user_liquidity_f = total_liquidity_f * shares / self.storage['totalShares']
-
-        provided_estimate_f = (
-            user_liquidity_f * impacted_count
-            / self.storage['maxEvents'])
+        user_liquidity_f = total_liquidity_f * claim_shares / self.storage['totalShares']
 
         expected_amount_f = int(user_liquidity_f) - int(provided_estimate_f)
         expected_amount = int(expected_amount_f / precision)
@@ -471,13 +471,16 @@ class PoolBaseTestCase(TestCase):
 
     def _check_added_event(self, result, next_event_id, amount):
         added_event = result.storage['events'][next_event_id]
+        event_shares = int(result.storage['totalShares']
+            / result.storage['maxEvents'])
 
         target_event = {
             'createdCounter': self.storage['counter'],
             'lockedShares': 0,
             'provided': amount,
             'result': None,
-            'totalShares': self.storage['totalShares']
+            'totalShares': self.storage['totalShares'],
+            'shares': event_shares
         }
 
         self.assertDictEqual(added_event, target_event)
