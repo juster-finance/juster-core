@@ -316,10 +316,12 @@ class PoolBaseTestCase(TestCase):
 
     def _check_claim_amount(self, result, expected_amount):
         if expected_amount:
-            self.assertTrue(len(result.operations) == 1)
+            self.assertEqual(len(result.operations), 1)
             op = result.operations[0]
             amount = int(op['amount'])
             self.assertEqual(expected_amount, amount)
+        else:
+            self.assertEqual(len(result.operations), 0)
 
 
     def claim_liquidity(self, sender=None, position_id=0, shares=1_000_000, amount=0):
