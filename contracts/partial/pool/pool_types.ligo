@@ -106,7 +106,6 @@ type storage is record [
     manager : address;
     maxEvents : nat;
     counter : nat;
-    nextLiquidityF : nat;
     isDepositPaused : bool;
     metadata : big_map (string, bytes);
     precision : nat;

@@ -66,8 +66,6 @@ block {
     else skip;
 
     store.entryLiquidityF := abs(store.entryLiquidityF - providedF);
-
-    (* calculating shares *)
     const totalLiquidityF = calcTotalLiquidity(store);
 
     (* totalLiquidity includes provided liquidity so the following condition
@@ -93,8 +91,6 @@ block {
     store.nextPositionId := store.nextPositionId + 1n;
     store.totalShares := store.totalShares + shares;
     store.counter := store.counter + 1n;
-    const providedPerEventF = providedF / store.maxEvents;
-    store.nextLiquidityF := store.nextLiquidityF + providedPerEventF;
 
 } with ((nil: list(operation)), store)
 
@@ -191,17 +187,12 @@ block {
     then failwith(PoolErrors.wrongState, 4)
     else skip;
 
-    const liquidityPerEventF = userLiquidityF / store.maxEvents;
-
-    (* TODO: is it possible to have liquidityPerEvent > store.nextLiquidity ?
-        - is it better to failwith here with wrongState? *)
-    store.nextLiquidityF := absPositive(store.nextLiquidityF - liquidityPerEventF);
-
     (* Another impossible condition that is better to check: *)
     if store.totalShares < claim.shares
     then failwith(PoolErrors.wrongState, 5)
     else skip;
 
+    (* TODO: this block with failwith can be replaced with absOrFail *)
     store.totalShares := abs(store.totalShares - claim.shares);
 
     if store.activeLiquidityF < providedInitialF
@@ -222,6 +213,9 @@ block {
         positionId = claim.positionId;
         shares = claim.shares;
     ];
+
+    (* TODO: store = addNewWithdrawal(store, newWithdrawal)
+        and the same might be done in other places *)
     store.withdrawals[store.nextWithdrawalId] := newWithdrawal;
     store.nextWithdrawalId := store.nextWithdrawalId + 1n;
 
@@ -314,17 +308,6 @@ block {
     (* remainedLiquidity should always be less than store.activeLiquidity but
         it is better to cap it on zero if it somehow goes negative: *)
     store.activeLiquidityF := absPositive(store.activeLiquidityF - remainedLiquidityF);
-
-    const profitLossPerEventF = (reward - event.provided) * store.precision / store.maxEvents;
-    const lockedProfitF = profitLossPerEventF * event.lockedShares / event.totalShares;
-    const remainedProfitF = profitLossPerEventF - lockedProfitF;
-
-    (* TODO: is it possible to make nextLiquidity < 0? when liquidity withdrawn
-        for example and then failed event? Its good to be sure that it is impossible *)
-    (* TODO: need to find this test cases if it is possible or find some proof that it is not *)
-    store.nextLiquidityF := absPositive(store.nextLiquidityF + remainedProfitF);
-    (* TODO: consider failwith here instead of absPositive
-        the same for store.activeLiquidity, but don't want to block this entrypoint *)
 
 } with ((nil: list(operation)), store)
 
