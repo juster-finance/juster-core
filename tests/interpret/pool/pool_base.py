@@ -58,7 +58,11 @@ class PoolBaseTestCase(TestCase):
 
     def get_next_liquidity(self):
         """ Returns next event liquidity value in int """
-        return int(self.storage['nextLiquidityF'] / self.storage['precision'])
+        return self.pool.getNextLiquidity().onchain_view(
+            storage=self.storage,
+            balance=self.balances['contract']
+        )
+
 
     def add_line(
             self,
@@ -529,8 +533,9 @@ class PoolBaseTestCase(TestCase):
 
         new_event_fee = config['expirationFee'] + config['measureStartFee']
         self.assertEqual(event_fee, new_event_fee)
+        max_liquidity_f = self._calc_total_liquidity() / self.storage['maxEvents']
         expected_provided_f = min(
-            self.storage['nextLiquidityF'], self._calc_free_liquidity())
+            max_liquidity_f, self._calc_free_liquidity())
         expected_provided = int(expected_provided_f / precision)
         self.assertEqual(provided_amount, expected_provided)
         self.assertEqual(result.operations[0]['destination'], juster_address)
@@ -566,22 +571,6 @@ class PoolBaseTestCase(TestCase):
         self.assertEqual(
             abs(active_events_diff),
             self.storage['lines'][line_id]['maxEvents'])
-
-        next_event_liquidity_diff = (
-            result.storage['nextLiquidityF']
-            - self.storage['nextLiquidityF']
-        )
-
-        calculated_diff = (
-            self.storage['nextLiquidityF']
-            * self.storage['maxEvents']
-            / result.storage['maxEvents']
-        ) - self.storage['nextLiquidityF']
-
-        self.assertEqual(
-            int(next_event_liquidity_diff / self.storage['precision']),
-            int(calculated_diff / self.storage['precision'])
-        )
 
         self.storage = result.storage
         return result_state
@@ -677,12 +666,6 @@ class PoolBaseTestCase(TestCase):
             storage=self.storage,
             sender=sender)
         self.assertEqual(len(result.operations), 0)
-        liquidity_diff = int(
-            (result.storage['nextLiquidityF'] - self.storage['nextLiquidityF'])
-            / self.storage['precision'])
-
-        calc_diff = amount / self.storage['maxEvents']
-        self.assertTrue(abs(liquidity_diff - calc_diff) <= 1)
         self.storage = result.storage
 
         self.balances[sender] = self.balances.get(sender, 0) - amount
@@ -748,10 +731,6 @@ class PoolBaseTestCase(TestCase):
 
     def get_total_shares(self):
         return self.pool.getTotalShares().onchain_view(storage=self.storage)
-
-
-    def get_next_liquidity_f(self):
-        return self.pool.getNextLiquidityF().onchain_view(storage=self.storage)
 
 
     def get_liquidity_units(self):

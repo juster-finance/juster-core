@@ -195,10 +195,9 @@ class PoolViewsTestCase(PoolBaseTestCase):
     def test_get_next_liquidity_view(self):
         self.add_line(max_events=10)
         self.deposit_liquidity(amount=100)
-        self.assertEqual(self.get_next_liquidity_f(), 0)
+        self.assertEqual(self.get_next_liquidity(), 0)
         self.approve_liquidity()
-        expected_next_liquidity = 10 * self.storage['precision']
-        self.assertEqual(self.get_next_liquidity_f(), expected_next_liquidity)
+        self.assertEqual(self.get_next_liquidity(), 10)
 
 
     def test_get_liquidity_units_view(self):

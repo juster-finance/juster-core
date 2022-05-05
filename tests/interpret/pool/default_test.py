@@ -8,13 +8,6 @@ class DefaultEntryTestCase(PoolBaseTestCase):
         self.default(sender=self.c, amount=1_000_000)
         self.assertEqual(self.get_next_liquidity(), 100_000)
 
-    def test_should_not_accept_xtz_if_no_active_lines(self):
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.default(sender=self.c, amount=1_000_000)
-
-        msg = 'Need to have at least one line'
-        self.assertTrue(msg in str(cm.exception))
-
     def test_should_allow_to_withdraw_amount_from_contract_for_provider(self):
         self.add_line(max_events=2)
         # someone puts liquidity to contract that no one owns:
