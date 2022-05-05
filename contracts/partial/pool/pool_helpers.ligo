@@ -6,23 +6,30 @@ function calcFreeLiquidity(const store : storage) : int is
 function calcTotalLiquidity(const store : storage) : int is
     calcFreeLiquidity(store) + store.activeLiquidityF;
 
-function calcLiquidityPayout(const store : storage; const newEventFee : tez) : tez is
+function calcLiquidityPayout(const store : storage) is
     block {
 
-        const maxLiquidityF = int(store.nextLiquidityF);
+        const maxLiquidityF = calcTotalLiquidity(store) / store.maxEvents;
+        (* TODO: maybe if use activeShares instead of activeLiquidity, it would
+            be possible to implement next kind of logic:
+                freeShares = storeTotalShares - store.activeShares
+                freeLiquidity / freeShares * store.totalShares / store.maxEvents ?
+
+            BUT: without activeLiquidity it would be hard to estimate totalLiquidity
+            it might be needed somewhere else
+        *)
         const freeLiquidityF = calcFreeLiquidity(store);
 
         const liquidityAmountF = if maxLiquidityF > freeLiquidityF
             then freeLiquidityF
             else maxLiquidityF;
 
-        const liquidityAmount = liquidityAmountF / store.precision - newEventFee/1mutez;
+    } with abs(liquidityAmountF / store.precision)
 
-        if liquidityAmount <= 0
-        then failwith(PoolErrors.noLiquidity)
-        else skip;
-
-    } with abs(liquidityAmount) * 1mutez
+function excludeFee(const liquidityAmount : nat; const newEventFee : nat) is
+    if liquidityAmount > newEventFee
+    then abs(liquidityAmount - newEventFee)
+    else (failwith(PoolErrors.noLiquidity) : nat)
 
 function getEntry(const entryId : nat; const store : storage) : entryType is
     getOrFail(entryId, store.entries, PoolErrors.entryNotFound)
@@ -39,13 +46,11 @@ function getLine(const lineId : nat; const store : storage) : lineType is
 function getClaim(const key : claimKey; const store : storage) : claimParams is
     getOrFail(key, store.claims, PoolErrors.claimNotFound)
 
-function checkHasActiveEvents(const store : storage) : unit is
-    if store.maxEvents = 0n
-    then failwith(PoolErrors.noActiveEvents)
-    else unit;
-
 (* TODO: replace with absOr(const value : int; const default : nat) ? *)
 function absPositive(const value : int) is if value >= 0 then abs(value) else 0n
+
+function absOrFail(const value : int; const msg : string) is
+    if value >= 0 then abs(value) else (failwith(msg) : nat)
 
 function calcFreeEventSlots(const store : storage) is
     store.maxEvents - Map.size(store.activeEvents)
@@ -54,27 +59,6 @@ function checkHaveFreeEventSlots(const store : storage) is
     if calcFreeEventSlots(store) <= 0
     then failwith(PoolErrors.noFreeEventSlots)
     else unit;
-
-function increaseMaxActiveEvents(const count : nat; var store : storage) is
-block {
-    const newMaxActiveEvents = store.maxEvents + count;
-    store.nextLiquidityF :=
-        store.nextLiquidityF * store.maxEvents / newMaxActiveEvents;
-    store.maxEvents := newMaxActiveEvents;
-} with store
-
-function decreaseMaxActiveEvents(const count : nat; var store : storage) is
-block {
-    if count >= store.maxEvents
-    then failwith(PoolErrors.noActiveEvents)
-    else skip;
-
-    const newMaxActiveEvents = abs(store.maxEvents - count);
-
-    store.nextLiquidityF :=
-        store.nextLiquidityF * store.maxEvents / newMaxActiveEvents;
-    store.maxEvents := newMaxActiveEvents;
-} with store
 
 function checkLineIsNotPaused(const line : lineType) is
     if line.isPaused

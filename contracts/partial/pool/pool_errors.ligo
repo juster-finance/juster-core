@@ -6,7 +6,6 @@ module PoolErrors is {
     const positionNotFound : string = "Position is not found";
     const eventNotFound : string = "Event is not found";
     const earlyApprove : string = "Cannot approve liquidity before acceptAfter";
-    const noActiveEvents : string = "Need to have at least one line";
     const notPositionOwner : string = "Not position owner";
     const noLiquidity : string = "Not enough liquidity to run event";
     const noFreeEventSlots : string = "Max active events limit reached";

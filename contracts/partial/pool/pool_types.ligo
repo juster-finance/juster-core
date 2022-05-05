@@ -32,6 +32,9 @@ type eventType is record [
     shares : nat;
     totalShares : nat;
     lockedShares : nat;
+    (* TODO: lockedShares measured in totalShares, this simplifies calculations
+        but the name might confuse. Maybe there is something that describe
+        it better? *)
     result : option(nat);
     (* TODO: consider having isFinished : bool field? Or result as an option
         is enough? *)

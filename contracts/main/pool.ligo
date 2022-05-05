@@ -18,7 +18,7 @@ block {
 
     store.lines[store.nextLineId] := line;
     store.nextLineId := store.nextLineId + 1n;
-    store := increaseMaxActiveEvents(line.maxEvents, store);
+    store.maxEvents := store.maxEvents + line.maxEvents;
 
 } with ((nil: list(operation)), store)
 
@@ -62,14 +62,10 @@ block {
     (* store.entryLiquidity is the sum of all entries, so the following
         condition should not be true but it is better to check *)
     if store.entryLiquidityF < providedF
-    then failwith(PoolErrors.wrongState)
+    then failwith(PoolErrors.wrongState, 1)
     else skip;
 
     store.entryLiquidityF := abs(store.entryLiquidityF - providedF);
-
-    (* if there are no lines, then it is impossible to calculate providedPerEvent
-        and there would be DIV/0 error *)
-    checkHasActiveEvents(store);
 
     (* calculating shares *)
     const totalLiquidityF = calcTotalLiquidity(store);
@@ -77,7 +73,7 @@ block {
     (* totalLiquidity includes provided liquidity so the following condition
         should not be true but it is better to check *)
     if totalLiquidityF < int(providedF)
-    then failwith(PoolErrors.wrongState)
+    then failwith(PoolErrors.wrongState, 2)
     else skip;
 
     const liquidityBeforeDepositF = abs(totalLiquidityF - providedF);
@@ -116,7 +112,7 @@ block {
 
     const providedF = entry.amount * store.precision;
     if store.entryLiquidityF < providedF
-    then failwith(PoolErrors.wrongState)
+    then failwith(PoolErrors.wrongState, 3)
     else skip;
 
     store.entryLiquidityF := abs(store.entryLiquidityF - providedF);
@@ -192,7 +188,7 @@ block {
     (* Having negative payoutValue should not be possible,
         but it is better to check: *)
     if payoutValue < 0
-    then failwith(PoolErrors.wrongState)
+    then failwith(PoolErrors.wrongState, 4)
     else skip;
 
     const liquidityPerEventF = userLiquidityF / store.maxEvents;
@@ -203,13 +199,13 @@ block {
 
     (* Another impossible condition that is better to check: *)
     if store.totalShares < claim.shares
-    then failwith(PoolErrors.wrongState)
+    then failwith(PoolErrors.wrongState, 5)
     else skip;
 
     store.totalShares := abs(store.totalShares - claim.shares);
 
     if store.activeLiquidityF < providedInitialF
-    then failwith(PoolErrors.wrongState)
+    then failwith(PoolErrors.wrongState, 6)
     else skip;
 
     (* Is it possible to exclide providedEsitmatedF?
@@ -265,7 +261,7 @@ block {
             all locked claims so it should not be less than withdrawSum, so
             next case should not be possible: *)
         if withdrawSumF > store.withdrawableLiquidityF
-        then failwith(PoolErrors.wrongState)
+        then failwith(PoolErrors.wrongState, 7)
         else skip;
 
         store.withdrawableLiquidityF := abs(store.withdrawableLiquidityF - withdrawSumF);
@@ -377,7 +373,8 @@ block {
 
     (* TODO: is it possible to have some hook (view) to adjust payout?
         so it will allow to change line priorities and reallocate funds using token *)
-    const liquidityPayout = calcLiquidityPayout(store, newEventFee);
+    const nextLiquidity = calcLiquidityPayout(store);
+    const liquidityPayout = excludeFee(nextLiquidity, newEventFee / 1mutez) * 1mutez;
     const provideLiquidityOperation = Tezos.transaction(
         provideLiquidity,
         liquidityPayout,
@@ -415,9 +412,12 @@ block {
 
     const line = getLine(lineId, store);
 
-    store := if line.isPaused
-        then increaseMaxActiveEvents(line.maxEvents, store)
-        else decreaseMaxActiveEvents(line.maxEvents, store);
+    store.maxEvents := if line.isPaused
+        then store.maxEvents + line.maxEvents
+        else absOrFail(
+            store.maxEvents - line.maxEvents,
+            PoolErrors.wrongState
+        );
 
     store.lines[lineId] := line with record [isPaused = not line.isPaused];
 
@@ -468,14 +468,7 @@ block {
 } with (operations, store)
 
 
-function default(var store : storage) is
-block {
-    (* If there are no active lines this entrypoint is disabled *)
-    checkHasActiveEvents(store);
-    const distributedAmountF =
-        Tezos.amount / 1mutez * store.precision / store.maxEvents;
-    store.nextLiquidityF := store.nextLiquidityF + distributedAmountF;
-} with ((nil: list(operation)), store)
+function default(var store : storage) is ((nil: list(operation)), store)
 
 
 (* entrypoints:
@@ -581,8 +574,8 @@ case params of [
 [@view] function getManager(const _ : unit; const s: storage) is
     s.manager
 
-[@view] function getNextLiquidityF(const _ : unit; const s: storage) is
-    s.nextLiquidityF
+[@view] function getNextLiquidity(const _ : unit; const s: storage) is
+    calcLiquidityPayout(s)
 
 [@view] function getLiquidityUnits(const _ : unit; const s: storage) is
     s.liquidityUnits
