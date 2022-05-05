@@ -75,7 +75,6 @@ def generate_pool_storage(manager, new_event_fee=0):
         'manager': manager,
         'maxEvents': 0,
         'counter': 0,
-        'nextLiquidityF': 0,
         'entryLiquidityF': 0,
         'entryLockPeriod': 0,
         'entries': {},
