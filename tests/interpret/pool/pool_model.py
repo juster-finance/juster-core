@@ -16,11 +16,25 @@ PoolModelT = TypeVar('PoolModelT', bound='PoolModel')
 PositionT = TypeVar('PositionT', bound='Position')
 EventT = TypeVar('EventT', bound='Event')
 ClaimT = TypeVar('ClaimT', bound='Claim')
+EntryT = TypeVar('EntryT', bound='Entry')
 ClaimKeyT = TypeVar('ClaimKeyT', bound='ClaimKey')
 AnyStorage = dict[str, Any]
 
 # TODO: add models directory at the root and here might be pool dir with all
 # classes splitted in separate files
+
+@dataclass
+class Entry:
+    provider: str
+    amount: Decimal
+
+    @classmethod
+    def from_storage(cls, storage: AnyStorage) -> EntryT:
+        return cls(
+            provider=storage['provider'],
+            amount=Decimal(storage['amount'])
+        )
+
 
 @dataclass
 class Position:
@@ -86,24 +100,29 @@ class Event:
             provided=Decimal(storage['provided'])
         )
 
+    # TODO: make precision global // add precision to event params?
     def get_result_for_shares(self, shares: Decimal, precision: Decimal) -> int:
-        result = self.result if self.result is not None else 0
+        result = self.result if self.result is not None else Decimal(0)
         return (
             result * shares * precision / self.total_shares
         ).quantize(Decimal(1), context=rounding_down_context)
 
+    def get_active_amount(self, precision: Decimal) -> int:
+        provided = self.provided * precision
+        locked = self.locked_shares * provided / self.total_shares
+        return provided - locked
+
 
 @dataclass
 class PoolModel:
-    """ Model that emulates simplified Pool case with one event line and
-        instant liquidity add
-    """
+    """ Model that emulates simplified Pool case with one event line """
 
     active_events: list[int] = field(default_factory=list)
     positions: dict[int, Position] = field(default_factory=dict)
     total_shares: Decimal = Decimal(0)
     events: dict[int, Event] = field(default_factory=dict)
     claims: dict[ClaimKey, Claim] = field(default_factory=dict)
+    entries: dict[int, Entry] = field(default_factory=dict)
     max_events: int = 0
     counter: int = 0
     precision: Decimal = Decimal(10**6)
@@ -129,10 +148,11 @@ class PoolModel:
         }
 
         return cls(
-            active_events=list(storage['activeEvents'].values()),
+            active_events=list(storage['activeEvents'].keys()),
             positions=convert(Position, storage['positions']),
             total_shares=Decimal(storage['totalShares']),
             events=convert(Event, storage['events']),
+            entries=convert(Entry, storage['entries']),
             claims=claims,
             max_events=storage['maxEvents'],
             counter=storage['counter'],
@@ -145,26 +165,38 @@ class PoolModel:
         ...
         return self
 
+    def quantize(self, value):
+        return Decimal(value).quantize(
+            Decimal(1),
+            context=rounding_down_context
+        )
+
     def calc_active_liquidity(self):
-        return sum(
-            event.provided for event in self.events.values()
-        ).quantize(Decimal(1), context=rounding_down_context)
+        return self.quantize(sum(
+            self.events[event_id].get_active_amount(self.precision)
+            for event_id in self.active_events
+        ))
 
     def calc_withdrawable_liquidity(self):
-        return sum(
+        return self.quantize(sum(
             self.events[claim_key.event_id].get_result_for_shares(
                 shares=claim.shares,
                 precision=self.precision
             )
             for claim_key, claim in self.claims.items()
-        ).quantize(Decimal(1), context=rounding_down_context)
+        ))
+
+    def calc_entry_liquidity(self):
+        return self.quantize(sum(
+            entry.amount * self.precision for entry in self.entries.values()
+        ))
 
     def calc_free_liquidity(self):
         return (
             self.balance * self.precision
             - self.calc_withdrawable_liquidity()
-            # - self.calc_entry_liquidty()
-        ).quantize(Decimal(1), context=rounding_down_context)
+            - self.calc_entry_liquidity()
+        )
 
     def calc_total_liquidity(self):
         return self.calc_free_liquidity() + self.calc_active_liquidity()
@@ -181,17 +213,23 @@ class PoolModel:
         ).quantize(Decimal(1), context=rounding_down_context)
 
     def deposit(self, user: str, amount: Decimal) -> PoolModelT:
+        entry = Entry(user, amount)
+        index = 0 if not len(self.entries) else max(self.entries.keys()) + 1
+        self.entries[index] = entry
+        self.balance += amount
 
+    def approve(self, entry_id: int):
+        entry = self.entries[entry_id]
         position = Position(
-            provider=user,
-            shares=self.calc_deposit_shares(amount),
+            provider=entry.provider,
+            shares=self.calc_deposit_shares(entry.amount),
             added_counter=self.counter
         )
+        self.entries.pop(entry_id)
 
         index = 0 if not len(self.positions) else max(self.positions.keys()) + 1
         self.positions[index] = position
         self.total_shares += position.shares
-        self.balance += amount
         self.counter += 1
 
         return self
@@ -219,20 +257,27 @@ class PoolModel:
     def __eq__(self, other: PoolModelT) -> bool:
         # TODO: it is possible to sort active_events in other places and
         # then this method is probably not necessary
-        is_equal = all([
-            sorted(self.active_events) == sorted(other.active_events),
-            self.positions == other.positions,
-            self.events == other.events,
-            self.claims == other.claims,
-            self.total_shares == other.total_shares,
-            self.max_events == other.max_events,
-            self.counter == other.counter,
-            self.precision == other.precision,
-            self.liquidity_units == other.liquidity_units,
-            self.balance == other.balance
-        ])
+        comparsions = {
+            'active_events': sorted(self.active_events) == sorted(other.active_events),
+            'positions': self.positions == other.positions,
+            'events': self.events == other.events,
+            'entries': self.entries == other.entries,
+            'claims': self.claims == other.claims,
+            'total_shares': self.total_shares == other.total_shares,
+            'max_events': self.max_events == other.max_events,
+            'counter': self.counter == other.counter,
+            'precision': self.precision == other.precision,
+            'liquidity_units': self.liquidity_units == other.liquidity_units,
+            'balance': self.balance == other.balance
+        }
 
+        is_equal = all(comparsions.values())
         if not is_equal:
+            for name, is_same in comparsions.items():
+                if not is_same:
+                    print(f'{name} is not equal:')
+                    print(getattr(self, name))
+                    print(getattr(other, name))
             import pdb; pdb.set_trace()
 
         return is_equal
