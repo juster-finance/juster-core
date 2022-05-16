@@ -22,13 +22,14 @@ AnyStorage = dict[str, Any]
 class Entry:
     provider: str
     amount: Decimal
-    # TODO: add accept_after: timestamp
+    accept_after: int
 
     @classmethod
     def from_storage(cls, storage: AnyStorage) -> Entry:
         return cls(
             provider=storage['provider'],
-            amount=Decimal(storage['amount'])
+            amount=Decimal(storage['amount']),
+            accept_after=int(storage['acceptAfter'])
         )
 
 
@@ -126,12 +127,15 @@ class PoolModel:
     balance: Decimal = Decimal(0)
     next_entry_id: int = 0
     next_position_id: int = 0
+    entry_lock_period: int = 0
+    now: int = 0
 
     @classmethod
     def from_storage(
         cls: Type[PoolModel],
         storage: AnyStorage,
-        balance: Decimal=Decimal(0)
+        balance: Decimal=Decimal(0),
+        now: int=0
     ) -> PoolModel:
 
         def convert(cls: Any, items: AnyStorage):
@@ -158,7 +162,9 @@ class PoolModel:
             liquidity_units=Decimal(storage['liquidityUnits']),
             balance=balance,
             next_entry_id=storage['nextEntryId'],
-            next_position_id=storage['nextPositionId']
+            next_position_id=storage['nextPositionId'],
+            entry_lock_period=storage['entryLockPeriod'],
+            now=now
         )
 
     def update_max_lines(self, max_lines: int) -> PoolModel:
@@ -213,7 +219,8 @@ class PoolModel:
         ).quantize(Decimal(1), context=rounding_down_context)
 
     def deposit(self, user: str, amount: Decimal) -> PoolModel:
-        entry = Entry(user, amount)
+        accept_after = self.now + self.entry_lock_period
+        entry = Entry(user, amount, accept_after)
         self.entries[self.next_entry_id] = entry
         self.next_entry_id += 1
         self.balance += amount
@@ -273,7 +280,9 @@ class PoolModel:
             'counter': self.counter == other.counter,
             'precision': self.precision == other.precision,
             'liquidity_units': self.liquidity_units == other.liquidity_units,
-            'balance': self.balance == other.balance
+            'balance': self.balance == other.balance,
+            'next_position_id': self.next_position_id == other.next_position_id,
+            'next_entry_id': self.next_entry_id == other.next_entry_id,
         }
 
         is_equal = all(comparsions.values())
