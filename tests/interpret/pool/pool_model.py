@@ -27,6 +27,7 @@ AnyStorage = dict[str, Any]
 class Entry:
     provider: str
     amount: Decimal
+    # TODO: add accept_after: timestamp
 
     @classmethod
     def from_storage(cls, storage: AnyStorage) -> EntryT:
@@ -128,6 +129,7 @@ class PoolModel:
     precision: Decimal = Decimal(10**6)
     liquidity_units: Decimal = Decimal(0)
     balance: Decimal = Decimal(0)
+    next_entry_id: int = 0
 
     @classmethod
     def from_storage(
@@ -158,7 +160,8 @@ class PoolModel:
             counter=storage['counter'],
             precision=Decimal(storage['precision']),
             liquidity_units=Decimal(storage['liquidityUnits']),
-            balance=balance
+            balance=balance,
+            next_entry_id=storage['nextEntryId']
         )
 
     def update_max_lines(self, max_lines: int) -> PoolModelT:
@@ -214,9 +217,11 @@ class PoolModel:
 
     def deposit(self, user: str, amount: Decimal) -> PoolModelT:
         entry = Entry(user, amount)
-        index = 0 if not len(self.entries) else max(self.entries.keys()) + 1
-        self.entries[index] = entry
+        self.entries[self.next_entry_id] = entry
+        self.next_entry_id += 1
         self.balance += amount
+
+        return self
 
     def approve(self, entry_id: int):
         entry = self.entries[entry_id]
