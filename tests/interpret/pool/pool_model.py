@@ -130,6 +130,7 @@ class PoolModel:
     liquidity_units: Decimal = Decimal(0)
     balance: Decimal = Decimal(0)
     next_entry_id: int = 0
+    next_position_id: int = 0
 
     @classmethod
     def from_storage(
@@ -161,7 +162,8 @@ class PoolModel:
             precision=Decimal(storage['precision']),
             liquidity_units=Decimal(storage['liquidityUnits']),
             balance=balance,
-            next_entry_id=storage['nextEntryId']
+            next_entry_id=storage['nextEntryId'],
+            next_position_id=storage['nextPositionId']
         )
 
     def update_max_lines(self, max_lines: int) -> PoolModelT:
@@ -223,7 +225,7 @@ class PoolModel:
 
         return self
 
-    def approve(self, entry_id: int):
+    def approve(self, entry_id: int) -> PoolModelT:
         entry = self.entries[entry_id]
         position = Position(
             provider=entry.provider,
@@ -232,8 +234,8 @@ class PoolModel:
         )
         self.entries.pop(entry_id)
 
-        index = 0 if not len(self.positions) else max(self.positions.keys()) + 1
-        self.positions[index] = position
+        self.positions[self.next_position_id] = position
+        self.next_position_id += 1
         self.total_shares += position.shares
         self.counter += 1
 
