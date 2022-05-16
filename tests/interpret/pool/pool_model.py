@@ -243,6 +243,10 @@ class PoolModel:
 
         return self
 
+    def cancel(self, entry_id: int) -> PoolModel:
+        self.entries.pop(entry_id)
+        return self
+
     def claim(self, position_id: int, shares: Decimal) -> PoolModel:
         ...
         return self
