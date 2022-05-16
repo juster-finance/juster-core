@@ -1,3 +1,4 @@
+from __future__ import annotations
 import json
 from decimal import Decimal
 from typing import Optional
@@ -12,12 +13,6 @@ from decimal import Context, ROUND_DOWN
 rounding_down_context = Context(rounding=ROUND_DOWN)
 
 
-PoolModelT = TypeVar('PoolModelT', bound='PoolModel')
-PositionT = TypeVar('PositionT', bound='Position')
-EventT = TypeVar('EventT', bound='Event')
-ClaimT = TypeVar('ClaimT', bound='Claim')
-EntryT = TypeVar('EntryT', bound='Entry')
-ClaimKeyT = TypeVar('ClaimKeyT', bound='ClaimKey')
 AnyStorage = dict[str, Any]
 
 # TODO: add models directory at the root and here might be pool dir with all
@@ -30,7 +25,7 @@ class Entry:
     # TODO: add accept_after: timestamp
 
     @classmethod
-    def from_storage(cls, storage: AnyStorage) -> EntryT:
+    def from_storage(cls, storage: AnyStorage) -> Entry:
         return cls(
             provider=storage['provider'],
             amount=Decimal(storage['amount'])
@@ -44,7 +39,7 @@ class Position:
     added_counter: int
 
     @classmethod
-    def from_storage(cls, storage: AnyStorage) -> PositionT:
+    def from_storage(cls, storage: AnyStorage) -> Position:
         return cls(
             provider=storage['provider'],
             shares=Decimal(storage['shares']),
@@ -58,7 +53,7 @@ class Claim:
     provider: str
 
     @classmethod
-    def from_storage(cls, storage: AnyStorage) -> ClaimT:
+    def from_storage(cls, storage: AnyStorage) -> Claim:
         return cls(
             shares=Decimal(storage['shares']),
             provider=storage['provider']
@@ -71,7 +66,7 @@ class ClaimKey:
     position_id: int
 
     @classmethod
-    def from_tuple(cls, tpl: tuple[int, int]) -> ClaimKeyT:
+    def from_tuple(cls, tpl: tuple[int, int]) -> ClaimKey:
         return cls(
             event_id=tpl[0],
             position_id=tpl[1]
@@ -91,7 +86,7 @@ class Event:
     provided: Decimal
 
     @classmethod
-    def from_storage(cls, storage: AnyStorage) -> EventT:
+    def from_storage(cls, storage: AnyStorage) -> Event:
         return cls(
             created_counter=storage['createdCounter'],
             shares=Decimal(storage['shares']),
@@ -134,10 +129,10 @@ class PoolModel:
 
     @classmethod
     def from_storage(
-        cls: Type[PoolModelT],
+        cls: Type[PoolModel],
         storage: AnyStorage,
         balance: Decimal=Decimal(0)
-    ) -> PoolModelT:
+    ) -> PoolModel:
 
         def convert(cls: Any, items: AnyStorage):
             return {
@@ -166,7 +161,7 @@ class PoolModel:
             next_position_id=storage['nextPositionId']
         )
 
-    def update_max_lines(self, max_lines: int) -> PoolModelT:
+    def update_max_lines(self, max_lines: int) -> PoolModel:
         ...
         return self
 
@@ -217,7 +212,7 @@ class PoolModel:
             / self.calc_total_liquidity()
         ).quantize(Decimal(1), context=rounding_down_context)
 
-    def deposit(self, user: str, amount: Decimal) -> PoolModelT:
+    def deposit(self, user: str, amount: Decimal) -> PoolModel:
         entry = Entry(user, amount)
         self.entries[self.next_entry_id] = entry
         self.next_entry_id += 1
@@ -225,7 +220,7 @@ class PoolModel:
 
         return self
 
-    def approve(self, entry_id: int) -> PoolModelT:
+    def approve(self, entry_id: int) -> PoolModel:
         entry = self.entries[entry_id]
         position = Position(
             provider=entry.provider,
@@ -241,27 +236,27 @@ class PoolModel:
 
         return self
 
-    def claim(self, position_id: int, shares: Decimal) -> PoolModelT:
+    def claim(self, position_id: int, shares: Decimal) -> PoolModel:
         ...
         return self
 
-    def withdraw(self, position_id: int, event_id: int) -> PoolModelT:
+    def withdraw(self, position_id: int, event_id: int) -> PoolModel:
         ...
         return self
 
-    def pay_reward(self, event_id: int, amount: Decimal) -> PoolModelT:
+    def pay_reward(self, event_id: int, amount: Decimal) -> PoolModel:
         ...
         return self
 
-    def create_event(self, line_id: int) -> PoolModelT:
+    def create_event(self, line_id: int) -> PoolModel:
         ...
         return self
 
-    def default(self, amount: Decimal) -> PoolModelT:
+    def default(self, amount: Decimal) -> PoolModel:
         ...
         return self
 
-    def __eq__(self, other: PoolModelT) -> bool:
+    def __eq__(self, other: PoolModel) -> bool:
         # TODO: it is possible to sort active_events in other places and
         # then this method is probably not necessary
         comparsions = {
