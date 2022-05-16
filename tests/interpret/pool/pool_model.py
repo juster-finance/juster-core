@@ -97,13 +97,13 @@ class Event:
         )
 
     # TODO: make precision global // add precision to event params?
-    def get_result_for_shares(self, shares: Decimal, precision: Decimal) -> int:
+    def get_result_for_shares(self, shares: Decimal, precision: Decimal) -> Decimal:
         result = self.result if self.result is not None else Decimal(0)
         return (
             result * shares * precision / self.total_shares
         ).quantize(Decimal(1), context=rounding_down_context)
 
-    def get_active_amount(self, precision: Decimal) -> int:
+    def get_active_amount(self, precision: Decimal) -> Decimal:
         provided = self.provided * precision
         locked = self.locked_shares * provided / self.total_shares
         return provided - locked
@@ -256,7 +256,10 @@ class PoolModel:
         ...
         return self
 
-    def __eq__(self, other: PoolModel) -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, PoolModel):
+            return NotImplemented
+
         # TODO: it is possible to sort active_events in other places and
         # then this method is probably not necessary
         comparsions = {
