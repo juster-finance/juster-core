@@ -11,6 +11,9 @@ from tests.test_data import (
     generate_line_params,
     generate_juster_config
 )
+from tests.interpret.pool.pool_model import PoolModel
+from tests.interpret.pool.pool_model import ClaimKey
+
 
 POOL_FN = '../../../build/contracts/pool.tz'
 RUN_TIME = int(time.time())
@@ -44,6 +47,21 @@ class PoolBaseTestCase(TestCase):
         self.drop_changes()
 
 
+    def to_model(self, storage=None, balance=None):
+        storage = self.storage if storage is None else storage
+        balance = (
+            Decimal(self.balances['contract']) if balance is None else balance)
+        return PoolModel.from_storage(
+            storage=storage,
+            balance=balance,
+            now=self.current_time)
+
+
+    def get_balance(self, address=None):
+        address = self.address if address is None else address
+        return int(self.balances[address])
+
+
     def drop_changes(self):
         self.storage = self.init_storage.copy()
         self.balances = {self.address: 0}
@@ -52,16 +70,21 @@ class PoolBaseTestCase(TestCase):
 
     def update_balance(self, address, amount):
         """ Used to track balances of different users """
-        self.balances[address] = self.balances.get(address, 0) + amount
-        self.assertTrue(self.balances['contract'] >= 0)
+        self.balances[address] = self.balances.get(address, Decimal(0)) + amount
+        self.assertTrue(self.balances['contract'] >= Decimal(0))
 
 
     def get_next_liquidity(self):
         """ Returns next event liquidity value in int """
-        return self.pool.getNextLiquidity().onchain_view(
-            storage=self.storage,
-            balance=self.balances['contract']
-        )
+        return int(self.to_model().calc_next_event_liquidity())
+
+
+    def check_operation_is(self, operation, amount=None, destination=None):
+        """ Asserts that amount & destination of given operation is expected """
+        if amount is not None:
+            self.assertEqual(amount, int(operation['amount']))
+        if destination is not None:
+            self.assertEqual(destination, operation['destination'])
 
 
     def add_line(
@@ -99,68 +122,63 @@ class PoolBaseTestCase(TestCase):
             sender=sender
         )
 
-        line_id = self.storage['nextLineId']
-        self.assertEqual(
-            line_id + 1,
-            result.storage['nextLineId']
+        init_model = self.to_model().add_line(
+            measure_period=measure_period,
+            bets_period=bets_period,
+            last_bets_close_time=last_bets_close_time,
+            max_events=max_events,
+            is_paused=False,
+            min_betting_period=min_betting_period
         )
+
+        result_model = self.to_model(storage=result.storage)
+        self.assertEqual(init_model, result_model)
 
         added_line = result.storage['lines'][self.storage['nextLineId']]
         self.assertEqual(added_line['currencyPair'], currency_pair)
-        self.assertEqual(added_line['maxEvents'], max_events)
-        self.assertEqual(added_line['betsPeriod'], bets_period)
-        self.assertEqual(added_line['lastBetsCloseTime'], last_bets_close_time)
+        self.assertEqual(added_line['juster'], juster_address)
+        self.assertEqual(added_line['advanceTime'], advance_time)
 
+        line_id = self.storage['nextLineId']
         self.storage = result.storage
         return line_id
 
 
     def deposit_liquidity(self, sender=None, amount=1_000_000):
         sender = sender or self.manager
+        new_balance = self.get_balance(self.address) + amount
+
         call = self.pool.depositLiquidity()
         result = call.with_amount(amount).interpret(
             storage=self.storage,
             now=self.current_time,
             sender=sender,
-            balance=self.balances[self.address] + amount
+            balance=new_balance
+        )
+
+        init_model = self.to_model().deposit(
+            user=sender,
+            amount=Decimal(amount)
+        )
+
+        result_model = self.to_model(
+            storage=result.storage,
+            balance=new_balance
+        )
+
+        self.assertEqual(init_model, result_model)
+
+        self.assertEqual(
+            result.storage['entryLiquidityF'],
+            result_model.calc_entry_liquidity()
         )
 
         entry_id = self.storage['nextEntryId']
-        self.assertEqual(
-            entry_id + 1,
-            result.storage['nextEntryId']
-        )
-
-        added_position = result.storage['entries'][entry_id]
-        expected_unlock_time = self.storage['entryLockPeriod'] + self.current_time
-        self.assertEqual(added_position['acceptAfter'], expected_unlock_time)
-        self.assertEqual(added_position['amount'], amount)
-        self.assertEqual(added_position['provider'], sender)
-
-        entry_liquidity_diff = (
-            result.storage['entryLiquidityF']
-            - self.storage['entryLiquidityF']
-        )
-        amount_f = self.storage['precision'] * amount
-        self.assertEqual(entry_liquidity_diff, amount_f)
-
         self.storage = result.storage
         self.update_balance(self.address, amount)
         self.update_balance(sender, -amount)
 
         return entry_id
-
-
-    def _calc_free_liquidity(self):
-        return (
-            self.balances['contract'] * self.storage['precision']
-            - self.storage['withdrawableLiquidityF']
-            - self.storage['entryLiquidityF']
-        )
-
-
-    def _calc_total_liquidity(self):
-        return self._calc_free_liquidity() + self.storage['activeLiquidityF']
 
 
     def approve_liquidity(self, sender=None, entry_id=0, amount=0):
@@ -170,39 +188,19 @@ class PoolBaseTestCase(TestCase):
             storage=self.storage,
             now=self.current_time,
             sender=sender,
-            balance=self.balances[self.address]
+            balance=self.get_balance(self.address)
         )
 
         self.assertTrue(result.storage['entries'][entry_id] is None)
         result.storage['entries'].pop(entry_id)
 
-        position_id = self.storage['nextPositionId']
-        added_position = result.storage['positions'][position_id]
-        self.assertEqual(added_position['addedCounter'], self.storage['counter'])
-        self.assertEqual(result.storage['counter'], self.storage['counter'] + 1)
+        init_model = self.to_model().approve(entry_id)
+        result_model = self.to_model(storage=result.storage)
+        self.assertEqual(init_model, result_model)
 
-        entry = self.storage['entries'][entry_id]
-        self.assertEqual(added_position['provider'], entry['provider'])
-
-        amount = entry['amount']
-        amount_f = amount * self.storage['precision']
-        total_shares = self.storage['totalShares']
-        total_liquidity_f = self._calc_total_liquidity()
-
-        is_new = total_shares == 0
-        # TODO: replace calculations with decimals:
-        expected_added_shares = int(
-            amount if is_new else amount_f * total_shares / total_liquidity_f)
-
-        self.assertEqual(added_position['shares'], expected_added_shares)
-        entry_liquidity_diff_f = (
-            self.storage['entryLiquidityF']
-            - result.storage['entryLiquidityF']
-        )
-        self.assertEqual(entry_liquidity_diff_f, amount_f)
-
+        added_position_id = self.storage['nextPositionId']
         self.storage = result.storage
-        return position_id
+        return added_position_id
 
 
     def cancel_liquidity(self, sender=None, entry_id=0, amount=0):
@@ -212,26 +210,30 @@ class PoolBaseTestCase(TestCase):
             storage=self.storage,
             now=self.current_time,
             sender=sender,
-            balance=self.balances[self.address]
+            balance=self.get_balance(self.address)
         )
-
-        position = self.storage['entries'][entry_id]
-        self.assertEqual(position['provider'], sender)
-        liquidity_diff_f = (
-            self.storage['entryLiquidityF'] - result.storage['entryLiquidityF'])
-        amount_f = position['amount'] * self.storage['precision']
-        self.assertEqual(liquidity_diff_f, amount_f)
 
         self.assertTrue(result.storage['entries'][entry_id] is None)
         result.storage['entries'].pop(entry_id)
 
+        init_model = self.to_model().cancel(entry_id)
+        result_model = self.to_model(storage=result.storage)
+        self.assertEqual(init_model, result_model)
+
         entry = self.storage['entries'][entry_id]
         self.assertEqual(len(result.operations), 1)
-        op = result.operations[0]
-        self.assertEqual(op['destination'], sender)
-        self.assertEqual(op['amount'], str(entry['amount']))
+        self.check_operation_is(
+            operation=result.operations[0],
+            amount=entry['amount'],
+            destination=sender
+        )
 
         self.storage = result.storage
+
+        self.assertEqual(
+            result.storage['entryLiquidityF'],
+            result_model.calc_entry_liquidity()
+        )
 
 
     def _check_withdrawal_creation(self, result, position_id, shares):
@@ -252,82 +254,6 @@ class PoolBaseTestCase(TestCase):
         self.assertDictEqual(expected_withdrawal, actual_withdrawal)
 
 
-    def _check_position_diff(self, result, position_id, shares):
-        old_position = self.storage['positions'][position_id]
-        new_position = result.storage['positions'][position_id]
-
-        self.assertEqual(old_position['provider'], new_position['provider'])
-        self.assertEqual(old_position['provider'], new_position['provider'])
-
-        shares_diff = old_position['shares'] - new_position['shares']
-        self.assertEqual(shares_diff, shares)
-
-        self.assertEqual(
-            new_position['addedCounter'], old_position['addedCounter'])
-        total_shares_diff = (
-            self.storage['totalShares'] - result.storage['totalShares'])
-        self.assertEqual(total_shares_diff, shares)
-
-
-    def _calc_and_check_claim_excpected_amount(self, result, position_id, shares):
-        position = self.storage['positions'][position_id]
-        precision = Decimal(self.storage['precision'])
-        total_liquidity_f = self._calc_total_liquidity()
-        total_pool_shares = Decimal(self.storage['totalShares'])
-        claim_shares = Decimal(shares)
-        provided_initial_f = Decimal(0)
-        provided_estimate_f = 0
-
-        for event_id in self.storage['activeEvents']:
-            event = self.storage['events'][event_id]
-            is_impacted = position['addedCounter'] < event['createdCounter']
-            have_shares = claim_shares > 0
-
-            if is_impacted and have_shares:
-                provided = Decimal(event['provided'])
-                total_event_shares = Decimal(event['totalShares'])
-
-                key = (event_id, position_id)
-                default_claim = {'shares': 0}
-                old_claim = self.storage['claims'].get(key, default_claim)
-                new_claim = result.storage['claims'][key]
-
-                shares_diff = new_claim['shares'] - old_claim['shares']
-                self.assertEqual(shares_diff, claim_shares)
-
-                provided_initial_f += int(
-                    provided * claim_shares * precision / total_event_shares)
-
-                provided_estimate_f += int(
-                    total_liquidity_f * claim_shares * event['shares']
-                    / total_event_shares / total_pool_shares)
-
-        active_liquidity_diff_f = (
-            self.storage['activeLiquidityF']
-            - result.storage['activeLiquidityF']
-        )
-
-        self.assertEqual(active_liquidity_diff_f, provided_initial_f)
-
-        # TODO: make all tests internal calculations in Decimals
-        user_liquidity_f = total_liquidity_f * claim_shares / self.storage['totalShares']
-
-        expected_amount_f = int(user_liquidity_f) - int(provided_estimate_f)
-        expected_amount = int(expected_amount_f / precision)
-
-        return expected_amount
-
-
-    def _check_claim_amount(self, result, expected_amount):
-        if expected_amount:
-            self.assertEqual(len(result.operations), 1)
-            op = result.operations[0]
-            amount = int(op['amount'])
-            self.assertEqual(expected_amount, amount)
-        else:
-            self.assertEqual(len(result.operations), 0)
-
-
     def claim_liquidity(self, sender=None, position_id=0, shares=1_000_000, amount=0):
         sender = sender or self.manager
         params = {
@@ -340,14 +266,22 @@ class PoolBaseTestCase(TestCase):
             storage=self.storage,
             now=self.current_time,
             sender=sender,
-            balance=self.balances[self.address]
+            balance=self.get_balance(self.address)
         )
 
-        self._check_position_diff(result, position_id, shares)
+        model = self.to_model()
+        expected_amount = model.calc_claim_payout(position_id, shares)
+        init_model = model.claim(position_id, Decimal(shares))
+        new_balance = self.get_balance(self.address) - expected_amount
+        result_model = self.to_model(storage=result.storage, balance=new_balance)
+        self.assertEqual(init_model, result_model)
         self._check_withdrawal_creation(result, position_id, shares)
-        expected_amount = self._calc_and_check_claim_excpected_amount(
-            result, position_id, shares)
-        self._check_claim_amount(result, expected_amount)
+
+        if expected_amount:
+            self.assertEqual(len(result.operations), 1)
+            self.check_operation_is(result.operations[0], amount=expected_amount)
+        else:
+            self.assertEqual(len(result.operations), 0)
 
         self.storage = result.storage
 
@@ -366,52 +300,38 @@ class PoolBaseTestCase(TestCase):
             storage=self.storage,
             now=self.current_time,
             sender=sender,
-            balance=self.balances[self.address]
+            balance=self.get_balance(self.address)
         )
 
-        precision = Decimal(self.storage['precision'])
-        amounts_f = {}
+        claim_keys = [ClaimKey.from_dict(position) for position in positions]
+        payouts = self.to_model().calc_withdraw_payouts(claim_keys)
+        init_model = self.to_model().withdraw(claim_keys)
+        new_balance = self.get_balance(self.address) - sum(payouts.values())
+
         for position in positions:
             key = (position['eventId'], position['positionId'])
             self.assertTrue(result.storage['claims'][key] is None)
             result.storage['claims'].pop(key)
 
-            claim = self.storage['claims'][key]
-            event = self.storage['events'][position['eventId']]
-            event_result_f = Decimal(event['result']) * precision
-            shares = Decimal(claim['shares'])
-            total_shares = Decimal(event['totalShares'])
-            amount_f = int(shares * event_result_f / total_shares )
-            provider = claim['provider']
+        result_model = self.to_model(storage=result.storage, balance=new_balance)
+        self.assertEqual(init_model, result_model)
 
-            if amount_f > 0:
-                amounts_f[provider] = amounts_f.get(provider, 0) + amount_f
+        self.assertEqual(len(payouts), len(result.operations))
 
-        amounts_sum_f = sum(amounts_f.values())
-        self.assertEqual(len(amounts_f), len(result.operations))
-
-        withdrawable_diff_f = (
-            Decimal(self.storage['withdrawableLiquidityF'])
-            - Decimal(result.storage['withdrawableLiquidityF'])
-        )
-        self.assertEqual(withdrawable_diff_f, amounts_sum_f)
-        self.storage = result.storage
-
-        amounts = {
-            key: int(amount / precision)
-            for key, amount in amounts_f.items()
-        }
-
-        if amounts_sum_f:
-            for op in result.operations:
-                amount = int(op['amount'])
-                participant = op['destination']
-                self.assertEqual(amount, amounts[participant])
-
+        if len(payouts):
+            for operation in result.operations:
+                participant = operation['destination']
+                amount = payouts[participant]
+                self.check_operation_is(
+                    operation=operation,
+                    amount=amount,
+                    destination=participant
+                )
                 self.update_balance(self.address, -amount)
                 self.update_balance(participant, amount)
 
-        return amounts
+        self.storage = result.storage
+        return payouts
 
 
     def pay_reward(self, sender=None, event_id=0, amount=1_000_000):
@@ -422,77 +342,24 @@ class PoolBaseTestCase(TestCase):
             storage=self.storage,
             now=self.current_time,
             sender=sender,
-            balance=self.balances[self.address]
+            balance=self.get_balance(self.address)
         )
 
-        self.assertEqual(result.storage['events'][event_id]['result'], amount)
-        self.assertFalse(event_id in result.storage['activeEvents'])
-        withdrawable_diff_f = (
-            Decimal(result.storage['withdrawableLiquidityF'])
-            - Decimal(self.storage['withdrawableLiquidityF'])
-        )
-
-        event = self.storage['events'][event_id]
-        amount_f = Decimal(amount * self.storage['precision'])
-        locked_shares = Decimal(event['lockedShares'])
-        total_shares = Decimal(event['totalShares'])
-        event_lock_f = int(locked_shares * amount_f / total_shares)
-        self.assertEqual(withdrawable_diff_f, event_lock_f)
+        init_model = self.to_model().pay_reward(event_id, Decimal(amount))
+        new_balance = self.get_balance(self.address) + amount
+        result_model = self.to_model(
+            storage=result.storage, balance=Decimal(new_balance))
+        self.assertEqual(init_model, result_model)
 
         self.storage = result.storage
         self.update_balance(sender, -amount)
         self.update_balance(self.address, amount)
 
 
-    def _check_liquidity_units_calc(self, result, event_line_id, amount):
-        line = result.storage['lines'][event_line_id]
-        liquidity_units_diff = (
-            result.storage['liquidityUnits']
-            - self.storage['liquidityUnits'])
-
-        duration = (
-            line['measurePeriod']
-            + line['lastBetsCloseTime']
-            - self.current_time)
-
-        expected_liquidity_units = int(
-            duration
-            * amount
-            / self.storage['totalShares']
-        )
-
-        self.assertEqual(liquidity_units_diff, expected_liquidity_units)
-
-
-    def _check_create_event_active_liquidity_calc(self, result, amount_f):
-        active_liquidity_diff_f = (
-            result.storage['activeLiquidityF']
-            - self.storage['activeLiquidityF']
-        )
-
-        self.assertEqual(active_liquidity_diff_f, amount_f)
-
-
-    def _check_added_event(self, result, next_event_id, amount):
-        added_event = result.storage['events'][next_event_id]
-        event_shares = int(result.storage['totalShares']
-            / result.storage['maxEvents'])
-
-        target_event = {
-            'createdCounter': self.storage['counter'],
-            'lockedShares': 0,
-            'provided': amount,
-            'result': None,
-            'totalShares': self.storage['totalShares'],
-            'shares': event_shares
-        }
-
-        self.assertDictEqual(added_event, target_event)
-
-
     def create_event(
             self,
             sender=None,
+            # TODO: replace with line_id:
             event_line_id=0,
             next_event_id=None,
             amount=0,
@@ -513,37 +380,34 @@ class PoolBaseTestCase(TestCase):
                 f'{juster_address}%getNextEventId': next_event_id,
                 f'{juster_address}%getConfig': config
             },
-            balance=self.balances[self.address]
+            balance=self.get_balance(self.address)
         )
 
-        event_fee = int(result.operations[0]['amount'])
-        provide_op = int(result.operations[1]['amount'])
-        precision = self.storage['precision']
-        provided_amount = event_fee + provide_op
-        provided_amount_f = provided_amount * precision
-
-        self.assertTrue(next_event_id in result.storage['activeEvents'])
-        self._check_create_event_active_liquidity_calc(result, provided_amount_f)
-        self._check_added_event(result, next_event_id, provided_amount)
-        self.assertEqual(self.storage['counter'] + 1, result.storage['counter'])
-        self._check_liquidity_units_calc(
-            result, event_line_id=event_line_id, amount=provided_amount)
+        init_model = self.to_model().create_event(event_line_id, next_event_id)
+        next_event_liquidity = self.to_model().calc_next_event_liquidity()
+        new_balance = self.get_balance(self.address) - next_event_liquidity
+        result_model = self.to_model(
+            storage=result.storage, balance=Decimal(new_balance))
+        self.assertEqual(init_model, result_model)
 
         self.assertEqual(len(result.operations), 2)
+        event_fee = config['expirationFee'] + config['measureStartFee']
 
-        new_event_fee = config['expirationFee'] + config['measureStartFee']
-        self.assertEqual(event_fee, new_event_fee)
-        max_liquidity_f = self._calc_total_liquidity() / self.storage['maxEvents']
-        expected_provided_f = min(
-            max_liquidity_f, self._calc_free_liquidity())
-        expected_provided = int(expected_provided_f / precision)
-        self.assertEqual(provided_amount, expected_provided)
-        self.assertEqual(result.operations[0]['destination'], juster_address)
-        self.assertEqual(result.operations[1]['destination'], juster_address)
+        self.check_operation_is(
+            operation=result.operations[0],
+            amount=event_fee,
+            destination=juster_address
+        )
+
+        self.check_operation_is(
+            operation=result.operations[1],
+            amount=next_event_liquidity - event_fee,
+            destination=juster_address
+        )
 
         self.storage = result.storage
-        self.update_balance(self.address, -provided_amount)
-        self.update_balance(juster_address, provided_amount)
+        self.update_balance(self.address, -next_event_liquidity)
+        self.update_balance(juster_address, next_event_liquidity)
         self.next_event_id += 1
         return next_event_id
 
@@ -556,24 +420,15 @@ class PoolBaseTestCase(TestCase):
             storage=self.storage,
             now=self.current_time,
             sender=sender,
-            balance=self.balances[self.address]
+            balance=self.get_balance(self.address)
         )
 
-        init_state = self.storage['lines'][line_id]['isPaused']
-        result_state = result.storage['lines'][line_id]['isPaused']
-        self.assertEqual(init_state, not result_state)
-
-        active_events_diff = (
-            result.storage['maxEvents']
-            - self.storage['maxEvents']
-        )
-
-        self.assertEqual(
-            abs(active_events_diff),
-            self.storage['lines'][line_id]['maxEvents'])
+        init_model = self.to_model().trigger_pause_line(line_id)
+        result_model = self.to_model(storage=result.storage)
+        self.assertEqual(init_model, result_model)
 
         self.storage = result.storage
-        return result_state
+        return result.storage['lines'][line_id]['isPaused']
 
 
     def trigger_pause_deposit(self, sender=None, amount=0):
@@ -584,7 +439,7 @@ class PoolBaseTestCase(TestCase):
             storage=self.storage,
             now=self.current_time,
             sender=sender,
-            balance=self.balances[self.address]
+            balance=self.get_balance(self.address)
         )
 
         init_state = self.storage['isDepositPaused']
@@ -604,7 +459,7 @@ class PoolBaseTestCase(TestCase):
             storage=self.storage,
             now=self.current_time,
             sender=sender,
-            balance=self.balances[self.address]
+            balance=self.get_balance(self.address)
         )
 
         self.assertEqual(result.storage['entryLockPeriod'], new_period)
