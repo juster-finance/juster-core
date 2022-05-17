@@ -476,7 +476,7 @@ class PoolModel:
         return self
 
     def default(self, amount: Decimal) -> PoolModel:
-        ...
+        self.balance += amount
         return self
 
     def __eq__(self, other: object) -> bool:
