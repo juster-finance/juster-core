@@ -80,6 +80,13 @@ class ClaimKey:
             position_id=tpl[1]
         )
 
+    @classmethod
+    def from_dict(cls, dct: dict[str, int]) -> ClaimKey:
+        return cls(
+            event_id=dct['eventId'],
+            position_id=dct['positionId']
+        )
+
     def __hash__(self):
         # TODO: this is probably not very good way of hashing, check this out
         return hash(f'{self.event_id}:{self.position_id}')
@@ -227,6 +234,20 @@ class PoolModel:
             / self.calc_total_liquidity()
         )
 
+    def calc_withdraw_payouts(
+        self,
+        claim_keys: list[ClaimKey]
+    ) -> dict[str, Decimal]:
+        payouts: dict[str, Decimal] = {}
+        for claim_key in claim_keys:
+            claim = self.claims[claim_key]
+            event = self.events[claim_key.event_id]
+            payout = payouts.get(claim.provider, Decimal(0))
+            payout += event.get_result_for_shares(claim.shares)
+            payouts[claim.provider] = payout
+
+        return payouts
+
     def deposit(self, user: str, amount: Decimal) -> PoolModel:
         accept_after = self.now + self.entry_lock_period
         entry = Entry(user, amount, accept_after)
@@ -328,8 +349,10 @@ class PoolModel:
 
         return self
 
-    def withdraw(self, position_id: int, event_id: int) -> PoolModel:
-        ...
+    def withdraw(self, claim_keys: list[ClaimKey]) -> PoolModel:
+        payouts = self.calc_withdraw_payouts(claim_keys)
+        self.balance -= sum(payouts.values())
+        [self.claims.pop(key) for key in claim_keys]
         return self
 
     def pay_reward(self, event_id: int, amount: Decimal) -> PoolModel:
