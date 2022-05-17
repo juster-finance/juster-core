@@ -381,8 +381,46 @@ class PoolModel:
         self.balance += amount
         return self
 
-    def create_event(self, line_id: int) -> PoolModel:
-        ...
+    def calc_next_event_liquidity(self) -> Decimal:
+        max_liquidity = quantize(
+            self.calc_total_liquidity()
+            / self.max_events
+        )
+        liquidity_f = min(max_liquidity, self.calc_free_liquidity())
+        return quantize(liquidity_f / self.precision)
+
+    def calc_liquidity_units(self, duration: int, amount: Decimal) -> Decimal:
+        liquidity_units = quantize(
+            Decimal(duration)
+            * amount
+            / self.total_shares
+        )
+        assert liquidity_units >= 0
+        return liquidity_units
+
+    def create_event(self, next_event_id: int, duration: int) -> PoolModel:
+        assert not next_event_id in self.events
+        shares = quantize(self.total_shares / self.max_events)
+        provided_amount = self.calc_next_event_liquidity()
+
+        self.events[next_event_id] = Event(
+            created_counter=self.counter,
+            shares=shares,
+            total_shares=self.total_shares,
+            locked_shares=Decimal(0),
+            result=None,
+            provided=provided_amount,
+            precision=self.precision
+        )
+
+        self.counter += 1
+        self.active_liquidity += provided_amount * self.precision
+        liquidity_units = self.calc_liquidity_units(duration, provided_amount)
+        self.liquidity_units += liquidity_units
+        self.balance -= provided_amount
+        self.active_events.append(next_event_id)
+        assert self.balance >= Decimal(0)
+
         return self
 
     def default(self, amount: Decimal) -> PoolModel:
