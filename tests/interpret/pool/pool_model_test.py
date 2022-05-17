@@ -1,4 +1,4 @@
-from tests.interpret.pool.pool_model import PoolModel
+from models.pool import PoolModel
 from copy import deepcopy
 from unittest import TestCase
 from decimal import Decimal

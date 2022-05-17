@@ -1,3 +1,4 @@
+# TODO: split it into different classes each in different file
 from __future__ import annotations
 import json
 from decimal import Decimal
@@ -19,8 +20,6 @@ def quantize(value: Decimal) -> Decimal:
 
 AnyStorage = dict[str, Any]
 
-# TODO: add models directory at the root and here might be pool dir with all
-# classes splitted in separate files
 
 @dataclass
 class Entry:

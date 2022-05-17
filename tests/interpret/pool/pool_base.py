@@ -11,8 +11,8 @@ from tests.test_data import (
     generate_line_params,
     generate_juster_config
 )
-from tests.interpret.pool.pool_model import PoolModel
-from tests.interpret.pool.pool_model import ClaimKey
+from models.pool import PoolModel
+from models.pool import ClaimKey
 
 
 POOL_FN = '../../../build/contracts/pool.tz'
@@ -237,6 +237,7 @@ class PoolBaseTestCase(TestCase):
 
 
     def _check_withdrawal_creation(self, result, position_id, shares):
+        # TODO: move this to model too?
         next_id = self.storage['nextWithdrawalId']
         self.assertEqual(result.storage['nextWithdrawalId'], next_id+1)
         actual_withdrawal = result.storage['withdrawals'][next_id]
