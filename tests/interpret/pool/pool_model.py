@@ -92,25 +92,36 @@ class Event:
     locked_shares: Decimal
     result: Optional[Decimal]
     provided: Decimal
+    precision: Decimal
 
     @classmethod
-    def from_storage(cls, storage: AnyStorage) -> Event:
+    def from_storage(cls, storage: AnyStorage, precision: Decimal) -> Event:
         return cls(
             created_counter=storage['createdCounter'],
             shares=Decimal(storage['shares']),
             total_shares=Decimal(storage['totalShares']),
             locked_shares=Decimal(storage['lockedShares']),
             result=Decimal(storage['result']) if storage['result'] else None,
-            provided=Decimal(storage['provided'])
+            provided=Decimal(storage['provided']),
+            precision=precision
         )
 
-    # TODO: make precision global // add precision to event params?
-    def get_result_for_shares(self, shares: Decimal, precision: Decimal) -> Decimal:
+    def get_result_for_shares(self, shares: Decimal) -> Decimal:
         result = self.result if self.result is not None else Decimal(0)
-        return quantize(result * shares * precision / self.total_shares)
+        return quantize(
+            result
+            * shares
+            * self.precision
+            / self.total_shares
+        )
 
-    def get_provided_for_shares(self, shares: Decimal, precision: Decimal) -> Decimal:
-        return quantize(self.provided * shares * precision / self.total_shares)
+    def get_provided_for_shares(self, shares: Decimal) -> Decimal:
+        return quantize(
+            self.provided
+            * shares
+            * self.precision
+            / self.total_shares
+        )
 
 
 @dataclass
@@ -148,21 +159,28 @@ class PoolModel:
                 for index, item_storage in items.items()
             }
 
+        precision = Decimal(storage['precision'])
+
         claims = {
             ClaimKey.from_tuple(index): Claim.from_storage(claim)
             for index, claim in storage['claims'].items()
+        }
+
+        events = {
+            index: Event.from_storage(event, precision)
+            for index, event in storage['events'].items()
         }
 
         return cls(
             active_events=list(storage['activeEvents'].keys()),
             positions=convert(Position, storage['positions']),
             total_shares=Decimal(storage['totalShares']),
-            events=convert(Event, storage['events']),
+            events=events,
             entries=convert(Entry, storage['entries']),
             claims=claims,
             max_events=storage['maxEvents'],
             counter=storage['counter'],
-            precision=Decimal(storage['precision']),
+            precision=precision,
             liquidity_units=Decimal(storage['liquidityUnits']),
             balance=balance,
             next_entry_id=storage['nextEntryId'],
@@ -178,10 +196,7 @@ class PoolModel:
 
     def calc_withdrawable_liquidity(self):
         return quantize(sum(
-            self.events[claim_key.event_id].get_result_for_shares(
-                shares=claim.shares,
-                precision=self.precision
-            )
+            self.events[claim_key.event_id].get_result_for_shares(claim.shares)
             for claim_key, claim in self.claims.items()
         ))
 
@@ -205,7 +220,8 @@ class PoolModel:
         if is_first_deposit:
             return amount
 
-        return quantize(amount
+        return quantize(
+            amount
             * self.precision
             * self.total_shares
             / self.calc_total_liquidity()
@@ -258,7 +274,7 @@ class PoolModel:
         assert claim.shares <= event.total_shares
         self.events[event_id] = event
 
-        self.active_liquidity -= event.get_provided_for_shares(shares, self.precision)
+        self.active_liquidity -= event.get_provided_for_shares(shares)
 
     def iter_impacted_event_ids(self, position_id: int):
         position = self.positions[position_id]
