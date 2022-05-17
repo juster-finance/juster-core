@@ -135,6 +135,7 @@ class Event:
 class PoolModel:
     """ Model that emulates simplified Pool case with one event line """
 
+    # TODO: add f postfix to all high precision values
     active_events: list[int] = field(default_factory=list)
     positions: dict[int, Position] = field(default_factory=dict)
     total_shares: Decimal = Decimal(0)
@@ -151,6 +152,7 @@ class PoolModel:
     entry_lock_period: int = 0
     now: int = 0
     active_liquidity: Decimal = Decimal(0)
+    withdrawable_liquidity: Decimal = Decimal(0)
 
     @classmethod
     def from_storage(
@@ -194,18 +196,21 @@ class PoolModel:
             next_position_id=storage['nextPositionId'],
             entry_lock_period=storage['entryLockPeriod'],
             now=now,
-            active_liquidity=storage['activeLiquidityF']
+            active_liquidity=storage['activeLiquidityF'],
+            withdrawable_liquidity=storage['withdrawableLiquidityF']
         )
 
     def update_max_lines(self, max_lines: int) -> PoolModel:
         ...
         return self
 
+    '''
     def calc_withdrawable_liquidity(self):
         return quantize(sum(
             self.events[claim_key.event_id].get_result_for_shares(claim.shares)
             for claim_key, claim in self.claims.items()
         ))
+    '''
 
     def calc_entry_liquidity(self):
         return quantize(sum(
@@ -215,7 +220,7 @@ class PoolModel:
     def calc_free_liquidity(self):
         return (
             self.balance * self.precision
-            - self.calc_withdrawable_liquidity()
+            - self.withdrawable_liquidity
             - self.calc_entry_liquidity()
         )
 
@@ -234,7 +239,7 @@ class PoolModel:
             / self.calc_total_liquidity()
         )
 
-    def calc_withdraw_payouts(
+    def calc_withdraw_payouts_f(
         self,
         claim_keys: list[ClaimKey]
     ) -> dict[str, Decimal]:
@@ -247,6 +252,16 @@ class PoolModel:
             payouts[claim.provider] = payout
 
         return payouts
+
+    def calc_withdraw_payouts(
+        self,
+        claim_keys: list[ClaimKey]
+    ) -> dict[str, Decimal]:
+        payouts_f = self.calc_withdraw_payouts_f(claim_keys)
+        return {
+            address: quantize(payout_f/self.precision)
+            for address, payout_f in payouts_f.items()
+        }
 
     def deposit(self, user: str, amount: Decimal) -> PoolModel:
         accept_after = self.now + self.entry_lock_period
@@ -350,9 +365,11 @@ class PoolModel:
         return self
 
     def withdraw(self, claim_keys: list[ClaimKey]) -> PoolModel:
+        payouts_f = self.calc_withdraw_payouts_f(claim_keys)
         payouts = self.calc_withdraw_payouts(claim_keys)
-        self.balance -= sum(payouts.values())
         [self.claims.pop(key) for key in claim_keys]
+        self.withdrawable_liquidity -= sum(payouts_f.values())
+        self.balance -= sum(payouts.values())
         return self
 
     def pay_reward(self, event_id: int, amount: Decimal) -> PoolModel:
@@ -389,7 +406,8 @@ class PoolModel:
             'next_entry_id': self.next_entry_id == other.next_entry_id,
             'entry_lock_period': self.entry_lock_period == other.entry_lock_period,
             'now': self.now == other.now,
-            'active_liquidity': self.active_liquidity == other.active_liquidity
+            'active_liquidity': self.active_liquidity == other.active_liquidity,
+            'withdrawable_liquidity': self.withdrawable_liquidity == other.withdrawable_liquidity
         }
 
         is_equal = all(comparsions.values())
