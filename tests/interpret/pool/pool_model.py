@@ -103,12 +103,13 @@ class Event:
 
     @classmethod
     def from_storage(cls, storage: AnyStorage, precision: Decimal) -> Event:
+        result = storage['result']
         return cls(
             created_counter=storage['createdCounter'],
             shares=Decimal(storage['shares']),
             total_shares=Decimal(storage['totalShares']),
             locked_shares=Decimal(storage['lockedShares']),
-            result=Decimal(storage['result']) if storage['result'] else None,
+            result=None if result is None else Decimal(result),
             provided=Decimal(storage['provided']),
             precision=precision
         )
@@ -129,17 +130,6 @@ class Event:
             * self.precision
             / self.total_shares
         )
-
-    '''
-    def get_profit_for_shares(self, shares: Decimal) -> Decimal:
-        assert self.result is not None
-        return quantize(
-            (self.result - self.provided)
-            * shares
-            * self.precision
-            / self.total_shares
-        )
-    '''
 
 
 @dataclass
