@@ -133,6 +133,25 @@ class Event:
 
 
 @dataclass
+class Line:
+    measure_period: int
+    bets_period: int
+    last_bets_close_time: int
+    max_events: int
+    is_paused: bool
+
+    @classmethod
+    def from_storage(cls, storage: AnyStorage) -> Line:
+        return cls(
+            measure_period=storage['measurePeriod'],
+            bets_period=storage['betsPeriod'],
+            last_bets_close_time=storage['lastBetsCloseTime'],
+            max_events=storage['maxEvents'],
+            is_paused=storage['isPaused']
+        )
+
+
+@dataclass
 class PoolModel:
     """ Model that emulates simplified Pool case with one event line """
 
@@ -154,6 +173,8 @@ class PoolModel:
     now: int = 0
     active_liquidity: Decimal = Decimal(0)
     withdrawable_liquidity: Decimal = Decimal(0)
+    lines: dict[int, Line] = field(default_factory=dict)
+    next_line_id: int = 0
 
     @classmethod
     def from_storage(
@@ -198,11 +219,16 @@ class PoolModel:
             entry_lock_period=storage['entryLockPeriod'],
             now=now,
             active_liquidity=Decimal(storage['activeLiquidityF']),
-            withdrawable_liquidity=Decimal(storage['withdrawableLiquidityF'])
+            withdrawable_liquidity=Decimal(storage['withdrawableLiquidityF']),
+            lines=convert(Line, storage['lines']),
+            next_line_id=storage['nextLineId']
         )
 
-    def update_max_lines(self, max_lines: int) -> PoolModel:
-        ...
+    def trigger_pause_line(self, line_id: int) -> PoolModel:
+        line = self.lines[line_id]
+        diff = line.max_events
+        self.max_events += diff if line.is_paused else -diff
+        line.is_paused = not line.is_paused
         return self
 
     def calc_entry_liquidity(self):
@@ -256,6 +282,7 @@ class PoolModel:
             for address, payout_f in payouts_f.items()
         }
 
+    # TODO: name all methods the same way that it is named in contract?
     def deposit(self, user: str, amount: Decimal) -> PoolModel:
         accept_after = self.now + self.entry_lock_period
         entry = Entry(user, amount, accept_after)
