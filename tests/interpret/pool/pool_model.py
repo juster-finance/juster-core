@@ -130,6 +130,17 @@ class Event:
             / self.total_shares
         )
 
+    '''
+    def get_profit_for_shares(self, shares: Decimal) -> Decimal:
+        assert self.result is not None
+        return quantize(
+            (self.result - self.provided)
+            * shares
+            * self.precision
+            / self.total_shares
+        )
+    '''
+
 
 @dataclass
 class PoolModel:
@@ -196,21 +207,13 @@ class PoolModel:
             next_position_id=storage['nextPositionId'],
             entry_lock_period=storage['entryLockPeriod'],
             now=now,
-            active_liquidity=storage['activeLiquidityF'],
-            withdrawable_liquidity=storage['withdrawableLiquidityF']
+            active_liquidity=Decimal(storage['activeLiquidityF']),
+            withdrawable_liquidity=Decimal(storage['withdrawableLiquidityF'])
         )
 
     def update_max_lines(self, max_lines: int) -> PoolModel:
         ...
         return self
-
-    '''
-    def calc_withdrawable_liquidity(self):
-        return quantize(sum(
-            self.events[claim_key.event_id].get_result_for_shares(claim.shares)
-            for claim_key, claim in self.claims.items()
-        ))
-    '''
 
     def calc_entry_liquidity(self):
         return quantize(sum(
@@ -344,6 +347,7 @@ class PoolModel:
         )
 
         # TODO: should all high precision variables marked with f?
+        # TODO: maybe replace this high precision Decimals with Fractions?
         expected_amount_f = provider_liquidity - locked_liquidity
         expected_amount = quantize(expected_amount_f / self.precision)
         return expected_amount
@@ -373,7 +377,18 @@ class PoolModel:
         return self
 
     def pay_reward(self, event_id: int, amount: Decimal) -> PoolModel:
-        ...
+        event = self.events[event_id]
+        event.result = amount
+
+        locked_amount = event.get_result_for_shares(event.locked_shares)
+        self.withdrawable_liquidity += locked_amount
+
+        left_shares = event.total_shares - event.locked_shares
+        self.active_liquidity -= event.get_provided_for_shares(left_shares)
+        assert self.active_liquidity >= Decimal(0)
+
+        self.active_events.remove(event_id)
+        self.balance += amount
         return self
 
     def create_event(self, line_id: int) -> PoolModel:
