@@ -253,6 +253,27 @@ class PoolModel:
         line.is_paused = not line.is_paused
         return self
 
+    def add_line(
+        self,
+        measure_period: int,
+        bets_period: int,
+        last_bets_close_time: int,
+        max_events: int,
+        is_paused: bool,
+        min_betting_period: int
+    ) -> PoolModel:
+        self.lines[self.next_line_id] = Line(
+            measure_period=measure_period,
+            bets_period=bets_period,
+            last_bets_close_time=last_bets_close_time,
+            max_events=max_events,
+            is_paused=is_paused,
+            min_betting_period=min_betting_period
+        )
+        self.next_line_id += 1
+        self.max_events += 0 if is_paused else max_events
+        return self
+
     def calc_entry_liquidity(self):
         return quantize(sum(
             entry.amount * self.precision for entry in self.entries.values()
@@ -478,4 +499,11 @@ class PoolModel:
     def default(self, amount: Decimal) -> PoolModel:
         self.balance += amount
         return self
+
+    def diff_with(self, other: PoolModel) -> list[str]:
+        """ Returns attributes that different with other """
+        return [
+            attr_name for attr_name, attr_value in self.__dict__.items()
+            if attr_value != getattr(other, attr_name)
+        ]
 
