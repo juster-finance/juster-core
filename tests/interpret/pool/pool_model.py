@@ -47,6 +47,9 @@ class Position:
             added_counter=storage['addedCounter']
         )
 
+    def remove_shares(self, shares: Decimal):
+        self.shares -= shares
+        assert self.shares >= 0
 
 @dataclass
 class Claim:
@@ -247,8 +250,71 @@ class PoolModel:
         self.entries.pop(entry_id)
         return self
 
+    def add_claim_shares(
+        self,
+        event_id: int,
+        position_id: int,
+        shares: Decimal
+    ) -> None:
+        provider = self.positions[position_id].provider
+        claim_key = ClaimKey(event_id, position_id)
+        default_claim = Claim(shares=Decimal(0), provider=provider)
+        claim = self.claims.get(claim_key, default_claim)
+        claim.shares += shares
+        self.claims[claim_key] = claim
+
+        event = self.events[event_id]
+        event.locked_shares += shares
+        assert claim.shares <= event.total_shares
+        self.events[event_id] = event
+
+    def iter_impacted_event_ids(self, position_id: int):
+        position = self.positions[position_id]
+        for event_id in self.active_events:
+            event = self.events[event_id]
+            if event.created_counter > position.added_counter:
+                yield event_id
+        return
+
+    def calc_claim_locked_liquidity(
+        self,
+        position_id: int,
+        shares: Decimal
+    ) -> Decimal:
+        total_liquidity = self.calc_total_liquidity()
+        locked_liquidity = Decimal(0)
+        for event_id in self.iter_impacted_event_ids(position_id):
+            event = self.events[event_id]
+            locked_liquidity += self.quantize(
+                total_liquidity
+                * shares
+                * event.shares
+                / event.total_shares
+                / self.total_shares
+            )
+
+        provider_liquidity = self.quantize(
+            total_liquidity
+            * shares
+            / self.total_shares
+        )
+
+        # TODO: should all high precision variables marked with f?
+        expected_amount_f = provider_liquidity - locked_liquidity
+        expected_amount = self.quantize(expected_amount_f / self.precision)
+        return expected_amount
+
     def claim(self, position_id: int, shares: Decimal) -> PoolModel:
-        ...
+        if shares == 0:
+            return self
+
+        position = self.positions[position_id]
+        position.remove_shares(shares)
+
+        for event_id in self.iter_impacted_event_ids(position_id):
+            self.add_claim_shares(event_id, position_id, shares)
+
+        self.total_shares -= shares
         return self
 
     def withdraw(self, position_id: int, event_id: int) -> PoolModel:
