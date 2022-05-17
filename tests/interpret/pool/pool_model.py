@@ -271,7 +271,7 @@ class PoolModel:
                 yield event_id
         return
 
-    def calc_claim_locked_liquidity(
+    def calc_claim_payout(
         self,
         position_id: int,
         shares: Decimal
@@ -302,7 +302,7 @@ class PoolModel:
     def claim(self, position_id: int, shares: Decimal) -> PoolModel:
         if shares == 0:
             return self
-
+        payout = self.calc_claim_payout(position_id, shares)
         position = self.positions[position_id]
         position.remove_shares(shares)
 
@@ -310,6 +310,9 @@ class PoolModel:
             self.add_claim_shares(event_id, position_id, shares)
 
         self.total_shares -= shares
+        self.balance -= payout
+        assert self.balance >= Decimal(0)
+
         return self
 
     def withdraw(self, position_id: int, event_id: int) -> PoolModel:
