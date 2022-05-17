@@ -10,7 +10,11 @@ from dataclasses import field
 from decimal import Context, ROUND_DOWN
 
 
-rounding_down_context = Context(rounding=ROUND_DOWN)
+def quantize(value: Decimal) -> Decimal:
+    return Decimal(value).quantize(
+        Decimal(1),
+        context=Context(rounding=ROUND_DOWN)
+    )
 
 
 AnyStorage = dict[str, Any]
@@ -103,13 +107,11 @@ class Event:
     # TODO: make precision global // add precision to event params?
     def get_result_for_shares(self, shares: Decimal, precision: Decimal) -> Decimal:
         result = self.result if self.result is not None else Decimal(0)
-        return (
-            result * shares * precision / self.total_shares
-        ).quantize(Decimal(1), context=rounding_down_context)
+        return quantize(result * shares * precision / self.total_shares)
 
     def get_active_amount(self, precision: Decimal) -> Decimal:
-        provided = self.provided * precision
-        locked = self.locked_shares * provided / self.total_shares
+        provided = quantize(self.provided * precision)
+        locked = quantize(self.locked_shares * provided / self.total_shares)
         return provided - locked
 
 
@@ -174,20 +176,13 @@ class PoolModel:
         ...
         return self
 
-    def quantize(self, value):
-        return Decimal(value).quantize(
-            Decimal(1),
-            context=rounding_down_context
+    def calc_active_liquidity(self):
+        return sum(self.events[event_id].get_active_amount(self.precision)
+            for event_id in self.active_events
         )
 
-    def calc_active_liquidity(self):
-        return self.quantize(sum(
-            self.events[event_id].get_active_amount(self.precision)
-            for event_id in self.active_events
-        ))
-
     def calc_withdrawable_liquidity(self):
-        return self.quantize(sum(
+        return quantize(sum(
             self.events[claim_key.event_id].get_result_for_shares(
                 shares=claim.shares,
                 precision=self.precision
@@ -196,7 +191,7 @@ class PoolModel:
         ))
 
     def calc_entry_liquidity(self):
-        return self.quantize(sum(
+        return quantize(sum(
             entry.amount * self.precision for entry in self.entries.values()
         ))
 
@@ -215,11 +210,11 @@ class PoolModel:
         if is_first_deposit:
             return amount
 
-        return (amount
+        return quantize(amount
             * self.precision
             * self.total_shares
             / self.calc_total_liquidity()
-        ).quantize(Decimal(1), context=rounding_down_context)
+        )
 
     def deposit(self, user: str, amount: Decimal) -> PoolModel:
         accept_after = self.now + self.entry_lock_period
@@ -285,7 +280,7 @@ class PoolModel:
         locked_liquidity = Decimal(0)
         for event_id in self.iter_impacted_event_ids(position_id):
             event = self.events[event_id]
-            locked_liquidity += self.quantize(
+            locked_liquidity += quantize(
                 total_liquidity
                 * shares
                 * event.shares
@@ -293,7 +288,7 @@ class PoolModel:
                 / self.total_shares
             )
 
-        provider_liquidity = self.quantize(
+        provider_liquidity = quantize(
             total_liquidity
             * shares
             / self.total_shares
@@ -301,7 +296,7 @@ class PoolModel:
 
         # TODO: should all high precision variables marked with f?
         expected_amount_f = provider_liquidity - locked_liquidity
-        expected_amount = self.quantize(expected_amount_f / self.precision)
+        expected_amount = quantize(expected_amount_f / self.precision)
         return expected_amount
 
     def claim(self, position_id: int, shares: Decimal) -> PoolModel:
