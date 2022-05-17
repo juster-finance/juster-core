@@ -109,10 +109,8 @@ class Event:
         result = self.result if self.result is not None else Decimal(0)
         return quantize(result * shares * precision / self.total_shares)
 
-    def get_active_amount(self, precision: Decimal) -> Decimal:
-        provided = quantize(self.provided * precision)
-        locked = quantize(self.locked_shares * provided / self.total_shares)
-        return provided - locked
+    def get_provided_for_shares(self, shares: Decimal, precision: Decimal) -> Decimal:
+        return quantize(self.provided * shares * precision / self.total_shares)
 
 
 @dataclass
@@ -134,6 +132,7 @@ class PoolModel:
     next_position_id: int = 0
     entry_lock_period: int = 0
     now: int = 0
+    active_liquidity: Decimal = Decimal(0)
 
     @classmethod
     def from_storage(
@@ -169,17 +168,13 @@ class PoolModel:
             next_entry_id=storage['nextEntryId'],
             next_position_id=storage['nextPositionId'],
             entry_lock_period=storage['entryLockPeriod'],
-            now=now
+            now=now,
+            active_liquidity=storage['activeLiquidityF']
         )
 
     def update_max_lines(self, max_lines: int) -> PoolModel:
         ...
         return self
-
-    def calc_active_liquidity(self):
-        return sum(self.events[event_id].get_active_amount(self.precision)
-            for event_id in self.active_events
-        )
 
     def calc_withdrawable_liquidity(self):
         return quantize(sum(
@@ -203,7 +198,7 @@ class PoolModel:
         )
 
     def calc_total_liquidity(self):
-        return self.calc_free_liquidity() + self.calc_active_liquidity()
+        return self.calc_free_liquidity() + self.active_liquidity
 
     def calc_deposit_shares(self, amount: Decimal):
         is_first_deposit = self.total_shares == 0
@@ -262,6 +257,8 @@ class PoolModel:
         event.locked_shares += shares
         assert claim.shares <= event.total_shares
         self.events[event_id] = event
+
+        self.active_liquidity -= event.get_provided_for_shares(shares, self.precision)
 
     def iter_impacted_event_ids(self, position_id: int):
         position = self.positions[position_id]
@@ -351,6 +348,9 @@ class PoolModel:
             'balance': self.balance == other.balance,
             'next_position_id': self.next_position_id == other.next_position_id,
             'next_entry_id': self.next_entry_id == other.next_entry_id,
+            'entry_lock_period': self.entry_lock_period == other.entry_lock_period,
+            'now': self.now == other.now,
+            'active_liquidity': self.active_liquidity == other.active_liquidity
         }
 
         is_equal = all(comparsions.values())
