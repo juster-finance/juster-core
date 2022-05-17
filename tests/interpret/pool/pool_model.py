@@ -139,6 +139,7 @@ class Line:
     last_bets_close_time: int
     max_events: int
     is_paused: bool
+    min_betting_period: int
 
     @classmethod
     def from_storage(cls, storage: AnyStorage) -> Line:
@@ -147,7 +148,28 @@ class Line:
             bets_period=storage['betsPeriod'],
             last_bets_close_time=storage['lastBetsCloseTime'],
             max_events=storage['maxEvents'],
-            is_paused=storage['isPaused']
+            is_paused=storage['isPaused'],
+            min_betting_period=storage['minBettingPeriod']
+        )
+
+    def update_last_bets_close_time(self, now: int) -> None:
+        periods = (now - self.last_bets_close_time) // self.bets_period + 1
+        if now < self.last_bets_close_time:
+            periods = 1
+
+        self.last_bets_close_time += self.bets_period * periods
+
+        # late event case:
+        time_to_event = self.last_bets_close_time - now
+        assert time_to_event >= 0
+        if time_to_event < self.min_betting_period:
+            self.last_bets_close_time += self.bets_period
+
+    def calc_duration(self, now: int) -> int:
+        return (
+            self.measure_period
+            + self.last_bets_close_time
+            - now
         )
 
 
@@ -425,7 +447,7 @@ class PoolModel:
         assert liquidity_units >= 0
         return liquidity_units
 
-    def create_event(self, next_event_id: int, duration: int) -> PoolModel:
+    def create_event(self, line_id: int, next_event_id: int) -> PoolModel:
         assert not next_event_id in self.events
         shares = quantize(self.total_shares / self.max_events)
         provided_amount = self.calc_next_event_liquidity()
@@ -442,6 +464,9 @@ class PoolModel:
 
         self.counter += 1
         self.active_liquidity += provided_amount * self.precision
+        line = self.lines[line_id]
+        line.update_last_bets_close_time(self.now)
+        duration = line.calc_duration(self.now)
         liquidity_units = self.calc_liquidity_units(duration, provided_amount)
         self.liquidity_units += liquidity_units
         self.balance -= provided_amount
@@ -477,17 +502,21 @@ class PoolModel:
             'entry_lock_period': self.entry_lock_period == other.entry_lock_period,
             'now': self.now == other.now,
             'active_liquidity': self.active_liquidity == other.active_liquidity,
-            'withdrawable_liquidity': self.withdrawable_liquidity == other.withdrawable_liquidity
+            'withdrawable_liquidity': self.withdrawable_liquidity == other.withdrawable_liquidity,
+            'lines': self.lines == other.lines,
+            'next_line_id': self.next_line_id == other.next_line_id
         }
 
-        is_equal = all(comparsions.values())
-        if not is_equal:
-            for name, is_same in comparsions.items():
-                if not is_same:
-                    print(f'{name} is not equal:')
-                    print(getattr(self, name))
-                    print(getattr(other, name))
+        diffs = [
+            cmp for cmp, is_equal in comparsions.items() if not is_equal
+        ]
+
+        if any(diffs):
+            for name in diffs:
+                print(f'{name} is not equal:')
+                print(getattr(self, name))
+                print(getattr(other, name))
             import pdb; pdb.set_trace()
 
-        return is_equal
+        return not any(diffs)
 
