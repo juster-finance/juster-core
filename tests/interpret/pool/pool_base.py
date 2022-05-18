@@ -156,7 +156,7 @@ class PoolBaseTestCase(TestCase):
             balance=new_balance
         )
 
-        init_model = self.to_model().deposit(
+        init_model = self.to_model().deposit_liquidity(
             user=sender,
             amount=Decimal(amount)
         )
@@ -194,7 +194,7 @@ class PoolBaseTestCase(TestCase):
         self.assertTrue(result.storage['entries'][entry_id] is None)
         result.storage['entries'].pop(entry_id)
 
-        init_model = self.to_model().approve(entry_id)
+        init_model = self.to_model().approve_liquidity(entry_id)
         result_model = self.to_model(storage=result.storage)
         self.assertEqual(init_model, result_model)
 
@@ -216,7 +216,7 @@ class PoolBaseTestCase(TestCase):
         self.assertTrue(result.storage['entries'][entry_id] is None)
         result.storage['entries'].pop(entry_id)
 
-        init_model = self.to_model().cancel(entry_id)
+        init_model = self.to_model().cancel_liquidity(entry_id)
         result_model = self.to_model(storage=result.storage)
         self.assertEqual(init_model, result_model)
 
@@ -272,7 +272,7 @@ class PoolBaseTestCase(TestCase):
 
         model = self.to_model()
         expected_amount = model.calc_claim_payout(position_id, shares)
-        init_model = model.claim(position_id, Decimal(shares))
+        init_model = model.claim_liquidity(position_id, Decimal(shares))
         new_balance = self.get_balance(self.address) - expected_amount
         result_model = self.to_model(storage=result.storage, balance=new_balance)
         self.assertEqual(init_model, result_model)
@@ -306,7 +306,7 @@ class PoolBaseTestCase(TestCase):
 
         claim_keys = [ClaimKey.from_dict(position) for position in positions]
         payouts = self.to_model().calc_withdraw_payouts(claim_keys)
-        init_model = self.to_model().withdraw(claim_keys)
+        init_model = self.to_model().withdraw_liquidity(claim_keys)
         new_balance = self.get_balance(self.address) - sum(payouts.values())
 
         for position in positions:

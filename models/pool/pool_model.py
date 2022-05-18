@@ -168,8 +168,7 @@ class PoolModel:
             for address, payout_f in payouts_f.items()
         }
 
-    # TODO: name all methods the same way that it is named in contract?
-    def deposit(self, user: str, amount: Decimal) -> PoolModel:
+    def deposit_liquidity(self, user: str, amount: Decimal) -> PoolModel:
         accept_after = self.now + self.entry_lock_period
         entry = Entry(user, amount, accept_after)
         self.entries[self.next_entry_id] = entry
@@ -178,7 +177,7 @@ class PoolModel:
 
         return self
 
-    def approve(self, entry_id: int) -> PoolModel:
+    def approve_liquidity(self, entry_id: int) -> PoolModel:
         entry = self.entries[entry_id]
         position = Position(
             provider=entry.provider,
@@ -194,7 +193,7 @@ class PoolModel:
 
         return self
 
-    def cancel(self, entry_id: int) -> PoolModel:
+    def cancel_liquidity(self, entry_id: int) -> PoolModel:
         self.entries.pop(entry_id)
         return self
 
@@ -255,7 +254,7 @@ class PoolModel:
         expected_amount = quantize(expected_amount_f / self.precision)
         return expected_amount
 
-    def claim(self, position_id: int, shares: Decimal) -> PoolModel:
+    def claim_liquidity(self, position_id: int, shares: Decimal) -> PoolModel:
         if shares == 0:
             return self
         payout = self.calc_claim_payout(position_id, shares)
@@ -271,7 +270,7 @@ class PoolModel:
 
         return self
 
-    def withdraw(self, claim_keys: list[ClaimKey]) -> PoolModel:
+    def withdraw_liquidity(self, claim_keys: list[ClaimKey]) -> PoolModel:
         payouts_f = self.calc_withdraw_payouts_f(claim_keys)
         payouts = self.calc_withdraw_payouts(claim_keys)
         [self.claims.pop(key) for key in claim_keys]
@@ -349,5 +348,4 @@ class PoolModel:
             attr_name for attr_name, attr_value in self.__dict__.items()
             if attr_value != getattr(other, attr_name)
         ]
-
 
