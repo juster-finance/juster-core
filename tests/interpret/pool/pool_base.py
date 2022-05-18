@@ -360,8 +360,7 @@ class PoolBaseTestCase(TestCase):
     def create_event(
             self,
             sender=None,
-            # TODO: replace with line_id:
-            event_line_id=0,
+            line_id=0,
             next_event_id=None,
             amount=0,
             config=None):
@@ -371,8 +370,8 @@ class PoolBaseTestCase(TestCase):
         config = config or generate_juster_config(
             expiration_fee=0, measure_start_fee=0)
 
-        contract_call = self.pool.createEvent(event_line_id)
-        juster_address = self.storage['lines'][event_line_id]['juster']
+        contract_call = self.pool.createEvent(line_id)
+        juster_address = self.storage['lines'][line_id]['juster']
         result = contract_call.with_amount(amount).interpret(
             storage=self.storage,
             now=self.current_time,
@@ -384,7 +383,7 @@ class PoolBaseTestCase(TestCase):
             balance=self.get_balance(self.address)
         )
 
-        init_model = self.to_model().create_event(event_line_id, next_event_id)
+        init_model = self.to_model().create_event(line_id, next_event_id)
         next_event_liquidity = self.to_model().calc_next_event_liquidity()
         new_balance = self.get_balance(self.address) - next_event_liquidity
         result_model = self.to_model(

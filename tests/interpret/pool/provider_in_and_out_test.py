@@ -14,7 +14,7 @@ class ProviderInAndOutTestCase(PoolBaseTestCase):
 
         # creating 9 events:
         for next_event_id in range(9):
-            self.create_event(event_line_id=0, next_event_id=next_event_id)
+            self.create_event(line_id=0, next_event_id=next_event_id)
             self.wait(3600)
 
         # second provider adds some liquidity with 20% shares:
@@ -22,7 +22,7 @@ class ProviderInAndOutTestCase(PoolBaseTestCase):
         self.approve_liquidity(self.a, entry_id=entry_id)
 
         # creating 10th event: 8xtz + 2xtz should be provided:
-        self.create_event(event_line_id=0, next_event_id=9)
+        self.create_event(line_id=0, next_event_id=9)
 
         # A decided to remove liquidity and then redeposit it back:
         withdrawn_amount = self.claim_liquidity(

@@ -14,7 +14,7 @@ class MultipleProvidersResultsTestCase(PoolBaseTestCase):
 
         # creating event where provider have 100% of the liquidity:
         # as far as max_events is 2: this event should receive 5xtz:
-        self.create_event(event_line_id=0, next_event_id=0)
+        self.create_event(line_id=0, next_event_id=0)
 
         # second provider adds liquidity with the same amount:
         self.deposit_liquidity(self.b, amount=provided_amount)
@@ -28,7 +28,7 @@ class MultipleProvidersResultsTestCase(PoolBaseTestCase):
 
         # creating next event, total liquidity 10xtz (5xtz kept on contract)
         self.wait(3600)
-        self.create_event(event_line_id=0, next_event_id=1)
+        self.create_event(line_id=0, next_event_id=1)
 
         # providers decided to remove their liquidity:
         withdrawn_amount = self.claim_liquidity(

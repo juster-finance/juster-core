@@ -77,8 +77,8 @@ class PayRewardTestCase(PoolBaseTestCase):
         self.add_line(max_events=1, juster_address=self.d)
         self.deposit_liquidity(amount=100)
         self.approve_liquidity()
-        self.create_event(event_line_id=0)
-        self.create_event(event_line_id=1)
+        self.create_event(line_id=0)
+        self.create_event(line_id=1)
 
         self.pay_reward(event_id=0, amount=50, sender=self.c)
         self.pay_reward(event_id=1, amount=50, sender=self.d)

@@ -81,7 +81,7 @@ class RandomProviderTestCase(PoolBaseTestCase):
 
             for line_id, event_create_step in event_create_steps.items():
                 if step == event_create_step:
-                    created_id = self.create_event(event_line_id=line_id)
+                    created_id = self.create_event(line_id=line_id)
                     close_event_times[created_id] = self.current_time + EVENT_DURATION
 
             self.wait(STEP_DURATION)

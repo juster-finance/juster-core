@@ -9,7 +9,7 @@ class CreateEventTestCase(PoolBaseTestCase):
         self.approve_liquidity()
 
         for event_id in range(9):
-            self.create_event(event_line_id=0)
+            self.create_event(line_id=0)
             self.wait(3600)
 
         self.assertEqual(self.get_next_liquidity(), 10)
@@ -18,11 +18,11 @@ class CreateEventTestCase(PoolBaseTestCase):
         self.assertEqual(self.get_next_liquidity(), 5)
 
         for event_id in range(2):
-            self.create_event(event_line_id=1)
+            self.create_event(line_id=1)
             self.wait(3600)
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.create_event(event_line_id=1)
+            self.create_event(line_id=1)
 
         err_text = 'Not enough liquidity to run event'
         self.assertTrue(err_text in str(cm.exception))
@@ -39,11 +39,11 @@ class CreateEventTestCase(PoolBaseTestCase):
         self.add_line(max_events=2)
         self.deposit_liquidity(amount=100)
         self.approve_liquidity()
-        self.create_event(event_line_id=0, next_event_id=42)
+        self.create_event(line_id=0, next_event_id=42)
         self.wait(3600)
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.create_event(event_line_id=0, next_event_id=42)
+            self.create_event(line_id=0, next_event_id=42)
 
         err_text = 'Event id is already taken'
         self.assertTrue(err_text in str(cm.exception))

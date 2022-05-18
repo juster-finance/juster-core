@@ -26,7 +26,7 @@ class FeeEventCreationTestCase(PoolBaseTestCase):
         self.assertEqual(self.get_next_liquidity(), 3_000_000)
 
         # creating one event:
-        self.create_event(event_line_id=0, next_event_id=0, config=custom_config)
+        self.create_event(line_id=0, next_event_id=0, config=custom_config)
         self.wait(3600)
 
         # A decided to remove all liquidity so nextEventLiquidity should be /2:
@@ -36,7 +36,7 @@ class FeeEventCreationTestCase(PoolBaseTestCase):
         self.assertEqual(self.get_next_liquidity(), 1_500_000)
 
         # Run and finish event with profit 3xtz (provided 1xtz, 0.5xtz fee):
-        self.create_event(event_line_id=0, next_event_id=1, config=custom_config)
+        self.create_event(line_id=0, next_event_id=1, config=custom_config)
         self.wait(3600)
         self.pay_reward(event_id=1, amount=4_500_000)
         self.assertEqual(self.get_next_liquidity(), 2_500_000)
@@ -68,7 +68,7 @@ class FeeEventCreationTestCase(PoolBaseTestCase):
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.create_event(
-                event_line_id=0,
+                line_id=0,
                 next_event_id=1,
                 config=custom_config)
         msg = 'Not enough liquidity to run event'

@@ -20,7 +20,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
         self.assertEqual(self.get_next_liquidity(), 10_000_000)
 
         # creating one event:
-        self.create_event(event_line_id=0, next_event_id=0)
+        self.create_event(line_id=0, next_event_id=0)
         self.wait(3600)
 
         # A decided to remove liquidity:
@@ -29,13 +29,13 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
         self.assertEqual(self.get_next_liquidity(), 2_000_000)
 
         # Run and finish event with profit 2xtz:
-        self.create_event(event_line_id=0, next_event_id=1)
+        self.create_event(line_id=0, next_event_id=1)
         self.wait(3600)
         self.pay_reward(event_id=1, amount=4_000_000)
         self.assertEqual(self.get_next_liquidity(), 2_200_000)
 
         # Run and finish event with loss 1xtz:
-        self.create_event(event_line_id=0, next_event_id=2)
+        self.create_event(line_id=0, next_event_id=2)
         self.wait(3600)
         self.pay_reward(event_id=2, amount=1_200_000)
         self.assertEqual(self.get_next_liquidity(), 2_100_000)
@@ -51,7 +51,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
         self.approve_liquidity(self.a, entry_id=0)
 
         for event_id in range(5):
-            self.create_event(event_line_id=0, next_event_id=event_id)
+            self.create_event(line_id=0, next_event_id=event_id)
             self.wait(3600)
 
         for event_id in range(5):
@@ -73,7 +73,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
         self.approve_liquidity(self.a, entry_id=0)
 
         for event_id in range(5):
-            self.create_event(event_line_id=0)
+            self.create_event(line_id=0)
             self.wait(3600)
 
         mean_amount = 0
@@ -99,7 +99,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
         # creating events for only one line:
         second_line_event_ids = []
         for event_id in range(5):
-            self.create_event(event_line_id=0)
+            self.create_event(line_id=0)
             self.wait(3600)
 
         for event_id in range(5):

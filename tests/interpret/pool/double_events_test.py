@@ -19,7 +19,7 @@ class DoubleEventsTest(PoolBaseTestCase):
         self.approve_liquidity(self.a, entry_id=0)
 
         # creating first event should succeed:
-        self.create_event(event_line_id=0, next_event_id=0)
+        self.create_event(line_id=0, next_event_id=0)
 
         # waiting almost until lastBetsCloseTime:
         lastBetsCloseTime = self.storage['lines'][0]['lastBetsCloseTime']
@@ -30,13 +30,13 @@ class DoubleEventsTest(PoolBaseTestCase):
 
         # creating second event at the same time should fail:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.create_event(event_line_id=0, next_event_id=1)
+            self.create_event(line_id=0, next_event_id=1)
         msg = 'Event cannot be created until previous event betsCloseTime'
         self.assertTrue(msg in str(cm.exception))
 
         # waiting to complete 5 minutes:
         self.wait(1)
-        self.create_event(event_line_id=0, next_event_id=1)
+        self.create_event(line_id=0, next_event_id=1)
 
         self.assertEqual(len(self.storage['events']), 2)
 

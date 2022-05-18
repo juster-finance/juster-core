@@ -24,8 +24,8 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
         self.deposit_liquidity(sender=self.b, amount=300)
         self.approve_liquidity(entry_id=0)
         self.approve_liquidity(entry_id=1)
-        self.create_event(event_line_id=0)
-        self.create_event(event_line_id=1)
+        self.create_event(line_id=0)
+        self.create_event(line_id=1)
 
         self.claim_liquidity(sender=self.a, position_id=0, shares=100)
         target_claims = {
@@ -51,7 +51,7 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
         self.assertEqual(self.balances[self.a], -100)
 
         # 50 mutez used in the first event (100 / 2 max active events):
-        self.create_event(event_line_id=0)
+        self.create_event(line_id=0)
         self.claim_liquidity(sender=self.a, position_id=0, shares=100)
 
         # 50 mutez unused liquidity should be returned:
@@ -96,7 +96,7 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
         self.add_line()
         self.deposit_liquidity(amount=100, sender=self.a)
         self.approve_liquidity()
-        self.create_event(event_line_id=0)
+        self.create_event(line_id=0)
 
         self.claim_liquidity(position_id=0, shares=50)
         self.claim_liquidity(position_id=0, shares=30)
@@ -118,7 +118,7 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
         self.add_line()
         self.deposit_liquidity(amount=100, sender=self.a)
         self.approve_liquidity()
-        self.create_event(event_line_id=0)
+        self.create_event(line_id=0)
 
         self.claim_liquidity(position_id=0, shares=0)
         self.assertEqual(len(self.storage['claims']), 0)
@@ -128,7 +128,7 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
         self.add_line(max_events=2)
         self.deposit_liquidity(amount=100, sender=self.a)
         self.approve_liquidity(entry_id=0)
-        self.create_event(event_line_id=0)
+        self.create_event(line_id=0)
 
         self.deposit_liquidity(amount=100, sender=self.b)
         self.approve_liquidity(entry_id=1)

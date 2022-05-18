@@ -15,8 +15,8 @@ class MultipleEventsAndProvidersTest(PoolBaseTestCase):
         self.assertEqual(self.get_next_liquidity(), 1_000_000)
 
         # running two events, in each should be added 1xtz:
-        self.create_event(event_line_id=0, next_event_id=0)
-        self.create_event(event_line_id=1, next_event_id=1)
+        self.create_event(line_id=0, next_event_id=0)
+        self.create_event(line_id=1, next_event_id=1)
 
         # second provider adds the same amount of liquidity:
         self.deposit_liquidity(self.b, amount=3_000_000)
@@ -24,7 +24,7 @@ class MultipleEventsAndProvidersTest(PoolBaseTestCase):
         self.assertEqual(self.get_next_liquidity(), 2_000_000)
 
         # running last event with 2xtz liquidity:
-        self.create_event(event_line_id=2, next_event_id=2)
+        self.create_event(line_id=2, next_event_id=2)
 
         self.wait(3600)
 
@@ -40,9 +40,9 @@ class MultipleEventsAndProvidersTest(PoolBaseTestCase):
         self.assertEqual(self.get_next_liquidity(), 2_000_000)
 
         # The second cycle both providers in place:
-        self.create_event(event_line_id=0, next_event_id=3)
-        self.create_event(event_line_id=1, next_event_id=4)
-        self.create_event(event_line_id=2, next_event_id=5)
+        self.create_event(line_id=0, next_event_id=3)
+        self.create_event(line_id=1, next_event_id=4)
+        self.create_event(line_id=2, next_event_id=5)
 
         self.wait(3600)
         self.pay_reward(event_id=3, amount=3_000_000)

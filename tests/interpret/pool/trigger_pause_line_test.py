@@ -75,12 +75,12 @@ class TriggerPauseLineTestCase(PoolBaseTestCase):
         self.trigger_pause_line(line_id=line_id, sender=self.manager)
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.create_event(event_line_id=line_id)
+            self.create_event(line_id=line_id)
         self.assertTrue('Line is paused' in str(cm.exception))
 
         # test that line can be runned if triggered pause again:
         self.trigger_pause_line(line_id=line_id, sender=self.manager)
-        self.create_event(event_line_id=line_id)
+        self.create_event(line_id=line_id)
 
     def test_add_line_while_all_events_are_run_and_claim(self):
         line_one = self.add_line(sender=self.manager, max_events=1)
@@ -89,9 +89,9 @@ class TriggerPauseLineTestCase(PoolBaseTestCase):
         entry_id = self.deposit_liquidity(amount=30, sender=self.a)
         self.approve_liquidity(entry_id=entry_id)
 
-        self.create_event(event_line_id=line_one)
+        self.create_event(line_id=line_one)
         self.wait(3600)
-        self.create_event(event_line_id=line_two)
+        self.create_event(line_id=line_two)
 
         # the case with increased max events:
         line_three = self.add_line(sender=self.manager, max_events=1)

@@ -19,24 +19,24 @@ class EventCountLimitCase(PoolBaseTestCase):
         self.approve_liquidity(self.a, entry_id=0)
 
         # creating first three events should succeed:
-        self.create_event(event_line_id=0, next_event_id=0)
+        self.create_event(line_id=0, next_event_id=0)
         self.wait(PERIOD)
 
-        self.create_event(event_line_id=0, next_event_id=1)
+        self.create_event(line_id=0, next_event_id=1)
         self.wait(PERIOD)
 
-        self.create_event(event_line_id=0, next_event_id=2)
+        self.create_event(line_id=0, next_event_id=2)
         self.wait(PERIOD)
 
         # creating fourth event should fail:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.create_event(event_line_id=0, next_event_id=3)
+            self.create_event(line_id=0, next_event_id=3)
         msg = 'Max active events limit reached'
         self.assertTrue(msg in str(cm.exception))
 
         # closing event and trying again:
         self.pay_reward(event_id=0)
-        self.create_event(event_line_id=0, next_event_id=3)
+        self.create_event(line_id=0, next_event_id=3)
 
         # the first event is not removed:
         self.assertEqual(len(self.storage['events']), 4)

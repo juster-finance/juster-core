@@ -19,13 +19,13 @@ class LateEventTestCase(PoolBaseTestCase):
         self.approve_liquidity(self.a, entry_id=0)
 
         # creating first event:
-        self.create_event(event_line_id=0, next_event_id=0)
+        self.create_event(line_id=0, next_event_id=0)
 
         # waiting a lot more time than period:
         self.wait(PERIOD*10)
 
         # creating second event and checking that it is created in good time:
-        self.create_event(event_line_id=0, next_event_id=1)
+        self.create_event(line_id=0, next_event_id=1)
         lastBetsCloseTime = self.storage['lines'][0]['lastBetsCloseTime']
         delta_before_bets_close = lastBetsCloseTime - self.current_time
         self.assertTrue(delta_before_bets_close > 0)
