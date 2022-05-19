@@ -138,6 +138,7 @@ block {
     (* Case when event runs in advance: *)
     if Tezos.now < line.lastBetsCloseTime
     then periods := periods + 1n
+    (* TODO: maybe replace this with `then periods := 1n`? *)
     else skip;
 
     var nextBetsCloseTime := line.lastBetsCloseTime + line.betsPeriod*periods;
