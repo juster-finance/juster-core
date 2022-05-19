@@ -144,7 +144,7 @@ class RewardFeeSplitTest(JusterBaseTestCase):
         self.withdraw(self.d, 1_000_000, sender=self.a)
 
 
-    def test_reward_fee_split_explicit_test(self):
+    def test_reward_fee_split_explicit_test_b(self):
         self._prepare_to_test()
 
         # implicit test with participant C:
