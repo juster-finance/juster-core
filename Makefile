@@ -7,13 +7,16 @@ all: install lint compile test
 install:
 	poetry install
 
-lint: mypy
+lint: isort mypy pylint
 
 mypy:
 	poetry run mypy models/ tests/
 
 isort:
 	poetry run isort tests/ models/ scripts/
+
+pylint:
+	poetry run pylint tests/ models/ scripts/
 
 test:
 	poetry run pytest

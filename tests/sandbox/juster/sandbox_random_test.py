@@ -5,8 +5,6 @@
 import unittest
 from random import choice
 
-from pytezos.rpc.errors import MichelsonError
-
 from tests.sandbox.sandbox_base import SandboxedJusterTestCase
 
 ITERATIONS = 1
@@ -113,4 +111,3 @@ class SandboxRandomTestCase(SandboxedJusterTestCase):
 
             # TODO: withdraw claimRewards?
             self.assertEqual(withdrawals, deposited)
-

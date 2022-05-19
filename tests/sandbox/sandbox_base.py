@@ -3,18 +3,12 @@
     in different time scales
 """
 
-import json
-import unittest
 from os.path import dirname
 from os.path import join
 
 from pytezos import ContractInterface
-from pytezos import MichelsonRuntimeError
-from pytezos import pytezos
 from pytezos.contract.result import ContractCallResult
 from pytezos.sandbox.node import SandboxedNodeTestCase
-from pytezos.sandbox.parameters import sandbox_addresses
-from pytezos.sandbox.parameters import sandbox_commitment
 
 from tests.test_data import generate_juster_storage
 from tests.test_data import generate_pool_storage
@@ -88,21 +82,15 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
         self.oracle_mock = self._find_contract_by_hash(client, result.hash())
 
 
-    def _deploy_pool(self, client, juster_address):
+    def _deploy_pool(self, client):
         """ Deploys Pool """
 
         filename = join(dirname(__file__), POOL_FN)
         contract = ContractInterface.from_file(filename)
         contract = contract.using(shell=client.shell, key=client.key)
 
-        new_event_fee = (
-            self.juster.storage['config']['expirationFee']()
-            + self.juster.storage['config']['measureStartFee']()
-        )
-
         storage = generate_pool_storage(
-            manager=pkh(self.manager),
-            new_event_fee=new_event_fee
+            manager=pkh(self.manager)
         )
 
         opg = contract.originate(initial_storage=storage)
@@ -254,5 +242,4 @@ class SandboxedJusterTestCase(SandboxedNodeTestCase):
         self._activate_accs()
         self._deploy_oracle_mock(self.manager)
         self._deploy_juster(self.manager, self.oracle_mock.address)
-        self._deploy_pool(self.manager, self.juster.address)
-
+        self._deploy_pool(self.manager)

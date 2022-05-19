@@ -1,5 +1,4 @@
 from pytezos.michelson.micheline import MichelsonRuntimeError
-from pytezos.rpc.errors import MichelsonError
 
 from tests.sandbox.sandbox_base import SandboxedJusterTestCase
 
@@ -95,4 +94,3 @@ class ViewsSandboxTestCase(SandboxedJusterTestCase):
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.juster.getPosition(wrong_key).storage_view()
         self.assertTrue('Position is not found' in str(cm.exception))
-

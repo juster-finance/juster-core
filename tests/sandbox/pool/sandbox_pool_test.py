@@ -225,7 +225,7 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
         # creating events (1):
         for line_id in range(LINES):
             opg = self._pool_create_event(self.a, line_id=line_id)
-            if (line_id % 100 == 1):
+            if line_id % 100 == 1:
                 self.bake_block()
 
         self.bake_block()
@@ -233,7 +233,7 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
         # creating events (2):
         for line_id in range(LINES):
             opg = self._pool_create_event(self.a, line_id=line_id)
-            if (line_id % 100 == 1):
+            if line_id % 100 == 1:
                 self.bake_block()
 
         self.bake_block()

@@ -36,4 +36,3 @@ class RewardProgramViewsTestCase(SandboxedJusterTestCase):
         self.bake_block()
 
         self.assertTrue(self.reward_program.storage['result']())
-

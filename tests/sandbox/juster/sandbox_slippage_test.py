@@ -45,4 +45,3 @@ class SandboxSlippageTestCase(SandboxedJusterTestCase):
         self.assertTrue(
             'Expected ratio very differs from current pool ratio'
             in str(cm.exception))
-

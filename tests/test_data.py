@@ -1,5 +1,4 @@
 """ Data for storage and params used to test contract """
-import time
 
 ONE_HOUR = 60*60
 ONE_DAY = ONE_HOUR*24
@@ -60,7 +59,7 @@ def generate_juster_storage(manager, oracle_address):
     return storage
 
 
-def generate_pool_storage(manager, new_event_fee=0):
+def generate_pool_storage(manager):
     return {
         'nextLineId': 0,
         'lines': {},
@@ -115,4 +114,3 @@ def generate_line_params(
         'minBettingPeriod': min_betting_period,
         'advanceTime': advance_time
     }
-
