@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "juster-core"
+version = "0.1.0"
+description = ""
+authors = ["ztepler <ztepler@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "~3.10"
+pytezos = "^3.5.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.1.2"
+mypy = "^0.950"
+# exceptiongroup is required to run pytezos but it wasn't installed wtih pytezos
+exceptiongroup = "^1.0.0-rc.6"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
