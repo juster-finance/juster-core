@@ -6,7 +6,6 @@ import unittest
 from tests.sandbox.sandbox_base import SandboxedJusterTestCase
 from pytezos.rpc.errors import MichelsonError
 from random import choice
-from tqdm import tqdm
 
 
 ITERATIONS = 1
@@ -67,7 +66,7 @@ class SandboxRandomTestCase(SandboxedJusterTestCase):
                 yield self.c
         user_iterator = iterate_users()
 
-        for event_id in tqdm(range(ITERATIONS)):
+        for event_id in range(ITERATIONS):
             print(f'creating event {event_id}')
 
             bets_time = 25
