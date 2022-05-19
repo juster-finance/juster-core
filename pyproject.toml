@@ -13,7 +13,14 @@ pytest = "^7.1.2"
 mypy = "^0.950"
 # exceptiongroup is required to run pytezos but it wasn't installed wtih pytezos
 exceptiongroup = "^1.0.0-rc.6"
+isort = "^5.10.1"
+black = "^22.3.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+line_length = 100
+force_single_line = true
+
