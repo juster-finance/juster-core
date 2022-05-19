@@ -37,4 +37,3 @@ class DefaultEntryTestCase(PoolBaseTestCase):
         self.claim_liquidity(sender=self.c, position_id=1, shares=2_000_000)
         self.assertEqual(self.balances[self.c], 4_000_000)
         self.assertEqual(self.balances['contract'], 0)
-

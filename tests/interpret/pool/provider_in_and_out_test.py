@@ -26,14 +26,16 @@ class ProviderInAndOutTestCase(PoolBaseTestCase):
 
         # A decided to remove liquidity and then redeposit it back:
         withdrawn_amount = self.claim_liquidity(
-            self.a, position_id=0, shares=80_000_000)
+            self.a, position_id=0, shares=80_000_000
+        )
         self.assertEqual(withdrawn_amount, 0)
 
         entry_id = self.deposit_liquidity(self.a, amount=provided_amount)
         self.approve_liquidity(self.a, entry_id=entry_id)
 
         # should receive the same amount of shares:
-        self.assertEqual(self.storage['positions'][2]['shares'], provided_amount)
+        self.assertEqual(
+            self.storage['positions'][2]['shares'], provided_amount
+        )
         self.assertEqual(self.storage['totalShares'], 100_000_000)
         self.assertEqual(self.get_next_liquidity(), 10_000_000)
-

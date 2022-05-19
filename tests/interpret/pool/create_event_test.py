@@ -4,7 +4,9 @@ from tests.interpret.pool.pool_base import PoolBaseTestCase
 
 
 class CreateEventTestCase(PoolBaseTestCase):
-    def test_should_fail_if_free_liquidity_is_less_than_next_event_liquidity(self):
+    def test_should_fail_if_free_liquidity_is_less_than_next_event_liquidity(
+        self,
+    ):
         self.add_line(max_events=10)
         self.deposit_liquidity(amount=100)
         self.approve_liquidity()
@@ -28,13 +30,11 @@ class CreateEventTestCase(PoolBaseTestCase):
         err_text = 'Not enough liquidity to run event'
         self.assertTrue(err_text in str(cm.exception))
 
-
     def test_should_fail_if_zero_events_in_line_added(self):
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.add_line(max_events=0)
         err_text = 'Line should have at least one event'
         self.assertTrue(err_text in str(cm.exception))
-
 
     def test_should_fail_if_next_event_id_is_already_was_an_event_before(self):
         self.add_line(max_events=2)
@@ -49,23 +49,26 @@ class CreateEventTestCase(PoolBaseTestCase):
         err_text = 'Event id is already taken'
         self.assertTrue(err_text in str(cm.exception))
 
-
     def test_should_reschedule_event_if_less_than_min_betting_time_left(self):
         line_id = self.add_line(
-            max_events=2, bets_period=100, min_betting_period=40)
+            max_events=2, bets_period=100, min_betting_period=40
+        )
         self.deposit_liquidity(amount=100)
         self.approve_liquidity()
 
         # current time with 1 sec > than min_betting_period allows:
         self.current_time = 61
         event_id = self.create_event()
-        self.assertEqual(self.storage['lines'][line_id]['lastBetsCloseTime'], 200)
+        self.assertEqual(
+            self.storage['lines'][line_id]['lastBetsCloseTime'], 200
+        )
 
         # current time with 85 secs expected betting period:
         self.current_time = 215
         event_id = self.create_event()
-        self.assertEqual(self.storage['lines'][line_id]['lastBetsCloseTime'], 300)
-
+        self.assertEqual(
+            self.storage['lines'][line_id]['lastBetsCloseTime'], 300
+        )
 
     def test_should_allow_to_run_event_if_have_advance_time(self):
         line_id = self.add_line(max_events=2, bets_period=100, advance_time=10)
@@ -75,7 +78,9 @@ class CreateEventTestCase(PoolBaseTestCase):
         # current time with 1 sec > than min_betting_period allows:
         self.current_time = 0
         event_id = self.create_event()
-        self.assertEqual(self.storage['lines'][line_id]['lastBetsCloseTime'], 100)
+        self.assertEqual(
+            self.storage['lines'][line_id]['lastBetsCloseTime'], 100
+        )
 
         # too early to run event:
         self.current_time = 80
@@ -87,5 +92,6 @@ class CreateEventTestCase(PoolBaseTestCase):
         # good time:
         self.current_time = 91
         self.create_event()
-        self.assertEqual(self.storage['lines'][line_id]['lastBetsCloseTime'], 200)
-
+        self.assertEqual(
+            self.storage['lines'][line_id]['lastBetsCloseTime'], 200
+        )

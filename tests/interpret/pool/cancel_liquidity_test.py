@@ -9,7 +9,6 @@ class CancelLiquidityTestCase(PoolBaseTestCase):
         self.deposit_liquidity()
         self.cancel_liquidity()
 
-
     def test_should_not_be_able_to_cancel_others_liquidity(self):
         self.add_line()
         self.deposit_liquidity(sender=self.a)
@@ -18,8 +17,9 @@ class CancelLiquidityTestCase(PoolBaseTestCase):
         msg = 'Not entry position owner'
         self.assertTrue(msg in str(cm.exception))
 
-
-    def test_should_not_be_able_to_cancel_liquidity_after_it_was_approved(self):
+    def test_should_not_be_able_to_cancel_liquidity_after_it_was_approved(
+        self,
+    ):
         self.add_line()
         self.deposit_liquidity()
         self.approve_liquidity()
@@ -29,8 +29,9 @@ class CancelLiquidityTestCase(PoolBaseTestCase):
         msg = 'Entry is not found'
         self.assertTrue(msg in str(cm.exception))
 
-
-    def test_should_not_be_able_to_approve_liquidity_after_it_was_canceled(self):
+    def test_should_not_be_able_to_approve_liquidity_after_it_was_canceled(
+        self,
+    ):
         self.add_line()
         self.deposit_liquidity()
         self.cancel_liquidity()
@@ -39,4 +40,3 @@ class CancelLiquidityTestCase(PoolBaseTestCase):
             self.approve_liquidity()
         msg = 'Entry is not found'
         self.assertTrue(msg in str(cm.exception))
-

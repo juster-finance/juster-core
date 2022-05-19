@@ -52,10 +52,11 @@ class MultipleEventsAndProvidersTest(PoolBaseTestCase):
         # Both providers should have the same shares and should earn 2xtz:
         # removing liquidity:
         withdrawn_amount = self.claim_liquidity(
-            self.a, position_id=0, shares=3_000_000)
+            self.a, position_id=0, shares=3_000_000
+        )
         self.assertEqual(withdrawn_amount, 4_000_000)
 
         withdrawn_amount = self.claim_liquidity(
-            self.b, position_id=1, shares=3_000_000)
+            self.b, position_id=1, shares=3_000_000
+        )
         self.assertEqual(withdrawn_amount, 4_000_000)
-

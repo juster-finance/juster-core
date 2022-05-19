@@ -11,9 +11,7 @@ class SetEntryLockPeriodTestCase(PoolBaseTestCase):
         self.set_entry_lock_period(new_period=0, sender=self.manager)
         self.assertEqual(self.storage['entryLockPeriod'], 0)
 
-
     def test_should_fail_to_set_new_entry_lock_period_if_not_manager(self):
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.set_entry_lock_period(new_period=3600, sender=self.c)
         self.assertTrue('Not a contract manager' in str(cm.exception))
-

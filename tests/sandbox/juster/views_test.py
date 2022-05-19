@@ -4,7 +4,6 @@ from tests.sandbox.sandbox_base import SandboxedJusterTestCase
 
 
 class ViewsSandboxTestCase(SandboxedJusterTestCase):
-
     def test_views(self):
 
         # checking that initial nextEventId is 0
@@ -39,7 +38,7 @@ class ViewsSandboxTestCase(SandboxedJusterTestCase):
             user=self.b,
             expected_below=1,
             expected_above_eq=1,
-            amount=1_000_000
+            amount=1_000_000,
         )
         self.bake_block()
 
@@ -48,7 +47,7 @@ class ViewsSandboxTestCase(SandboxedJusterTestCase):
             user=self.b,
             side='aboveEq',
             minimal_win_amount=1_500_000,
-            amount=1_000_000
+            amount=1_000_000,
         )
         self.bake_block()
 
@@ -71,7 +70,7 @@ class ViewsSandboxTestCase(SandboxedJusterTestCase):
             'isWithdrawn': False,
             'liquidityShares': 100_000_000,
             'providedLiquidityAboveEq': 1_000_000,
-            'providedLiquidityBelow': 1_000_000
+            'providedLiquidityBelow': 1_000_000,
         }
 
         key = (self.b.key.public_key_hash(), 0)

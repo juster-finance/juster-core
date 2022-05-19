@@ -12,4 +12,3 @@ class PoolModelTestCase(TestCase):
         self.assertEqual(model_copy, model)
         model_copy.default(Decimal(1_000_000))
         self.assertNotEqual(model_copy, model)
-

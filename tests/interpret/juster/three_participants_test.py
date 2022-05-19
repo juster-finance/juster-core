@@ -50,7 +50,6 @@ from tests.interpret.juster.juster_base import JusterBaseTestCase
 
 
 class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
-
     def test_with_three_participants(self):
 
         self.current_time = RUN_TIME
@@ -60,23 +59,22 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
         amount = self.measure_start_fee + self.expiration_fee
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.new_event(
-                event_params=self.default_event_params,
-                amount=int(amount // 2))
+                event_params=self.default_event_params, amount=int(amount // 2)
+            )
         msg = 'measureStartFee and expirationFee should be provided'
         self.assertTrue(msg in str(cm.exception))
 
         # Creating event:
         amount = self.measure_start_fee + self.expiration_fee
-        self.new_event(
-            event_params=self.default_event_params,
-            amount=amount)
+        self.new_event(event_params=self.default_event_params, amount=amount)
 
         # Participant A: adding liquidity 50/50 just at start:
         self.provide_liquidity(
             participant=self.a,
             amount=50_000,
             expected_above_eq=1,
-            expected_below=1)
+            expected_below=1,
+        )
 
         # Testing that with current ratio 1:1, bet with 10:1 ratio fails:
         with self.assertRaises(MichelsonRuntimeError) as cm:
@@ -84,7 +82,8 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
                 participant=self.a,
                 amount=100_000,
                 bet='aboveEq',
-                minimal_win=1_000_000)
+                minimal_win=1_000_000,
+            )
         msg = 'Wrong minimalWinAmount'
         self.assertTrue(msg in str(cm.exception))
 
@@ -94,31 +93,34 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
             participant=self.b,
             amount=50_000,
             bet='aboveEq',
-            minimal_win=50_000)
+            minimal_win=50_000,
+        )
 
         # Participant A: adding more liquidity after 12 hours
         # (1/2 of the bets period):
-        self.current_time = RUN_TIME + 12*ONE_HOUR
+        self.current_time = RUN_TIME + 12 * ONE_HOUR
         self.provide_liquidity(
             participant=self.a,
             amount=40_000,
             expected_above_eq=4,
-            expected_below=1)
+            expected_below=1,
+        )
 
         # Participant C: adding more liquidity at the very end:
-        self.current_time = RUN_TIME + 24*ONE_HOUR
+        self.current_time = RUN_TIME + 24 * ONE_HOUR
         self.provide_liquidity(
             participant=self.c,
             amount=80_000,
             expected_above_eq=4,
-            expected_below=1)
+            expected_below=1,
+        )
 
         # Running measurement and make failwith checks:
-        self.current_time = RUN_TIME + 26*ONE_HOUR
+        self.current_time = RUN_TIME + 26 * ONE_HOUR
         start_callback_values = {
             'currencyPair': self.currency_pair,
-            'lastUpdate': self.current_time - 1*ONE_HOUR,
-            'rate': 6_000_000
+            'lastUpdate': self.current_time - 1 * ONE_HOUR,
+            'rate': 6_000_000,
         }
 
         # Checking that it is not possible to run close before measurement started:
@@ -126,7 +128,8 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
             self.close(
                 callback_values=start_callback_values,
                 source=self.a,
-                sender=self.oracle_address)
+                sender=self.oracle_address,
+            )
         msg = "Can't close event before measurement period started"
         self.assertTrue(msg in str(cm.exception))
 
@@ -145,7 +148,7 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
 
         # Check that measurement during bets time is failed:
         callback_in_betstime = start_callback_values.copy()
-        callback_in_betstime.update({'lastUpdate': RUN_TIME + 12*ONE_HOUR})
+        callback_in_betstime.update({'lastUpdate': RUN_TIME + 12 * ONE_HOUR})
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.start_measurement(
@@ -171,7 +174,8 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
         self.start_measurement(
             callback_values=start_callback_values,
             source=self.a,
-            sender=self.oracle_address)
+            sender=self.oracle_address,
+        )
 
         # Check that betting in measurement period is failed:
         with self.assertRaises(MichelsonRuntimeError) as cm:
@@ -179,7 +183,8 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
                 participant=self.a,
                 amount=100_000,
                 bet='below',
-                minimal_win=100_000)
+                minimal_win=100_000,
+            )
         msg = 'Bets after betCloseTime is not allowed'
         self.assertTrue(msg in str(cm.exception))
 
@@ -189,7 +194,8 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
                 participant=self.c,
                 amount=100_000,
                 expected_above_eq=1,
-                expected_below=1)
+                expected_below=1,
+            )
         msg = 'Providing Liquidity after betCloseTime is not allowed'
         self.assertTrue(msg in str(cm.exception))
 
@@ -206,33 +212,31 @@ class ThreeParticipantsDeterminedTest(JusterBaseTestCase):
 
         # Checking that withdrawal before event is closed is not allowed:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.withdraw(
-                participant=self.a,
-                withdraw_amount=100_000)
+            self.withdraw(participant=self.a, withdraw_amount=100_000)
         msg = 'Withdraw is not allowed until event is closed'
         self.assertTrue(msg in str(cm.exception))
 
         # Closing event:
-        self.current_time = RUN_TIME + 38*ONE_HOUR
+        self.current_time = RUN_TIME + 38 * ONE_HOUR
 
         # Emulating calback with price is increased 25%:
         close_callback_values = {
             'currencyPair': self.currency_pair,
-            'lastUpdate': self.current_time - 1*ONE_HOUR,
-            'rate': 7_500_000
+            'lastUpdate': self.current_time - 1 * ONE_HOUR,
+            'rate': 7_500_000,
         }
         self.close(
             callback_values=close_callback_values,
             source=self.b,
-            sender=self.oracle_address)
+            sender=self.oracle_address,
+        )
 
         # Trying to trigger Force Majeure is failed because event is closed:
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.trigger_force_majeure(sender=self.a)
 
         # Withdrawals:
-        self.current_time = RUN_TIME + 64*ONE_HOUR
+        self.current_time = RUN_TIME + 64 * ONE_HOUR
         self.withdraw(self.a, 65_000)
         self.withdraw(self.b, 75_000)
         self.withdraw(self.c, 80_000)
-

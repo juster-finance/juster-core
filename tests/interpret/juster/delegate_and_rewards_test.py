@@ -8,7 +8,6 @@ from tests.interpret.juster.juster_base import JusterBaseTestCase
 
 
 class DelegateAndBakingRewardsTest(JusterBaseTestCase):
-
     def test_delegate_and_baking_rewards(self):
 
         self.current_time = RUN_TIME
@@ -17,11 +16,15 @@ class DelegateAndBakingRewardsTest(JusterBaseTestCase):
         # Only manager can set delegate:
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.contract.setDelegate(random_delegate_from_twitter).interpret(
-                now=self.current_time, storage=self.storage, sender=self.d)
+                now=self.current_time, storage=self.storage, sender=self.d
+            )
         self.assertTrue("Not a contract manager" in str(cm.exception))
 
-        result = self.contract.setDelegate(random_delegate_from_twitter).interpret(
-            now=self.current_time, storage=self.storage, sender=self.manager)
+        result = self.contract.setDelegate(
+            random_delegate_from_twitter
+        ).interpret(
+            now=self.current_time, storage=self.storage, sender=self.manager
+        )
 
         self.assertTrue(len(result.operations) == 1)
 
@@ -31,30 +34,36 @@ class DelegateAndBakingRewardsTest(JusterBaseTestCase):
         self.storage = result.storage
 
         # Sending 200_000 mutez to contract:
-        result = self.contract.default().with_amount(200_000).interpret(
-            now=self.current_time,
-            storage=self.storage,
-            sender=random_delegate_from_twitter)
+        result = (
+            self.contract.default()
+            .with_amount(200_000)
+            .interpret(
+                now=self.current_time,
+                storage=self.storage,
+                sender=random_delegate_from_twitter,
+            )
+        )
         self.storage = result.storage
 
         # Trying to withdraw with address different from manager:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.claim_baking_rewards(
-                expected_reward=200_000,
-                sender=self.c)
+            self.claim_baking_rewards(expected_reward=200_000, sender=self.c)
         self.assertTrue('Not a contract manager' in str(cm.exception))
 
         # Withdrawing with manager:
-        self.claim_baking_rewards(
-            expected_reward=200_000, sender=self.manager)
+        self.claim_baking_rewards(expected_reward=200_000, sender=self.manager)
 
         # Sending another 500_000 mutez to contract:
-        result = self.contract.default().with_amount(500_000).interpret(
-            now=self.current_time,
-            storage=self.storage,
-            sender=random_delegate_from_twitter)
+        result = (
+            self.contract.default()
+            .with_amount(500_000)
+            .interpret(
+                now=self.current_time,
+                storage=self.storage,
+                sender=random_delegate_from_twitter,
+            )
+        )
         self.storage = result.storage
 
         # Withdrawing with manager again:
-        self.claim_baking_rewards(
-            expected_reward=500_000, sender=self.manager)
+        self.claim_baking_rewards(expected_reward=500_000, sender=self.manager)

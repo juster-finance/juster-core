@@ -23,7 +23,7 @@ class MultipleProvidersResultsTestCase(PoolBaseTestCase):
         # should receive the same amount of shares:
         self.assertEqual(
             self.storage['positions'][0]['shares'],
-            self.storage['positions'][1]['shares']
+            self.storage['positions'][1]['shares'],
         )
 
         # creating next event, total liquidity 10xtz (5xtz kept on contract)
@@ -32,11 +32,13 @@ class MultipleProvidersResultsTestCase(PoolBaseTestCase):
 
         # providers decided to remove their liquidity:
         withdrawn_amount = self.claim_liquidity(
-            self.a, position_id=0, shares=10_000_000)
+            self.a, position_id=0, shares=10_000_000
+        )
         self.assertEqual(withdrawn_amount, 0)
 
         withdrawn_amount = self.claim_liquidity(
-            self.b, position_id=1, shares=10_000_000)
+            self.b, position_id=1, shares=10_000_000
+        )
         self.assertEqual(withdrawn_amount, 5_000_000)
 
         # first event is finished with profit 2xtz, all this 7xtz should go to
@@ -49,19 +51,18 @@ class MultipleProvidersResultsTestCase(PoolBaseTestCase):
 
         # first provider first event 100%:
         amounts = self.withdraw_liquidity(
-            positions=[dict(positionId=0, eventId=0)],
-            sender=self.a)
+            positions=[dict(positionId=0, eventId=0)], sender=self.a
+        )
         self.assertEqual(amounts[self.a], 7_000_000)
 
         # second provider second event 50%:
         amounts = self.withdraw_liquidity(
-            positions=[dict(positionId=1, eventId=1)],
-            sender=self.b)
+            positions=[dict(positionId=1, eventId=1)], sender=self.b
+        )
         self.assertEqual(amounts[self.b], 5_000_000)
 
         # first provider second event 50%:
         amounts = self.withdraw_liquidity(
-            positions=[dict(positionId=0, eventId=1)],
-            sender=self.a)
+            positions=[dict(positionId=0, eventId=1)], sender=self.a
+        )
         self.assertEqual(amounts[self.a], 5_000_000)
-

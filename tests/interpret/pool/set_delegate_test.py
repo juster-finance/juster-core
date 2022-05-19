@@ -13,4 +13,3 @@ class SetDelegateTestCase(PoolBaseTestCase):
 
         msg = 'Not a contract manager'
         self.assertTrue(msg in str(cm.exception))
-

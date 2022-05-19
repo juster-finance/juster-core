@@ -6,13 +6,11 @@ from tests.interpret.pool.pool_base import PoolBaseTestCase
 class DoubleEventsTest(PoolBaseTestCase):
     def test_double_event_should_fail(self):
 
-        PERIOD = 5*60
+        PERIOD = 5 * 60
 
         # creating line with a lot of possible events and bets period 5 min:
         self.add_line(
-            currency_pair='XTZ-USD',
-            max_events=10,
-            bets_period=PERIOD
+            currency_pair='XTZ-USD', max_events=10, bets_period=PERIOD
         )
 
         # adding some liquidity so it will be possible to create events:
@@ -40,4 +38,3 @@ class DoubleEventsTest(PoolBaseTestCase):
         self.create_event(line_id=0, next_event_id=1)
 
         self.assertEqual(len(self.storage['events']), 2)
-

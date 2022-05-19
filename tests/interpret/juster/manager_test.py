@@ -20,19 +20,23 @@ RESET_CONFIG_LAMBDA_FN = '../../../build/lambdas/reset_new_event_config.tz'
 
 
 class ManagerTest(JusterBaseTestCase):
-
     def test_update_config(self):
 
         self.current_time = RUN_TIME
         self.id = self.storage['nextEventId']
 
-        raise_liq_code = open(join(dirname(__file__), RAISE_LIQ_FEE_LAMBDA_FN)).read()
-        reset_config_code = open(join(dirname(__file__), RESET_CONFIG_LAMBDA_FN)).read()
+        raise_liq_code = open(
+            join(dirname(__file__), RAISE_LIQ_FEE_LAMBDA_FN)
+        ).read()
+        reset_config_code = open(
+            join(dirname(__file__), RESET_CONFIG_LAMBDA_FN)
+        ).read()
 
         # Creating first event with default params:
         self.new_event(
             event_params=self.default_event_params,
-            amount=self.measure_start_fee + self.expiration_fee)
+            amount=self.measure_start_fee + self.expiration_fee,
+        )
 
         # Default max liquidity percent is 30%:
         assert self.storage['config']['maxLiquidityPercent'] == 300_000
@@ -47,7 +51,8 @@ class ManagerTest(JusterBaseTestCase):
         self.id = self.storage['nextEventId']
         self.new_event(
             event_params=new_params,
-            amount=self.measure_start_fee + self.expiration_fee)
+            amount=self.measure_start_fee + self.expiration_fee,
+        )
 
         assert self.storage['events'][self.id]['liquidityPercent'] == 310_000
 
@@ -63,68 +68,67 @@ class ManagerTest(JusterBaseTestCase):
         self.update_config(reset_config_code, self.manager)
         assert self.storage['config']['maxLiquidityPercent'] == 300_000
 
-
     def test_change_manager(self):
 
         # C tries to run acceptOwnership rights with no success:
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.contract.acceptOwnership().interpret(
-                storage=self.storage,
-                sender=self.c)
+                storage=self.storage, sender=self.c
+            )
         self.assertTrue("Not allowed to accept ownership" in str(cm.exception))
 
         # manager A call transfer rights to another address B:
         result = self.contract.changeManager(self.b).interpret(
-                storage=self.storage,
-                sender=self.manager)
+            storage=self.storage, sender=self.manager
+        )
         assert result.storage['proposedManager'] == self.b
         self.storage = result.storage
 
         # Checking that another address C can't claim baking rewards:
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.contract.claimBakingRewards().interpret(
-                    storage=self.storage,
-                    sender=self.c)
+                storage=self.storage, sender=self.c
+            )
         self.assertTrue("Not a contract manager" in str(cm.exception))
 
         # Checking that proposed manager can't claim retained profits:
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.contract.claimRetainedProfits().interpret(
-                    storage=self.storage,
-                    sender=self.b)
+                storage=self.storage, sender=self.b
+            )
         self.assertTrue("Not a contract manager" in str(cm.exception))
 
         # And checking that current manager still can run claim:
         self.contract.claimBakingRewards().interpret(
-                storage=self.storage,
-                sender=self.manager)
+            storage=self.storage, sender=self.manager
+        )
 
         # Checking that the same old manager A can change rights
         # again to another address C:
         result = self.contract.changeManager(self.c).interpret(
-                storage=self.storage,
-                sender=self.manager)
+            storage=self.storage, sender=self.manager
+        )
         assert result.storage['proposedManager'] == self.c
         self.storage = result.storage
 
         # Checking that another address D can't accpept rights:
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.contract.acceptOwnership().interpret(
-                storage=self.storage,
-                sender=self.d)
+                storage=self.storage, sender=self.d
+            )
         self.assertTrue("Not allowed to accept ownership" in str(cm.exception))
 
         # Check that another address B can't accpept rights too:
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.contract.acceptOwnership().interpret(
-                storage=self.storage,
-                sender=self.b)
+                storage=self.storage, sender=self.b
+            )
         self.assertTrue("Not allowed to accept ownership" in str(cm.exception))
 
         # check that another address C can accpept rights:
         result = self.contract.acceptOwnership().interpret(
-            storage=self.storage,
-            sender=self.c)
+            storage=self.storage, sender=self.c
+        )
         assert result.storage['manager'] == self.c
         assert result.storage['proposedManager'] == None
         self.storage = result.storage
@@ -133,11 +137,11 @@ class ManagerTest(JusterBaseTestCase):
         # baking rewards and retained profits:
 
         result = self.contract.claimRetainedProfits().interpret(
-                storage=self.storage,
-                sender=self.c)
+            storage=self.storage, sender=self.c
+        )
         self.storage = result.storage
 
         result = self.contract.claimBakingRewards().interpret(
-                storage=self.storage,
-                sender=self.c)
+            storage=self.storage, sender=self.c
+        )
         self.storage = result.storage

@@ -22,7 +22,7 @@ class Line:
             last_bets_close_time=storage['lastBetsCloseTime'],
             max_events=storage['maxEvents'],
             is_paused=storage['isPaused'],
-            min_betting_period=storage['minBettingPeriod']
+            min_betting_period=storage['minBettingPeriod'],
         )
 
     def update_last_bets_close_time(self, now: int) -> None:
@@ -39,10 +39,4 @@ class Line:
             self.last_bets_close_time += self.bets_period
 
     def calc_duration(self, now: int) -> int:
-        return (
-            self.measure_period
-            + self.last_bets_close_time
-            - now
-        )
-
-
+        return self.measure_period + self.last_bets_close_time - now

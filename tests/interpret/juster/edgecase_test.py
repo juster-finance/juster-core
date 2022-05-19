@@ -8,7 +8,6 @@ from tests.interpret.juster.juster_base import JusterBaseTestCase
 
 
 class ZeroEdgecasesTest(JusterBaseTestCase):
-
     def test_zero_edgecases(self):
         self.current_time = RUN_TIME
         self.id = self.storage['nextEventId']
@@ -17,13 +16,14 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
         self.measure_start_fee = 0
         self.expiration_fee = 0
 
-        self.storage['config'].update({
-            'measureStartFee': self.measure_start_fee,
-            'expirationFee': self.expiration_fee,
-        })
+        self.storage['config'].update(
+            {
+                'measureStartFee': self.measure_start_fee,
+                'expirationFee': self.expiration_fee,
+            }
+        )
 
-        self.new_event(
-            event_params=self.default_event_params, amount=0)
+        self.new_event(event_params=self.default_event_params, amount=0)
 
         # A provides liquidity with 0 tez, assert failed:
         with self.assertRaises(MichelsonRuntimeError) as cm:
@@ -31,7 +31,8 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
                 participant=self.a,
                 amount=0,
                 expected_above_eq=1,
-                expected_below=1)
+                expected_below=1,
+            )
         self.assertTrue('Zero liquidity provided' in str(cm.exception))
 
         # A tries to bet but there are no liquidity, assert failed:
@@ -40,7 +41,8 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
                 participant=self.a,
                 amount=1_000_000,
                 bet='aboveEq',
-                minimal_win=1_000_000)
+                minimal_win=1_000_000,
+            )
         msg = "Can't process bet before liquidity added"
         self.assertTrue(msg in str(cm.exception))
 
@@ -49,7 +51,8 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
             participant=self.b,
             amount=10,
             expected_above_eq=1,
-            expected_below=1)
+            expected_below=1,
+        )
 
         # A provides liquidity with 0 expected aboveEq/below, assert failed:
         with self.assertRaises(MichelsonRuntimeError) as cm:
@@ -57,7 +60,8 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
                 participant=self.a,
                 amount=1_000_000,
                 expected_above_eq=0,
-                expected_below=1)
+                expected_below=1,
+            )
         msg = 'Expected ratio in pool should be more than zero'
         self.assertTrue(msg in str(cm.exception))
 
@@ -68,7 +72,8 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
                 participant=self.a,
                 amount=1_000_000,
                 expected_above_eq=10,
-                expected_below=1)
+                expected_below=1,
+            )
         msg = 'Expected ratio very differs from current pool ratio'
         self.assertTrue(msg in str(cm.exception))
 
@@ -78,27 +83,20 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
                 participant=self.a,
                 amount=1_000_000,
                 expected_above_eq=1,
-                expected_below=0)
+                expected_below=0,
+            )
         msg = 'Expected ratio in pool should be more than zero'
         self.assertTrue(msg in str(cm.exception))
 
         # A tries to Bet with winRate a lot more than expected:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.bet(
-                participant=self.a,
-                amount=1,
-                bet='below',
-                minimal_win=5)
+            self.bet(participant=self.a, amount=1, bet='below', minimal_win=5)
         msg = 'Wrong minimalWinAmount'
         self.assertTrue(msg in str(cm.exception))
 
         # A tries to Bet 0 tez:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.bet(
-                participant=self.a,
-                amount=0,
-                bet='below',
-                minimal_win=0)
+            self.bet(participant=self.a, amount=0, bet='below', minimal_win=0)
         msg = 'Bet without tez'
         self.assertTrue(msg in str(cm.exception))
 
@@ -111,13 +109,14 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
         callback_values = {
             'currencyPair': self.currency_pair,
             'lastUpdate': self.current_time,
-            'rate': 6_000_000
+            'rate': 6_000_000,
         }
 
         self.start_measurement(
             callback_values=callback_values,
             source=self.a,
-            sender=self.oracle_address)
+            sender=self.oracle_address,
+        )
 
         # Closing event:
         self.current_time = bets_close + period
@@ -126,12 +125,13 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
         callback_values = {
             'currencyPair': self.currency_pair,
             'lastUpdate': self.current_time,
-            'rate': 7_500_000
+            'rate': 7_500_000,
         }
         self.close(
             callback_values=callback_values,
             source=self.a,
-            sender=self.oracle_address)
+            sender=self.oracle_address,
+        )
 
         # A provides liquidity after event closed is not allowed:
         with self.assertRaises(MichelsonRuntimeError) as cm:
@@ -139,7 +139,8 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
                 participant=self.a,
                 amount=10,
                 expected_above_eq=1,
-                expected_below=1)
+                expected_below=1,
+            )
         msg = 'Providing Liquidity after betCloseTime is not allowed'
         self.assertTrue(msg in str(cm.exception))
 
@@ -148,17 +149,14 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
             self.close(
                 callback_values=callback_values,
                 source=self.a,
-                sender=self.oracle_address)
+                sender=self.oracle_address,
+            )
         msg = "Event already closed. Can't close event twice"
         self.assertTrue(msg in str(cm.exception))
 
         # A tries to Bet after event is closed and failed:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.bet(
-                participant=self.a,
-                amount=1,
-                bet='below',
-                minimal_win=5)
+            self.bet(participant=self.a, amount=1, bet='below', minimal_win=5)
         msg = 'Bets after betCloseTime is not allowed'
         self.assertTrue(msg in str(cm.exception))
 
@@ -167,7 +165,8 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
             self.start_measurement(
                 callback_values=callback_values,
                 source=self.a,
-                sender=self.oracle_address)
+                sender=self.oracle_address,
+            )
         msg = 'Measurement period already started'
         self.assertTrue(msg in str(cm.exception))
 
@@ -179,4 +178,3 @@ class ZeroEdgecasesTest(JusterBaseTestCase):
 
         # B withdraws all:
         self.withdraw(self.b, 10)
-

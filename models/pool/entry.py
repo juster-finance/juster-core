@@ -17,7 +17,5 @@ class Entry:
         return cls(
             provider=storage['provider'],
             amount=Decimal(storage['amount']),
-            accept_after=int(storage['acceptAfter'])
+            accept_after=int(storage['acceptAfter']),
         )
-
-

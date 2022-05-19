@@ -9,16 +9,15 @@ from tests.test_data import generate_line_params
 
 # TODO: split into SandboxPoolBaseTestCase and others?
 class SandboxPoolTestCase(SandboxedJusterTestCase):
-
     def _add_line(
-            self,
-            user,
-            measure_period=1,
-            currency_pair='XTZ-USD',
-            target_dynamics=1_000_000,
-            max_events=2,
-            juster_address=None
-        ):
+        self,
+        user,
+        measure_period=1,
+        currency_pair='XTZ-USD',
+        target_dynamics=1_000_000,
+        max_events=2,
+        juster_address=None,
+    ):
 
         juster_address = juster_address or self.juster.address
         line_params = generate_line_params(
@@ -26,18 +25,16 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
             measure_period=measure_period,
             max_events=max_events,
             target_dynamics=target_dynamics,
-            juster_address=juster_address)
-
-        opg = (user.contract(self.pool.address)
-            .addLine(line_params)
-            .send()
+            juster_address=juster_address,
         )
+
+        opg = user.contract(self.pool.address).addLine(line_params).send()
 
         return opg
 
-
     def _deposit_liquidity(self, user, amount):
-        opg = (user.contract(self.pool.address)
+        opg = (
+            user.contract(self.pool.address)
             .depositLiquidity()
             .with_amount(amount)
             .send()
@@ -45,47 +42,33 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
 
         return opg
 
-
     def _approve_liquidity(self, user, entry_id):
-        opg = (user.contract(self.pool.address)
-            .approveLiquidity(entry_id)
-            .send()
+        opg = (
+            user.contract(self.pool.address).approveLiquidity(entry_id).send()
         )
 
         return opg
-
 
     def _pool_create_event(self, user, line_id=0):
-        opg = (user.contract(self.pool.address)
-            .createEvent(line_id)
-            .send()
-        )
+        opg = user.contract(self.pool.address).createEvent(line_id).send()
 
         return opg
 
-
     def _claim_liquidity(self, user, position_id=0, shares=0):
-        opg = (user.contract(self.pool.address)
+        opg = (
+            user.contract(self.pool.address)
             .claimLiquidity(positionId=position_id, shares=shares)
             .send()
         )
 
         return opg
 
-
     def _pool_withdraw(self, user, event_id=0, position_id=0):
-        claims = [{
-            'positionId': position_id,
-            'eventId': event_id
-        }]
+        claims = [{'positionId': position_id, 'eventId': event_id}]
 
-        opg = (user.contract(self.pool.address)
-            .withdrawLiquidity(claims)
-            .send()
-        )
+        opg = user.contract(self.pool.address).withdrawLiquidity(claims).send()
 
         return opg
-
 
     def test_pool(self):
         self._add_line(self.manager)
@@ -93,8 +76,10 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
 
         # A deposits 10 tez + fees to create two events in line:
         config = self.juster.getConfig().onchain_view()
-        event_creation_fee = config['measureStartFee'] + config['expirationFee']
-        shares = 10_000_000 + event_creation_fee*2
+        event_creation_fee = (
+            config['measureStartFee'] + config['expirationFee']
+        )
+        shares = 10_000_000 + event_creation_fee * 2
         self._deposit_liquidity(self.a, shares)
         self.bake_block()
 
@@ -112,13 +97,13 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
         self.assertEqual(event_params['poolAboveEq'], 5_000_000)
 
         # A claims 40% of his liquidity (10tez + fees/2 - 5tez) * 0.4 = :
-        opg = self._claim_liquidity(self.a, 0, int(0.4*shares))
+        opg = self._claim_liquidity(self.a, 0, int(0.4 * shares))
         self.bake_block()
         result = self._find_call_result_by_hash(self.a, opg.hash())
         self.assertEqual(len(result.operations), 1)
         op = result.operations[0]
         self.assertEqual(op['destination'], pkh(self.a))
-        self.assertEqual(int(op['amount']), 0.4*shares/2)
+        self.assertEqual(int(op['amount']), 0.4 * shares / 2)
 
         # B bets in below:
         bet_res = self._bet(
@@ -126,7 +111,7 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
             user=self.b,
             side='below',
             minimal_win_amount=7_500_000,
-            amount=5_000_000
+            amount=5_000_000,
         )
 
         # waiting for the end of the betting period:
@@ -145,7 +130,7 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
         self.assertEqual(int(op['amount']), 4_000_000)
 
         # provider withdraw the rest 60% of the liquidity
-        opg = self._claim_liquidity(self.a, 0, int(0.6*shares))
+        opg = self._claim_liquidity(self.a, 0, int(0.6 * shares))
         self.bake_block()
         result = self._find_call_result_by_hash(self.a, opg.hash())
         self.assertEqual(len(result.operations), 1)
@@ -154,11 +139,10 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
 
         # provider returns his 60% of unused liquidity + 6xtz that was earned
         # from the first event (using provider liquidity)
-        self.assertEqual(int(op['amount']), 0.6*shares/2 + 6_000_000)
+        self.assertEqual(int(op['amount']), 0.6 * shares / 2 + 6_000_000)
 
         # nothing should be left on the contract:
         self.assertEqual(self.pool.getBalance().storage_view(), 0)
-
 
     def test_double_liquidity_provided_the_same_amount(self):
 
@@ -185,8 +169,9 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
         shares = self.pool.storage['positions'][1]()['shares']
         self.assertEqual(shares, 10_000_000)
 
-
-    @unittest.skip("this test require 2 minutes to complete, so it is skipped now")
+    @unittest.skip(
+        "this test require 2 minutes to complete, so it is skipped now"
+    )
     def test_pool_load(self):
         # TODO: really want to split this test into multiple but then I got
         # pytezos.rpc.node.RpcError (node.validator.checkpoint_error)
@@ -203,7 +188,8 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
                 self.manager,
                 target_dynamics=1_000_000 + line,
                 measure_period=1,
-                max_events=3)
+                max_events=3,
+            )
 
         self.bake_block()
         self.assertEqual(len(self.pool.storage['lines']()), LINES)
@@ -212,15 +198,13 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
             self._deposit_liquidity(self.a, 10_000_000)
         self.bake_block()
 
-        self.assertEqual(
-            self.pool.storage['nextEntryId'](), PROVIDERS)
+        self.assertEqual(self.pool.storage['nextEntryId'](), PROVIDERS)
 
         for entry_id in range(PROVIDERS):
             self._approve_liquidity(self.a, entry_id)
         self.bake_block()
 
-        self.assertEqual(
-            self.pool.storage['nextPositionId'](), PROVIDERS)
+        self.assertEqual(self.pool.storage['nextPositionId'](), PROVIDERS)
 
         # creating events (1):
         for line_id in range(LINES):
@@ -253,8 +237,7 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
         # withdrawing for (1):
         for event_id in range(LINES):
             self._withdraw(
-                event_id=event_id,
-                participant_address=self.pool.address
+                event_id=event_id, participant_address=self.pool.address
             )
 
         self.bake_block()
@@ -271,7 +254,5 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
         result = self._find_call_result_by_hash(self.a, opg.hash())
         event_result = self.pool.storage['events'][event_id]()['result']
         self.assertEqual(
-            int(result.operations[0]['amount']),
-            int(event_result * 5 / 100)
+            int(result.operations[0]['amount']), int(event_result * 5 / 100)
         )
-

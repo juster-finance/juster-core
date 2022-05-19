@@ -12,11 +12,9 @@ class DepositLiquidityTestCase(PoolBaseTestCase):
         msg = 'Should provide tez'
         self.assertTrue(msg in str(cm.exception))
 
-
     def test_should_be_able_to_deposit_liquidity(self):
         self.add_line()
         self.deposit_liquidity(amount=1000)
-
 
     def test_should_allow_to_withdraw_all_liquidity_and_add_new(self):
         self.add_line()
@@ -29,4 +27,3 @@ class DepositLiquidityTestCase(PoolBaseTestCase):
         self.deposit_liquidity(amount=1000)
         self.approve_liquidity(entry_id=1)
         self.assertEqual(self.storage['totalShares'], 1000)
-

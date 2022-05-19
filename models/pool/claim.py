@@ -14,7 +14,5 @@ class Claim:
     @classmethod
     def from_storage(cls, storage: AnyStorage) -> Claim:
         return cls(
-            shares=Decimal(storage['shares']),
-            provider=storage['provider']
+            shares=Decimal(storage['shares']), provider=storage['provider']
         )
-

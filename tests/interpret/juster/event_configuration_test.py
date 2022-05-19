@@ -8,7 +8,6 @@ from tests.interpret.juster.juster_base import JusterBaseTestCase
 
 
 class EventConfigurationTest(JusterBaseTestCase):
-
     def test_event_configuration(self):
         self.current_time = RUN_TIME
         self.id = self.storage['nextEventId']
@@ -21,7 +20,8 @@ class EventConfigurationTest(JusterBaseTestCase):
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.new_event(
                 event_params=event_params,
-                amount=self.measure_start_fee + self.expiration_fee)
+                amount=self.measure_start_fee + self.expiration_fee,
+            )
         msg = 'measurePeriod is less than minimal value'
         self.assertTrue(msg in str(cm.exception))
 
@@ -33,7 +33,8 @@ class EventConfigurationTest(JusterBaseTestCase):
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.new_event(
                 event_params=event_params,
-                amount=self.measure_start_fee + self.expiration_fee)
+                amount=self.measure_start_fee + self.expiration_fee,
+            )
         msg = 'measurePeriod is exceed maximum value'
         self.assertTrue(msg in str(cm.exception))
 
@@ -45,7 +46,8 @@ class EventConfigurationTest(JusterBaseTestCase):
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.new_event(
                 event_params=event_params,
-                amount=self.measure_start_fee + self.expiration_fee)
+                amount=self.measure_start_fee + self.expiration_fee,
+            )
         msg = 'betsCloseTime is less than minimal allowed period'
         self.assertTrue(msg in str(cm.exception))
 
@@ -57,7 +59,8 @@ class EventConfigurationTest(JusterBaseTestCase):
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.new_event(
                 event_params=event_params,
-                amount=self.measure_start_fee + self.expiration_fee)
+                amount=self.measure_start_fee + self.expiration_fee,
+            )
         msg = 'betsCloseTime is exceed maximum allowed period'
         self.assertTrue(msg in str(cm.exception))
 
@@ -69,7 +72,8 @@ class EventConfigurationTest(JusterBaseTestCase):
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.new_event(
                 event_params=event_params,
-                amount=self.measure_start_fee + self.expiration_fee)
+                amount=self.measure_start_fee + self.expiration_fee,
+            )
         msg = 'liquidityPercent is less than minimal value'
         self.assertTrue(msg in str(cm.exception))
 
@@ -81,7 +85,7 @@ class EventConfigurationTest(JusterBaseTestCase):
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.new_event(
                 event_params=event_params,
-                amount=self.measure_start_fee + self.expiration_fee)
+                amount=self.measure_start_fee + self.expiration_fee,
+            )
         msg = 'liquidityPercent is exceed maximum value'
         self.assertTrue(msg in str(cm.exception))
-

@@ -7,12 +7,12 @@ from tests.interpret.pool.pool_base import PoolBaseTestCase
 
 
 class PayRewardTestCase(PoolBaseTestCase):
-
-    def test_should_fail_to_pay_reward_for_event_that_was_not_created_by_pool(self):
+    def test_should_fail_to_pay_reward_for_event_that_was_not_created_by_pool(
+        self,
+    ):
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.pay_reward(event_id=100)
         self.assertTrue('Active event is not found' in str(cm.exception))
-
 
     def test_should_fail_if_event_finished_twice(self):
         self.add_line()
@@ -24,7 +24,6 @@ class PayRewardTestCase(PoolBaseTestCase):
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.pay_reward(event_id=0)
         self.assertTrue('Active event is not found' in str(cm.exception))
-
 
     def test_pay_reward_finishes_event(self):
         # simple test that checks that after event is finished result is writed:
@@ -40,7 +39,6 @@ class PayRewardTestCase(PoolBaseTestCase):
         # result after finish should equal to provided amount:
         self.pay_reward(event_id=0, amount=1_000_000)
         self.assertEqual(self.storage['events'][0]['result'], 1_000_000)
-
 
     def test_pay_reward_changes_next_event_liquidity_amount(self):
         # creating simple line with one event that should receive random amount of tez
@@ -60,7 +58,6 @@ class PayRewardTestCase(PoolBaseTestCase):
         self.pay_reward(event_id=0, amount=random_amount)
         self.assertEqual(self.get_next_liquidity(), random_amount)
 
-
     def test_should_fail_if_wrong_address_tries_to_payout(self):
         # creating simple line with one event that should receive random amount of tez
         self.add_line(max_events=1)
@@ -72,7 +69,6 @@ class PayRewardTestCase(PoolBaseTestCase):
             self.pay_reward(event_id=0, amount=100, sender=self.c)
         msg = 'Address is not expected'
         self.assertTrue(msg in str(cm.exception))
-
 
     def test_should_allow_to_run_two_justers_in_different_lines(self):
         self.add_line(max_events=1, juster_address=self.c)
@@ -86,5 +82,6 @@ class PayRewardTestCase(PoolBaseTestCase):
         self.pay_reward(event_id=1, amount=50, sender=self.d)
 
         self.claim_liquidity(position_id=0, shares=100)
-        self.assertTrue(all(balance == 0 for balance in self.balances.values()))
-
+        self.assertTrue(
+            all(balance == 0 for balance in self.balances.values())
+        )

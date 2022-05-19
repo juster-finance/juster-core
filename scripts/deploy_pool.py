@@ -48,7 +48,7 @@ def generate_pool_storage(manager, juster_address):
         'proposedManager': manager,
         'liquidityUnits': 0,
         'withdrawals': {},
-        'nextWithdrawalId': 0
+        'nextWithdrawalId': 0,
     }
 
 
@@ -56,8 +56,8 @@ def deploy_pool(client):
     print(f'deploying pool...')
     contract = CONTRACTS['pool'].using(key=KEY, shell=SHELL)
     storage = generate_pool_storage(
-        manager=client.key.public_key_hash(),
-        juster_address=JUSTER_ADDRESS)
+        manager=client.key.public_key_hash(), juster_address=JUSTER_ADDRESS
+    )
 
     opg = contract.originate(initial_storage=storage).send()
     print(f'success: {opg.hash()}')
@@ -76,4 +76,3 @@ if __name__ == '__main__':
     client = pytezos.using(key=KEY, shell=SHELL)
     juster_address = deploy_pool(client)
     # TODO: add basic lines
-

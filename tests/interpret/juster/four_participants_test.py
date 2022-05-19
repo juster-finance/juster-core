@@ -65,7 +65,6 @@ from tests.interpret.juster.juster_base import JusterBaseTestCase
 
 
 class FourParticipantsDeterminedTest(JusterBaseTestCase):
-
     def test_with_four_participants(self):
 
         self.current_time = RUN_TIME
@@ -73,16 +72,15 @@ class FourParticipantsDeterminedTest(JusterBaseTestCase):
 
         # Creating event:
         amount = self.measure_start_fee + self.expiration_fee
-        self.new_event(
-            event_params=self.default_event_params,
-            amount=amount)
+        self.new_event(event_params=self.default_event_params, amount=amount)
 
         # Participant A: adding liquidity 50/50 just at start:
         self.provide_liquidity(
             participant=self.a,
             amount=50_000,
             expected_above_eq=1,
-            expected_below=1)
+            expected_below=1,
+        )
 
         # Participant B: bets aboveEq 50_000 after 1 hour:
         self.current_time = RUN_TIME + ONE_HOUR
@@ -90,69 +88,76 @@ class FourParticipantsDeterminedTest(JusterBaseTestCase):
             participant=self.b,
             amount=50_000,
             bet='aboveEq',
-            minimal_win=50_000)
+            minimal_win=50_000,
+        )
 
         # Participant A: adding more liquidity after 12 hours (1/2 of the bets period):
-        self.current_time = RUN_TIME + 12*ONE_HOUR
+        self.current_time = RUN_TIME + 12 * ONE_HOUR
         self.provide_liquidity(
             participant=self.a,
             amount=40_000,
             expected_above_eq=4,
-            expected_below=1)
+            expected_below=1,
+        )
 
         # Participant D: adding more liquidity after 12 hours:
         self.provide_liquidity(
             participant=self.d,
             amount=360_000,
             expected_above_eq=4,
-            expected_below=1)
+            expected_below=1,
+        )
 
         # Participant D: bets below 125_000 after 12 hours:
         self.bet(
             participant=self.d,
             amount=125_000,
             bet='below',
-            minimal_win=125_000)
+            minimal_win=125_000,
+        )
 
         # Participant C: adding more liquidity at the very end:
-        self.current_time = RUN_TIME + 24*ONE_HOUR
+        self.current_time = RUN_TIME + 24 * ONE_HOUR
         self.provide_liquidity(
             participant=self.c,
             amount=50_000,
             expected_above_eq=1,
-            expected_below=1)
+            expected_below=1,
+        )
 
         # Running measurement:
-        self.current_time = RUN_TIME + 26*ONE_HOUR
+        self.current_time = RUN_TIME + 26 * ONE_HOUR
 
         # Emulating callback:
         callback_values = {
             'currencyPair': self.currency_pair,
-            'lastUpdate': self.current_time - 1*ONE_HOUR,
-            'rate': 6_000_000
+            'lastUpdate': self.current_time - 1 * ONE_HOUR,
+            'rate': 6_000_000,
         }
         self.start_measurement(
             callback_values=callback_values,
             source=self.a,
-            sender=self.oracle_address)
+            sender=self.oracle_address,
+        )
 
         # Closing event:
-        self.current_time = RUN_TIME + 38*ONE_HOUR
+        self.current_time = RUN_TIME + 38 * ONE_HOUR
 
         # Emulating calback with price is increased 25%:
         callback_values = {
             'currencyPair': self.currency_pair,
-            'lastUpdate': self.current_time - 1*ONE_HOUR,
-            'rate': 7_500_000
+            'lastUpdate': self.current_time - 1 * ONE_HOUR,
+            'rate': 7_500_000,
         }
         self.close(
             callback_values=callback_values,
             source=self.b,
-            sender=self.oracle_address)
+            sender=self.oracle_address,
+        )
 
         # Withdrawals:
-        self.current_time = RUN_TIME + 64*ONE_HOUR
-        self.withdraw(self.b,  75_000)
+        self.current_time = RUN_TIME + 64 * ONE_HOUR
+        self.withdraw(self.b, 75_000)
         self.withdraw(self.a, 100_000)
-        self.withdraw(self.c,  50_000)
+        self.withdraw(self.c, 50_000)
         self.withdraw(self.d, 450_000)

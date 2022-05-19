@@ -4,8 +4,8 @@ from getpass import getpass
 from pytezos import ContractInterface
 from pytezos import pytezos
 
-ONE_HOUR = 60*60
-ONE_DAY = ONE_HOUR*24
+ONE_HOUR = 60 * 60
+ONE_DAY = ONE_HOUR * 24
 SHELL = 'https://rpc.tzkt.io/ithacanet/'
 KEY = getpass()
 CONTRACTS = {
@@ -28,17 +28,17 @@ def generate_storage(manager, oracle_address):
         'expirationFee': 100_000,
         'minLiquidityPercent': 0,
         'maxLiquidityPercent': 300_000,  # 30% for 1_000_000 liquidityPrecision
-        'maxAllowedMeasureLag': 60*15,  # 15 minutes
-        'maxMeasurePeriod': ONE_DAY*31,  # 31 day
-        'maxPeriodToBetsClose': ONE_DAY*31,  # 31 day
+        'maxAllowedMeasureLag': 60 * 15,  # 15 minutes
+        'maxMeasurePeriod': ONE_DAY * 31,  # 31 day
+        'maxPeriodToBetsClose': ONE_DAY * 31,  # 31 day
         'measureStartFee': 100_000,
-        'minMeasurePeriod': 60*5,  # 5 min
-        'minPeriodToBetsClose': 60*5,  # 5 min
+        'minMeasurePeriod': 60 * 5,  # 5 min
+        'minPeriodToBetsClose': 60 * 5,  # 5 min
         'oracleAddress': oracle_address,
         'rewardCallFee': 100_000,
         'rewardFeeSplitAfter': ONE_DAY,
         'providerProfitFee': 10000,  # 1%
-        'isEventCreationPaused': False
+        'isEventCreationPaused': False,
     }
 
     storage = {
@@ -55,18 +55,16 @@ def generate_storage(manager, oracle_address):
         'measurementStartCallId': None,
         'config': config,
         'manager': manager,
-
         'liquidityPrecision': 1_000_000,
         'ratioPrecision': 100_000_000,
         'sharePrecision': 100_000_000,
         'targetDynamicsPrecision': 1_000_000,
         'providerProfitFeePrecision': 1_000_000,
-
         'bakingRewards': 0,
         'retainedProfits': 0,
         'proposedManager': None,
         'isWithdrawn': {},
-        'metadata': {"": to_hex(CONTRACT_METADATA_URI)}
+        'metadata': {"": to_hex(CONTRACT_METADATA_URI)},
     }
 
     return storage
@@ -85,8 +83,8 @@ def deploy_juster(client):
     print(f'deploying juster...')
     contract = CONTRACTS['juster'].using(key=KEY, shell=SHELL)
     storage = generate_storage(
-        manager=client.key.public_key_hash(),
-        oracle_address=ORACLE_ADDRESS)
+        manager=client.key.public_key_hash(), oracle_address=ORACLE_ADDRESS
+    )
 
     opg = contract.originate(initial_storage=storage).send()
     print(f'success: {opg.hash()}')
@@ -114,4 +112,3 @@ if __name__ == '__main__':
     2. Juster deploy
     """
     juster_address = deploy_juster(client)
-

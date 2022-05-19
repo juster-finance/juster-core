@@ -10,7 +10,6 @@ from tests.interpret.juster.juster_base import JusterBaseTestCase
 
 
 class EmptyEqualEventTest(JusterBaseTestCase):
-
     def test_empty_equal_event(self):
 
         self.current_time = RUN_TIME
@@ -18,9 +17,7 @@ class EmptyEqualEventTest(JusterBaseTestCase):
 
         # Creating event:
         amount = self.measure_start_fee + self.expiration_fee
-        self.new_event(
-            event_params=self.default_event_params,
-            amount=amount)
+        self.new_event(event_params=self.default_event_params, amount=amount)
 
         bets_close = self.default_event_params['betsCloseTime']
         period = self.default_event_params['measurePeriod']
@@ -32,12 +29,13 @@ class EmptyEqualEventTest(JusterBaseTestCase):
         callback_values = {
             'currencyPair': self.currency_pair,
             'lastUpdate': self.current_time,
-            'rate': 6_000_000
+            'rate': 6_000_000,
         }
         self.start_measurement(
             callback_values=callback_values,
             source=self.a,
-            sender=self.oracle_address)
+            sender=self.oracle_address,
+        )
 
         # Closing event:
         self.current_time = bets_close + period
@@ -48,6 +46,7 @@ class EmptyEqualEventTest(JusterBaseTestCase):
         self.close(
             callback_values=callback_values,
             source=self.a,
-            sender=self.oracle_address)
+            sender=self.oracle_address,
+        )
 
         self.assertTrue(self.storage['events'][self.id]['isBetsAboveEqWin'])

@@ -14,8 +14,8 @@ class SimpleProvideAndExitTest(PoolBaseTestCase):
 
         # removing liquidity:
         withdrawn_amount = self.claim_liquidity(
-            self.a, position_id=0, shares=provided_amount)
+            self.a, position_id=0, shares=provided_amount
+        )
 
         # checking that pool contract balance not changed
         self.assertEqual(withdrawn_amount, provided_amount)
-

@@ -26,7 +26,8 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
 
         # A decided to remove liquidity:
         withdrawn_amount = self.claim_liquidity(
-            self.a, position_id=0, shares=80_000_000)
+            self.a, position_id=0, shares=80_000_000
+        )
         self.assertEqual(self.get_next_liquidity(), 2_000_000)
 
         # Run and finish event with profit 2xtz:
@@ -41,8 +42,9 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
         self.pay_reward(event_id=2, amount=1_200_000)
         self.assertEqual(self.get_next_liquidity(), 2_100_000)
 
-
-    def test_next_event_liquidity_cant_be_emptied_when_all_events_are_lose(self):
+    def test_next_event_liquidity_cant_be_emptied_when_all_events_are_lose(
+        self,
+    ):
 
         # creating default event line:
         self.add_line(max_events=5)
@@ -60,9 +62,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
 
         self.assertEqual(self.get_next_liquidity(), 0)
 
-
     def test_next_event_liquidity_shoul_be_equal_to_events_result_mean(self):
-
         def random_amount():
             return randint(1, 20) * 100_000
 
@@ -70,7 +70,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
         self.add_line(max_events=5)
 
         # providing liquidity, value should not matter:
-        self.deposit_liquidity(self.a, amount=random_amount()*5)
+        self.deposit_liquidity(self.a, amount=random_amount() * 5)
         self.approve_liquidity(self.a, entry_id=0)
 
         for event_id in range(5):
@@ -84,7 +84,6 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
             mean_amount += amount / 5
 
         self.assertEqual(self.get_next_liquidity(), mean_amount)
-
 
     def test_next_event_liquidity_with_two_lines_and_one_emptied(self):
 
@@ -109,7 +108,6 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
         # there are should be liquidity for the second line:
         self.assertEqual(self.get_next_liquidity(), 500_000)
 
-
     def test_next_event_liquidity_cant_be_emptied_when_provider_goes_out(self):
 
         # creating default event line:
@@ -127,12 +125,11 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
 
         self.assertEqual(self.get_next_liquidity(), 0)
 
-
     def test_event_creation_fees_included_in_costs(self):
 
         custom_config = generate_juster_config(
-            measure_start_fee=200_000,
-            expiration_fee=100_000)
+            measure_start_fee=200_000, expiration_fee=100_000
+        )
 
         self.add_line(max_events=2)
 
@@ -152,8 +149,9 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
         self.assertEqual(self.storage['events'][1]['provided'], 350_000)
         self.wait(3600)
 
-
-    def test_next_event_liquidity_should_not_be_changed_by_locked_liquidity(self):
+    def test_next_event_liquidity_should_not_be_changed_by_locked_liquidity(
+        self,
+    ):
         # This is case catched in hanzhounet, error was in payReward with
         # locked profits/losses that should not be distributed
 
@@ -197,7 +195,6 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
         difference = self.get_next_liquidity() - 1_000_000
         self.assertTrue(difference <= 1)
 
-
     def test_next_event_liquidity_with_event_creation_fee(self):
         # this case represents case from testnet launch
         self.add_line(max_events=2, bets_period=100, measure_period=100)
@@ -212,4 +209,3 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
 
         self.pay_reward(event_id=event_0, amount=900_000)
         event_3 = self.create_event()
-

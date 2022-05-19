@@ -10,8 +10,8 @@ from tests.interpret.juster.juster_base import JusterBaseTestCase
 
 
 class LiquidityFeeDynamicTest(JusterBaseTestCase):
-    """ This is experimental version of test with dynamic parameters.
-        Trying to understand is it good or evil """
+    """This is experimental version of test with dynamic parameters.
+    Trying to understand is it good or evil"""
 
     def test_liquidity_fee(self):
 
@@ -27,14 +27,16 @@ class LiquidityFeeDynamicTest(JusterBaseTestCase):
         # Creating event:
         self.new_event(
             event_params=self.default_event_params,
-            amount=self.measure_start_fee + self.expiration_fee)
+            amount=self.measure_start_fee + self.expiration_fee,
+        )
 
         # Participant A: adding liquidity 1tez in both pools:
         self.provide_liquidity(
             participant=self.a,
             amount=1_000_000,
             expected_above_eq=1,
-            expected_below=1)
+            expected_below=1,
+        )
 
         # Participant B: bets for 1tez at different times and
         # have different possible win amount (adjusted by liq percent):
@@ -44,8 +46,7 @@ class LiquidityFeeDynamicTest(JusterBaseTestCase):
             bet = 1_000_000
             elapsed_time = current_time - RUN_TIME
             multiplier = elapsed_time / bets_duration
-            return int(bet + possible_win * (1 - 0.01*multiplier))
-
+            return int(bet + possible_win * (1 - 0.01 * multiplier))
 
         saved_storage = self.storage
 
@@ -62,10 +63,10 @@ class LiquidityFeeDynamicTest(JusterBaseTestCase):
                 participant=self.b,
                 amount=1_000_000,
                 bet='aboveEq',
-                minimal_win=1_000_000)
+                minimal_win=1_000_000,
+            )
 
             possible_win = self.storage['betsAboveEq'][(self.b, self.id)]
             calculated_win = calculate_possible_win(self.current_time)
 
             self.assertEqual(possible_win, calculated_win)
-

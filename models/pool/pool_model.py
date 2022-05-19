@@ -19,7 +19,7 @@ from models.pool.types import AnyStorage
 
 @dataclass
 class PoolModel:
-    """ Model that emulates simplified Pool case with one event line """
+    """Model that emulates simplified Pool case with one event line"""
 
     # TODO: add f postfix to all high precision values
     active_events: list[int] = field(default_factory=list)
@@ -46,10 +46,9 @@ class PoolModel:
     def from_storage(
         cls: Type[PoolModel],
         storage: AnyStorage,
-        balance: Decimal=Decimal(0),
-        now: int=0
+        balance: Decimal = Decimal(0),
+        now: int = 0,
     ) -> PoolModel:
-
         def convert(cls: Any, items: AnyStorage):
             return {
                 index: cls.from_storage(item_storage)
@@ -87,7 +86,7 @@ class PoolModel:
             active_liquidity=Decimal(storage['activeLiquidityF']),
             withdrawable_liquidity=Decimal(storage['withdrawableLiquidityF']),
             lines=convert(Line, storage['lines']),
-            next_line_id=storage['nextLineId']
+            next_line_id=storage['nextLineId'],
         )
 
     def trigger_pause_line(self, line_id: int) -> PoolModel:
@@ -104,7 +103,7 @@ class PoolModel:
         last_bets_close_time: int,
         max_events: int,
         is_paused: bool,
-        min_betting_period: int
+        min_betting_period: int,
     ) -> PoolModel:
         self.lines[self.next_line_id] = Line(
             measure_period=measure_period,
@@ -112,16 +111,19 @@ class PoolModel:
             last_bets_close_time=last_bets_close_time,
             max_events=max_events,
             is_paused=is_paused,
-            min_betting_period=min_betting_period
+            min_betting_period=min_betting_period,
         )
         self.next_line_id += 1
         self.max_events += 0 if is_paused else max_events
         return self
 
     def calc_entry_liquidity(self):
-        return quantize(sum(
-            entry.amount * self.precision for entry in self.entries.values()
-        ))
+        return quantize(
+            sum(
+                entry.amount * self.precision
+                for entry in self.entries.values()
+            )
+        )
 
     def calc_free_liquidity(self):
         return (
@@ -146,8 +148,7 @@ class PoolModel:
         )
 
     def calc_withdraw_payouts_f(
-        self,
-        claim_keys: list[ClaimKey]
+        self, claim_keys: list[ClaimKey]
     ) -> dict[str, Decimal]:
         payouts: dict[str, Decimal] = {}
         for claim_key in claim_keys:
@@ -160,12 +161,11 @@ class PoolModel:
         return payouts
 
     def calc_withdraw_payouts(
-        self,
-        claim_keys: list[ClaimKey]
+        self, claim_keys: list[ClaimKey]
     ) -> dict[str, Decimal]:
         payouts_f = self.calc_withdraw_payouts_f(claim_keys)
         return {
-            address: quantize(payout_f/self.precision)
+            address: quantize(payout_f / self.precision)
             for address, payout_f in payouts_f.items()
         }
 
@@ -183,7 +183,7 @@ class PoolModel:
         position = Position(
             provider=entry.provider,
             shares=self.calc_deposit_shares(entry.amount),
-            added_counter=self.counter
+            added_counter=self.counter,
         )
         self.entries.pop(entry_id)
 
@@ -199,10 +199,7 @@ class PoolModel:
         return self
 
     def add_claim_shares(
-        self,
-        event_id: int,
-        position_id: int,
-        shares: Decimal
+        self, event_id: int, position_id: int, shares: Decimal
     ) -> None:
         provider = self.positions[position_id].provider
         claim_key = ClaimKey(event_id, position_id)
@@ -226,11 +223,7 @@ class PoolModel:
                 yield event_id
         return
 
-    def calc_claim_payout(
-        self,
-        position_id: int,
-        shares: Decimal
-    ) -> Decimal:
+    def calc_claim_payout(self, position_id: int, shares: Decimal) -> Decimal:
         total_liquidity = self.calc_total_liquidity()
         locked_liquidity = Decimal(0)
         for event_id in self.iter_impacted_event_ids(position_id):
@@ -244,9 +237,7 @@ class PoolModel:
             )
 
         provider_liquidity = quantize(
-            total_liquidity
-            * shares
-            / self.total_shares
+            total_liquidity * shares / self.total_shares
         )
 
         # TODO: should all high precision variables marked with f?
@@ -295,18 +286,13 @@ class PoolModel:
         return self
 
     def calc_next_event_liquidity(self) -> Decimal:
-        max_liquidity = quantize(
-            self.calc_total_liquidity()
-            / self.max_events
-        )
+        max_liquidity = quantize(self.calc_total_liquidity() / self.max_events)
         liquidity_f = min(max_liquidity, self.calc_free_liquidity())
         return quantize(liquidity_f / self.precision)
 
     def calc_liquidity_units(self, duration: int, amount: Decimal) -> Decimal:
         liquidity_units = quantize(
-            Decimal(duration)
-            * amount
-            / self.total_shares
+            Decimal(duration) * amount / self.total_shares
         )
         assert liquidity_units >= 0
         return liquidity_units
@@ -323,7 +309,7 @@ class PoolModel:
             locked_shares=Decimal(0),
             result=None,
             provided=provided_amount,
-            precision=self.precision
+            precision=self.precision,
         )
 
         self.counter += 1
@@ -344,9 +330,9 @@ class PoolModel:
         return self
 
     def diff_with(self, other: PoolModel) -> list[str]:
-        """ Returns attributes that different with other """
+        """Returns attributes that different with other"""
         return [
-            attr_name for attr_name, attr_value in self.__dict__.items()
+            attr_name
+            for attr_name, attr_value in self.__dict__.items()
             if attr_value != getattr(other, attr_name)
         ]
-

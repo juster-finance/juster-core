@@ -48,7 +48,6 @@ from tests.interpret.juster.juster_base import JusterBaseTestCase
 
 
 class MultipleLPTest(JusterBaseTestCase):
-
     def test_with_multiple_providers(self):
 
         self.current_time = RUN_TIME
@@ -56,92 +55,104 @@ class MultipleLPTest(JusterBaseTestCase):
 
         # Creating event:
         event_params = self.default_event_params.copy()
-        event_params.update({
-            'betsCloseTime': RUN_TIME + ONE_HOUR,
-            'measurePeriod': ONE_HOUR,
-        })
+        event_params.update(
+            {
+                'betsCloseTime': RUN_TIME + ONE_HOUR,
+                'measurePeriod': ONE_HOUR,
+            }
+        )
         self.new_event(
             event_params=event_params,
-            amount=self.measure_start_fee + self.expiration_fee)
+            amount=self.measure_start_fee + self.expiration_fee,
+        )
 
         # Participant A: adding liquidity 1/1 just at start:
         self.provide_liquidity(
             participant=self.a,
             amount=1_000_000,
             expected_above_eq=1,
-            expected_below=1)
+            expected_below=1,
+        )
 
         # Participant B: bets aboveEq for 1 tez:
         self.bet(
             participant=self.b,
             amount=1_000_000,
             bet='aboveEq',
-            minimal_win=1_000_000)
+            minimal_win=1_000_000,
+        )
 
         # Participant A: adding more liquidity after 30 mins with 1:4:
-        self.current_time = int(RUN_TIME + 0.5*ONE_HOUR)
+        self.current_time = int(RUN_TIME + 0.5 * ONE_HOUR)
         self.provide_liquidity(
             participant=self.a,
             amount=2_000_000,
             expected_above_eq=4,
-            expected_below=1)
+            expected_below=1,
+        )
 
         # Participant C: adding more liquidity after 30 mins with 1:4:
         self.provide_liquidity(
             participant=self.c,
             amount=4_000_000,
             expected_above_eq=4,
-            expected_below=1)
+            expected_below=1,
+        )
 
         # Participant D: bets below for 2 tez:
         self.bet(
             participant=self.d,
             amount=2_000_000,
             bet='below',
-            minimal_win=2_000_000)
+            minimal_win=2_000_000,
+        )
 
         # Participant B: bets aboveEq for 4 tez:
         self.bet(
             participant=self.b,
             amount=4_000_000,
             bet='aboveEq',
-            minimal_win=4_000_000)
+            minimal_win=4_000_000,
+        )
 
         # Participant A: adding more liquidity after 30 mins with 1:4:
         self.provide_liquidity(
             participant=self.a,
             amount=4_000_000,
             expected_above_eq=4,
-            expected_below=1)
+            expected_below=1,
+        )
 
         # Running measurement:
-        self.current_time = RUN_TIME + 2*ONE_HOUR
+        self.current_time = RUN_TIME + 2 * ONE_HOUR
         callback_values = {
             'currencyPair': self.currency_pair,
-            'lastUpdate': self.current_time - int(0.5*ONE_HOUR),
-            'rate': 8_000_000
+            'lastUpdate': self.current_time - int(0.5 * ONE_HOUR),
+            'rate': 8_000_000,
         }
         self.start_measurement(
             callback_values=callback_values,
             source=self.a,
-            sender=self.oracle_address)
+            sender=self.oracle_address,
+        )
 
         # Closing event:
-        self.current_time = RUN_TIME + 3*ONE_HOUR
+        self.current_time = RUN_TIME + 3 * ONE_HOUR
 
         # Emulating calback with price is increased 25%:
         callback_values = {
             'currencyPair': self.currency_pair,
-            'lastUpdate': self.current_time - int(0.5*ONE_HOUR),
-            'rate': 6_000_000
+            'lastUpdate': self.current_time - int(0.5 * ONE_HOUR),
+            'rate': 6_000_000,
         }
         self.close(
             callback_values=callback_values,
             source=self.b,
-            sender=self.oracle_address)
+            sender=self.oracle_address,
+        )
 
         # Withdrawals:
-        self.current_time = RUN_TIME + 4*ONE_HOUR
+        self.current_time = RUN_TIME + 4 * ONE_HOUR
         self.withdraw(self.a, 8_000_000)
         self.withdraw(self.b, 0)
         self.withdraw(self.c, 4_000_000)

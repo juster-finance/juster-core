@@ -6,13 +6,11 @@ from tests.interpret.pool.pool_base import PoolBaseTestCase
 class EventCountLimitCase(PoolBaseTestCase):
     def test_exceeding_event_count_should_fail(self):
 
-        PERIOD = 5*60
+        PERIOD = 5 * 60
 
         # creating line with a lot of possible events and bets period 5 min:
         self.add_line(
-            currency_pair='XTZ-USD',
-            max_events=3,
-            bets_period=PERIOD
+            currency_pair='XTZ-USD', max_events=3, bets_period=PERIOD
         )
 
         # adding some liquidity so it will be possible to create events:
@@ -41,4 +39,3 @@ class EventCountLimitCase(PoolBaseTestCase):
 
         # the first event is not removed:
         self.assertEqual(len(self.storage['events']), 4)
-

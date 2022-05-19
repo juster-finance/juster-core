@@ -2,7 +2,6 @@ from tests.interpret.pool.pool_base import PoolBaseTestCase
 
 
 class LiquidityUnitsTestCase(PoolBaseTestCase):
-
     def test_should_calculate_liquidity_units_properly(self):
         # creating event with expected duration 200:
         self.add_line(max_events=1, bets_period=100, measure_period=100)
@@ -21,7 +20,6 @@ class LiquidityUnitsTestCase(PoolBaseTestCase):
         self.claim_liquidity(shares=100)
         withdrawal = self.storage['withdrawals'][0]
         self.assertEqual(withdrawal['liquidityUnits'], expected_units)
-
 
     def test_multiple_withdrawals_should_have_the_same_units(self):
         self.current_time = 0
@@ -43,4 +41,3 @@ class LiquidityUnitsTestCase(PoolBaseTestCase):
         units_b = w[1]['liquidityUnits']
 
         self.assertEqual(units_a, units_b)
-

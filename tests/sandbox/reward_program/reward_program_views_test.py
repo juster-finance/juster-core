@@ -6,15 +6,18 @@ from tests.sandbox.sandbox_base import SandboxedJusterTestCase
 
 
 class RewardProgramViewsTestCase(SandboxedJusterTestCase):
-
-    @unittest.skip("node.validator.checkpoint_error RpcError failed when runned with another tests")
+    @unittest.skip(
+        "node.validator.checkpoint_error RpcError failed when runned with another tests"
+    )
     def test_reward_program_views(self):
         self._deploy_reward_program(self.client, self.juster.address)
         self.assertFalse(self.reward_program.storage['result']())
 
         # should fail if position is not found:
         with self.assertRaises(MichelsonError) as cm:
-            self.b.contract(self.reward_program.address).provideEvidence([0]).send()
+            self.b.contract(self.reward_program.address).provideEvidence(
+                [0]
+            ).send()
         self.assertTrue('Position is not found' in str(cm.exception))
 
         # creating event and checking getEventCreatorAddress view:
@@ -27,12 +30,14 @@ class RewardProgramViewsTestCase(SandboxedJusterTestCase):
             user=self.b,
             expected_below=1,
             expected_above_eq=1,
-            amount=1_000_000
+            amount=1_000_000,
         )
         self.bake_block()
 
         # checking that B position get positive result:
-        self.b.contract(self.reward_program.address).provideEvidence([0]).send()
+        self.b.contract(self.reward_program.address).provideEvidence(
+            [0]
+        ).send()
         self.bake_block()
 
         self.assertTrue(self.reward_program.storage['result']())

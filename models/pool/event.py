@@ -28,23 +28,14 @@ class Event:
             locked_shares=Decimal(storage['lockedShares']),
             result=None if result is None else Decimal(result),
             provided=Decimal(storage['provided']),
-            precision=precision
+            precision=precision,
         )
 
     def get_result_for_shares(self, shares: Decimal) -> Decimal:
         result = self.result if self.result is not None else Decimal(0)
-        return quantize(
-            result
-            * shares
-            * self.precision
-            / self.total_shares
-        )
+        return quantize(result * shares * self.precision / self.total_shares)
 
     def get_provided_for_shares(self, shares: Decimal) -> Decimal:
         return quantize(
-            self.provided
-            * shares
-            * self.precision
-            / self.total_shares
+            self.provided * shares * self.precision / self.total_shares
         )
-

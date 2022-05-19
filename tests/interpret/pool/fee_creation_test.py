@@ -8,8 +8,8 @@ class FeeEventCreationTestCase(PoolBaseTestCase):
     def test_next_event_liquidity_should_include_future_fees(self):
 
         custom_config = generate_juster_config(
-            measure_start_fee=200_000,
-            expiration_fee=300_000)
+            measure_start_fee=200_000, expiration_fee=300_000
+        )
 
         # creating default event:
         self.add_line(max_events=3)
@@ -32,7 +32,8 @@ class FeeEventCreationTestCase(PoolBaseTestCase):
 
         # A decided to remove all liquidity so nextEventLiquidity should be /2:
         withdrawn_amount = self.claim_liquidity(
-            self.a, position_id=0, shares=4_500_000)
+            self.a, position_id=0, shares=4_500_000
+        )
         self.assertEqual(withdrawn_amount, 3_000_000)
         self.assertEqual(self.get_next_liquidity(), 1_500_000)
 
@@ -52,12 +53,13 @@ class FeeEventCreationTestCase(PoolBaseTestCase):
         self.add_line(max_events=2)
         self.assertEqual(self.get_next_liquidity(), 1_500_000)
 
-
-    def test_should_fail_to_create_event_if_fee_more_than_next_event_liquidity(self):
+    def test_should_fail_to_create_event_if_fee_more_than_next_event_liquidity(
+        self,
+    ):
 
         custom_config = generate_juster_config(
-            measure_start_fee=200_000,
-            expiration_fee=300_000)
+            measure_start_fee=200_000, expiration_fee=300_000
+        )
 
         # creating default event:
         self.add_line(max_events=3)
@@ -68,10 +70,6 @@ class FeeEventCreationTestCase(PoolBaseTestCase):
         self.assertEqual(self.get_next_liquidity(), 500_000)
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.create_event(
-                line_id=0,
-                next_event_id=1,
-                config=custom_config)
+            self.create_event(line_id=0, next_event_id=1, config=custom_config)
         msg = 'Not enough liquidity to run event'
         self.assertTrue(msg in str(cm.exception))
-
