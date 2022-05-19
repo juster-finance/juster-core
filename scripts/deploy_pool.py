@@ -1,8 +1,10 @@
 # TODO make one deploy.py with CLI for both testnet/mainnet and different contracts
 
-from pytezos import ContractInterface, pytezos
 import time
 from getpass import getpass
+
+from pytezos import ContractInterface
+from pytezos import pytezos
 
 SHELL = 'https://rpc.tzkt.io/ithacanet/'
 KEY = getpass()

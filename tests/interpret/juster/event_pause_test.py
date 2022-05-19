@@ -1,9 +1,13 @@
 """ Test that when pause is setted it is impossible to create new events """
 
-from tests.interpret.juster.juster_base import JusterBaseTestCase, RUN_TIME, ONE_HOUR
-from pytezos import MichelsonRuntimeError
-from os.path import join, dirname
+from os.path import dirname
+from os.path import join
 
+from pytezos import MichelsonRuntimeError
+
+from tests.interpret.juster.juster_base import ONE_HOUR
+from tests.interpret.juster.juster_base import RUN_TIME
+from tests.interpret.juster.juster_base import JusterBaseTestCase
 
 TRIGGER_PAUSE_LAMBDA_FN = '../../../build/lambdas/trigger_pause.tz'
 

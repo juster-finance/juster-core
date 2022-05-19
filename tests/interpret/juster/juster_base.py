@@ -6,12 +6,19 @@
         callbacks, because callback is internal transaction
 """
 
-from unittest import TestCase
 import time
-from os.path import dirname, join
-from pytezos import ContractInterface, pytezos, MichelsonRuntimeError
+from os.path import dirname
+from os.path import join
+from unittest import TestCase
+
+from pytezos import ContractInterface
+from pytezos import MichelsonRuntimeError
+from pytezos import pytezos
+
 from tests.interpret.juster.event_model import EventModel
-from tests.test_data import generate_juster_storage, ONE_HOUR, ONE_DAY
+from tests.test_data import ONE_DAY
+from tests.test_data import ONE_HOUR
+from tests.test_data import generate_juster_storage
 
 CONTRACT_FN = '../../../build/contracts/juster.tz'
 RUN_TIME = int(time.time())

@@ -1,6 +1,8 @@
-from pytezos import ContractInterface, pytezos
 import time
 from getpass import getpass
+
+from pytezos import ContractInterface
+from pytezos import pytezos
 
 ONE_HOUR = 60*60
 ONE_DAY = ONE_HOUR*24

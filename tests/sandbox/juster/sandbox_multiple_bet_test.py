@@ -1,9 +1,12 @@
 import unittest
-from pytezos.sandbox.node import SandboxedNodeTestCase
-from os.path import join, dirname
-from pytezos import ContractInterface, pytezos
-from tests.test_data import generate_juster_storage
+from os.path import dirname
+from os.path import join
 
+from pytezos import ContractInterface
+from pytezos import pytezos
+from pytezos.sandbox.node import SandboxedNodeTestCase
+
+from tests.test_data import generate_juster_storage
 
 JUSTER_FN = '../../../build/contracts/juster.tz'
 

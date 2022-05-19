@@ -6,9 +6,14 @@
 
 """
 
-from tests.interpret.juster.juster_base import JusterBaseTestCase, RUN_TIME, ONE_HOUR
+from os.path import dirname
+from os.path import join
+
 from pytezos import MichelsonRuntimeError
-from os.path import dirname, join
+
+from tests.interpret.juster.juster_base import ONE_HOUR
+from tests.interpret.juster.juster_base import RUN_TIME
+from tests.interpret.juster.juster_base import JusterBaseTestCase
 
 RAISE_LIQ_FEE_LAMBDA_FN = '../../../build/lambdas/raise_liq_fee.tz'
 RESET_CONFIG_LAMBDA_FN = '../../../build/lambdas/reset_new_event_config.tz'

@@ -1,19 +1,19 @@
 from __future__ import annotations
 
-from decimal import Decimal
-from typing import Optional
-from typing import Any
-from typing import Type
 from dataclasses import dataclass
 from dataclasses import field
+from decimal import Decimal
+from typing import Any
+from typing import Optional
+from typing import Type
 
-from models.pool.entry import Entry
-from models.pool.position import Position
 from models.pool.claim import Claim
 from models.pool.claim_key import ClaimKey
+from models.pool.entry import Entry
 from models.pool.event import Event
-from models.pool.line import Line
 from models.pool.helpers import quantize
+from models.pool.line import Line
+from models.pool.position import Position
 from models.pool.types import AnyStorage
 
 

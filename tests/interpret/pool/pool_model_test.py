@@ -1,7 +1,8 @@
-from models.pool import PoolModel
 from copy import deepcopy
-from unittest import TestCase
 from decimal import Decimal
+from unittest import TestCase
+
+from models.pool import PoolModel
 
 
 class PoolModelTestCase(TestCase):

@@ -57,8 +57,11 @@
         D: 450_000 / 485_000 = 0.927
 """
 
-from tests.interpret.juster.juster_base import JusterBaseTestCase, RUN_TIME, ONE_HOUR
 from pytezos import MichelsonRuntimeError
+
+from tests.interpret.juster.juster_base import ONE_HOUR
+from tests.interpret.juster.juster_base import RUN_TIME
+from tests.interpret.juster.juster_base import JusterBaseTestCase
 
 
 class FourParticipantsDeterminedTest(JusterBaseTestCase):

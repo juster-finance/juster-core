@@ -1,7 +1,7 @@
-from unittest import TestCase
-from tests.interpret.juster.event_model import EventModel
 from random import random
+from unittest import TestCase
 
+from tests.interpret.juster.event_model import EventModel
 
 # storage from three_participants_test at the moment after event is closed:
 # (only required fields)

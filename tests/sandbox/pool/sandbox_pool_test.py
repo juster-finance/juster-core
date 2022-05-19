@@ -1,6 +1,9 @@
 import unittest
-from tests.sandbox.sandbox_base import SandboxedJusterTestCase, pkh
+
 from pytezos.rpc.errors import MichelsonError
+
+from tests.sandbox.sandbox_base import SandboxedJusterTestCase
+from tests.sandbox.sandbox_base import pkh
 from tests.test_data import generate_line_params
 
 

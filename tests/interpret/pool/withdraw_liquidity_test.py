@@ -1,6 +1,8 @@
 import unittest
-from tests.interpret.pool.pool_base import PoolBaseTestCase
+
 from pytezos import MichelsonRuntimeError
+
+from tests.interpret.pool.pool_base import PoolBaseTestCase
 
 
 class WithdrawLiquidityTestCase(PoolBaseTestCase):

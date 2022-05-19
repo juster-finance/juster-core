@@ -1,5 +1,6 @@
-from tests.interpret.juster.juster_base import JusterBaseTestCase
 from pytezos import MichelsonRuntimeError
+
+from tests.interpret.juster.juster_base import JusterBaseTestCase
 
 
 class ManagerHandshakeTestCase(JusterBaseTestCase):

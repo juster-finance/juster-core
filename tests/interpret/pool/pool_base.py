@@ -1,19 +1,21 @@
-from unittest import TestCase
-import time
 import math
+import time
 from decimal import Decimal
-from os.path import dirname, join
-from pytezos import ContractInterface, pytezos, MichelsonRuntimeError
-from tests.test_data import (
-    ONE_HOUR,
-    ONE_DAY,
-    generate_pool_storage,
-    generate_line_params,
-    generate_juster_config
-)
-from models.pool import PoolModel
-from models.pool import ClaimKey
+from os.path import dirname
+from os.path import join
+from unittest import TestCase
 
+from pytezos import ContractInterface
+from pytezos import MichelsonRuntimeError
+from pytezos import pytezos
+
+from models.pool import ClaimKey
+from models.pool import PoolModel
+from tests.test_data import ONE_DAY
+from tests.test_data import ONE_HOUR
+from tests.test_data import generate_juster_config
+from tests.test_data import generate_line_params
+from tests.test_data import generate_pool_storage
 
 POOL_FN = '../../../build/contracts/pool.tz'
 RUN_TIME = int(time.time())

@@ -1,6 +1,7 @@
-from tests.test_data import generate_juster_config
-from tests.interpret.pool.pool_base import PoolBaseTestCase
 from random import randint
+
+from tests.interpret.pool.pool_base import PoolBaseTestCase
+from tests.test_data import generate_juster_config
 
 
 class NextEventLiquidityTestCase(PoolBaseTestCase):

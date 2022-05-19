@@ -12,6 +12,9 @@ lint: mypy
 mypy:
 	poetry run mypy models/ tests/
 
+isort:
+	poetry run isort tests/ models/ scripts/
+
 test:
 	poetry run pytest
 

@@ -3,18 +3,21 @@
     in different time scales
 """
 
-from pytezos.sandbox.node import SandboxedNodeTestCase
-from pytezos.sandbox.parameters import sandbox_addresses, sandbox_commitment
-from pytezos import ContractInterface, pytezos, MichelsonRuntimeError
-from pytezos.contract.result import ContractCallResult
-import unittest
-from os.path import dirname, join
 import json
-from tests.test_data import (
-    generate_juster_storage,
-    generate_pool_storage
-)
+import unittest
+from os.path import dirname
+from os.path import join
 
+from pytezos import ContractInterface
+from pytezos import MichelsonRuntimeError
+from pytezos import pytezos
+from pytezos.contract.result import ContractCallResult
+from pytezos.sandbox.node import SandboxedNodeTestCase
+from pytezos.sandbox.parameters import sandbox_addresses
+from pytezos.sandbox.parameters import sandbox_commitment
+
+from tests.test_data import generate_juster_storage
+from tests.test_data import generate_pool_storage
 
 JUSTER_FN = '../../build/contracts/juster.tz'
 POOL_FN = '../../build/contracts/pool.tz'

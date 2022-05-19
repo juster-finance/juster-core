@@ -1,5 +1,6 @@
-from tests.interpret.pool.pool_base import PoolBaseTestCase
 from random import randint
+
+from tests.interpret.pool.pool_base import PoolBaseTestCase
 
 
 class RandomProviderTestCase(PoolBaseTestCase):

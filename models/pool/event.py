@@ -1,9 +1,11 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Optional
 from decimal import Decimal
-from models.pool.types import AnyStorage
+from typing import Optional
+
 from models.pool.helpers import quantize
+from models.pool.types import AnyStorage
 
 
 @dataclass

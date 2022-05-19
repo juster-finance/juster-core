@@ -1,5 +1,6 @@
-from tests.sandbox.sandbox_base import SandboxedJusterTestCase
 from pytezos.rpc.errors import MichelsonError
+
+from tests.sandbox.sandbox_base import SandboxedJusterTestCase
 
 
 class SandboxSlippageTestCase(SandboxedJusterTestCase):

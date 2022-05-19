@@ -1,5 +1,6 @@
-from tests.interpret.pool.pool_base import PoolBaseTestCase
 from pytezos import MichelsonRuntimeError
+
+from tests.interpret.pool.pool_base import PoolBaseTestCase
 from tests.test_data import generate_line_params
 
 

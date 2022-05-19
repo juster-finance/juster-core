@@ -1,7 +1,9 @@
 import unittest
 from random import randint
-from tests.interpret.pool.pool_base import PoolBaseTestCase
+
 from pytezos import MichelsonRuntimeError
+
+from tests.interpret.pool.pool_base import PoolBaseTestCase
 
 
 class PayRewardTestCase(PoolBaseTestCase):

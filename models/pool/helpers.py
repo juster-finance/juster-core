@@ -1,5 +1,5 @@
-from decimal import Context
 from decimal import ROUND_DOWN
+from decimal import Context
 from decimal import Decimal
 
 

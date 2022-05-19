@@ -1,6 +1,7 @@
+from pytezos import MichelsonRuntimeError
+
 from tests.interpret.pool.pool_base import PoolBaseTestCase
 from tests.test_data import generate_juster_config
-from pytezos import MichelsonRuntimeError
 
 
 class FeeEventCreationTestCase(PoolBaseTestCase):
