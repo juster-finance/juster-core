@@ -14,6 +14,7 @@ from models.pool.claim_key import ClaimKey
 from models.pool.event import Event
 from models.pool.line import Line
 from models.pool.helpers import quantize
+from models.pool.types import AnyStorage
 
 
 @dataclass
