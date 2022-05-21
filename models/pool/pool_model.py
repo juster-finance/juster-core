@@ -299,8 +299,12 @@ class PoolModel:
 
     def create_event(self, line_id: int, next_event_id: int) -> PoolModel:
         assert not next_event_id in self.events
-        shares = quantize(self.total_shares / self.max_events)
+        # shares = quantize(self.total_shares / self.max_events)
         provided_amount = self.calc_next_event_liquidity()
+        shares = quantize(
+            self.total_shares * provided_amount * self.precision
+            / self.calc_total_liquidity()
+        )
 
         self.events[next_event_id] = Event(
             created_counter=self.counter,
