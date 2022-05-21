@@ -232,6 +232,10 @@ block {
     var sums := (Map.empty : map(address, nat));
     for key in list withdrawRequests block {
         const event = getEvent(key.eventId, store);
+        (* TODO: it might be better to (1) checkEventFinished(event) and then
+            (2) use event.result (default: 0 and can't be None) with @inline
+            and @inline calcEventReward(shares, event)
+        *)
         const eventResult = getEventResult(event);
         const claim = getClaim(key, store);
         const eventRewardF = eventResult * claim.shares * store.precision / event.totalShares;
@@ -365,8 +369,15 @@ block {
 
     const operations = list[newEventOperation; provideLiquidityOperation];
     const eventCosts = (liquidityPayout + newEventFee)/1mutez;
-    const eventShares = store.totalShares / store.maxEvents;
-    (* TODO: use this eventShares to calculate nextLiquidity *)
+    const eventShares = (
+        eventCosts * store.totalShares * store.precision
+        / abs(calcTotalLiquidity(store))
+    );
+    (* TODO: does this eventShares calc guarantees that
+        sum(event.shares / event.total_shares for event in active) always be < 1 ?
+        one of 100% solutions might be checking amount of activeShares and
+        limiting them bellow totalShares [but there is no activeShares yet]
+    *)
 
     const event = record [
         createdCounter = store.counter;
