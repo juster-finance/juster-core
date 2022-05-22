@@ -165,6 +165,7 @@ block {
                 claim.shares * event.provided * store.precision
                 / event.totalShares);
 
+            (* TODO: replace with model from dipdup: event.shares / event.totalShares ? *)
             providedEstimateF := providedEstimateF + (
                 claim.shares * event.shares * totalLiquidityF
                 / store.totalShares / event.totalShares
