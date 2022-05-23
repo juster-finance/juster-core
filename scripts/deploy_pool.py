@@ -12,11 +12,11 @@ CONTRACTS = {
     'pool': ContractInterface.from_file('build/contracts/pool.tz'),
 }
 
-# Hangzhou2 Juster address:
+# Juster address:
 JUSTER_ADDRESS = 'KT1Feq9iRBBhpSBdPF1Y7Sd7iJu7uLqqRf1A'
 
-# URI to metadata:
-CONTRACT_METADATA_URI = 'ipfs://QmYSk4WpbGGoDui8kWZnKKgshyAAAM6UvhmoJ1YFe39fQJ'
+with open('metadata/pool_metadata.json', 'r') as metadata_file:
+    METADATA = metadata_file.read()
 
 
 def to_hex(string):
@@ -43,7 +43,10 @@ def generate_pool_storage(manager, juster_address):
         'entries': {},
         'nextEntryId': 0,
         'isDepositPaused': False,
-        'metadata': {"": to_hex(CONTRACT_METADATA_URI)},
+        'metadata': {
+            '': to_hex('tezos-storage:contents'),
+            'contents': to_hex(METADATA)
+        },
         'precision': 1_000_000,
         'proposedManager': manager,
         'liquidityUnits': 0,
