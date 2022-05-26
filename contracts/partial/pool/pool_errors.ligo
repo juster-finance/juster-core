@@ -1,6 +1,4 @@
-(* TODO: move all errors here *)
 module PoolErrors is {
-    const wrongState : string = "Wrong state";
     const notEntryOwner : string = "Not entry position owner";
     const entryNotFound : string = "Entry is not found";
     const positionNotFound : string = "Position is not found";
@@ -25,4 +23,17 @@ module PoolErrors is {
     const zeroAmount : string = "Should provide tez";
     const eventNotFinished : string = "Event result is not received yet";
     const claimNotFound : string = "Claim is not found";
+}
+
+module PoolWrongState is {
+    const negativeEvents : string = "Wrong state: negative events";
+    const negativeTotalLiquidity : string = "Wrong state: negative total liquidity";
+    const negativeEntryLiquidity : string = "Wrong state: negative entry liquidity";
+    const negativePayout : string = "Wrong state: negative payout";
+    const negativeTotalShares : string = "Wrong state: negative total shares";
+    const negativeActiveLiquidity : string = "Wrong state: negative active liquidity";
+    const negativeActiveLiquidity : string = "Wrong state: negative active liquidity";
+    const negativeWithdrawableLiquidity : string = "Wrong state: negative withdrawable liquidity";
+    const negativeDuration : string = "Wrong state: negative duration";
+    const lockedExceedTotal : string = "Wrong state: locked exceed total";
 }

@@ -62,7 +62,7 @@ block {
     (* store.entryLiquidity is the sum of all entries, so the following
         condition should not be true but it is better to check *)
     if store.entryLiquidityF < providedF
-    then failwith(PoolErrors.wrongState, 1)
+    then failwith(PoolWrongState.negativeEntryLiquidity)
     else skip;
 
     store.entryLiquidityF := abs(store.entryLiquidityF - providedF);
@@ -71,7 +71,7 @@ block {
     (* totalLiquidity includes provided liquidity so the following condition
         should not be true but it is better to check *)
     if totalLiquidityF < int(providedF)
-    then failwith(PoolErrors.wrongState, 2)
+    then failwith(PoolWrongState.negativeTotalLiquidity)
     else skip;
 
     const liquidityBeforeDepositF = abs(totalLiquidityF - providedF);
@@ -108,7 +108,7 @@ block {
 
     const providedF = entry.amount * store.precision;
     if store.entryLiquidityF < providedF
-    then failwith(PoolErrors.wrongState, 3)
+    then failwith(PoolWrongState.negativeEntryLiquidity)
     else skip;
 
     store.entryLiquidityF := abs(store.entryLiquidityF - providedF);
@@ -185,19 +185,19 @@ block {
     (* Having negative payoutValue should not be possible,
         but it is better to check: *)
     if payoutValue < 0
-    then failwith(PoolErrors.wrongState, 4)
+    then failwith(PoolWrongState.negativePayout)
     else skip;
 
     (* Another impossible condition that is better to check: *)
     if store.totalShares < claim.shares
-    then failwith(PoolErrors.wrongState, 5)
+    then failwith(PoolWrongState.negativeTotalShares)
     else skip;
 
     (* TODO: this block with failwith can be replaced with absOrFail *)
     store.totalShares := abs(store.totalShares - claim.shares);
 
     if store.activeLiquidityF < providedInitialF
-    then failwith(PoolErrors.wrongState, 6)
+    then failwith(PoolWrongState.negativeActiveLiquidity)
     else skip;
 
     (* Is it possible to exclide providedEsitmatedF?
@@ -260,7 +260,7 @@ block {
             all locked claims so it should not be less than withdrawSum, so
             next case should not be possible: *)
         if withdrawSumF > store.withdrawableLiquidityF
-        then failwith(PoolErrors.wrongState, 7)
+        then failwith(PoolWrongState.negativeWithdrawableLiquidity)
         else skip;
 
         store.withdrawableLiquidityF := abs(store.withdrawableLiquidityF - withdrawSumF);
@@ -411,7 +411,7 @@ block {
         then store.maxEvents + line.maxEvents
         else absOrFail(
             store.maxEvents - line.maxEvents,
-            PoolErrors.wrongState
+            PoolWrongState.negativeEvents
         );
 
     store.lines[lineId] := line with record [isPaused = not line.isPaused];

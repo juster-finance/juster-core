@@ -158,7 +158,7 @@ block {
         - Tezos.now;
 
     if duration <= 0
-    then failwith(PoolErrors.wrongState)
+    then failwith(PoolWrongState.negativeDuration)
     else skip;
 } with abs(duration);
 
@@ -177,7 +177,7 @@ function increaseLocked(const shares : nat; const event : eventType) is
 block {
     const newLockedShares = event.lockedShares + shares;
     if newLockedShares > event.totalShares
-    then failwith(PoolErrors.wrongState)
+    then failwith(PoolWrongState.lockedExceedTotal)
     else skip;
 } with event with record [
     lockedShares = newLockedShares;
