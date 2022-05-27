@@ -81,3 +81,23 @@ class BalanceIssueTestCase(PoolBaseTestCase):
         self.create_event()
 
         self.claim_liquidity(shares=1_000, position_id=pos_id)
+
+
+    def test_payout_should_not_exceed_balance_when_there_was_lmt_shares_event(
+        self,
+    ):
+
+        self.add_line(max_events=2)
+        entry_id = self.deposit_liquidity(amount=1000)
+        pos_id = self.approve_liquidity(entry_id=entry_id)
+
+        first_event = self.create_event()
+        self.wait(3600)
+        second_event = self.create_event()
+        self.wait(3600)
+        self.pay_reward(event_id=first_event, amount=100)
+        third_event = self.create_event()
+        self.assertEqual(self.balances['contract'], 0)
+
+        payout = self.claim_liquidity(shares=100, position_id=pos_id)
+        self.assertEqual(payout, 0)
