@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 
-@dataclass
+@dataclass(unsafe_hash=True)
 class ClaimKey:
     event_id: int
     position_id: int
@@ -15,7 +15,3 @@ class ClaimKey:
     @classmethod
     def from_dict(cls, dct: dict[str, int]) -> ClaimKey:
         return cls(event_id=dct['eventId'], position_id=dct['positionId'])
-
-    def __hash__(self):
-        # TODO: this is probably not very good way of hashing, check this out
-        return hash(f'{self.event_id}:{self.position_id}')
