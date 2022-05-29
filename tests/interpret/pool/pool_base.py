@@ -118,7 +118,8 @@ class PoolBaseTestCase(TestCase):
             storage=self.storage, now=self.current_time, sender=sender
         )
 
-        init_model = self.to_model().add_line(
+        init_model = self.to_model()
+        line_id = init_model.add_line(
             measure_period=measure_period,
             bets_period=bets_period,
             last_bets_close_time=last_bets_close_time,
@@ -130,12 +131,11 @@ class PoolBaseTestCase(TestCase):
         result_model = self.to_model(storage=result.storage)
         self.assertEqual(init_model, result_model)
 
-        added_line = result.storage['lines'][self.storage['nextLineId']]
+        added_line = result.storage['lines'][line_id]
         self.assertEqual(added_line['currencyPair'], currency_pair)
         self.assertEqual(added_line['juster'], juster_address)
         self.assertEqual(added_line['advanceTime'], advance_time)
 
-        line_id = self.storage['nextLineId']
         self.storage = result.storage
         return line_id
 
@@ -151,7 +151,8 @@ class PoolBaseTestCase(TestCase):
             balance=new_balance,
         )
 
-        init_model = self.to_model().deposit_liquidity(
+        init_model = self.to_model()
+        entry_id = init_model.deposit_liquidity(
             user=sender, amount=Decimal(amount)
         )
 
@@ -166,7 +167,6 @@ class PoolBaseTestCase(TestCase):
             result_model.calc_entry_liquidity(),
         )
 
-        entry_id = self.storage['nextEntryId']
         self.storage = result.storage
         self.update_balance(self.address, amount)
         self.update_balance(sender, -amount)
@@ -186,13 +186,13 @@ class PoolBaseTestCase(TestCase):
         self.assertTrue(result.storage['entries'][entry_id] is None)
         result.storage['entries'].pop(entry_id)
 
-        init_model = self.to_model().approve_liquidity(entry_id)
+        init_model = self.to_model()
+        position_id = init_model.approve_liquidity(entry_id)
         result_model = self.to_model(storage=result.storage)
         self.assertEqual(init_model, result_model)
 
-        added_position_id = self.storage['nextPositionId']
         self.storage = result.storage
-        return added_position_id
+        return position_id
 
     def cancel_liquidity(self, sender=None, entry_id=0, amount=0):
         sender = sender or self.manager
@@ -207,7 +207,8 @@ class PoolBaseTestCase(TestCase):
         self.assertTrue(result.storage['entries'][entry_id] is None)
         result.storage['entries'].pop(entry_id)
 
-        init_model = self.to_model().cancel_liquidity(entry_id)
+        init_model = self.to_model()
+        init_model.cancel_liquidity(entry_id)
         result_model = self.to_model(storage=result.storage)
         self.assertEqual(init_model, result_model)
 
@@ -259,29 +260,26 @@ class PoolBaseTestCase(TestCase):
             balance=self.get_balance(self.address),
         )
 
-        model = self.to_model()
-        expected_amount = model.calc_claim_payout(position_id, shares)
-        init_model = model.claim_liquidity(position_id, Decimal(shares))
-        new_balance = self.get_balance(self.address) - expected_amount
+        init_model = self.to_model()
+        payout = init_model.claim_liquidity(position_id, Decimal(shares))
+        new_balance = self.get_balance(self.address) - payout
         result_model = self.to_model(
             storage=result.storage, balance=new_balance
         )
         self.assertEqual(init_model, result_model)
         self._check_withdrawal_creation(result, position_id, shares)
 
-        if expected_amount:
+        if payout > Decimal(0):
             self.assertEqual(len(result.operations), 1)
-            self.check_operation_is(
-                result.operations[0], amount=expected_amount
-            )
+            self.check_operation_is(result.operations[0], amount=payout)
         else:
             self.assertEqual(len(result.operations), 0)
 
         self.storage = result.storage
 
-        self.update_balance(self.address, -expected_amount)
-        self.update_balance(sender, expected_amount)
-        return expected_amount
+        self.update_balance(self.address, -payout)
+        self.update_balance(sender, payout)
+        return payout
 
     def withdraw_liquidity(self, sender=None, positions=None, amount=0):
         sender = sender or self.manager
@@ -297,8 +295,8 @@ class PoolBaseTestCase(TestCase):
         )
 
         claim_keys = [ClaimKey.from_dict(position) for position in positions]
-        payouts = self.to_model().calc_withdraw_payouts(claim_keys)
-        init_model = self.to_model().withdraw_liquidity(claim_keys)
+        init_model = self.to_model()
+        payouts = init_model.withdraw_liquidity(claim_keys)
         new_balance = self.get_balance(self.address) - sum(payouts.values())
 
         for position in positions:
@@ -337,7 +335,8 @@ class PoolBaseTestCase(TestCase):
             balance=self.get_balance(self.address),
         )
 
-        init_model = self.to_model().pay_reward(event_id, Decimal(amount))
+        init_model = self.to_model()
+        init_model.pay_reward(event_id, Decimal(amount))
         new_balance = self.get_balance(self.address) + amount
         result_model = self.to_model(
             storage=result.storage, balance=Decimal(new_balance)
@@ -371,7 +370,8 @@ class PoolBaseTestCase(TestCase):
             balance=self.get_balance(self.address),
         )
 
-        init_model = self.to_model().create_event(line_id, next_event_id)
+        init_model = self.to_model()
+        init_model.create_event(line_id, next_event_id)
         next_event_liquidity = self.to_model().calc_next_event_liquidity()
         new_balance = self.get_balance(self.address) - next_event_liquidity
         result_model = self.to_model(
@@ -411,7 +411,8 @@ class PoolBaseTestCase(TestCase):
             balance=self.get_balance(self.address),
         )
 
-        init_model = self.to_model().trigger_pause_line(line_id)
+        init_model = self.to_model()
+        init_model.trigger_pause_line(line_id)
         result_model = self.to_model(storage=result.storage)
         self.assertEqual(init_model, result_model)
 

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from dataclasses import field
 from decimal import Decimal
 from typing import Any
+from typing import Iterator
 from typing import Optional
 from typing import Type
 
@@ -89,12 +90,12 @@ class PoolModel:
             next_line_id=storage['nextLineId'],
         )
 
-    def trigger_pause_line(self, line_id: int) -> PoolModel:
+    def trigger_pause_line(self, line_id: int) -> bool:
         line = self.lines[line_id]
         diff = line.max_events
         self.max_events += diff if line.is_paused else -diff
         line.is_paused = not line.is_paused
-        return self
+        return line.is_paused
 
     def add_line(
         self,
@@ -104,8 +105,9 @@ class PoolModel:
         max_events: int,
         is_paused: bool,
         min_betting_period: int,
-    ) -> PoolModel:
-        self.lines[self.next_line_id] = Line(
+    ) -> int:
+        line_id = self.next_line_id
+        self.lines[line_id] = Line(
             measure_period=measure_period,
             bets_period=bets_period,
             last_bets_close_time=last_bets_close_time,
@@ -115,7 +117,7 @@ class PoolModel:
         )
         self.next_line_id += 1
         self.max_events += 0 if is_paused else max_events
-        return self
+        return line_id
 
     def calc_entry_liquidity(self):
         return quantize(
@@ -169,16 +171,17 @@ class PoolModel:
             for address, payout_f in payouts_f.items()
         }
 
-    def deposit_liquidity(self, user: str, amount: Decimal) -> PoolModel:
+    def deposit_liquidity(self, user: str, amount: Decimal) -> int:
         accept_after = self.now + self.entry_lock_period
         entry = Entry(user, amount, accept_after)
-        self.entries[self.next_entry_id] = entry
+        entry_id = self.next_entry_id
+        self.entries[entry_id] = entry
         self.next_entry_id += 1
         self.balance += amount
 
-        return self
+        return entry_id
 
-    def approve_liquidity(self, entry_id: int) -> PoolModel:
+    def approve_liquidity(self, entry_id: int) -> int:
         entry = self.entries[entry_id]
         position = Position(
             provider=entry.provider,
@@ -187,16 +190,16 @@ class PoolModel:
         )
         self.entries.pop(entry_id)
 
-        self.positions[self.next_position_id] = position
+        position_id = self.next_position_id
+        self.positions[position_id] = position
         self.next_position_id += 1
         self.total_shares += position.shares
         self.counter += 1
 
-        return self
+        return position_id
 
-    def cancel_liquidity(self, entry_id: int) -> PoolModel:
+    def cancel_liquidity(self, entry_id: int) -> None:
         self.entries.pop(entry_id)
-        return self
 
     def add_claim_shares(
         self, event_id: int, position_id: int, shares: Decimal
@@ -215,7 +218,7 @@ class PoolModel:
 
         self.active_liquidity -= event.get_provided_for_shares(shares)
 
-    def iter_impacted_event_ids(self, position_id: int):
+    def iter_impacted_event_ids(self, position_id: int) -> Iterator[int]:
         position = self.positions[position_id]
         for event_id in self.active_events:
             event = self.events[event_id]
@@ -246,9 +249,10 @@ class PoolModel:
         expected_amount = quantize(expected_amount_f / self.precision)
         return expected_amount
 
-    def claim_liquidity(self, position_id: int, shares: Decimal) -> PoolModel:
+    def claim_liquidity(self, position_id: int, shares: Decimal) -> Decimal:
         if shares == 0:
-            return self
+            return Decimal(0)
+
         payout = self.calc_claim_payout(position_id, shares)
         position = self.positions[position_id]
         position.remove_shares(shares)
@@ -260,17 +264,19 @@ class PoolModel:
         self.balance -= payout
         assert self.balance >= Decimal(0)
 
-        return self
+        return payout
 
-    def withdraw_liquidity(self, claim_keys: list[ClaimKey]) -> PoolModel:
+    def withdraw_liquidity(
+        self, claim_keys: list[ClaimKey]
+    ) -> dict[str, Decimal]:
         payouts_f = self.calc_withdraw_payouts_f(claim_keys)
         payouts = self.calc_withdraw_payouts(claim_keys)
         [self.claims.pop(key) for key in claim_keys]
         self.withdrawable_liquidity -= sum(payouts_f.values())
         self.balance -= sum(payouts.values())
-        return self
+        return payouts
 
-    def pay_reward(self, event_id: int, amount: Decimal) -> PoolModel:
+    def pay_reward(self, event_id: int, amount: Decimal) -> None:
         event = self.events[event_id]
         event.result = amount
 
@@ -283,7 +289,6 @@ class PoolModel:
 
         self.active_events.remove(event_id)
         self.balance += amount
-        return self
 
     def calc_next_event_liquidity(self) -> Decimal:
         max_liquidity = quantize(self.calc_total_liquidity() / self.max_events)
@@ -297,12 +302,13 @@ class PoolModel:
         assert liquidity_units >= 0
         return liquidity_units
 
-    def create_event(self, line_id: int, next_event_id: int) -> PoolModel:
+    def create_event(self, line_id: int, next_event_id: int) -> int:
         assert not next_event_id in self.events
-        # shares = quantize(self.total_shares / self.max_events)
         provided_amount = self.calc_next_event_liquidity()
         shares = quantize(
-            self.total_shares * provided_amount * self.precision
+            self.total_shares
+            * provided_amount
+            * self.precision
             / self.calc_total_liquidity()
         )
 
@@ -327,11 +333,10 @@ class PoolModel:
         self.active_events.append(next_event_id)
         assert self.balance >= Decimal(0)
 
-        return self
+        return next_event_id
 
-    def default(self, amount: Decimal) -> PoolModel:
+    def default(self, amount: Decimal) -> None:
         self.balance += amount
-        return self
 
     def diff_with(self, other: PoolModel) -> list[str]:
         """Returns attributes that different with other"""

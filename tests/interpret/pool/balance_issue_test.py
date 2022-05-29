@@ -82,7 +82,6 @@ class BalanceIssueTestCase(PoolBaseTestCase):
 
         self.claim_liquidity(shares=1_000, position_id=pos_id)
 
-
     def test_payout_should_not_exceed_balance_when_there_was_lmt_shares_event(
         self,
     ):
