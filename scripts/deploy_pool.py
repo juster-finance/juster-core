@@ -45,7 +45,7 @@ def generate_pool_storage(manager, juster_address):
         'isDepositPaused': False,
         'metadata': {
             '': to_hex('tezos-storage:contents'),
-            'contents': to_hex(METADATA)
+            'contents': to_hex(METADATA),
         },
         'precision': 1_000_000,
         'proposedManager': manager,
