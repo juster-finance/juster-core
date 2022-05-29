@@ -31,11 +31,11 @@ class Event:
             precision=precision,
         )
 
-    def get_result_for_shares(self, shares: Decimal) -> Decimal:
+    def get_result_for_shares_f(self, shares: Decimal) -> Decimal:
         result = self.result if self.result is not None else Decimal(0)
         return quantize(result * shares * self.precision / self.total_shares)
 
-    def get_provided_for_shares(self, shares: Decimal) -> Decimal:
+    def get_provided_for_shares_f(self, shares: Decimal) -> Decimal:
         return quantize(
             self.provided * shares * self.precision / self.total_shares
         )

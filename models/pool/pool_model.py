@@ -38,8 +38,8 @@ class PoolModel:
     next_position_id: int = 0
     entry_lock_period: int = 0
     now: int = 0
-    active_liquidity: Decimal = Decimal(0)
-    withdrawable_liquidity: Decimal = Decimal(0)
+    active_liquidity_f: Decimal = Decimal(0)
+    withdrawable_liquidity_f: Decimal = Decimal(0)
     lines: dict[int, Line] = field(default_factory=dict)
     next_line_id: int = 0
 
@@ -84,8 +84,10 @@ class PoolModel:
             next_position_id=storage['nextPositionId'],
             entry_lock_period=storage['entryLockPeriod'],
             now=now,
-            active_liquidity=Decimal(storage['activeLiquidityF']),
-            withdrawable_liquidity=Decimal(storage['withdrawableLiquidityF']),
+            active_liquidity_f=Decimal(storage['activeLiquidityF']),
+            withdrawable_liquidity_f=Decimal(
+                storage['withdrawableLiquidityF']
+            ),
             lines=convert(Line, storage['lines']),
             next_line_id=storage['nextLineId'],
         )
@@ -119,7 +121,7 @@ class PoolModel:
         self.max_events += 0 if is_paused else max_events
         return line_id
 
-    def calc_entry_liquidity(self):
+    def calc_entry_liquidity_f(self):
         return quantize(
             sum(
                 entry.amount * self.precision
@@ -127,15 +129,15 @@ class PoolModel:
             )
         )
 
-    def calc_free_liquidity(self):
+    def calc_free_liquidity_f(self):
         return (
             self.balance * self.precision
-            - self.withdrawable_liquidity
-            - self.calc_entry_liquidity()
+            - self.withdrawable_liquidity_f
+            - self.calc_entry_liquidity_f()
         )
 
-    def calc_total_liquidity(self):
-        return self.calc_free_liquidity() + self.active_liquidity
+    def calc_total_liquidity_f(self):
+        return self.calc_free_liquidity_f() + self.active_liquidity_f
 
     def calc_deposit_shares(self, amount: Decimal):
         is_first_deposit = self.total_shares == 0
@@ -146,21 +148,21 @@ class PoolModel:
             amount
             * self.precision
             * self.total_shares
-            / self.calc_total_liquidity()
+            / self.calc_total_liquidity_f()
         )
 
     def calc_withdraw_payouts_f(
         self, claim_keys: list[ClaimKey]
     ) -> dict[str, Decimal]:
-        payouts: dict[str, Decimal] = {}
+        payouts_f: dict[str, Decimal] = {}
         for claim_key in claim_keys:
             claim = self.claims[claim_key]
             event = self.events[claim_key.event_id]
-            payout = payouts.get(claim.provider, Decimal(0))
-            payout += event.get_result_for_shares(claim.shares)
-            payouts[claim.provider] = payout
+            payout_f = payouts_f.get(claim.provider, Decimal(0))
+            payout_f += event.get_result_for_shares_f(claim.shares)
+            payouts_f[claim.provider] = payout_f
 
-        return payouts
+        return payouts_f
 
     def calc_withdraw_payouts(
         self, claim_keys: list[ClaimKey]
@@ -216,7 +218,7 @@ class PoolModel:
         assert claim.shares <= event.total_shares
         self.events[event_id] = event
 
-        self.active_liquidity -= event.get_provided_for_shares(shares)
+        self.active_liquidity_f -= event.get_provided_for_shares_f(shares)
 
     def iter_impacted_event_ids(self, position_id: int) -> Iterator[int]:
         position = self.positions[position_id]
@@ -227,25 +229,25 @@ class PoolModel:
         return
 
     def calc_claim_payout(self, position_id: int, shares: Decimal) -> Decimal:
-        total_liquidity = self.calc_total_liquidity()
-        locked_liquidity = Decimal(0)
+        total_liquidity_f = self.calc_total_liquidity_f()
+        locked_liquidity_f = Decimal(0)
         for event_id in self.iter_impacted_event_ids(position_id):
             event = self.events[event_id]
-            locked_liquidity += quantize(
-                total_liquidity
+            locked_liquidity_f += quantize(
+                total_liquidity_f
                 * shares
                 * event.shares
                 / event.total_shares
                 / self.total_shares
             )
 
-        provider_liquidity = quantize(
-            total_liquidity * shares / self.total_shares
+        provider_liquidity_f = quantize(
+            total_liquidity_f * shares / self.total_shares
         )
 
         # TODO: should all high precision variables marked with f?
         # TODO: maybe replace this high precision Decimals with Fractions?
-        expected_amount_f = provider_liquidity - locked_liquidity
+        expected_amount_f = provider_liquidity_f - locked_liquidity_f
         expected_amount = quantize(expected_amount_f / self.precision)
         return expected_amount
 
@@ -272,7 +274,7 @@ class PoolModel:
         payouts_f = self.calc_withdraw_payouts_f(claim_keys)
         payouts = self.calc_withdraw_payouts(claim_keys)
         [self.claims.pop(key) for key in claim_keys]
-        self.withdrawable_liquidity -= sum(payouts_f.values())
+        self.withdrawable_liquidity_f -= sum(payouts_f.values())
         self.balance -= sum(payouts.values())
         return payouts
 
@@ -280,19 +282,21 @@ class PoolModel:
         event = self.events[event_id]
         event.result = amount
 
-        locked_amount = event.get_result_for_shares(event.locked_shares)
-        self.withdrawable_liquidity += locked_amount
+        locked_amount_f = event.get_result_for_shares_f(event.locked_shares)
+        self.withdrawable_liquidity_f += locked_amount_f
 
         left_shares = event.total_shares - event.locked_shares
-        self.active_liquidity -= event.get_provided_for_shares(left_shares)
-        assert self.active_liquidity >= Decimal(0)
+        self.active_liquidity_f -= event.get_provided_for_shares_f(left_shares)
+        assert self.active_liquidity_f >= Decimal(0)
 
         self.active_events.remove(event_id)
         self.balance += amount
 
     def calc_next_event_liquidity(self) -> Decimal:
-        max_liquidity = quantize(self.calc_total_liquidity() / self.max_events)
-        liquidity_f = min(max_liquidity, self.calc_free_liquidity())
+        max_liquidity_f = quantize(
+            self.calc_total_liquidity_f() / self.max_events
+        )
+        liquidity_f = min(max_liquidity_f, self.calc_free_liquidity_f())
         return quantize(liquidity_f / self.precision)
 
     def calc_liquidity_units(self, duration: int, amount: Decimal) -> Decimal:
@@ -309,7 +313,7 @@ class PoolModel:
             self.total_shares
             * provided_amount
             * self.precision
-            / self.calc_total_liquidity()
+            / self.calc_total_liquidity_f()
         )
 
         self.events[next_event_id] = Event(
@@ -323,7 +327,7 @@ class PoolModel:
         )
 
         self.counter += 1
-        self.active_liquidity += provided_amount * self.precision
+        self.active_liquidity_f += provided_amount * self.precision
         line = self.lines[line_id]
         line.update_last_bets_close_time(self.now)
         duration = line.calc_duration(self.now)

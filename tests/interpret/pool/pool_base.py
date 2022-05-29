@@ -164,7 +164,7 @@ class PoolBaseTestCase(TestCase):
 
         self.assertEqual(
             result.storage['entryLiquidityF'],
-            result_model.calc_entry_liquidity(),
+            result_model.calc_entry_liquidity_f(),
         )
 
         self.storage = result.storage
@@ -224,7 +224,7 @@ class PoolBaseTestCase(TestCase):
 
         self.assertEqual(
             result.storage['entryLiquidityF'],
-            result_model.calc_entry_liquidity(),
+            result_model.calc_entry_liquidity_f(),
         )
 
     def _check_withdrawal_creation(self, result, position_id, shares):
