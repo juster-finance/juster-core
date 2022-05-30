@@ -243,8 +243,10 @@ class PoolModel:
 
         # TODO: maybe replace this high precision Decimals with Fractions?
         free_fraction_f = self.precision - active_fraction_f
+        free_fraction_f = 0 if free_fraction_f < 0 else free_fraction_f
         expected_amount_f = provider_liquidity_f * free_fraction_f / self.precision
         expected_amount = quantize(expected_amount_f / self.precision)
+        assert expected_amount >= Decimal(0)
         return expected_amount
 
     def claim_liquidity(self, position_id: int, shares: Decimal) -> Decimal:
@@ -259,6 +261,8 @@ class PoolModel:
             self.add_claim_shares(event_id, position_id, shares)
 
         self.total_shares -= shares
+        assert self.total_shares >= Decimal(0)
+
         self.balance -= payout
         assert self.balance >= Decimal(0)
 
