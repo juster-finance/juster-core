@@ -80,7 +80,8 @@ class BalanceIssueTestCase(PoolBaseTestCase):
         self.pay_reward(event_id=first_event, amount=100)
         self.create_event()
 
-        self.claim_liquidity(shares=1_000, position_id=pos_id)
+        payout = self.claim_liquidity(shares=1_000, position_id=pos_id)
+        self.assertEqual(payout, 0)
 
     def test_payout_should_not_exceed_balance_when_there_was_lmt_shares_event(
         self,
