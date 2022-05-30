@@ -13,6 +13,7 @@ from models.pool.claim_key import ClaimKey
 from models.pool.entry import Entry
 from models.pool.event import Event
 from models.pool.helpers import quantize
+from models.pool.helpers import quantize_up
 from models.pool.line import Line
 from models.pool.position import Position
 from models.pool.types import AnyStorage
@@ -230,24 +231,19 @@ class PoolModel:
 
     def calc_claim_payout(self, position_id: int, shares: Decimal) -> Decimal:
         total_liquidity_f = self.calc_total_liquidity_f()
-        locked_liquidity_f = Decimal(0)
+        active_fraction_f = Decimal(0)
+
         for event_id in self.iter_impacted_event_ids(position_id):
             event = self.events[event_id]
-            locked_liquidity_f += quantize(
-                total_liquidity_f
-                * shares
-                * event.shares
-                / event.total_shares
-                / self.total_shares
-            )
+            active_fraction_f += event.active_fraction_f
 
         provider_liquidity_f = quantize(
             total_liquidity_f * shares / self.total_shares
         )
 
-        # TODO: should all high precision variables marked with f?
         # TODO: maybe replace this high precision Decimals with Fractions?
-        expected_amount_f = provider_liquidity_f - locked_liquidity_f
+        free_fraction_f = self.precision - active_fraction_f
+        expected_amount_f = provider_liquidity_f * free_fraction_f / self.precision
         expected_amount = quantize(expected_amount_f / self.precision)
         return expected_amount
 
@@ -309,16 +305,11 @@ class PoolModel:
     def create_event(self, line_id: int, next_event_id: int) -> int:
         assert not next_event_id in self.events
         provided_amount = self.calc_next_event_liquidity()
-        shares = quantize(
-            self.total_shares
-            * provided_amount
-            * self.precision
-            / self.calc_total_liquidity_f()
-        )
+        active_fraction_f = quantize_up(self.precision / self.max_events)
 
         self.events[next_event_id] = Event(
             created_counter=self.counter,
-            shares=shares,
+            active_fraction_f=active_fraction_f,
             total_shares=self.total_shares,
             locked_shares=Decimal(0),
             result=None,
