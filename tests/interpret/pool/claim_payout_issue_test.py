@@ -26,7 +26,3 @@ class ClaimPayoutIssueTest(PoolBaseTestCase):
 
         # provider succesfully claims all liquidity:
         self.claim_liquidity(shares=1_000_000, position_id=position_id)
-
-        second_event_shares = self.storage['events'][1]['shares']
-        third_event_shares = self.storage['events'][2]['shares']
-        self.assertTrue(third_event_shares < second_event_shares)
