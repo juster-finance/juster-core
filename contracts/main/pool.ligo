@@ -66,7 +66,7 @@ block {
     else skip;
 
     store.entryLiquidityF := abs(store.entryLiquidityF - providedF);
-    const totalLiquidityF = calcTotalLiquidity(store);
+    const totalLiquidityF = calcTotalLiquidityF(store);
 
     (* totalLiquidity includes provided liquidity so the following condition
         should not be true but it is better to check *)
@@ -135,7 +135,7 @@ block {
     else skip;
     const leftShares = abs(position.shares - claim.shares);
 
-    const totalLiquidityF = calcTotalLiquidity(store);
+    const totalLiquidityF = calcTotalLiquidityF(store);
 
     var providedInitialF := 0n;
     var activeFractionF := 0n;
@@ -292,20 +292,6 @@ block {
 
     (* Part of activeLiquidity was already excluded if there was some claims *)
     const providedF = event.provided * store.precision;
-    (* TODO: here claimde liquidity estimated by event creation price, but it
-        feels like it might be estimated by current share price with:
-        event.lockedShares * currentSharePrice()
-        wheren currentSharePrice() is calcTotalLiquidity() / store.totalShares
-
-        need to understand: is it required to estimate this shares by event creation price
-        which is not changed during time (valuable property)
-        or is it possible to use current share price?
-            currentSharePrice is changed over time and it might lead to
-            underestimated / overestimated activeLiquidity volume
-
-        also there is might be an alternative solution with activeShares
-            instead of activeLiquidity and this might simplify all the case
-    *)
     const claimedLiquidityF = event.lockedShares * providedF / event.totalShares;
     const remainedLiquidityF = providedF - claimedLiquidityF;
 

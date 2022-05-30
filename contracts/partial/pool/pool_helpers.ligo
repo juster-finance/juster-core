@@ -1,24 +1,16 @@
-function calcFreeLiquidity(const store : storage) : int is
+function calcFreeLiquidityF(const store : storage) : int is
     Tezos.balance/1mutez * store.precision
     - store.withdrawableLiquidityF
     - store.entryLiquidityF
 
-function calcTotalLiquidity(const store : storage) : int is
-    calcFreeLiquidity(store) + store.activeLiquidityF;
+function calcTotalLiquidityF(const store : storage) : int is
+    calcFreeLiquidityF(store) + store.activeLiquidityF;
 
 function calcLiquidityPayout(const store : storage) is
     block {
 
-        const maxLiquidityF = calcTotalLiquidity(store) / store.maxEvents;
-        (* TODO: maybe if use activeShares instead of activeLiquidity, it would
-            be possible to implement next kind of logic:
-                freeShares = storeTotalShares - store.activeShares
-                freeLiquidity / freeShares * store.totalShares / store.maxEvents ?
-
-            BUT: without activeLiquidity it would be hard to estimate totalLiquidity
-            it might be needed somewhere else
-        *)
-        const freeLiquidityF = calcFreeLiquidity(store);
+        const maxLiquidityF = calcTotalLiquidityF(store) / store.maxEvents;
+        const freeLiquidityF = calcFreeLiquidityF(store);
 
         const liquidityAmountF = if maxLiquidityF > freeLiquidityF
             then freeLiquidityF
