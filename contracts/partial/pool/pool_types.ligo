@@ -29,7 +29,7 @@ type positionType is record [
 
 type eventType is record [
     createdCounter : nat;
-    shares : nat;
+    activeFractionF : nat;
     totalShares : nat;
     lockedShares : nat;
     (* TODO: lockedShares measured in totalShares, this simplifies calculations

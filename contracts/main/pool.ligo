@@ -138,7 +138,7 @@ block {
     const totalLiquidityF = calcTotalLiquidity(store);
 
     var providedInitialF := 0n;
-    var providedEstimateF := 0;
+    var activeFractionF := 0n;
 
     for eventId -> _lineId in map store.activeEvents block {
         const event = getEvent(eventId, store);
@@ -166,11 +166,7 @@ block {
                 / event.totalShares);
 
             (* TODO: replace with model from dipdup: event.shares / event.totalShares ? *)
-            providedEstimateF := providedEstimateF + (
-                claim.shares * event.shares * totalLiquidityF
-                / store.totalShares / event.totalShares
-            );
-
+            activeFractionF := activeFractionF + event.activeFractionF;
             store.events[eventId] := increaseLocked(claim.shares, event);
         }
         else skip;
@@ -180,7 +176,10 @@ block {
     store.positions[claim.positionId] := updatedPosition;
 
     const userLiquidityF = claim.shares * totalLiquidityF / store.totalShares;
-    const payoutValue = (userLiquidityF - providedEstimateF) / store.precision;
+    const freeFractionF = store.precision - activeFractionF;
+    const payoutValue = if freeFractionF > 0
+        then userLiquidityF * freeFractionF / store.precision / store.precision
+        else 0;
 
     (* Having negative payoutValue should not be possible,
         but it is better to check: *)
@@ -370,15 +369,7 @@ block {
 
     const operations = list[newEventOperation; provideLiquidityOperation];
     const eventCosts = (liquidityPayout + newEventFee)/1mutez;
-    const eventShares = (
-        eventCosts * store.totalShares * store.precision
-        / abs(calcTotalLiquidity(store))
-    );
-    (* TODO: does this eventShares calc guarantees that
-        sum(event.shares / event.total_shares for event in active) always be < 1 ?
-        one of 100% solutions might be checking amount of activeShares and
-        limiting them bellow totalShares [but there is no activeShares yet]
-    *)
+    const activeFractionF = ceilDiv(store.precision, store.maxEvents);
 
     const event = record [
         createdCounter = store.counter;
@@ -386,7 +377,7 @@ block {
         lockedShares = 0n;
         result = (None : option(nat));
         provided = eventCosts;
-        shares = eventShares;
+        activeFractionF = activeFractionF;
     ];
 
     store.events[nextEventId] := event;

@@ -39,3 +39,9 @@ function prepareOperation(
     const payout : tez
 ) : operation is Tezos.transaction(unit, payout, getReceiver(addressTo));
 
+
+function ceilDiv(const numerator : nat; const denominator : nat) is
+    case ediv(numerator, denominator) of [
+    | Some(result, remainder) -> if remainder > 0n then result + 1n else result
+    | None -> failwith("DIV / 0")
+    ];
