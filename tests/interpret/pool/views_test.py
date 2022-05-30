@@ -145,7 +145,7 @@ class PoolViewsTestCase(PoolBaseTestCase):
             'totalShares': 1000,
             'lockedShares': 0,
             'result': None,
-            'shares': 1000,
+            'activeFractionF': 1000000,
             'provided': 1000,
         }
 
