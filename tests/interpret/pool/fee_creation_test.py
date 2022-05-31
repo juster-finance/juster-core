@@ -10,6 +10,8 @@ class FeeEventCreationTestCase(PoolBaseTestCase):
         custom_config = generate_juster_config(
             measure_start_fee=200_000, expiration_fee=300_000
         )
+        # changing precision to the one which divided into three:
+        self.storage['precision'] = 420
 
         # creating default event:
         self.add_line(max_events=3)
