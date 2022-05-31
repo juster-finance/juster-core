@@ -197,7 +197,6 @@ class PoolModel:
         self.positions[position_id] = position
         self.next_position_id += 1
         self.total_shares += position.shares
-        self.counter += 1
 
         return position_id
 
@@ -225,7 +224,7 @@ class PoolModel:
         position = self.positions[position_id]
         for event_id in self.active_events:
             event = self.events[event_id]
-            if event.created_counter > position.added_counter:
+            if event.created_counter >= position.added_counter:
                 yield event_id
         return
 
