@@ -90,7 +90,6 @@ block {
     store.positions[store.nextPositionId] := newPosition;
     store.nextPositionId := store.nextPositionId + 1n;
     store.totalShares := store.totalShares + shares;
-    store.counter := store.counter + 1n;
 
 } with ((nil: list(operation)), store)
 
@@ -142,7 +141,7 @@ block {
 
     for eventId -> _lineId in map store.activeEvents block {
         const event = getEvent(eventId, store);
-        const isImpactedEvent = position.addedCounter < event.createdCounter;
+        const isImpactedEvent = position.addedCounter <= event.createdCounter;
         const isHaveShares = claim.shares > 0n;
 
         if isImpactedEvent and isHaveShares
