@@ -141,7 +141,7 @@ class PoolViewsTestCase(PoolBaseTestCase):
 
         actual_event = self.get_event(event_id=777)
         expected_event = {
-            'createdCounter': 1,
+            'createdCounter': 0,
             'totalShares': 1000,
             'lockedShares': 0,
             'result': None,
@@ -210,7 +210,7 @@ class PoolViewsTestCase(PoolBaseTestCase):
             'activeLiquidityF': 50 * precision,
             'withdrawableLiquidityF': 0,
             'entryLiquidityF': 100 * precision,
-            'counter': 2,
+            'counter': 1,
             'maxEvents': 2,
         }
         self.assertDictEqual(expected_state_values, actual_state_values)
