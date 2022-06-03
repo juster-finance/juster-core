@@ -83,6 +83,33 @@ class BalanceIssueTestCase(PoolBaseTestCase):
         payout = self.claim_liquidity(shares=1_000, position_id=pos_id)
         self.assertEqual(payout, 0)
 
+    def test_negative_payout_issue_when_provided_approved_during_loss_event_b(
+        self,
+    ):
+        """Similar to previous test that represents wrong claim liquidity
+        payout for second position"""
+
+        self.add_line(max_events=2)
+        entry_id = self.deposit_liquidity(amount=1000)
+        pos_one = self.approve_liquidity(entry_id=entry_id)
+
+        first_event = self.create_event()
+        self.wait(3600)
+        second_event = self.create_event()
+        self.wait(3600)
+
+        entry_id = self.deposit_liquidity(amount=1000)
+        pos_two = self.approve_liquidity(entry_id=entry_id)
+
+        self.pay_reward(event_id=first_event, amount=100)
+        third_event = self.create_event()
+
+        # there is only 300 mutez on balance but pool tries to pay 400 with
+        # current calculations:
+        payout = self.claim_liquidity(shares=1_000, position_id=pos_two)
+        # TODO: find out what payout value should be fair for second provider?
+        # self.assertEqual(payout, 0)
+
     def test_payout_should_not_exceed_balance_when_there_was_lmt_shares_event(
         self,
     ):
