@@ -28,7 +28,10 @@ class ProviderInAndOutTestCase(PoolBaseTestCase):
         withdrawn_amount = self.claim_liquidity(
             self.a, position_id=0, shares=80_000_000
         )
-        self.assertEqual(withdrawn_amount, 0)
+        # free liquidity is 18 xtz (0 xtz from A and 18 xtz from B)
+        # A receives claims for all events + 80% of free liquidity:
+        self.assertEqual(withdrawn_amount, 14_400_000)
+        # so A exchanges 20% of his 9 events for 14.4 xtz (20% * 72 xtz)
 
         entry_id = self.deposit_liquidity(self.a, amount=provided_amount)
         self.approve_liquidity(self.a, entry_id=entry_id)

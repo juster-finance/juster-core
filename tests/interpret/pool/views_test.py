@@ -82,7 +82,7 @@ class PoolViewsTestCase(PoolBaseTestCase):
         self.assertEqual(self.get_next_position_id(), 1)
 
     def test_get_claim_view(self):
-        self.add_line(max_events=2)
+        self.add_line(max_events=1)
         self.deposit_liquidity(sender=self.a, amount=1000)
         self.approve_liquidity()
         self.create_event()
@@ -90,7 +90,7 @@ class PoolViewsTestCase(PoolBaseTestCase):
 
         actual_claim = self.get_claim(event_id=0, position_id=0)
         expected_claim = {
-            'shares': 420,
+            'amount': 420,
             'provider': self.a,
         }
 
@@ -142,10 +142,8 @@ class PoolViewsTestCase(PoolBaseTestCase):
         actual_event = self.get_event(event_id=777)
         expected_event = {
             'createdCounter': 0,
-            'totalShares': 1000,
-            'lockedShares': 0,
+            'claimed': 0,
             'result': None,
-            'activeFractionF': 1000000,
             'provided': 1000,
         }
 

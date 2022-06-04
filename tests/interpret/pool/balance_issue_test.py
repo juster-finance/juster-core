@@ -1,4 +1,5 @@
 from pytezos import MichelsonRuntimeError
+from decimal import Decimal
 
 from tests.interpret.pool.pool_base import PoolBaseTestCase
 
@@ -26,14 +27,13 @@ class BalanceIssueTestCase(PoolBaseTestCase):
         self.pay_reward(event_id=first_event, amount=1_000_000)
         self.pay_reward(event_id=second_event, amount=1_000_000)
 
-        self.withdraw_liquidity(
-            positions=[
-                {'positionId': position_one, 'eventId': first_event},
-                {'positionId': position_one, 'eventId': second_event},
-                {'positionId': position_two, 'eventId': first_event},
-                {'positionId': position_two, 'eventId': second_event},
-            ]
-        )
+        positions = [
+            {'positionId': position_one, 'eventId': first_event},
+            {'positionId': position_one, 'eventId': second_event},
+            {'positionId': position_two, 'eventId': first_event},
+            {'positionId': position_two, 'eventId': second_event},
+        ]
+        self.withdraw_liquidity(positions=positions)
 
         # checing continuality:
         entry_id = self.deposit_liquidity(amount=1_000_000)
@@ -43,7 +43,8 @@ class BalanceIssueTestCase(PoolBaseTestCase):
         )
 
         self.claim_liquidity(shares=1_000_000, position_id=new_position)
-        self.assertEqual(self.balances['contract'], 0)
+        # allowing 1 mutez on the contract:
+        self.assertTrue(self.balances['contract'] <= Decimal(1))
 
     def test_participant_should_be_able_to_claim_liquidity_when_it_all_active(
         self,
@@ -77,11 +78,17 @@ class BalanceIssueTestCase(PoolBaseTestCase):
         entry_id = self.deposit_liquidity(amount=1000)
         self.approve_liquidity(entry_id=entry_id)
 
+        # event finished with loss 400, free liquidity is 1000 + 100 = 1100
         self.pay_reward(event_id=first_event, amount=100)
+
+        # total liquidity is 100 + 1000 + 500 = 1600, event created with 50%:
         self.create_event()
 
+        # free liquidity = 1100 - 800 = 300
         payout = self.claim_liquidity(shares=1_000, position_id=pos_id)
-        self.assertEqual(payout, 0)
+
+        # payout is 50% of free liquidity = 50% * 300:
+        self.assertEqual(payout, 150)
 
     def test_negative_payout_issue_when_provided_approved_during_loss_event_b(
         self,

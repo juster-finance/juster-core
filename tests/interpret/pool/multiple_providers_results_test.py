@@ -26,7 +26,7 @@ class MultipleProvidersResultsTestCase(PoolBaseTestCase):
             self.storage['positions'][1]['shares'],
         )
 
-        # creating next event, total liquidity 10xtz (5xtz kept on contract)
+        # creating next event, total liquidity 20xtz (5xtz kept on contract)
         self.wait(3600)
         self.create_event(line_id=0, next_event_id=1)
 
@@ -34,35 +34,38 @@ class MultipleProvidersResultsTestCase(PoolBaseTestCase):
         withdrawn_amount = self.claim_liquidity(
             self.a, position_id=0, shares=10_000_000
         )
-        self.assertEqual(withdrawn_amount, 0)
+
+        # as far as there is 5 xtz on the contract, first provider gets 50% of
+        # free liquidity:
+        self.assertEqual(withdrawn_amount, 2_500_000)
 
         withdrawn_amount = self.claim_liquidity(
             self.b, position_id=1, shares=10_000_000
         )
-        self.assertEqual(withdrawn_amount, 5_000_000)
+        self.assertEqual(withdrawn_amount, 2_500_000)
 
-        # first event is finished with profit 2xtz, all this 7xtz should go to
-        # the first provider:
+        # first event is finished with profit 2xtz, and this 7xtz should be
+        # distributed between both providers:
         self.pay_reward(event_id=0, amount=7_000_000)
 
         # second event finished with the same amount as it started
         self.wait(3600)
         self.pay_reward(event_id=1, amount=10_000_000)
 
-        # first provider first event 100%:
-        amounts = self.withdraw_liquidity(
-            positions=[dict(positionId=0, eventId=0)], sender=self.a
-        )
-        self.assertEqual(amounts[self.a], 7_000_000)
+        # both providers receive the same amount of event results:
+        positions = [
+            dict(positionId=0, eventId=0),
+            dict(positionId=1, eventId=0),
+        ]
 
-        # second provider second event 50%:
-        amounts = self.withdraw_liquidity(
-            positions=[dict(positionId=1, eventId=1)], sender=self.b
-        )
-        self.assertEqual(amounts[self.b], 5_000_000)
+        amounts = self.withdraw_liquidity(positions=positions, sender=self.a)
+        self.assertEqual(amounts[self.a], 3_500_000)
+        self.assertEqual(amounts[self.b], 3_500_000)
 
-        # first provider second event 50%:
-        amounts = self.withdraw_liquidity(
-            positions=[dict(positionId=0, eventId=1)], sender=self.a
-        )
+        positions = [
+            dict(positionId=0, eventId=1),
+            dict(positionId=1, eventId=1),
+        ]
+        amounts = self.withdraw_liquidity(positions=positions, sender=self.b)
         self.assertEqual(amounts[self.a], 5_000_000)
+        self.assertEqual(amounts[self.b], 5_000_000)
