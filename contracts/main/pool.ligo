@@ -134,51 +134,56 @@ block {
     else skip;
     const leftShares = abs(position.shares - claim.shares);
 
-    const totalLiquidityF = calcTotalLiquidityF(store);
+    const claimFractionF = store.precision * claim.shares / store.totalShares;
+    var removedActiveF := 0n;
 
-    var providedInitialF := 0n;
-    var activeFractionF := 0n;
+    if claim.shares = 0n
+    then skip
+    else block {
+        (* TODO: it feels like it is possible to remove loop with new logic: *)
+        for eventId -> _lineId in map store.activeEvents block {
+            const event = getEvent(eventId, store);
 
-    for eventId -> _lineId in map store.activeEvents block {
-        const event = getEvent(eventId, store);
-        const isImpactedEvent = position.addedCounter <= event.createdCounter;
-        const isHaveShares = claim.shares > 0n;
-
-        if isImpactedEvent and isHaveShares
-        then block {
             const key = record [
                 eventId = eventId;
                 positionId = claim.positionId;
             ];
 
+            const alreadyClaimed = getClaimedAmount(key, store);
+
+            (* TODO: check leftProvided > 0 and raise wrong state? *)
+            const leftProvided = abs(event.provided - event.claimed);
+            const newClaimF = claimFractionF * leftProvided;
+            const newClaim = ceilDiv(newClaimF, store.precision);
+
             store.claims[key] := record [
-                shares = getClaimedShares(key, store) + claim.shares;
+                amount = alreadyClaimed + newClaim;
                 provider = position.provider;
             ];
 
-            (* TODO: is it possible to get rid of providedInitialF?
-                currently it required for activeLiquidityF calc that mihgt
-                required to be calculated with start event share price
-            *)
-            providedInitialF := providedInitialF + (
-                claim.shares * event.provided * store.precision
-                / event.totalShares);
+            removedActiveF := removedActiveF + newClaimF;
 
-            (* TODO: replace with model from dipdup: event.shares / event.totalShares ? *)
-            activeFractionF := activeFractionF + event.activeFractionF;
-            store.events[eventId] := increaseLocked(claim.shares, event);
+            const eventClaimed = ceilDiv(
+                leftProvided * claimFractionF, store.precision
+            );
+            const newClaimed = event.claimed + eventClaimed;
+            if newClaimed > event.provided
+            then failwith(PoolWrongState.lockedExceedTotal)
+            else skip;
+
+            store.events[eventId] := event with record [
+                claimed = newClaimed;
+            ];
         }
-        else skip;
     };
 
     const updatedPosition = position with record [ shares = leftShares ];
     store.positions[claim.positionId] := updatedPosition;
 
-    const userLiquidityF = claim.shares * totalLiquidityF / store.totalShares;
-    const freeFractionF = store.precision - activeFractionF;
-    const payoutValue = if freeFractionF > 0
-        then userLiquidityF * freeFractionF / store.precision / store.precision
-        else 0;
+    const payoutValue = (
+        calcFreeLiquidityF(store) * claim.shares
+        / store.totalShares / store.precision
+    );
 
     (* Having negative payoutValue should not be possible,
         but it is better to check: *)
@@ -194,14 +199,14 @@ block {
     (* TODO: this block with failwith can be replaced with absOrFail *)
     store.totalShares := abs(store.totalShares - claim.shares);
 
-    if store.activeLiquidityF < providedInitialF
+    if store.activeLiquidityF < removedActiveF
     then failwith(PoolWrongState.negativeActiveLiquidity)
     else skip;
 
     (* Is it possible to exclide providedEsitmatedF?
         the difference is that providedEstimatedF uses current share price
         instead providedInitialF used share price at event creation moment *)
-    store.activeLiquidityF := abs(store.activeLiquidityF - providedInitialF);
+    store.activeLiquidityF := abs(store.activeLiquidityF - removedActiveF);
 
     const operations = if payoutValue > 0 then
         list[prepareOperation(Tezos.sender, abs(payoutValue) * 1mutez)]
@@ -237,7 +242,7 @@ block {
         *)
         const eventResult = getEventResult(event);
         const claim = getClaim(key, store);
-        const eventRewardF = eventResult * claim.shares * store.precision / event.totalShares;
+        const eventRewardF = eventResult * claim.amount * store.precision / event.provided;
 
         sums[claim.provider] := case Map.find_opt(claim.provider, sums) of [
         | Some(sum) -> sum + eventRewardF
@@ -285,14 +290,13 @@ block {
     store.activeEvents := Map.remove(eventId, store.activeEvents);
 
     (* adding withdrawable liquidity to the pool: *)
-    const newWithdrawableF = reward * event.lockedShares * store.precision / event.totalShares;
+    const lockedFractionF = event.claimed * store.precision / event.provided;
+    const newWithdrawableF = reward * lockedFractionF;
 
     store.withdrawableLiquidityF := store.withdrawableLiquidityF + newWithdrawableF;
 
     (* Part of activeLiquidity was already excluded if there was some claims *)
-    const providedF = event.provided * store.precision;
-    const claimedLiquidityF = event.lockedShares * providedF / event.totalShares;
-    const remainedLiquidityF = providedF - claimedLiquidityF;
+    const remainedLiquidityF = (event.provided - event.claimed) * store.precision;
 
     (* remainedLiquidity should always be less than store.activeLiquidity but
         it is better to cap it on zero if it somehow goes negative: *)
@@ -354,15 +358,13 @@ block {
 
     const operations = list[newEventOperation; provideLiquidityOperation];
     const eventCosts = (liquidityPayout + newEventFee)/1mutez;
-    const activeFractionF = ceilDiv(store.precision, store.maxEvents);
 
     const event = record [
+        (* TODO: remove counter *)
         createdCounter = store.counter;
-        totalShares = store.totalShares;
-        lockedShares = 0n;
+        claimed = 0n;
         result = (None : option(nat));
         provided = eventCosts;
-        activeFractionF = activeFractionF;
     ];
 
     store.events[nextEventId] := event;

@@ -159,21 +159,11 @@ block {
     const config = getConfig(justerAddress);
 } with config.expirationFee + config.measureStartFee
 
-function getClaimedShares(const key : claimKey; const store : storage) is
+function getClaimedAmount(const key : claimKey; const store : storage) is
     case Big_map.find_opt(key, store.claims) of [
-    | Some(claim) -> claim.shares
+    | Some(claim) -> claim.amount
     | None -> 0n
     ];
-
-function increaseLocked(const shares : nat; const event : eventType) is
-block {
-    const newLockedShares = event.lockedShares + shares;
-    if newLockedShares > event.totalShares
-    then failwith(PoolWrongState.lockedExceedTotal)
-    else skip;
-} with event with record [
-    lockedShares = newLockedShares;
-];
 
 function getEventResult(const event : eventType) is
     case event.result of [
@@ -181,3 +171,8 @@ function getEventResult(const event : eventType) is
     | None -> (failwith(PoolErrors.eventNotFinished) : nat)
     ];
 
+function ceilDiv(const num: nat; const denom: nat) is
+    case ediv(num, denom) of [
+    | Some(result, remainder) -> if remainder > 0n then result + 1n else result
+    | None -> (failwith("DIV / 0"): nat)
+    ];

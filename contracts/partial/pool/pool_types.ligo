@@ -29,16 +29,11 @@ type positionType is record [
 
 type eventType is record [
     createdCounter : nat;
-    activeFractionF : nat;
-    totalShares : nat;
-    lockedShares : nat;
-    (* TODO: lockedShares measured in totalShares, this simplifies calculations
-        but the name might confuse. Maybe there is something that describe
-        it better? *)
     result : option(nat);
     (* TODO: consider having isFinished : bool field? Or result as an option
         is enough? *)
     provided : nat;
+    claimed : nat;
 ]
 
 type claimKey is record [
@@ -47,7 +42,7 @@ type claimKey is record [
 ]
 
 type claimParams is record [
-    shares : nat;
+    amount : nat;
     provider : address;
 ]
 
