@@ -11,9 +11,7 @@ from models.pool.types import AnyStorage
 @dataclass
 class Event:
     created_counter: int
-    active_fraction_f: Decimal
-    total_shares: Decimal
-    locked_shares: Decimal
+    claimed: Decimal
     result: Optional[Decimal]
     provided: Decimal
     precision: Decimal
@@ -23,19 +21,12 @@ class Event:
         result = storage['result']
         return cls(
             created_counter=storage['createdCounter'],
-            active_fraction_f=Decimal(storage['activeFractionF']),
-            total_shares=Decimal(storage['totalShares']),
-            locked_shares=Decimal(storage['lockedShares']),
+            claimed=Decimal(storage['claimed']),
             result=None if result is None else Decimal(result),
             provided=Decimal(storage['provided']),
             precision=precision,
         )
 
-    def get_result_for_shares_f(self, shares: Decimal) -> Decimal:
+    def get_result_for_provided_f(self, provided: Decimal) -> Decimal:
         result = self.result if self.result is not None else Decimal(0)
-        return quantize(result * shares * self.precision / self.total_shares)
-
-    def get_provided_for_shares_f(self, shares: Decimal) -> Decimal:
-        return quantize(
-            self.provided * shares * self.precision / self.total_shares
-        )
+        return quantize(result * provided * self.precision / self.provided)

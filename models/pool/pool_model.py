@@ -160,7 +160,7 @@ class PoolModel:
             claim = self.claims[claim_key]
             event = self.events[claim_key.event_id]
             payout_f = payouts_f.get(claim.provider, Decimal(0))
-            payout_f += event.get_result_for_shares_f(claim.shares)
+            payout_f += event.get_result_for_provided_f(claim.amount)
             payouts_f[claim.provider] = payout_f
 
         return payouts_f
@@ -202,51 +202,38 @@ class PoolModel:
 
     def cancel_liquidity(self, entry_id: int) -> None:
         self.entries.pop(entry_id)
+        # TODO: balance should be changed? is it tested?
+        # self.balance -
 
     def add_claim_shares(
         self, event_id: int, position_id: int, shares: Decimal
     ) -> None:
+        fraction_f = quantize(shares * self.precision / self.total_shares)
         provider = self.positions[position_id].provider
         claim_key = ClaimKey(event_id, position_id)
-        default_claim = Claim(shares=Decimal(0), provider=provider)
+        default_claim = Claim(amount=Decimal(0), provider=provider)
         claim = self.claims.get(claim_key, default_claim)
-        claim.shares += shares
+        event = self.events[event_id]
+
+        # TODO: maube it is better to have here withdrawn_fraction_f:
+        left_provided = event.provided - event.claimed
+        claimed_provided_f = fraction_f * left_provided
+        claim.amount += quantize_up(claimed_provided_f / self.precision)
         self.claims[claim_key] = claim
 
-        event = self.events[event_id]
-        event.locked_shares += shares
-        assert claim.shares <= event.total_shares
+        event_claimed = quantize_up(
+            fraction_f * left_provided / self.precision
+        )
+        event.claimed += event_claimed
         self.events[event_id] = event
 
-        self.active_liquidity_f -= event.get_provided_for_shares_f(shares)
-
-    def iter_impacted_event_ids(self, position_id: int) -> Iterator[int]:
-        position = self.positions[position_id]
-        for event_id in self.active_events:
-            event = self.events[event_id]
-            if event.created_counter >= position.added_counter:
-                yield event_id
-        return
+        self.active_liquidity_f -= claimed_provided_f
 
     def calc_claim_payout(self, position_id: int, shares: Decimal) -> Decimal:
-        total_liquidity_f = self.calc_total_liquidity_f()
-        active_fraction_f = Decimal(0)
-
-        for event_id in self.iter_impacted_event_ids(position_id):
-            event = self.events[event_id]
-            active_fraction_f += event.active_fraction_f
-
-        provider_liquidity_f = quantize(
-            total_liquidity_f * shares / self.total_shares
+        free_liquidity_f = self.calc_free_liquidity_f()
+        return quantize(
+            free_liquidity_f * shares / self.total_shares / self.precision
         )
-
-        # TODO: maybe replace this high precision Decimals with Fractions?
-        free_fraction_f = self.precision - active_fraction_f
-        free_fraction_f = 0 if free_fraction_f < 0 else free_fraction_f
-        expected_amount_f = provider_liquidity_f * free_fraction_f / self.precision
-        expected_amount = quantize(expected_amount_f / self.precision)
-        assert expected_amount >= Decimal(0)
-        return expected_amount
 
     def claim_liquidity(self, position_id: int, shares: Decimal) -> Decimal:
         if shares == 0:
@@ -256,7 +243,7 @@ class PoolModel:
         position = self.positions[position_id]
         position.remove_shares(shares)
 
-        for event_id in self.iter_impacted_event_ids(position_id):
+        for event_id in self.active_events:
             self.add_claim_shares(event_id, position_id, shares)
 
         self.total_shares -= shares
@@ -281,11 +268,11 @@ class PoolModel:
         event = self.events[event_id]
         event.result = amount
 
-        locked_amount_f = event.get_result_for_shares_f(event.locked_shares)
+        locked_amount_f = event.get_result_for_provided_f(event.claimed)
         self.withdrawable_liquidity_f += locked_amount_f
 
-        left_shares = event.total_shares - event.locked_shares
-        self.active_liquidity_f -= event.get_provided_for_shares_f(left_shares)
+        left_amount = event.provided - event.claimed
+        self.active_liquidity_f -= left_amount * self.precision
         assert self.active_liquidity_f >= Decimal(0)
 
         self.active_events.remove(event_id)
@@ -312,9 +299,7 @@ class PoolModel:
 
         self.events[next_event_id] = Event(
             created_counter=self.counter,
-            active_fraction_f=active_fraction_f,
-            total_shares=self.total_shares,
-            locked_shares=Decimal(0),
+            claimed=Decimal(0),
             result=None,
             provided=provided_amount,
             precision=self.precision,
