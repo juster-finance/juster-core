@@ -48,7 +48,7 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
         }
         self.assertDictEqual(self.storage['claims'], target_claims)
 
-    def test_should_return_unused_liquidity_amount(self):
+    def test_should_return_free_liquidity_share(self):
         self.add_line(max_events=2)
         self.deposit_liquidity(sender=self.a, amount=100)
         self.approve_liquidity(entry_id=0)
@@ -56,9 +56,10 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
 
         # 50 mutez used in the first event (100 / 2 max active events):
         self.create_event(line_id=0)
-        self.claim_liquidity(sender=self.a, position_id=0, shares=100)
+        payout = self.claim_liquidity(sender=self.a, position_id=0, shares=100)
 
         # 50 mutez unused liquidity should be returned:
+        self.assertEqual(payout, 50)
         self.assertEqual(self.balances[self.a], -50)
 
     def test_should_not_allow_to_claim_others_shares(self):
@@ -79,16 +80,6 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.claim_liquidity(position_id=0, shares=100)
-        msg = 'Claim shares is exceed position shares'
-        self.assertTrue(msg in str(cm.exception))
-
-    def test_should_not_be_possible_to_claim_more_shares_than_have(self):
-        self.add_line()
-        self.deposit_liquidity(amount=100)
-        self.approve_liquidity()
-
-        with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.claim_liquidity(position_id=0, shares=101)
         msg = 'Claim shares is exceed position shares'
         self.assertTrue(msg in str(cm.exception))
 
