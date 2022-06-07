@@ -224,7 +224,8 @@ class PoolModel:
         event.claimed += event_claimed
         self.events[event_id] = event
 
-        self.active_liquidity_f -= event_claimed_f
+        # TODO: consider removing high precision from active liquidity:
+        self.active_liquidity_f -= event_claimed * self.precision
 
     def calc_claim_payout(self, position_id: int, shares: Decimal) -> Decimal:
         free_liquidity_f = self.calc_free_liquidity_f()
