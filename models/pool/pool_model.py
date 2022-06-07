@@ -205,7 +205,6 @@ class PoolModel:
     def add_claim_shares(
         self, event_id: int, position_id: int, shares: Decimal
     ) -> None:
-        fraction_f = quantize(shares * self.precision / self.total_shares)
         provider = self.positions[position_id].provider
         claim_key = ClaimKey(event_id, position_id)
         default_claim = Claim(amount=Decimal(0), provider=provider)
@@ -215,7 +214,9 @@ class PoolModel:
         # TODO: maube it is better to have here withdrawn_fraction_f:
         left_provided = event.provided - event.claimed
 
-        event_claimed_f = fraction_f * left_provided
+        event_claimed_f = quantize(
+            shares * self.precision * left_provided / self.total_shares
+        )
         event_claimed = quantize_up(event_claimed_f / self.precision)
         claim.amount += event_claimed
         self.claims[claim_key] = claim
