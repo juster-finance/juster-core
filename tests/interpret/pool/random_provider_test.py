@@ -1,11 +1,12 @@
-from random import randint
+from random import randint, seed
 
 from tests.interpret.pool.pool_base import PoolBaseTestCase
 
 
 class RandomProviderTestCase(PoolBaseTestCase):
     def test_provider_should_get_calculated_reward_in_multiple_events(self):
-
+        SEED = randint(0, 10**16)
+        seed(SEED)
         ITERATIONS = 5
 
         for _ in range(ITERATIONS):
@@ -46,6 +47,10 @@ class RandomProviderTestCase(PoolBaseTestCase):
             self.assertEqual(self.balances[self.b], provider_profit_loss)
 
     def test_all_providers_should_have_zero_balance_at_the_end(self):
+        SEED = randint(0, 10**16)
+        SEED = 1757271336181368
+        seed(SEED)
+
         STEPS = 20
         AMOUNT = 100
         EVENTS_COUNT = 5
