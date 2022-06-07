@@ -31,7 +31,6 @@ class PoolModel:
     claims: dict[ClaimKey, Claim] = field(default_factory=dict)
     entries: dict[int, Entry] = field(default_factory=dict)
     max_events: int = 0
-    counter: int = 0
     precision: Decimal = Decimal(10**6)
     liquidity_units: Decimal = Decimal(0)
     balance: Decimal = Decimal(0)
@@ -77,7 +76,6 @@ class PoolModel:
             entries=convert(Entry, storage['entries']),
             claims=claims,
             max_events=storage['maxEvents'],
-            counter=storage['counter'],
             precision=precision,
             liquidity_units=Decimal(storage['liquidityUnits']),
             balance=balance,
@@ -189,7 +187,6 @@ class PoolModel:
         position = Position(
             provider=entry.provider,
             shares=self.calc_deposit_shares(entry.amount),
-            added_counter=self.counter,
         )
         self.entries.pop(entry_id)
 
@@ -297,14 +294,12 @@ class PoolModel:
         active_fraction_f = quantize_up(self.precision / self.max_events)
 
         self.events[next_event_id] = Event(
-            created_counter=self.counter,
             claimed=Decimal(0),
             result=None,
             provided=provided_amount,
             precision=self.precision,
         )
 
-        self.counter += 1
         self.active_liquidity_f += provided_amount * self.precision
         line = self.lines[line_id]
         line.update_last_bets_close_time(self.now)

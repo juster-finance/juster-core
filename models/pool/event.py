@@ -10,7 +10,6 @@ from models.pool.types import AnyStorage
 
 @dataclass
 class Event:
-    created_counter: int
     claimed: Decimal
     result: Optional[Decimal]
     provided: Decimal
@@ -20,7 +19,6 @@ class Event:
     def from_storage(cls, storage: AnyStorage, precision: Decimal) -> Event:
         result = storage['result']
         return cls(
-            created_counter=storage['createdCounter'],
             claimed=Decimal(storage['claimed']),
             result=None if result is None else Decimal(result),
             provided=Decimal(storage['provided']),
