@@ -163,10 +163,7 @@ block {
 
             removedActiveF := removedActiveF + newClaimF;
 
-            const eventClaimed = ceilDiv(
-                leftProvided * claimFractionF, store.precision
-            );
-            const newClaimed = event.claimed + eventClaimed;
+            const newClaimed = event.claimed + newClaim;
             if newClaimed > event.provided
             then failwith(PoolWrongState.lockedExceedTotal)
             else skip;
