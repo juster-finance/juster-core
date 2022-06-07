@@ -64,7 +64,6 @@ class PoolViewsTestCase(PoolBaseTestCase):
         actual_position = self.get_position(0)
         expected_position = {
             'shares': 1000,
-            'addedCounter': 0,
             'entryLiquidityUnits': 0,
             'provider': self.a,
         }
@@ -141,7 +140,6 @@ class PoolViewsTestCase(PoolBaseTestCase):
 
         actual_event = self.get_event(event_id=777)
         expected_event = {
-            'createdCounter': 0,
             'claimed': 0,
             'result': None,
             'provided': 1000,
@@ -208,7 +206,6 @@ class PoolViewsTestCase(PoolBaseTestCase):
             'activeLiquidityF': 50 * precision,
             'withdrawableLiquidityF': 0,
             'entryLiquidityF': 100 * precision,
-            'counter': 1,
             'maxEvents': 2,
         }
         self.assertDictEqual(expected_state_values, actual_state_values)
