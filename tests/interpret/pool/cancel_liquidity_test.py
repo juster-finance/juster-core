@@ -40,3 +40,13 @@ class CancelLiquidityTestCase(PoolBaseTestCase):
             self.approve_liquidity()
         msg = 'Entry is not found'
         self.assertTrue(msg in str(cm.exception))
+
+    def test_should_not_be_able_to_cancel_liquidity_twice(self):
+        self.add_line()
+        entry_id = self.deposit_liquidity()
+        self.cancel_liquidity(entry_id=entry_id)
+
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.cancel_liquidity(entry_id=entry_id)
+        msg = 'Entry is not found'
+        self.assertTrue(msg in str(cm.exception))
