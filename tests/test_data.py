@@ -71,7 +71,6 @@ def generate_pool_storage(manager):
         'claims': {},
         'manager': manager,
         'maxEvents': 0,
-        'counter': 0,
         'entryLiquidityF': 0,
         'entryLockPeriod': 0,
         'entries': {},
