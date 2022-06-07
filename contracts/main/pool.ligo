@@ -133,7 +133,6 @@ block {
     else skip;
     const leftShares = abs(position.shares - claim.shares);
 
-    const claimFractionF = store.precision * claim.shares / store.totalShares;
     var removedActiveF := 0n;
 
     if claim.shares = 0n
@@ -152,7 +151,10 @@ block {
 
             (* TODO: check leftProvided > 0 and raise wrong state? *)
             const leftProvided = abs(event.provided - event.claimed);
-            const newClaimF = claimFractionF * leftProvided;
+            const newClaimF = (
+                store.precision * claim.shares * leftProvided
+                / store.totalShares
+            );
             const newClaim = ceilDiv(newClaimF, store.precision);
 
             store.claims[key] := record [
@@ -286,9 +288,9 @@ block {
     store.activeEvents := Map.remove(eventId, store.activeEvents);
 
     (* adding withdrawable liquidity to the pool: *)
-    const lockedFractionF = event.claimed * store.precision / event.provided;
-    const newWithdrawableF = reward * lockedFractionF;
-
+    const newWithdrawableF = (
+        reward * event.claimed * store.precision / event.provided
+    );
     store.withdrawableLiquidityF := store.withdrawableLiquidityF + newWithdrawableF;
 
     (* Part of activeLiquidity was already excluded if there was some claims *)
