@@ -4,7 +4,7 @@ from tests.interpret.pool.pool_base import PoolBaseTestCase
 
 
 class CreateEventTestCase(PoolBaseTestCase):
-    def test_should_fail_if_free_liquidity_is_less_than_next_event_liquidity(
+    def test_should_fail_if_free_liquidity_is_not_enough_to_start_next_event(
         self,
     ):
         self.add_line(max_events=10)
