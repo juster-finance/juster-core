@@ -133,7 +133,7 @@ block {
     else skip;
     const leftShares = abs(position.shares - claim.shares);
 
-    var removedActiveF := 0n;
+    var removedActive := 0n;
 
     if claim.shares = 0n
     then skip
@@ -162,7 +162,7 @@ block {
                 provider = position.provider;
             ];
 
-            removedActiveF := removedActiveF + newClaimF;
+            removedActive := removedActive + newClaim;
 
             const newClaimed = event.claimed + newClaim;
             if newClaimed > event.provided
@@ -197,13 +197,13 @@ block {
     (* TODO: this block with failwith can be replaced with absOrFail *)
     store.totalShares := abs(store.totalShares - claim.shares);
 
+    (* TODO: does this high precision still required for active liquidity calc?
+        looks like it is not, consider removing it *)
+    const removedActiveF = removedActive * store.precision;
     if store.activeLiquidityF < removedActiveF
     then failwith(PoolWrongState.negativeActiveLiquidity)
     else skip;
 
-    (* Is it possible to exclide providedEsitmatedF?
-        the difference is that providedEstimatedF uses current share price
-        instead providedInitialF used share price at event creation moment *)
     store.activeLiquidityF := abs(store.activeLiquidityF - removedActiveF);
 
     const operations = if payoutValue > 0 then
