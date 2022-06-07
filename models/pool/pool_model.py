@@ -217,17 +217,16 @@ class PoolModel:
 
         # TODO: maube it is better to have here withdrawn_fraction_f:
         left_provided = event.provided - event.claimed
-        claimed_provided_f = fraction_f * left_provided
-        claim.amount += quantize_up(claimed_provided_f / self.precision)
+
+        event_claimed_f = fraction_f * left_provided
+        event_claimed = quantize_up(event_claimed_f / self.precision)
+        claim.amount += event_claimed
         self.claims[claim_key] = claim
 
-        event_claimed = quantize_up(
-            fraction_f * left_provided / self.precision
-        )
         event.claimed += event_claimed
         self.events[event_id] = event
 
-        self.active_liquidity_f -= claimed_provided_f
+        self.active_liquidity_f -= event_claimed_f
 
     def calc_claim_payout(self, position_id: int, shares: Decimal) -> Decimal:
         free_liquidity_f = self.calc_free_liquidity_f()
