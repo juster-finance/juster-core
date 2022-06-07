@@ -20,15 +20,14 @@ type lineType is record [
 ]
 
 type positionType is record [
-    (* TODO: replace provider with NFT token_id that represents this position? *)
     provider : address;
     shares : nat;
-    addedCounter : nat;
+    (* TODO: is it possible to change entry liquidity units logic to comply with
+        new pool logic? *)
     entryLiquidityUnits : nat;
 ]
 
 type eventType is record [
-    createdCounter : nat;
     result : option(nat);
     (* TODO: consider having isFinished : bool field? Or result as an option
         is enough? *)
@@ -38,6 +37,9 @@ type eventType is record [
 
 type claimKey is record [
     eventId : eventIdT;
+    (* TODO: if position became only shares map(address, nat)
+        then claimKey can be eventId + providerAddress
+        then claimParams can be simple amount *)
     positionId : positionIdT;
 ]
 
@@ -100,7 +102,6 @@ type storage is record [
     claims : big_map(claimKey, claimParams);
     manager : address;
     maxEvents : nat;
-    counter : nat;
     isDepositPaused : bool;
     metadata : big_map (string, bytes);
     precision : nat;

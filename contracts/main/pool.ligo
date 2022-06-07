@@ -83,7 +83,6 @@ block {
     const newPosition = record [
         provider = entry.provider;
         shares = shares;
-        addedCounter = store.counter;
         entryLiquidityUnits = store.liquidityUnits;
     ];
 
@@ -357,8 +356,6 @@ block {
     const eventCosts = (liquidityPayout + newEventFee)/1mutez;
 
     const event = record [
-        (* TODO: remove counter *)
-        createdCounter = store.counter;
         claimed = 0n;
         result = (None : option(nat));
         provided = eventCosts;
@@ -370,7 +367,6 @@ block {
 
     const newUnits = eventCosts * calcDuration(line) / store.totalShares;
     store.liquidityUnits := store.liquidityUnits + newUnits;
-    store.counter := store.counter + 1n;
 
 } with (operations, store)
 
@@ -557,6 +553,5 @@ case params of [
         activeLiquidityF = s.activeLiquidityF;
         withdrawableLiquidityF = s.withdrawableLiquidityF;
         entryLiquidityF = s.entryLiquidityF;
-        counter = s.counter;
         maxEvents = s.maxEvents
     ]
