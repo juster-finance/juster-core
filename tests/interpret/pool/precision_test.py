@@ -23,3 +23,14 @@ class PrecisionPoolTestCase(PoolBaseTestCase):
         )
         self.assertEqual(payouts[provider_address], 20)
 
+    def test_should_not_accumulate_precision_error_in_active_liquidity(self):
+        self.add_line(max_events=1)
+        entry_id = self.deposit_liquidity(amount=17)
+        position_id = self.approve_liquidity(entry_id=entry_id)
+        event_id = self.create_event()
+        self.claim_liquidity(position_id=position_id, shares=11)
+        self.assertEqual(
+            self.storage['activeLiquidityF'],
+            6 * self.storage['precision']
+        )
+        self.pay_reward(event_id=event_id, amount=17)
