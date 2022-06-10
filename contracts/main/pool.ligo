@@ -99,6 +99,11 @@ block {
 
     checkNoAmountIncluded(unit);
 
+    (* Cancel liquidity allowed only when deposit is set on pause: *)
+    if not store.isDepositPaused
+    then failwith(PoolErrors.cancelIsNotAllowed)
+    else skip;
+
     const entry = getEntry(entryId, store);
     store.entries := Big_map.remove(entryId, store.entries);
 
