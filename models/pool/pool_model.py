@@ -198,9 +198,9 @@ class PoolModel:
         return position_id
 
     def cancel_liquidity(self, entry_id: int) -> None:
+        entry = self.entries[entry_id]
         self.entries.pop(entry_id)
-        # TODO: balance should be changed? is it tested?
-        # self.balance -
+        self.balance -= entry.amount
 
     def add_claim_shares(
         self, event_id: int, position_id: int, shares: Decimal

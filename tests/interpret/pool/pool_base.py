@@ -197,11 +197,12 @@ class PoolBaseTestCase(TestCase):
     def cancel_liquidity(self, sender=None, entry_id=0, amount=0):
         sender = sender or self.manager
         call = self.pool.cancelLiquidity(entry_id)
+        init_balance = self.get_balance(self.address)
         result = call.with_amount(amount).interpret(
             storage=self.storage,
             now=self.current_time,
             sender=sender,
-            balance=self.get_balance(self.address),
+            balance=init_balance,
         )
 
         self.assertTrue(result.storage['entries'][entry_id] is None)
@@ -209,10 +210,14 @@ class PoolBaseTestCase(TestCase):
 
         init_model = self.to_model()
         init_model.cancel_liquidity(entry_id)
-        result_model = self.to_model(storage=result.storage)
-        self.assertEqual(init_model, result_model)
 
         entry = self.storage['entries'][entry_id]
+        result_model = self.to_model(
+            storage=result.storage,
+            balance=init_balance - entry['amount']
+        )
+        self.assertEqual(init_model, result_model)
+
         self.assertEqual(len(result.operations), 1)
         self.check_operation_is(
             operation=result.operations[0],
