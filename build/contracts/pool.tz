@@ -753,6 +753,16 @@
                          SWAP ;
                          DUP ;
                          DUG 2 ;
+                         CAR ;
+                         CAR ;
+                         CDR ;
+                         CDR ;
+                         CDR ;
+                         NOT ;
+                         IF { PUSH string "Cancel is not allowed" ; FAILWITH } {} ;
+                         SWAP ;
+                         DUP ;
+                         DUG 2 ;
                          SWAP ;
                          DUP ;
                          DUG 2 ;
