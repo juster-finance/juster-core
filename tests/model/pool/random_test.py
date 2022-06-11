@@ -10,6 +10,7 @@ def rand_from_zero_to(value_to):
 
 
 class RandomTester:
+    # TODO: typing
     users = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'manager']
     max_events = 18
 
@@ -18,6 +19,8 @@ class RandomTester:
         self.seed = randint(0, 10**16)
         self.balances = {user: Decimal(0) for user in self.users}
         self.balances['juster_core'] = Decimal(0)
+        self.balances['bakers'] = Decimal(0)
+        # TODO: move balance managemet to pool model?
         seed(self.seed)
         self.next_event_id = 0
 
@@ -67,10 +70,15 @@ class RandomTester:
     def random_create_event(self):
         if len(self.model.active_events) > self.max_events:
             return
-        if self.model.calc_free_liquidity_f() == 0:
+
+        next_event_liquidity = self.model.calc_next_event_liquidity()
+        if next_event_liquidity == 0:
             return
 
-        self.balances['juster_core'] += self.model.calc_next_event_liquidity()
+        if self.model.total_shares == 0:
+            return
+
+        self.balances['juster_core'] += next_event_liquidity
         self.model.create_event(line_id=0, next_event_id=self.next_event_id)
         self.next_event_id += 1
 
@@ -85,6 +93,19 @@ class RandomTester:
         for user, payout in payouts.items():
             self.balances[user] += payout
 
+    def random_pay_reward(self):
+        if not self.model.active_events:
+            return
+        event_id = choice(self.model.active_events)
+        random_reward = choice([0, 1, 1000, 1_000_000])
+        self.model.pay_reward(event_id=event_id, amount=random_reward)
+        self.balances['juster_core'] -= random_reward
+
+    def random_default(self):
+        random_amount = choice([0, 1, 1000, 1_000_000])
+        self.model.default(amount=random_amount)
+        self.balances['bakers'] -= random_amount
+
     def random_action(self):
         actions = [
             *[self.random_deposit] * 5,
@@ -93,8 +114,8 @@ class RandomTester:
             *[self.random_claim] * 5,
             *[self.random_withdraw] * 5,
             *[self.random_create_event] * 20,
-            # *[self.random_pay_reward] * 20,
-            # *[self.random_default] * 10,
+            *[self.random_pay_reward] * 20,
+            *[self.random_default] * 10,
             # TODO: random trigger pause line/deposits?
         ]
         action = choice(actions)
@@ -114,8 +135,6 @@ class RandomTester:
             self.random_action()
             self.check_invariants()
 
-
-# TODO: WIP, need to add different methods
 class PoolRandomModelTest(TestCase):
     def test_should_preserve_all_invariants(self):
         model = PoolModel()
