@@ -35,7 +35,6 @@ def generate_pool_storage(manager, juster_address):
         'claims': {},
         'manager': manager,
         'maxEvents': 0,
-        'counter': 0,
         'activeLiquidityF': 0,
         'withdrawableLiquidityF': 0,
         'entryLiquidityF': 0,
