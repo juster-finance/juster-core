@@ -16,6 +16,9 @@ class RandomTester:
 
     def check_invariants(self):
         assert sum(self.balances.values()) + self.model.balance == 0
+        # TODO: active liquidity equals to the amount in juster core
+        # TODO: sum of claims for finished events equals to withdrawable liquidity
+        # TODO: ?
 
     def random_user(self):
         return choice(self.users)
@@ -34,10 +37,33 @@ class RandomTester:
         self.balances[entry.provider] += entry.amount
         self.model.cancel_liquidity(entry_id=entry_id)
 
+    def random_approve(self):
+        if not len(self.model.entries):
+            return
+        entry_id = choice(list(self.model.entries.keys()))
+        entry = self.model.entries[entry_id]
+        self.model.approve_liquidity(entry_id=entry_id)
+
+    def random_claim(self):
+        if not len(self.model.positions):
+            return
+        position_id = choice(list(self.model.positions.keys()))
+        position = self.model.positions[position_id]
+        random_shares = (
+            randint(1, position.shares) if position.shares > 1 else 0
+        )
+        payout = self.model.claim_liquidity(
+            position_id=position_id,
+            shares=random_shares
+        )
+        self.balances[position.provider] += payout
+
     def random_action(self):
         actions = [
             *[self.random_deposit] * 5,
             *[self.random_cancel] * 1,
+            *[self.random_approve] * 6,
+            *[self.random_claim] * 5,
         ]
         action = choice(actions)
         action()
@@ -48,6 +74,7 @@ class RandomTester:
             self.check_invariants()
 
 
+# TODO: WIP, need to add different methods
 class PoolRandomModelTest(TestCase):
     def test_should_preserve_all_invariants(self):
         model = PoolModel()
