@@ -14,7 +14,7 @@
   CAR ;
   CAR ;
   CDR ;
-  PUSH mutez 100000 ;
+  PUSH mutez 10000 ;
   PAIR ;
   PAIR ;
   PAIR ;
@@ -28,7 +28,7 @@
   CDR ;
   CDR ;
   CDR ;
-  PUSH mutez 100000 ;
+  PUSH mutez 10000 ;
   PAIR ;
   DUP 3 ;
   CAR ;
