@@ -1307,7 +1307,9 @@
                               DIG 2 ;
                               ABS ;
                               MUL ;
-                              SENDER ;
+                              DUP 3 ;
+                              CAR ;
+                              CDR ;
                               PAIR ;
                               DIG 5 ;
                               SWAP ;
