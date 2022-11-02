@@ -131,7 +131,11 @@ block {
     checkNoAmountIncluded(unit);
 
     const position = getPosition(claim.positionId, store);
-    checkSenderIs(position.provider, PoolErrors.notPositionOwner);
+
+    (* If contract in disband state -> anyone can claim liquidity for anyone *)
+    if not store.isDisbandAllow
+    then checkSenderIs(position.provider, PoolErrors.notPositionOwner)
+    else skip;
 
     if claim.shares > position.shares
     then failwith(PoolErrors.exceedClaimShares)
