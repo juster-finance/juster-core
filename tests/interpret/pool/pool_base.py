@@ -274,16 +274,23 @@ class PoolBaseTestCase(TestCase):
         self.assertEqual(init_model, result_model)
         self._check_withdrawal_creation(result, position_id, shares)
 
+        position = self.storage['positions'][position_id]
+        provider = position['provider']
+
         if payout > Decimal(0):
             self.assertEqual(len(result.operations), 1)
-            self.check_operation_is(result.operations[0], amount=payout)
+            self.check_operation_is(
+                result.operations[0],
+                amount=payout,
+                destination=provider,
+            )
         else:
             self.assertEqual(len(result.operations), 0)
 
         self.storage = result.storage
 
         self.update_balance(self.address, -payout)
-        self.update_balance(sender, payout)
+        self.update_balance(provider, payout)
         return payout
 
     def withdraw_liquidity(self, sender=None, positions=None, amount=0):

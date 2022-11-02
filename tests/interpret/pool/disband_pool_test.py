@@ -1,3 +1,4 @@
+from decimal import Decimal
 from pytezos import MichelsonRuntimeError
 
 from tests.interpret.pool.pool_base import PoolBaseTestCase
@@ -20,3 +21,5 @@ class DisbandPoolTestCase(PoolBaseTestCase):
         position_id = self.approve_liquidity(entry_id=entry_id)
         self.disband(sender=self.manager)
         self.claim_liquidity(sender=self.b, position_id=0)
+
+        assert self.balances[self.a] == Decimal(0)
