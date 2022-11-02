@@ -1,5 +1,5 @@
 function calcFreeLiquidityF(const store : storage) : int is
-    Tezos.balance/1mutez * store.precision
+    Tezos.get_balance()/1mutez * store.precision
     - store.withdrawableLiquidityF
     - store.entryLiquidityF
 
@@ -119,22 +119,22 @@ block {
     else unit;
 
 function checkReadyToEmitEvent(const line : lineType) is
-    if Tezos.now < line.lastBetsCloseTime - int(line.advanceTime)
+    if Tezos.get_now() < line.lastBetsCloseTime - int(line.advanceTime)
     then failwith(PoolErrors.eventNotReady)
     else unit;
 
 function calcBetsCloseTime(const line : lineType) is
 block {
-    var periods := (Tezos.now - line.lastBetsCloseTime) / line.betsPeriod + 1n;
+    var periods := (Tezos.get_now() - line.lastBetsCloseTime) / line.betsPeriod + 1n;
 
     (* Case when event runs in advance: *)
-    if Tezos.now < line.lastBetsCloseTime
+    if Tezos.get_now() < line.lastBetsCloseTime
     then periods := periods + 1n
     (* TODO: maybe replace this with `then periods := 1n`? *)
     else skip;
 
     var nextBetsCloseTime := line.lastBetsCloseTime + line.betsPeriod*periods;
-    const timeToEvent = nextBetsCloseTime - Tezos.now;
+    const timeToEvent = nextBetsCloseTime - Tezos.get_now();
 
     (* Case when event is late: *)
     if abs(timeToEvent) < line.minBettingPeriod
@@ -147,7 +147,7 @@ block {
     const duration =
         int(line.measurePeriod)
         + line.lastBetsCloseTime
-        - Tezos.now;
+        - Tezos.get_now();
 
     if duration <= 0
     then failwith(PoolWrongState.negativeDuration)

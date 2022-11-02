@@ -29,12 +29,12 @@ block {
 
     checkDepositIsNotPaused(store);
 
-    const providedAmount = Tezos.amount / 1mutez;
+    const providedAmount = Tezos.get_amount() / 1mutez;
     if providedAmount = 0n then failwith(PoolErrors.zeroAmount) else skip;
 
     const newEntry = record[
-        provider = Tezos.sender;
-        acceptAfter = Tezos.now + int(store.entryLockPeriod);
+        provider = Tezos.get_sender();
+        acceptAfter = Tezos.get_now() + int(store.entryLockPeriod);
         amount = providedAmount;
     ];
     store.entries[store.nextEntryId] := newEntry;
@@ -55,7 +55,7 @@ block {
     const provided = entry.amount;
     const providedF = entry.amount * store.precision;
 
-    if Tezos.now < entry.acceptAfter
+    if Tezos.get_now() < entry.acceptAfter
     then failwith(PoolErrors.earlyApprove)
     else skip;
 
@@ -117,7 +117,7 @@ block {
     store.entryLiquidityF := abs(store.entryLiquidityF - providedF);
 
     const operations = if entry.amount > 0n then
-        list[prepareOperation(Tezos.sender, entry.amount * 1mutez)]
+        list[prepareOperation(Tezos.get_sender(), entry.amount * 1mutez)]
     else (nil: list(operation));
 
 } with (operations, store)
@@ -212,7 +212,7 @@ block {
     store.activeLiquidityF := abs(store.activeLiquidityF - removedActiveF);
 
     const operations = if payoutValue > 0 then
-        list[prepareOperation(Tezos.sender, abs(payoutValue) * 1mutez)]
+        list[prepareOperation(Tezos.get_sender(), abs(payoutValue) * 1mutez)]
     else (nil: list(operation));
 
     const newWithdrawal = record [
@@ -286,7 +286,7 @@ block {
     checkSenderIs(line.juster, PoolErrors.notExpectedAddress);
 
     (* adding event result *)
-    const reward = Tezos.amount / 1mutez;
+    const reward = Tezos.get_amount() / 1mutez;
     var event := getEvent(eventId, store);
     event.result := Some(reward);
     store.events := Big_map.update(eventId, Some(event), store.events);
@@ -536,7 +536,7 @@ case params of [
     s.nextLineId
 
 [@view] function getBalance (const _ : unit ; const _s: storage) is
-    Tezos.balance
+    Tezos.get_balance()
 
 [@view] function isDepositPaused(const _ : unit; const s: storage) is
     s.isDepositPaused

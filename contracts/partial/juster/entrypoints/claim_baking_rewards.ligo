@@ -7,7 +7,7 @@ block {
     onlyManager(store.manager);
 
     const operations : list(operation) =
-        makeOperationsIfNotZero(Tezos.sender, store.bakingRewards);
+        makeOperationsIfNotZero(Tezos.get_sender(), store.bakingRewards);
     store.bakingRewards := 0tez;
 
 } with (operations, store)

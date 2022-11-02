@@ -14,7 +14,7 @@ block {
 
     (* Check that callback runs from right address and with right
         currency pair: *)
-    if Tezos.sender =/= event.oracleAddress
+    if Tezos.get_sender() =/= event.oracleAddress
     then failwith("Unknown sender") else skip;
     if param.currencyPair =/= event.currencyPair
     then failwith("Unexpected currency pair") else skip;
@@ -40,7 +40,7 @@ block {
 
     (* Paying measureStartFee for this method initiator: *)
     const operations : list(operation) =
-        makeOperationsIfNotZero(Tezos.source, event.measureStartFee);
+        makeOperationsIfNotZero(Tezos.get_source(), event.measureStartFee);
 
     event.measureStartFee := 0tez;
     store.events[eventId] := event;

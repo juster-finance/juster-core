@@ -90,8 +90,8 @@ block {
     ];
 
     const feeTime : timestamp = closedTime + int(store.config.rewardFeeSplitAfter);
-    const senderCanGetFee = Tezos.now >= feeTime;
-    const senderIsNotParticipant = Tezos.sender =/= params.participantAddress;
+    const senderCanGetFee = Tezos.get_now() >= feeTime;
+    const senderIsNotParticipant = Tezos.get_sender() =/= params.participantAddress;
 
     const senderFee = if senderIsNotParticipant and senderCanGetFee
         then fee
@@ -128,7 +128,7 @@ block {
 
     if senderFee > 0n
     then operations := Tezos.transaction 
-        (unit, natToTez(senderFee), getReceiver(Tezos.sender)) # operations
+        (unit, natToTez(senderFee), getReceiver(Tezos.get_sender())) # operations
     else skip;
 
 } with operations;

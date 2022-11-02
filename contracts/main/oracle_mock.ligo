@@ -15,7 +15,7 @@ block {
 
     const returnedValue : callbackReturnedValue = record [
         currencyPair = requestedPair;
-        lastUpdate = Tezos.now;
+        lastUpdate = Tezos.get_now();
         rate = store
     ];
 
@@ -38,5 +38,5 @@ case params of [
 | Update(p) -> update(p, s)
 ]
 
-[@view] function getPrice(const _pair : string; var s : oracleStorage) : timestamp*nat is (Tezos.now, s)
+[@view] function getPrice(const _pair : string; var s : oracleStorage) : timestamp*nat is (Tezos.get_now(), s)
 

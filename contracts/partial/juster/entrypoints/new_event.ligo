@@ -6,7 +6,7 @@ block {
     const config : configType = store.config;
     const fees : tez = config.measureStartFee + config.expirationFee;
 
-    if fees =/= Tezos.amount then
+    if fees =/= Tezos.get_amount() then
         failwith("measureStartFee and expirationFee should be provided")
     else skip;
 
@@ -18,7 +18,7 @@ block {
         failwith("measurePeriod is less than minimal value")
     else skip;
 
-    const periodToBetsClose : int = eventParams.betsCloseTime - Tezos.now;
+    const periodToBetsClose : int = eventParams.betsCloseTime - Tezos.get_now();
     if periodToBetsClose <= 0 then
         failwith("betsCloseTime should be in the future")
     else skip;
@@ -45,7 +45,7 @@ block {
 
     const newEvent : eventType = record[
         currencyPair = eventParams.currencyPair;
-        createdTime = Tezos.now;
+        createdTime = Tezos.get_now();
         targetDynamics = eventParams.targetDynamics;
         betsCloseTime = eventParams.betsCloseTime;
         measureOracleStartTime = (None : option(timestamp));
@@ -66,7 +66,7 @@ block {
         oracleAddress = config.oracleAddress;
         maxAllowedMeasureLag = config.maxAllowedMeasureLag;
         isForceMajeure = False;
-        creator = Tezos.sender;
+        creator = Tezos.get_sender();
     ];
 
     store.events[store.nextEventId] := newEvent;

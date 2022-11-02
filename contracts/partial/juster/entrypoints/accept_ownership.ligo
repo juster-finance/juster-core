@@ -11,7 +11,7 @@ block {
     | None -> (failwith("Not allowed to accept ownership") : address)
     ];
 
-    if proposedManager =/= Tezos.sender
+    if proposedManager =/= Tezos.get_sender()
     then failwith("Not allowed to accept ownership")
     else skip;
 

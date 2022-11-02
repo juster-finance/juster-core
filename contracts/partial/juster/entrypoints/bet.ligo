@@ -7,7 +7,7 @@ function excludeLiquidity(
 
         (* Calculating liquidity bonus: *)
         const totalBettingTime : nat = abs(event.betsCloseTime - event.createdTime);
-        const elapsedTime : int = Tezos.now - event.createdTime;
+        const elapsedTime : int = Tezos.get_now() - event.createdTime;
         if (elapsedTime < 0) then
             (* It is impossible to get here, but if somehow it happens,
                 it can be exploited so I made this failwith: *)
@@ -36,13 +36,13 @@ block {
         failwith("Can't process bet before liquidity added")
     else skip;
 
-    if (Tezos.now > event.betsCloseTime) then
+    if (Tezos.get_now() > event.betsCloseTime) then
         failwith("Bets after betCloseTime is not allowed")
     else skip;
 
-    if Tezos.amount = 0tez then failwith("Bet without tez") else skip;
+    if Tezos.get_amount() = 0tez then failwith("Bet without tez") else skip;
 
-    const key : ledgerKey = (Tezos.sender, eventId);
+    const key : ledgerKey = (Tezos.get_sender(), eventId);
 
     (* poolTo is the pool where bet goes *)
     var poolTo : nat := case params.bet of [
@@ -56,7 +56,7 @@ block {
     | Below -> tezToNat(event.poolAboveEq)
     ];
 
-    const betValue : nat = tezToNat(Tezos.amount);
+    const betValue : nat = tezToNat(Tezos.get_amount());
 
     (* adding liquidity to betting pool *)
     poolTo := poolTo + betValue;
@@ -93,7 +93,7 @@ block {
     (* Adding this bet into deposited bets ledger that tracks all bets
         regardless above / below: *)
     store.depositedBets[key] :=
-        getLedgerAmount(key, store.depositedBets) + Tezos.amount;
+        getLedgerAmount(key, store.depositedBets) + Tezos.get_amount();
 
     store.events[eventId] := event;
 

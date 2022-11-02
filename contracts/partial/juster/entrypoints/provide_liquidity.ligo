@@ -28,8 +28,8 @@ block {
     const eventId : nat = params.eventId;
     var event : eventType := getEvent(store, eventId);
     const totalBets : tez = event.poolAboveEq + event.poolBelow;
-    const key : ledgerKey = (Tezos.sender, eventId);
-    const providedAmount : nat = tezToNat(Tezos.amount);
+    const key : ledgerKey = (Tezos.get_sender(), eventId);
+    const providedAmount : nat = tezToNat(Tezos.get_amount());
     const totalShares : nat = event.totalLiquidityShares;
 
     const isFirstLP : bool = totalBets = 0tez;
@@ -48,7 +48,7 @@ block {
         failwith("Expected ratio in pool should be more than zero")
     else skip;
 
-    if (Tezos.now > event.betsCloseTime) then
+    if (Tezos.get_now() > event.betsCloseTime) then
         failwith("Providing Liquidity after betCloseTime is not allowed")
     else skip;
 

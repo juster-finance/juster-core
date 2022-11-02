@@ -1,5 +1,5 @@
 function checkNoAmountIncluded(const _p : unit) : unit is
-    if Tezos.amount > 0tez
+    if Tezos.get_amount() > 0tez
     then failwith(Errors.disallowAmount)
     else unit;
 
@@ -8,7 +8,7 @@ function checkSenderIs(
     const addr : address;
     const failwithMsg : string) : unit is
 
-    if Tezos.sender =/= addr
+    if Tezos.get_sender() =/= addr
     then failwith(failwithMsg)
     else unit;
 

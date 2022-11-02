@@ -34,7 +34,7 @@ block {
     | None -> (failwith("No events provided") : nat)
     ];
 
-    const key = (Tezos.sender, eventId);
+    const key = (Tezos.get_sender(), eventId);
 
     const positionOption : option(positionType) = Tezos.call_view
         ("getPosition", key, store.juster);

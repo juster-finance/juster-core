@@ -1,6 +1,6 @@
 function isStartFailed(const event : eventType) : bool is
 block {
-    const startTimeLag : int = Tezos.now - event.betsCloseTime;
+    const startTimeLag : int = Tezos.get_now() - event.betsCloseTime;
     const isFailed : bool = (
         startTimeLag > 0
         and (abs(startTimeLag) > event.maxAllowedMeasureLag));
@@ -10,7 +10,7 @@ block {
 function isCloseFailed(const event : eventType) : bool is
 block {
     const closeTimeLag : int =
-        Tezos.now - event.betsCloseTime - event.measurePeriod;
+        Tezos.get_now() - event.betsCloseTime - event.measurePeriod;
     const isFailed : bool = (
         (closeTimeLag > 0)
         and (abs(closeTimeLag) > event.maxAllowedMeasureLag));
@@ -48,7 +48,7 @@ block {
     (* Triggering Force Majeure: *)
     if isStartMeasurementFailed or isCloseFailed then
     block {
-        const receiver : contract(unit) = getReceiver(Tezos.sender);
+        const receiver : contract(unit) = getReceiver(Tezos.get_sender());
         const fees : tez = event.measureStartFee + event.expirationFee;
         const operation : operation = Tezos.transaction(unit, fees, receiver);
         if fees > 0tez then
