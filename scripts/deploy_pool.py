@@ -57,6 +57,7 @@ def generate_pool_storage(manager, juster_address):
         'liquidityUnits': 0,
         'withdrawals': {},
         'nextWithdrawalId': 0,
+        'isDisbandAllow': False,
     }
 
 
