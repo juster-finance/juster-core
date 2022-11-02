@@ -216,7 +216,7 @@ block {
     store.activeLiquidityF := abs(store.activeLiquidityF - removedActiveF);
 
     const operations = if payoutValue > 0 then
-        list[prepareOperation(Tezos.get_sender(), abs(payoutValue) * 1mutez)]
+        list[prepareOperation(position.provider, abs(payoutValue) * 1mutez)]
     else (nil: list(operation));
 
     const newWithdrawal = record [

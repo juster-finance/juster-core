@@ -45,6 +45,8 @@ type claimKey is record [
 
 type claimParams is record [
     amount : nat;
+    (* TODO: is it required to keep provider in claim? there is already
+      positionId in claimKey that can be used to get provider address (?) *)
     provider : address;
 ]
 
