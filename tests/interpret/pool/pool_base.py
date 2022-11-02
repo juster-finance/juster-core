@@ -64,7 +64,7 @@ class PoolBaseTestCase(TestCase):
 
     def drop_changes(self):
         self.storage = self.init_storage.copy()
-        self.balances = {self.address: 0}
+        self.balances = {self.address: Decimal(0)}
         self.next_event_id = 0
 
     def update_balance(self, address, amount):
