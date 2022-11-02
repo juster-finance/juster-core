@@ -109,6 +109,7 @@ type storage is record [
     liquidityUnits : nat;
     withdrawals : big_map (nat, withdrawalType);
     nextWithdrawalId : nat;
+    isDisbandAllow : bool;
 ]
 
 

@@ -444,6 +444,12 @@ block {
 function default(var store : storage) is ((nil: list(operation)), store)
 
 
+function disband(var store : storage) is {
+    checkNoAmountIncluded(unit);
+    onlyManager(store.manager);
+} with ((nil: list(operation)), store with record [isDisbandAllow = true])
+
+
 (* entrypoints:
     - addLine: adding new line of typical events, only manager can add new lines
     - depositLiquidity: creating request for adding new liquidity
@@ -460,6 +466,7 @@ function default(var store : storage) is ((nil: list(operation)), store)
     - AcceptOwnership: allows proposed manager to accept given rights
     - SetDelegate: allows to change delegate
     - Default: allows to receive funds from delegate
+    - disband: allows anyone to claimLiquidity for everyone, used to emtpy pool
 *)
 
 type action is
@@ -478,6 +485,7 @@ type action is
 | AcceptOwnership of unit
 | SetDelegate of option (key_hash)
 | Default of unit
+| Disband of unit
 
 
 function main (const params : action; var s : storage) : (list(operation) * storage) is
@@ -497,6 +505,7 @@ case params of [
 | AcceptOwnership -> acceptOwnership(s)
 | SetDelegate(p) -> setDelegate(p, s)
 | Default -> default(s)
+| Disband -> disband(s)
 ]
 
 [@view] function getLine (const lineId : nat; const s: storage) is
