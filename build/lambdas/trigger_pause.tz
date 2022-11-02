@@ -1,15 +1,14 @@
 { DUP ;
-  CDR ;
-  SWAP ;
   DUP ;
-  DUG 2 ;
+  CDR ;
+  DUP 2 ;
   CAR ;
   CDR ;
   DUP 3 ;
   CAR ;
   CAR ;
   CDR ;
-  DUP 4 ;
+  DIG 4 ;
   CAR ;
   CAR ;
   CAR ;

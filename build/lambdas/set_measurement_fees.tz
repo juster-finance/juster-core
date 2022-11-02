@@ -1,8 +1,6 @@
 { DUP ;
   CDR ;
-  SWAP ;
-  DUP ;
-  DUG 2 ;
+  DUP 2 ;
   CAR ;
   CDR ;
   DUP 3 ;
@@ -21,9 +19,7 @@
   PAIR ;
   DUP ;
   CDR ;
-  SWAP ;
-  DUP ;
-  DUG 2 ;
+  DUP 2 ;
   CAR ;
   CDR ;
   CDR ;

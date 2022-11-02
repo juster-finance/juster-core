@@ -1,7 +1,9 @@
 { PUSH (pair nat nat) (Pair 86400 3600) ;
   PAIR ;
-  { CAR ;
+  { UNPAIR ;
     UNPAIR ;
+    DIG 2 ;
+    DROP ;
     DUP ;
     PUSH mutez 200000 ;
     PAIR ;

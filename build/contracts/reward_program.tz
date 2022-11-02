@@ -2,21 +2,21 @@
   storage (pair (address %juster) (bool %result)) ;
   code { UNPAIR ;
          IF_LEFT
-           { DROP ; NIL operation ; PAIR }
+           { DROP }
            { IF_CONS { SWAP ; DROP ; SOME } { NONE nat } ;
              IF_NONE { PUSH string "No events provided" ; FAILWITH } {} ;
              SENDER ;
              PAIR ;
-             SWAP ;
-             DUP ;
-             DUG 2 ;
+             DUP 2 ;
              CAR ;
              SWAP ;
              VIEW "getPosition"
                   (pair (pair (pair (mutez %betsAboveEq) (mutez %betsBelow))
-                              (pair (mutez %depositedBets) (mutez %depositedLiquidity)))
-                        (pair (pair (bool %isWithdrawn) (nat %liquidityShares))
-                              (pair (mutez %providedLiquidityAboveEq) (mutez %providedLiquidityBelow)))) ;
+                              (mutez %depositedBets)
+                              (mutez %depositedLiquidity))
+                        (pair (bool %isWithdrawn) (nat %liquidityShares))
+                        (mutez %providedLiquidityAboveEq)
+                        (mutez %providedLiquidityBelow)) ;
              IF_NONE { PUSH string "Juster.getPosition view is not found" ; FAILWITH } {} ;
              PUSH mutez 1000000 ;
              SWAP ;
@@ -25,8 +25,8 @@
              CDR ;
              COMPARE ;
              GE ;
-             IF { PUSH bool True ; SWAP ; CAR ; PAIR }
-                { PUSH bool False ; SWAP ; CAR ; PAIR } ;
-             NIL operation ;
-             PAIR } } }
+             IF { PUSH bool True ; SWAP ; CAR } { PUSH bool False ; SWAP ; CAR } ;
+             PAIR } ;
+         NIL operation ;
+         PAIR } }
 

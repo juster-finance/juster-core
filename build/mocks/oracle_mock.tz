@@ -6,9 +6,7 @@
   storage nat ;
   code { UNPAIR ;
          IF_LEFT
-           { SWAP ;
-             DUP ;
-             DUG 2 ;
+           { DUP 2 ;
              NOW ;
              DUP 3 ;
              CAR ;
@@ -21,8 +19,8 @@
              SWAP ;
              NIL operation ;
              DIG 2 ;
-             CONS ;
-             PAIR }
-           { SWAP ; DROP ; NIL operation ; PAIR } } ;
+             CONS }
+           { SWAP ; DROP ; NIL operation } ;
+         PAIR } ;
   view "getPrice" string (pair timestamp nat) { CDR ; NOW ; PAIR } }
 

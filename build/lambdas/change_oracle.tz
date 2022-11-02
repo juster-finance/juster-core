@@ -1,9 +1,7 @@
 { DUP ;
   CDR ;
   CDR ;
-  SWAP ;
-  DUP ;
-  DUG 2 ;
+  DUP 2 ;
   CDR ;
   CAR ;
   CDR ;
