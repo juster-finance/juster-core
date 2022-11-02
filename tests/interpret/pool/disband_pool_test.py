@@ -14,3 +14,9 @@ class DisbandPoolTestCase(PoolBaseTestCase):
         msg = 'Not a contract manager'
         self.assertTrue(msg in str(cm.exception))
 
+    def test_should_allow_to_claim_others_liquidity_if_pool_in_disbanded_state(self):
+        self.add_line()
+        entry_id = self.deposit_liquidity(sender=self.a)
+        position_id = self.approve_liquidity(entry_id=entry_id)
+        self.disband(sender=self.manager)
+        self.claim_liquidity(sender=self.b, position_id=0)
