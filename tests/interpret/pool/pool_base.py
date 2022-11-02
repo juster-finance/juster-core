@@ -510,6 +510,17 @@ class PoolBaseTestCase(TestCase):
         self.balances[sender] = self.balances.get(sender, 0) - amount
         self.balances['contract'] = self.balances.get('contract', 0) + amount
 
+    def disband(self, sender=None, amount=0):
+        sender = sender or self.manager
+
+        call = self.pool.disband().with_amount(amount)
+        result = call.interpret(
+            now=self.current_time, storage=self.storage, sender=sender
+        )
+        self.assertEqual(len(result.operations), 0)
+        assert result.storage['isDisbandAllow']
+        self.storage = result.storage
+
     def get_line(self, line_id):
         return self.pool.getLine(line_id).onchain_view(storage=self.storage)
 
