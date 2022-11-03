@@ -14,7 +14,6 @@ from models.pool.event import Event
 from models.pool.helpers import quantize
 from models.pool.helpers import quantize_up
 from models.pool.line import Line
-from models.pool.position import Position
 from models.pool.types import AnyStorage
 
 
@@ -24,7 +23,7 @@ class PoolModel:
 
     # TODO: add f postfix to all high precision values
     active_events: list[int] = field(default_factory=list)
-    positions: dict[int, Position] = field(default_factory=dict)
+    shares: dict[str, Decimal] = field(default_factory=dict)
     total_shares: Decimal = Decimal(0)
     events: dict[int, Event] = field(default_factory=dict)
     claims: dict[ClaimKey, Decimal] = field(default_factory=dict)
@@ -67,9 +66,14 @@ class PoolModel:
             for index, event in storage['events'].items()
         }
 
+        shares = {
+            address: Decimal(share)
+            for address, share in storage['shares'].items()
+        }
+
         return cls(
             active_events=list(storage['activeEvents'].keys()),
-            positions=convert(Position, storage['positions']),
+            shares=shares,
             total_shares=Decimal(storage['totalShares']),
             events=events,
             entries=convert(Entry, storage['entries']),
@@ -79,7 +83,6 @@ class PoolModel:
             liquidity_units=Decimal(storage['liquidityUnits']),
             balance=balance,
             next_entry_id=storage['nextEntryId'],
-            next_position_id=storage['nextPositionId'],
             entry_lock_period=storage['entryLockPeriod'],
             now=now,
             active_liquidity_f=Decimal(storage['activeLiquidityF']),
@@ -156,10 +159,9 @@ class PoolModel:
         for claim_key in claim_keys:
             claim_amount = self.claims[claim_key]
             event = self.events[claim_key.event_id]
-            position = self.positions[claim_key.position_id]
-            payout_f = payouts_f.get(position.provider, Decimal(0))
+            payout_f = payouts_f.get(claim_key.provider, Decimal(0))
             payout_f += event.get_result_for_provided_f(claim_amount)
-            payouts_f[position.provider] = payout_f
+            payouts_f[claim_key.provider] = payout_f
 
         return payouts_f
 
@@ -184,18 +186,12 @@ class PoolModel:
 
     def approve_liquidity(self, entry_id: int) -> int:
         entry = self.entries[entry_id]
-        position = Position(
-            provider=entry.provider,
-            shares=self.calc_deposit_shares(entry.amount),
-        )
+        new_shares = self.calc_deposit_shares(entry.amount)
+        existed_shares = self.shares.get(entry.provider, Decimal(0))
+        self.shares[entry.provider] = existed_shares + new_shares
+        self.total_shares += new_shares
         self.entries.pop(entry_id)
-
-        position_id = self.next_position_id
-        self.positions[position_id] = position
-        self.next_position_id += 1
-        self.total_shares += position.shares
-
-        return position_id
+        return entry.provider
 
     def cancel_liquidity(self, entry_id: int) -> None:
         entry = self.entries[entry_id]
@@ -203,10 +199,9 @@ class PoolModel:
         self.balance -= entry.amount
 
     def add_claim_shares(
-        self, event_id: int, position_id: int, shares: Decimal
+        self, event_id: int, provider: str, shares: Decimal
     ) -> None:
-        provider = self.positions[position_id].provider
-        claim_key = ClaimKey(event_id, position_id)
+        claim_key = ClaimKey(event_id, provider)
         claim_amount = self.claims.get(claim_key, Decimal(0))
         event = self.events[event_id]
 
@@ -225,22 +220,21 @@ class PoolModel:
         # TODO: consider removing high precision from active liquidity:
         self.active_liquidity_f -= event_claimed * self.precision
 
-    def calc_claim_payout(self, position_id: int, shares: Decimal) -> Decimal:
+    def calc_claim_payout(self, shares: Decimal) -> Decimal:
         free_liquidity_f = self.calc_free_liquidity_f()
         return quantize(
             free_liquidity_f * shares / self.total_shares / self.precision
         )
 
-    def claim_liquidity(self, position_id: int, shares: Decimal) -> Decimal:
+    def claim_liquidity(self, provider: str, shares: Decimal) -> Decimal:
         if shares == 0:
             return Decimal(0)
 
-        payout = self.calc_claim_payout(position_id, shares)
-        position = self.positions[position_id]
-        position.remove_shares(shares)
+        payout = self.calc_claim_payout(shares)
+        self.shares[provider] -= shares
 
         for event_id in self.active_events:
-            self.add_claim_shares(event_id, position_id, shares)
+            self.add_claim_shares(event_id, provider, shares)
 
         self.total_shares -= shares
         assert self.total_shares >= Decimal(0)
