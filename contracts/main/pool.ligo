@@ -156,7 +156,7 @@ block {
                 positionId = claim.positionId;
             ];
 
-            const alreadyClaimed = getClaimedAmount(key, store);
+            const alreadyClaimed = getClaimedAmountOrZero(key, store);
 
             (* TODO: check leftProvided > 0 and raise wrong state? *)
             const leftProvided = abs(event.provided - event.claimed);
@@ -166,11 +166,7 @@ block {
             );
             const newClaim = ceilDiv(newClaimF, store.precision);
 
-            store.claims[key] := record [
-                amount = alreadyClaimed + newClaim;
-                provider = position.provider;
-            ];
-
+            store.claims[key] := alreadyClaimed + newClaim;
             removedActive := removedActive + newClaim;
 
             const newClaimed = event.claimed + newClaim;
@@ -243,15 +239,16 @@ block {
     var sums := (Map.empty : map(address, nat));
     for key in list withdrawRequests block {
         const event = getEvent(key.eventId, store);
+        const position = getPosition(key.positionId, store);
         (* TODO: it might be better to (1) checkEventFinished(event) and then
             (2) use event.result (default: 0 and can't be None) with @inline
             and @inline calcEventReward(shares, event)
         *)
         const eventResult = getEventResult(event);
-        const claim = getClaim(key, store);
-        const eventRewardF = eventResult * claim.amount * store.precision / event.provided;
+        const claimAmount = getClaim(key, store);
+        const eventRewardF = eventResult * claimAmount * store.precision / event.provided;
 
-        sums[claim.provider] := case Map.find_opt(claim.provider, sums) of [
+        sums[position.provider] := case Map.find_opt(position.provider, sums) of [
         | Some(sum) -> sum + eventRewardF
         | None -> eventRewardF
         ];

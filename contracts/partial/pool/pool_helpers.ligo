@@ -35,7 +35,7 @@ function getEvent(const eventId : nat; const store : storage) : eventType is
 function getLine(const lineId : nat; const store : storage) : lineType is
     getOrFail(lineId, store.lines, PoolErrors.lineNotFound)
 
-function getClaim(const key : claimKey; const store : storage) : claimParams is
+function getClaim(const key : claimKey; const store : storage) : nat is
     getOrFail(key, store.claims, PoolErrors.claimNotFound)
 
 (* TODO: replace with absOr(const value : int; const default : nat) ? *)
@@ -159,9 +159,9 @@ block {
     const config = getConfig(justerAddress);
 } with config.expirationFee + config.measureStartFee
 
-function getClaimedAmount(const key : claimKey; const store : storage) is
+function getClaimedAmountOrZero(const key : claimKey; const store : storage) is
     case Big_map.find_opt(key, store.claims) of [
-    | Some(claim) -> claim.amount
+    | Some(claimAmount) -> claimAmount
     | None -> 0n
     ];
 

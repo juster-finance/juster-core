@@ -43,13 +43,6 @@ type claimKey is record [
     positionId : positionIdT;
 ]
 
-type claimParams is record [
-    amount : nat;
-    (* TODO: is it required to keep provider in claim? there is already
-      positionId in claimKey that can be used to get provider address (?) *)
-    provider : address;
-]
-
 (*  entry is not accepted yet position including provider address,
     timestamp when liquidity can be accepted and amount of this liquidity *)
 type entryType is record [
@@ -101,7 +94,7 @@ type storage is record [
     entryLockPeriod : nat;
     entries : big_map(entryIdT, entryType);
     nextEntryId : entryIdT;
-    claims : big_map(claimKey, claimParams);
+    claims : big_map(claimKey, nat);
     manager : address;
     maxEvents : nat;
     isDepositPaused : bool;
