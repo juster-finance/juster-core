@@ -21,9 +21,7 @@
                     (list %withdrawLiquidity (pair (nat %eventId) (nat %positionId))))))) ;
   storage
     (pair (pair (pair (pair (pair (map %activeEvents nat nat) (nat %activeLiquidityF))
-                            (big_map %claims
-                               (pair (nat %eventId) (nat %positionId))
-                               (pair (nat %amount) (address %provider)))
+                            (big_map %claims (pair (nat %eventId) (nat %positionId)) nat)
                             (big_map %entries
                                nat
                                (pair (pair (timestamp %acceptAfter) (nat %amount)) (address %provider))))
@@ -92,7 +90,7 @@
          PUSH string "Wrong state: negative entry liquidity" ;
          LAMBDA
            (pair (pair (pair (pair (pair (map nat nat) nat)
-                                   (big_map (pair nat nat) (pair nat address))
+                                   (big_map (pair nat nat) nat)
                                    (big_map nat (pair (pair timestamp nat) address)))
                              (pair nat nat)
                              (big_map nat (pair (pair nat nat) (option nat)))
@@ -140,7 +138,7 @@
          LAMBDA
            (pair (lambda
                     (pair (pair (pair (pair (pair (map nat nat) nat)
-                                            (big_map (pair nat nat) (pair nat address))
+                                            (big_map (pair nat nat) nat)
                                             (big_map nat (pair (pair timestamp nat) address)))
                                       (pair nat nat)
                                       (big_map nat (pair (pair nat nat) (option nat)))
@@ -162,7 +160,7 @@
                           (big_map nat (pair (pair nat nat) nat)))
                     int)
                  (pair (pair (pair (pair (pair (map nat nat) nat)
-                                         (big_map (pair nat nat) (pair nat address))
+                                         (big_map (pair nat nat) nat)
                                          (big_map nat (pair (pair timestamp nat) address)))
                                    (pair nat nat)
                                    (big_map nat (pair (pair nat nat) (option nat)))
@@ -201,7 +199,7 @@
          LAMBDA
            (pair nat
                  (pair (pair (pair (pair (map nat nat) nat)
-                                   (big_map (pair nat nat) (pair nat address))
+                                   (big_map (pair nat nat) nat)
                                    (big_map nat (pair (pair timestamp nat) address)))
                              (pair nat nat)
                              (big_map nat (pair (pair nat nat) (option nat)))
@@ -235,7 +233,40 @@
          LAMBDA
            (pair nat
                  (pair (pair (pair (pair (map nat nat) nat)
-                                   (big_map (pair nat nat) (pair nat address))
+                                   (big_map (pair nat nat) nat)
+                                   (big_map nat (pair (pair timestamp nat) address)))
+                             (pair nat nat)
+                             (big_map nat (pair (pair nat nat) (option nat)))
+                             bool)
+                       (pair (pair bool
+                                   (big_map
+                                      nat
+                                      (pair (pair (pair (pair nat nat) string bool) (pair address timestamp) nat nat)
+                                            (pair (pair nat nat) nat nat)
+                                            nat)))
+                             nat
+                             address)
+                       (pair nat (big_map string bytes))
+                       nat
+                       nat)
+                 (pair (pair nat nat) (big_map nat (pair (pair nat address) nat)) nat)
+                 (pair address nat)
+                 nat
+                 (big_map nat (pair (pair nat nat) nat)))
+           (pair (pair nat address) nat)
+           { UNPAIR ;
+             SWAP ;
+             CDR ;
+             CAR ;
+             CDR ;
+             CAR ;
+             SWAP ;
+             GET ;
+             IF_NONE { PUSH string "Position is not found" ; FAILWITH } {} } ;
+         LAMBDA
+           (pair nat
+                 (pair (pair (pair (pair (map nat nat) nat)
+                                   (big_map (pair nat nat) nat)
                                    (big_map nat (pair (pair timestamp nat) address)))
                              (pair nat nat)
                              (big_map nat (pair (pair nat nat) (option nat)))
@@ -269,7 +300,7 @@
          LAMBDA
            (pair nat
                  (pair (pair (pair (pair (map nat nat) nat)
-                                   (big_map (pair nat nat) (pair nat address))
+                                   (big_map (pair nat nat) nat)
                                    (big_map nat (pair (pair timestamp nat) address)))
                              (pair nat nat)
                              (big_map nat (pair (pair nat nat) (option nat)))
@@ -302,15 +333,16 @@
              SWAP ;
              GET ;
              IF_NONE { PUSH string "Line is not found" ; FAILWITH } {} } ;
-         DIG 11 ;
+         DIG 12 ;
          UNPAIR ;
          IF_LEFT
            { IF_LEFT
                { DIG 2 ;
                  DIG 3 ;
-                 DIG 6 ;
-                 DIG 8 ;
-                 DROP 4 ;
+                 DIG 4 ;
+                 DIG 7 ;
+                 DIG 9 ;
+                 DROP 5 ;
                  IF_LEFT
                    { DIG 2 ;
                      DIG 3 ;
@@ -900,33 +932,29 @@
                               EXEC ;
                               CONS }
                             { DIG 2 ; DROP 2 ; NIL operation } } } }
-               { DIG 4 ;
-                 DIG 7 ;
-                 DIG 10 ;
+               { DIG 5 ;
+                 DIG 8 ;
+                 DIG 11 ;
                  DROP 3 ;
                  IF_LEFT
                    { IF_LEFT
                        { DIG 2 ;
-                         DIG 4 ;
-                         DIG 6 ;
+                         DIG 5 ;
+                         DIG 7 ;
                          DROP 3 ;
                          SWAP ;
                          UNIT ;
-                         DIG 7 ;
+                         DIG 8 ;
                          SWAP ;
                          EXEC ;
                          DROP ;
                          DUP ;
                          DUP 3 ;
                          CAR ;
+                         PAIR ;
+                         DIG 4 ;
                          SWAP ;
-                         CDR ;
-                         CAR ;
-                         CDR ;
-                         CAR ;
-                         SWAP ;
-                         GET ;
-                         IF_NONE { PUSH string "Position is not found" ; FAILWITH } {} ;
+                         EXEC ;
                          DUP 2 ;
                          CAR ;
                          CDR ;
@@ -1047,11 +1075,8 @@
                                      CAR ;
                                      CDR ;
                                      CAR ;
-                                     DUP 14 ;
-                                     CAR ;
-                                     CDR ;
-                                     DUP 8 ;
-                                     DIG 9 ;
+                                     DUP 7 ;
+                                     DIG 8 ;
                                      UNPAIR ;
                                      SWAP ;
                                      CAR ;
@@ -1061,9 +1086,8 @@
                                      CAR ;
                                      SWAP ;
                                      GET ;
-                                     IF_NONE { PUSH nat 0 } { CAR } ;
+                                     IF_NONE { PUSH nat 0 } {} ;
                                      ADD ;
-                                     PAIR ;
                                      DIG 8 ;
                                      SWAP ;
                                      SOME ;
@@ -1396,9 +1420,10 @@
                          PAIR ;
                          SWAP }
                        { DIG 3 ;
-                         DIG 7 ;
+                         DIG 4 ;
                          DIG 8 ;
-                         DROP 3 ;
+                         DIG 9 ;
+                         DROP 4 ;
                          SWAP ;
                          DUP ;
                          DUP 3 ;
@@ -1966,7 +1991,8 @@
                      DIG 7 ;
                      DIG 8 ;
                      DIG 9 ;
-                     DROP 8 ;
+                     DIG 10 ;
+                     DROP 9 ;
                      IF_LEFT
                        { DROP }
                        { DROP ;
@@ -2120,15 +2146,16 @@
                          PAIR ;
                          PAIR } ;
                      NIL operation } } }
-           { DIG 4 ;
-             DIG 5 ;
+           { DIG 5 ;
              DIG 6 ;
              DIG 7 ;
              DIG 8 ;
+             DIG 9 ;
              DROP 5 ;
              IF_LEFT
                { DIG 4 ;
-                 DROP ;
+                 DIG 5 ;
+                 DROP 2 ;
                  IF_LEFT
                    { IF_LEFT
                        { DIG 2 ;
@@ -2454,13 +2481,14 @@
                          DIG 2 ;
                          SET_DELEGATE ;
                          CONS } } }
-               { DIG 6 ;
+               { DIG 7 ;
                  DROP ;
                  IF_LEFT
                    { DIG 2 ;
                      DIG 3 ;
                      DIG 4 ;
-                     DROP 3 ;
+                     DIG 5 ;
+                     DROP 4 ;
                      IF_LEFT
                        { SWAP ;
                          UNIT ;
@@ -2554,7 +2582,8 @@
                    { IF_LEFT
                        { DIG 3 ;
                          DIG 4 ;
-                         DROP 2 ;
+                         DIG 5 ;
+                         DROP 3 ;
                          SWAP ;
                          UNIT ;
                          DIG 5 ;
@@ -2702,11 +2731,11 @@
                          PAIR ;
                          NIL operation }
                        { DIG 2 ;
-                         DIG 5 ;
+                         DIG 6 ;
                          DROP 2 ;
                          SWAP ;
                          UNIT ;
-                         DIG 5 ;
+                         DIG 6 ;
                          SWAP ;
                          EXEC ;
                          DROP ;
@@ -2719,11 +2748,18 @@
                                 DUP 5 ;
                                 SWAP ;
                                 EXEC ;
-                                DUP ;
+                                DUP 4 ;
+                                DUP 3 ;
+                                CDR ;
+                                PAIR ;
+                                DUP 7 ;
+                                SWAP ;
+                                EXEC ;
+                                DUP 2 ;
                                 CDR ;
                                 IF_NONE { PUSH string "Event result is not received yet" ; FAILWITH } {} ;
+                                DUP 6 ;
                                 DUP 5 ;
-                                DUP 4 ;
                                 SWAP ;
                                 CAR ;
                                 CAR ;
@@ -2733,17 +2769,16 @@
                                 SWAP ;
                                 GET ;
                                 IF_NONE { PUSH string "Claim is not found" ; FAILWITH } {} ;
+                                DIG 3 ;
+                                CAR ;
+                                CDR ;
+                                DUP 7 ;
+                                CDR ;
+                                CAR ;
+                                CDR ;
+                                CDR ;
                                 DIG 2 ;
-                                CAR ;
-                                CDR ;
-                                DUP 6 ;
-                                CDR ;
-                                CAR ;
-                                CDR ;
-                                CDR ;
-                                DUP 3 ;
-                                CAR ;
-                                DIG 4 ;
+                                DIG 3 ;
                                 MUL ;
                                 MUL ;
                                 EDIV ;
@@ -2752,10 +2787,12 @@
                                 DUP 4 ;
                                 DIG 4 ;
                                 DUP 4 ;
+                                CAR ;
                                 CDR ;
                                 GET ;
                                 IF_NONE { SWAP } { DIG 2 ; ADD } ;
                                 DIG 2 ;
+                                CAR ;
                                 CDR ;
                                 SWAP ;
                                 SOME ;
@@ -2785,7 +2822,7 @@
                                 CDR ;
                                 CAR ;
                                 DIG 6 ;
-                                NONE (pair nat address) ;
+                                NONE nat ;
                                 SWAP ;
                                 UPDATE ;
                                 PAIR ;
@@ -2800,7 +2837,8 @@
                                 PAIR ;
                                 SWAP } ;
                          DIG 2 ;
-                         DROP ;
+                         DIG 3 ;
+                         DROP 2 ;
                          NIL operation ;
                          SWAP ;
                          ITER { UNPAIR ;
@@ -2888,7 +2926,7 @@
   view "getNextPositionId" unit nat { CDR ; CDR ; CAR ; CAR ; CAR } ;
   view "getClaim"
        (pair (nat %eventId) (nat %positionId))
-       (option (pair (nat %amount) (address %provider)))
+       (option nat)
        { UNPAIR ; SWAP ; CAR ; CAR ; CAR ; CDR ; CAR ; SWAP ; GET } ;
   view "getWithdrawal"
        nat
@@ -2911,7 +2949,7 @@
        nat
        { LAMBDA
            (pair (pair (pair (pair (pair (map nat nat) nat)
-                                   (big_map (pair nat nat) (pair nat address))
+                                   (big_map (pair nat nat) nat)
                                    (big_map nat (pair (pair timestamp nat) address)))
                              (pair nat nat)
                              (big_map nat (pair (pair nat nat) (option nat)))
