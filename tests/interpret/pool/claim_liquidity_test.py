@@ -33,18 +33,18 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
         self.claim_liquidity(sender=self.a, position_id=0, shares=100)
         # claim amount is 200 provided * 100 shares / 400 total shares:
         target_claims = {
-            (0, 0): {'amount': 50, 'provider': self.a},
-            (1, 0): {'amount': 50, 'provider': self.a},
+            (0, 0): 50,
+            (1, 0): 50,
         }
         self.assertDictEqual(self.storage['claims'], target_claims)
 
         # claim amount is 150 left provided * 100 shares / 300 total shares:
         self.claim_liquidity(sender=self.b, position_id=1, shares=100)
         target_claims = {
-            (0, 0): {'amount': 50, 'provider': self.a},
-            (1, 0): {'amount': 50, 'provider': self.a},
-            (0, 1): {'amount': 50, 'provider': self.b},
-            (1, 1): {'amount': 50, 'provider': self.b},
+            (0, 0): 50,
+            (1, 0): 50,
+            (0, 1): 50,
+            (1, 1): 50,
         }
         self.assertDictEqual(self.storage['claims'], target_claims)
 
@@ -97,7 +97,7 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
 
         # as far as there is 2 events, target amount is 100 / 2 = 50
         target_claims = {
-            (0, 0): {'amount': 50, 'provider': self.a},
+            (0, 0): 50,
         }
 
         self.assertDictEqual(self.storage['claims'], target_claims)

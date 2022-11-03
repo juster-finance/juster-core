@@ -81,19 +81,16 @@ class PoolViewsTestCase(PoolBaseTestCase):
         self.assertEqual(self.get_next_position_id(), 1)
 
     def test_get_claim_view(self):
+        # one event in line, so all 1000 mutez goes to this one event
         self.add_line(max_events=1)
         self.deposit_liquidity(sender=self.a, amount=1000)
         self.approve_liquidity()
         self.create_event()
         self.claim_liquidity(position_id=0, sender=self.a, shares=420)
 
+        # claiming 420 shares should equal to claim 420 mutez from event:
         actual_claim = self.get_claim(event_id=0, position_id=0)
-        expected_claim = {
-            'amount': 420,
-            'provider': self.a,
-        }
-
-        self.assertDictEqual(expected_claim, actual_claim)
+        self.assertEqual(actual_claim, 420)
 
         # check requesting claim that not in contract does not fail:
         self.assertTrue(self.get_claim(event_id=42, position_id=0) is None)
