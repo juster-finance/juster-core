@@ -23,3 +23,20 @@ class DisbandPoolTestCase(PoolBaseTestCase):
         self.claim_liquidity(sender=self.b, position_id=0)
 
         assert self.balances[self.a] == Decimal(0)
+
+    def test_should_create_claims_for_disbanded_liquidity(self):
+        # two events, 100 mutez liquidity, one event should have 50 mutez:
+        line_id = self.add_line(max_events=2)
+        entry_id = self.deposit_liquidity(sender=self.a, amount=100)
+        position_id = self.approve_liquidity(entry_id=entry_id)
+        event_id = self.create_event(line_id=line_id)
+        self.disband(sender=self.manager)
+        self.claim_liquidity(sender=self.b, position_id=0, shares=100)
+
+        assert len(self.storage['claims']) == 1
+        assert self.balances[self.a] == Decimal(-50)
+
+        self.pay_reward(event_id=event_id, amount=50)
+        positions = [dict(positionId=position_id, eventId=event_id)]
+        amounts = self.withdraw_liquidity(positions=positions, sender=self.b)
+        assert self.balances[self.a] == Decimal(0)
