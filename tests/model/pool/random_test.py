@@ -55,17 +55,17 @@ class RandomTester:
         self.model.approve_liquidity(entry_id=entry_id)
 
     def random_claim(self):
-        if not len(self.model.positions):
+        if not len(self.model.shares):
             return
-        position_id = choice(list(self.model.positions.keys()))
-        position = self.model.positions[position_id]
-        random_shares = rand_from_zero_to(position.shares)
+        provider = choice(list(self.model.shares.keys()))
+        provider_shares = self.model.shares[provider]
+        random_shares = rand_from_zero_to(provider_shares)
 
         payout = self.model.claim_liquidity(
-            position_id=position_id,
+            provider=provider,
             shares=random_shares
         )
-        self.balances[position.provider] += payout
+        self.balances[provider] += payout
 
     def random_create_event(self):
         if len(self.model.active_events) > self.max_events:

@@ -19,9 +19,9 @@ class DepositLiquidityTestCase(PoolBaseTestCase):
     def test_should_allow_to_withdraw_all_liquidity_and_add_new(self):
         self.add_line()
         self.deposit_liquidity(amount=1000)
-        self.approve_liquidity(entry_id=0)
+        provider = self.approve_liquidity(entry_id=0)
         self.assertEqual(self.storage['totalShares'], 1000)
-        self.claim_liquidity(position_id=0, shares=1000)
+        self.claim_liquidity(provider=provider, shares=1000)
         self.assertEqual(self.storage['totalShares'], 0)
 
         self.deposit_liquidity(amount=1000)

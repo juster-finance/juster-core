@@ -9,40 +9,48 @@ class BalanceIssueTestCase(PoolBaseTestCase):
         self,
     ):
         self.add_line(max_events=3)
-        entry_id = self.deposit_liquidity(amount=1_000_000)
-        position_one = self.approve_liquidity(entry_id=entry_id)
+        entry_id = self.deposit_liquidity(amount=1_000_000, sender=self.a)
+        provider_one = self.approve_liquidity(entry_id=entry_id)
 
-        entry_id = self.deposit_liquidity(amount=1_000_001)
-        position_two = self.approve_liquidity(entry_id=entry_id)
+        entry_id = self.deposit_liquidity(amount=1_000_001, sender=self.b)
+        provider_two = self.approve_liquidity(entry_id=entry_id)
 
         first_event = self.create_event()
         self.wait(3600)
         second_event = self.create_event()
         self.wait(3600)
 
-        self.claim_liquidity(shares=1_000_000, position_id=position_one)
-        self.claim_liquidity(shares=1_000_001, position_id=position_two)
+        self.claim_liquidity(
+            shares=1_000_000,
+            provider=provider_one,
+            sender=provider_one,
+        )
+        self.claim_liquidity(
+            shares=1_000_001,
+            provider=provider_two,
+            sender=provider_two,
+        )
         assert self.balances['contract'] >= 0
 
         self.pay_reward(event_id=first_event, amount=1_000_000)
         self.pay_reward(event_id=second_event, amount=1_000_000)
 
-        positions = [
-            {'positionId': position_one, 'eventId': first_event},
-            {'positionId': position_one, 'eventId': second_event},
-            {'positionId': position_two, 'eventId': first_event},
-            {'positionId': position_two, 'eventId': second_event},
+        claims = [
+            {'provider': provider_one, 'eventId': first_event},
+            {'provider': provider_one, 'eventId': second_event},
+            {'provider': provider_two, 'eventId': first_event},
+            {'provider': provider_two, 'eventId': second_event},
         ]
-        self.withdraw_liquidity(positions=positions)
+        self.withdraw_liquidity(claims=claims)
 
         # checing continuality:
         entry_id = self.deposit_liquidity(amount=1_000_000)
-        new_position = self.approve_liquidity(entry_id=entry_id)
+        new_provider = self.approve_liquidity(entry_id=entry_id)
         self.assertEqual(
-            self.storage['positions'][new_position]['shares'], 1_000_000
+            self.storage['shares'][new_provider], 1_000_000
         )
 
-        self.claim_liquidity(shares=1_000_000, position_id=new_position)
+        self.claim_liquidity(shares=1_000_000, provider=new_provider)
         # allowing 1 mutez on the contract:
         self.assertTrue(self.balances['contract'] <= Decimal(1))
 
@@ -51,7 +59,7 @@ class BalanceIssueTestCase(PoolBaseTestCase):
     ):
         self.add_line(max_events=3)
         entry_id = self.deposit_liquidity(amount=1_000_000)
-        pos_id = self.approve_liquidity(entry_id=entry_id)
+        provider = self.approve_liquidity(entry_id=entry_id)
 
         first_event = self.create_event()
         self.wait(3600)
@@ -59,8 +67,8 @@ class BalanceIssueTestCase(PoolBaseTestCase):
         self.wait(3600)
         third_event = self.create_event()
 
-        self.claim_liquidity(shares=1_000, position_id=pos_id)
-        self.claim_liquidity(shares=1, position_id=pos_id)
+        self.claim_liquidity(shares=1_000, provider=provider)
+        self.claim_liquidity(shares=1, provider=provider)
 
     def test_negative_payout_issue_when_provided_approved_during_loss_event(
         self,
@@ -68,7 +76,7 @@ class BalanceIssueTestCase(PoolBaseTestCase):
 
         self.add_line(max_events=2)
         entry_id = self.deposit_liquidity(amount=1000)
-        pos_id = self.approve_liquidity(entry_id=entry_id)
+        provider = self.approve_liquidity(entry_id=entry_id)
 
         first_event = self.create_event()
         self.wait(3600)
@@ -85,7 +93,7 @@ class BalanceIssueTestCase(PoolBaseTestCase):
         self.create_event()
 
         # free liquidity = 1100 - 800 = 300
-        payout = self.claim_liquidity(shares=1_000, position_id=pos_id)
+        payout = self.claim_liquidity(shares=1_000, provider=provider)
 
         # payout is 50% of free liquidity = 50% * 300:
         self.assertEqual(payout, 150)
@@ -98,7 +106,7 @@ class BalanceIssueTestCase(PoolBaseTestCase):
 
         self.add_line(max_events=2)
         entry_id = self.deposit_liquidity(amount=1000)
-        pos_one = self.approve_liquidity(entry_id=entry_id)
+        provider_one = self.approve_liquidity(entry_id=entry_id)
 
         first_event = self.create_event()
         self.wait(3600)
@@ -106,14 +114,14 @@ class BalanceIssueTestCase(PoolBaseTestCase):
         self.wait(3600)
 
         entry_id = self.deposit_liquidity(amount=1000)
-        pos_two = self.approve_liquidity(entry_id=entry_id)
+        provider_two = self.approve_liquidity(entry_id=entry_id)
 
         self.pay_reward(event_id=first_event, amount=100)
         third_event = self.create_event()
 
         # there is only 300 mutez on balance but pool tries to pay 400 with
         # current calculations:
-        payout = self.claim_liquidity(shares=1_000, position_id=pos_two)
+        payout = self.claim_liquidity(shares=1_000, provider=provider_two)
         self.assertEqual(payout, 150)
 
     def test_payout_should_not_exceed_balance_when_there_was_lmt_shares_event(
@@ -122,7 +130,7 @@ class BalanceIssueTestCase(PoolBaseTestCase):
 
         self.add_line(max_events=2)
         entry_id = self.deposit_liquidity(amount=1000)
-        pos_id = self.approve_liquidity(entry_id=entry_id)
+        provider = self.approve_liquidity(entry_id=entry_id)
 
         first_event = self.create_event()
         self.wait(3600)
@@ -132,5 +140,5 @@ class BalanceIssueTestCase(PoolBaseTestCase):
         third_event = self.create_event()
         self.assertEqual(self.balances['contract'], 0)
 
-        payout = self.claim_liquidity(shares=100, position_id=pos_id)
+        payout = self.claim_liquidity(shares=100, provider=provider)
         self.assertEqual(payout, 0)

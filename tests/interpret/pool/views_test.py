@@ -60,25 +60,10 @@ class PoolViewsTestCase(PoolBaseTestCase):
         self.add_line()
         self.deposit_liquidity(sender=self.a, amount=1000)
         self.approve_liquidity()
-
-        actual_position = self.get_position(0)
-        expected_position = {
-            'shares': 1000,
-            'entryLiquidityUnits': 0,
-            'provider': self.a,
-        }
-
-        self.assertDictEqual(expected_position, actual_position)
+        self.assertEqual(self.get_shares(self.a), 1000)
 
         # check requesting position that not in contract does not fail:
-        self.assertTrue(self.get_position(42) is None)
-
-    def test_get_next_position_id_view(self):
-        self.add_line()
-        self.deposit_liquidity(sender=self.a, amount=1000)
-        self.assertEqual(self.get_next_position_id(), 0)
-        self.approve_liquidity()
-        self.assertEqual(self.get_next_position_id(), 1)
+        self.assertTrue(self.get_shares(self.b) is None)
 
     def test_get_claim_view(self):
         # one event in line, so all 1000 mutez goes to this one event
@@ -86,20 +71,20 @@ class PoolViewsTestCase(PoolBaseTestCase):
         self.deposit_liquidity(sender=self.a, amount=1000)
         self.approve_liquidity()
         self.create_event()
-        self.claim_liquidity(position_id=0, sender=self.a, shares=420)
+        self.claim_liquidity(provider=self.a, sender=self.a, shares=420)
 
         # claiming 420 shares should equal to claim 420 mutez from event:
-        actual_claim = self.get_claim(event_id=0, position_id=0)
+        actual_claim = self.get_claim(event_id=0, provider=self.a)
         self.assertEqual(actual_claim, 420)
 
         # check requesting claim that not in contract does not fail:
-        self.assertTrue(self.get_claim(event_id=42, position_id=0) is None)
+        self.assertTrue(self.get_claim(event_id=42, provider=self.a) is None)
 
     def test_get_withdrawal_view(self):
         self.add_line(max_events=2)
         self.deposit_liquidity(sender=self.a, amount=1000)
         self.approve_liquidity()
-        self.claim_liquidity(position_id=0, sender=self.a, shares=420)
+        self.claim_liquidity(provider=self.a, sender=self.a, shares=420)
 
         actual_withdrawal = self.get_withdrawal(withdrawal_id=0)
         expected_withdrawal = {
@@ -118,7 +103,7 @@ class PoolViewsTestCase(PoolBaseTestCase):
         self.deposit_liquidity(sender=self.a, amount=1000)
         self.approve_liquidity()
         self.assertEqual(self.get_next_withdrawal_id(), 0)
-        self.claim_liquidity(position_id=0, sender=self.a, shares=420)
+        self.claim_liquidity(provider=self.a, sender=self.a, shares=420)
         self.assertEqual(self.get_next_withdrawal_id(), 1)
 
     def test_get_active_events_view(self):

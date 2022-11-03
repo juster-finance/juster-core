@@ -18,9 +18,9 @@ class DisbandPoolTestCase(PoolBaseTestCase):
     def test_should_allow_to_claim_others_liquidity_if_pool_in_disbanded_state(self):
         self.add_line()
         entry_id = self.deposit_liquidity(sender=self.a)
-        position_id = self.approve_liquidity(entry_id=entry_id)
+        provider = self.approve_liquidity(entry_id=entry_id)
         self.disband(sender=self.manager)
-        self.claim_liquidity(sender=self.b, position_id=0)
+        self.claim_liquidity(sender=self.b, provider=provider)
 
         assert self.balances[self.a] == Decimal(0)
 
@@ -28,15 +28,15 @@ class DisbandPoolTestCase(PoolBaseTestCase):
         # two events, 100 mutez liquidity, one event should have 50 mutez:
         line_id = self.add_line(max_events=2)
         entry_id = self.deposit_liquidity(sender=self.a, amount=100)
-        position_id = self.approve_liquidity(entry_id=entry_id)
+        provider = self.approve_liquidity(entry_id=entry_id)
         event_id = self.create_event(line_id=line_id)
         self.disband(sender=self.manager)
-        self.claim_liquidity(sender=self.b, position_id=0, shares=100)
+        self.claim_liquidity(sender=self.b, provider=provider, shares=100)
 
         assert len(self.storage['claims']) == 1
         assert self.balances[self.a] == Decimal(-50)
 
         self.pay_reward(event_id=event_id, amount=50)
-        positions = [dict(positionId=position_id, eventId=event_id)]
-        amounts = self.withdraw_liquidity(positions=positions, sender=self.b)
+        claims = [{'provider': provider, 'eventId': event_id}]
+        amounts = self.withdraw_liquidity(claims=claims, sender=self.b)
         assert self.balances[self.a] == Decimal(0)

@@ -13,11 +13,11 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
         # providing liquidity:
         self.deposit_liquidity(self.a, amount=80_000_000)
         self.approve_liquidity(self.a, entry_id=0)
-        self.assertEqual(self.get_next_liquidity(), 8_000_000)
+        provider_one = self.assertEqual(self.get_next_liquidity(), 8_000_000)
 
         # second provider adds some liquidity with 20% shares:
         self.deposit_liquidity(self.b, amount=20_000_000)
-        self.approve_liquidity(self.a, entry_id=1)
+        provider_two = self.approve_liquidity(self.a, entry_id=1)
         self.assertEqual(self.get_next_liquidity(), 10_000_000)
 
         # creating one event:
@@ -26,7 +26,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
 
         # A decided to remove liquidity:
         withdrawn_amount = self.claim_liquidity(
-            self.a, position_id=0, shares=80_000_000
+            self.a, provider=provider_one, shares=80_000_000
         )
         self.assertEqual(self.get_next_liquidity(), 2_000_000)
 
@@ -160,7 +160,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
 
         # providing liquidity:
         self.deposit_liquidity(self.a, amount=2_000_000)
-        self.approve_liquidity(self.a, entry_id=0)
+        provider = self.approve_liquidity(self.a, entry_id=0)
 
         self.create_event()
         self.claim_liquidity(self.a, shares=2_000_000)
@@ -169,7 +169,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
         self.wait(3600)
         self.pay_reward(event_id=0, amount=4_000_000)
 
-        self.withdraw_liquidity(positions=[{'eventId': 0, 'positionId': 0}])
+        self.withdraw_liquidity(claims=[{'eventId': 0, 'provider': provider}])
 
         self.assertEqual(self.get_next_liquidity(), 0)
 

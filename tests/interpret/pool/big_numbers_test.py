@@ -8,7 +8,7 @@ class BigNumbersTestCase(PoolBaseTestCase):
         big_amount = 10**18
         self.add_line(max_events=2)
         self.deposit_liquidity(amount=big_amount)
-        position_id = self.approve_liquidity()
+        provider = self.approve_liquidity()
         first_event = self.create_event()
         self.wait(3600)
         self.claim_liquidity(shares=int(big_amount * 0.2))
@@ -20,8 +20,8 @@ class BigNumbersTestCase(PoolBaseTestCase):
             event_id=second_event, amount=int(big_amount * 0.5 * 0.8)
         )
         self.withdraw_liquidity(
-            positions=[
-                {'positionId': position_id, 'eventId': first_event},
-                {'positionId': position_id, 'eventId': second_event},
+            claims=[
+                {'provider': provider, 'eventId': first_event},
+                {'provider': provider, 'eventId': second_event},
             ]
         )

@@ -106,6 +106,6 @@ class ApproveLiquidityTestCase(PoolBaseTestCase):
 
         # another provider adds 500 mutez and should receive 500 shares:
         self.deposit_liquidity(sender=self.b, amount=500)
-        self.approve_liquidity(entry_id=1)
-        received_shares = self.storage['positions'][1]['shares']
+        provider = self.approve_liquidity(entry_id=1)
+        received_shares = self.storage['shares'][provider]
         self.assertEqual(received_shares, 500)

@@ -11,10 +11,10 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
 
         self.add_line()
         self.deposit_liquidity(amount=100)
-        self.approve_liquidity()
+        provider = self.approve_liquidity()
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.claim_liquidity(position_id=0, shares=101)
+            self.claim_liquidity(provider=provider, shares=101)
         msg = 'Claim shares is exceed position shares'
         self.assertTrue(msg in str(cm.exception))
 
@@ -23,40 +23,40 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
         self.add_line(max_events=1)
         self.deposit_liquidity(sender=self.a, amount=100)
         self.deposit_liquidity(sender=self.b, amount=300)
-        self.approve_liquidity(entry_id=0)
-        self.approve_liquidity(entry_id=1)
+        provider_one = self.approve_liquidity(entry_id=0)
+        provider_two = self.approve_liquidity(entry_id=1)
 
         # 400 mutez distributed equallty between two events:
         self.create_event(line_id=0)
         self.create_event(line_id=1)
 
-        self.claim_liquidity(sender=self.a, position_id=0, shares=100)
+        self.claim_liquidity(sender=self.a, provider=provider_one, shares=100)
         # claim amount is 200 provided * 100 shares / 400 total shares:
         target_claims = {
-            (0, 0): 50,
-            (1, 0): 50,
+            (0, provider_one): 50,
+            (1, provider_one): 50,
         }
         self.assertDictEqual(self.storage['claims'], target_claims)
 
         # claim amount is 150 left provided * 100 shares / 300 total shares:
-        self.claim_liquidity(sender=self.b, position_id=1, shares=100)
+        self.claim_liquidity(sender=self.b, provider=provider_two, shares=100)
         target_claims = {
-            (0, 0): 50,
-            (1, 0): 50,
-            (0, 1): 50,
-            (1, 1): 50,
+            (0, provider_one): 50,
+            (1, provider_one): 50,
+            (0, provider_two): 50,
+            (1, provider_two): 50,
         }
         self.assertDictEqual(self.storage['claims'], target_claims)
 
     def test_should_return_free_liquidity_share(self):
         self.add_line(max_events=2)
         self.deposit_liquidity(sender=self.a, amount=100)
-        self.approve_liquidity(entry_id=0)
+        provider = self.approve_liquidity(entry_id=0)
         self.assertEqual(self.balances[self.a], -100)
 
         # 50 mutez used in the first event (100 / 2 max active events):
         self.create_event(line_id=0)
-        payout = self.claim_liquidity(sender=self.a, position_id=0, shares=100)
+        payout = self.claim_liquidity(sender=self.a, provider=provider, shares=100)
 
         # 50 mutez unused liquidity should be returned:
         self.assertEqual(payout, 50)
@@ -65,39 +65,39 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
     def test_should_not_allow_to_claim_others_shares(self):
         self.add_line()
         self.deposit_liquidity(sender=self.a)
-        self.approve_liquidity()
+        provider = self.approve_liquidity()
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.claim_liquidity(sender=self.b)
 
-        msg = 'Not position owner'
+        msg = 'Not shares owner'
         self.assertTrue(msg in str(cm.exception))
 
     def test_should_not_allow_to_claim_shares_twice(self):
         self.add_line()
         self.deposit_liquidity(amount=100)
-        self.approve_liquidity()
-        self.claim_liquidity(position_id=0, shares=100)
+        provider = self.approve_liquidity()
+        self.claim_liquidity(provider=provider, shares=100)
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.claim_liquidity(position_id=0, shares=100)
+            self.claim_liquidity(provider=provider, shares=100)
         msg = 'Claim shares is exceed position shares'
         self.assertTrue(msg in str(cm.exception))
 
     def test_should_be_possible_to_claim_partial_liquidity(self):
         self.add_line(max_events=2)
         self.deposit_liquidity(amount=100, sender=self.a)
-        self.approve_liquidity()
+        provider = self.approve_liquidity()
         self.create_event(line_id=0)
 
-        self.claim_liquidity(position_id=0, shares=50)
-        self.claim_liquidity(position_id=0, shares=30)
-        self.claim_liquidity(position_id=0, shares=15)
-        self.claim_liquidity(position_id=0, shares=3)
-        self.claim_liquidity(position_id=0, shares=2)
+        self.claim_liquidity(provider=provider, shares=50)
+        self.claim_liquidity(provider=provider, shares=30)
+        self.claim_liquidity(provider=provider, shares=15)
+        self.claim_liquidity(provider=provider, shares=3)
+        self.claim_liquidity(provider=provider, shares=2)
 
         # as far as there is 2 events, target amount is 100 / 2 = 50
         target_claims = {
-            (0, 0): 50,
+            (0, provider): 50,
         }
 
         self.assertDictEqual(self.storage['claims'], target_claims)
@@ -105,21 +105,21 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
     def test_should_not_create_claims_for_zero_shares(self):
         self.add_line()
         self.deposit_liquidity(amount=100, sender=self.a)
-        self.approve_liquidity()
+        provider = self.approve_liquidity()
         self.create_event(line_id=0)
 
-        self.claim_liquidity(position_id=0, shares=0)
+        self.claim_liquidity(provider=provider, shares=0)
         self.assertEqual(len(self.storage['claims']), 0)
 
     def test_should_increase_claimed_shares_for_events_created_before_position(self):
         self.add_line(max_events=2)
         self.deposit_liquidity(amount=100, sender=self.a)
-        self.approve_liquidity(entry_id=0)
+        provider_one = self.approve_liquidity(entry_id=0)
         self.create_event(line_id=0)
 
         self.deposit_liquidity(amount=100, sender=self.b)
-        self.approve_liquidity(entry_id=1)
+        provider_two = self.approve_liquidity(entry_id=1)
 
-        self.claim_liquidity(position_id=1, shares=100, sender=self.b)
+        self.claim_liquidity(provider=provider_two, shares=100, sender=self.b)
         # claimed amount is 100 shares / 200 total shares * 50 provided to event:
         self.assertEqual(self.storage['events'][0]['claimed'], 25)

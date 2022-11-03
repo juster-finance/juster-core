@@ -187,12 +187,12 @@ class PoolBaseTestCase(TestCase):
         result.storage['entries'].pop(entry_id)
 
         init_model = self.to_model()
-        position_id = init_model.approve_liquidity(entry_id)
+        provider = init_model.approve_liquidity(entry_id)
         result_model = self.to_model(storage=result.storage)
         self.assertEqual(init_model, result_model)
 
         self.storage = result.storage
-        return position_id
+        return provider
 
     def cancel_liquidity(self, sender=None, entry_id=0, amount=0):
         sender = sender or self.manager
@@ -232,30 +232,12 @@ class PoolBaseTestCase(TestCase):
             result_model.calc_entry_liquidity_f(),
         )
 
-    def _check_withdrawal_creation(self, result, position_id, shares):
-        # TODO: move this to model too?
-        next_id = self.storage['nextWithdrawalId']
-        self.assertEqual(result.storage['nextWithdrawalId'], next_id + 1)
-        actual_withdrawal = result.storage['withdrawals'][next_id]
-        position = self.storage['positions'][position_id]
-
-        liquidity_units = (
-            self.storage['liquidityUnits'] - position['entryLiquidityUnits']
-        )
-
-        expected_withdrawal = {
-            'liquidityUnits': liquidity_units,
-            'positionId': position_id,
-            'shares': shares,
-        }
-
-        self.assertDictEqual(expected_withdrawal, actual_withdrawal)
-
     def claim_liquidity(
-        self, sender=None, position_id=0, shares=1_000_000, amount=0
+        self, sender=None, provider=None, shares=1_000_000, amount=0
     ):
         sender = sender or self.manager
-        params = {'positionId': position_id, 'shares': shares}
+        provider = provider or self.manager
+        params = {'provider': provider, 'shares': shares}
 
         call = self.pool.claimLiquidity(params)
         result = call.with_amount(amount).interpret(
@@ -266,16 +248,12 @@ class PoolBaseTestCase(TestCase):
         )
 
         init_model = self.to_model()
-        payout = init_model.claim_liquidity(position_id, Decimal(shares))
+        payout = init_model.claim_liquidity(provider, Decimal(shares))
         new_balance = self.get_balance(self.address) - payout
         result_model = self.to_model(
             storage=result.storage, balance=new_balance
         )
         self.assertEqual(init_model, result_model)
-        self._check_withdrawal_creation(result, position_id, shares)
-
-        position = self.storage['positions'][position_id]
-        provider = position['provider']
 
         if payout > Decimal(0):
             self.assertEqual(len(result.operations), 1)
@@ -293,12 +271,12 @@ class PoolBaseTestCase(TestCase):
         self.update_balance(provider, payout)
         return payout
 
-    def withdraw_liquidity(self, sender=None, positions=None, amount=0):
+    def withdraw_liquidity(self, sender=None, claims=None, amount=0):
         sender = sender or self.manager
-        default_positions = [dict(positionId=0, eventId=0)]
-        positions = default_positions if positions is None else positions
+        default_claims = [dict(provider=self.manager, eventId=0)]
+        claims = default_claims if claims is None else claims
 
-        call = self.pool.withdrawLiquidity(positions)
+        call = self.pool.withdrawLiquidity(claims)
         result = call.with_amount(amount).interpret(
             storage=self.storage,
             now=self.current_time,
@@ -306,13 +284,13 @@ class PoolBaseTestCase(TestCase):
             balance=self.get_balance(self.address),
         )
 
-        claim_keys = [ClaimKey.from_dict(position) for position in positions]
+        claim_keys = [ClaimKey.from_dict(claim) for claim in claims]
         init_model = self.to_model()
         payouts = init_model.withdraw_liquidity(claim_keys)
         new_balance = self.get_balance(self.address) - sum(payouts.values())
 
-        for position in positions:
-            key = (position['eventId'], position['positionId'])
+        for claim in claims:
+            key = (claim['eventId'], claim['provider'])
             self.assertTrue(result.storage['claims'][key] is None)
             result.storage['claims'].pop(key)
 
@@ -540,16 +518,16 @@ class PoolBaseTestCase(TestCase):
     def get_next_entry_id(self):
         return self.pool.getNextEntryId().onchain_view(storage=self.storage)
 
-    def get_position(self, position_id):
-        return self.pool.getPosition(position_id).onchain_view(
+    def get_shares(self, provider):
+        return self.pool.getShares(provider).onchain_view(
             storage=self.storage
         )
 
     def get_next_position_id(self):
         return self.pool.getNextPositionId().onchain_view(storage=self.storage)
 
-    def get_claim(self, event_id, position_id):
-        key = {'eventId': event_id, 'positionId': position_id}
+    def get_claim(self, event_id, provider):
+        key = {'eventId': event_id, 'provider': provider}
         return self.pool.getClaim(key).onchain_view(storage=self.storage)
 
     def get_withdrawal(self, withdrawal_id):

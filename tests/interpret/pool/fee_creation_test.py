@@ -18,12 +18,12 @@ class FeeEventCreationTestCase(PoolBaseTestCase):
 
         # providing liquidity:
         self.deposit_liquidity(self.a, amount=4_500_000)
-        self.approve_liquidity(self.a, entry_id=0)
+        provider_one = self.approve_liquidity(self.a, entry_id=0)
         self.assertEqual(self.get_next_liquidity(), 1_500_000)
 
         # second provider adds the same amount of liquidity:
         self.deposit_liquidity(self.b, amount=4_500_000)
-        self.approve_liquidity(self.a, entry_id=1)
+        provider_two = self.approve_liquidity(self.a, entry_id=1)
 
         # and all of this liquidity should go to the events:
         self.assertEqual(self.get_next_liquidity(), 3_000_000)
@@ -34,7 +34,7 @@ class FeeEventCreationTestCase(PoolBaseTestCase):
 
         # A decided to remove all liquidity so nextEventLiquidity should be /2:
         withdrawn_amount = self.claim_liquidity(
-            self.a, position_id=0, shares=4_500_000
+            self.a, provider=provider_one, shares=4_500_000
         )
         self.assertEqual(withdrawn_amount, 3_000_000)
         self.assertEqual(self.get_next_liquidity(), 1_500_000)

@@ -54,17 +54,19 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
 
         return opg
 
-    def _claim_liquidity(self, user, position_id=0, shares=0):
+    def _claim_liquidity(self, user, provider=None, shares=0):
+        provider = provider or pkh(user)
         opg = (
             user.contract(self.pool.address)
-            .claimLiquidity(positionId=position_id, shares=shares)
+            .claimLiquidity(provider=provider, shares=shares)
             .send()
         )
 
         return opg
 
-    def _pool_withdraw(self, user, event_id=0, position_id=0):
-        claims = [{'positionId': position_id, 'eventId': event_id}]
+    def _pool_withdraw(self, user, event_id=0, provider=None):
+        provider = provider or pkh(user)
+        claims = [{'provider': provider, 'eventId': event_id}]
 
         opg = user.contract(self.pool.address).withdrawLiquidity(claims).send()
 
@@ -97,7 +99,7 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
         self.assertEqual(event_params['poolAboveEq'], 5_000_000)
 
         # A claims 40% of his liquidity (10tez + fees/2 - 5tez) * 0.4 = :
-        opg = self._claim_liquidity(self.a, 0, int(0.4 * shares))
+        opg = self._claim_liquidity(self.a, pkh(self.a), int(0.4 * shares))
         self.bake_block()
         result = self._find_call_result_by_hash(self.a, opg.hash())
         self.assertEqual(len(result.operations), 1)
@@ -123,14 +125,14 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
         self.bake_block()
 
         # withdrawing for claimed position for A, should be 40% of 10 tez:
-        opg = self._pool_withdraw(self.a, 0, 0)
+        opg = self._pool_withdraw(self.a, 0, pkh(self.a))
         self.bake_block()
         result = self._find_call_result_by_hash(self.a, opg.hash())
         op = result.operations[0]
         self.assertEqual(int(op['amount']), 4_000_000)
 
         # provider withdraw the rest 60% of the liquidity
-        opg = self._claim_liquidity(self.a, 0, int(0.6 * shares))
+        opg = self._claim_liquidity(self.a, pkh(self.a), int(0.6 * shares))
         self.bake_block()
         result = self._find_call_result_by_hash(self.a, opg.hash())
         self.assertEqual(len(result.operations), 1)
@@ -156,7 +158,7 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
         self._approve_liquidity(self.a, 0)
         self.bake_block()
 
-        shares = self.pool.storage['positions'][0]()['shares']
+        shares = self.pool.storage['shares'][pkh(self.a)]()
         self.assertEqual(shares, 10_000_000)
 
         # providing liquidity second time, nohting else changed:
@@ -166,9 +168,10 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
         self._approve_liquidity(self.a, 1)
         self.bake_block()
 
-        shares = self.pool.storage['positions'][1]()['shares']
-        self.assertEqual(shares, 10_000_000)
+        shares = self.pool.storage['shares'][pkh(self.a)]()
+        self.assertEqual(shares, 20_000_000)
 
+    # NOTE: this test is broken, consider to remove it:
     @unittest.skip(
         "this test require 2 minutes to complete, so it is skipped now"
     )
@@ -181,7 +184,7 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
         # hangzhounet tested for 300 lines x 50 providers
         # (about 60% of gas_limit per operation used):
         LINES = 27
-        PROVIDERS = 10
+        PROVIDERS = [self.a, self.b, self.c, self.manager]
 
         for line in range(LINES):
             self._add_line(
@@ -190,69 +193,62 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
                 measure_period=1,
                 max_events=3,
             )
+            self.bake_block()
 
-        self.bake_block()
-        self.assertEqual(len(self.pool.storage['lines']()), LINES)
+        for provider in PROVIDERS:
+            self._deposit_liquidity(provider, 10_000_000)
+            self.bake_block()
 
-        for entry_id in range(PROVIDERS):
-            self._deposit_liquidity(self.a, 10_000_000)
-        self.bake_block()
+        self.assertEqual(self.pool.storage['nextEntryId'](), len(PROVIDERS))
 
-        self.assertEqual(self.pool.storage['nextEntryId'](), PROVIDERS)
-
-        for entry_id in range(PROVIDERS):
+        for entry_id in range(len(PROVIDERS)):
             self._approve_liquidity(self.a, entry_id)
-        self.bake_block()
+            self.bake_block()
 
-        self.assertEqual(self.pool.storage['nextPositionId'](), PROVIDERS)
+        self.assertEqual(len(self.pool.storage['shares']()), len(PROVIDERS))
 
         # creating events (1):
         for line_id in range(LINES):
             opg = self._pool_create_event(self.a, line_id=line_id)
-            if line_id % 100 == 1:
-                self.bake_block()
-
-        self.bake_block()
+            self.bake_block()
 
         # creating events (2):
         for line_id in range(LINES):
             opg = self._pool_create_event(self.a, line_id=line_id)
-            if line_id % 100 == 1:
-                self.bake_block()
-
-        self.bake_block()
+            self.bake_block()
 
         # claiming some liquitidy (there should be internal loop for all events):
         # (this is the most gas consuming operation in pool)
         # for 300 lines x2 events gas_limit: 671280 and storage_limit: 48697
-        opg = self._claim_liquidity(self.a, 0, 10_000_000)
-        opg = self._claim_liquidity(self.a, 1, 5_000_000)
+        opg = self._claim_liquidity(self.a, pkh(self.a), 10_000_000)
+        self.bake_block()
+
+        opg = self._claim_liquidity(self.b, pkh(self.b), 5_000_000)
         self.bake_block()
 
         # running measuerements for (1):
         for event_id in range(LINES):
             self._run_measurements(event_id)
-        self.bake_block()
+            self.bake_block()
 
         # withdrawing for (1):
         for event_id in range(LINES):
             self._withdraw(
                 event_id=event_id, participant_address=self.pool.address
             )
-
-        self.bake_block()
+            self.bake_block()
 
         # withdrawing for participant:
         for event_id in range(LINES):
-            opg = self._pool_withdraw(self.a, event_id, 0)
-            opg = self._pool_withdraw(self.a, event_id, 1)
-
-        self.bake_block()
+            opg = self._pool_withdraw(self.a, event_id, pkh(self.a))
+            self.bake_block()
+            opg = self._pool_withdraw(self.b, event_id, pkh(self.b))
+            self.bake_block()
 
         # checking that withdrawal amount for the last event and participant
-        # who withdrawn 5/100 shares is calculated properly:
+        # who withdrawn 5/40 shares is calculated properly:
         result = self._find_call_result_by_hash(self.a, opg.hash())
         event_result = self.pool.storage['events'][event_id]()['result']
         self.assertEqual(
-            int(result.operations[0]['amount']), int(event_result * 5 / 100)
+            int(result.operations[0]['amount']), int(event_result * 5 / 40)
         )

@@ -39,7 +39,7 @@ class RandomProviderTestCase(PoolBaseTestCase):
                 total_liquidity += PROFIT_LOSS
 
                 if step == EXIT_STEP:
-                    self.claim_liquidity(self.b, position_id=1, shares=shares)
+                    self.claim_liquidity(self.b, provider=self.b, shares=shares)
 
             provider_profit_loss = (
                 (EXIT_STEP - ENTER_STEP + 1) * PROFIT_LOSS / 2
@@ -109,17 +109,17 @@ class RandomProviderTestCase(PoolBaseTestCase):
             for user, exit_step in exit_steps.items():
                 if step == exit_step:
                     pos_id = position_ids[user]
-                    shares = self.storage['positions'][pos_id]['shares']
+                    shares = self.storage['shares'][user]
                     self.claim_liquidity(
-                        user, position_id=pos_id, shares=shares
+                        user, provider=user, shares=shares
                     )
 
-        positions = [
-            dict(positionId=claim[1], eventId=claim[0])
+        claims = [
+            dict(provider=claim[1], eventId=claim[0])
             for claim in self.storage['claims']
         ]
 
-        self.withdraw_liquidity(positions=positions)
+        self.withdraw_liquidity(claims=claims)
 
         self.assertTrue(
             all(abs(balance) <= 1 for balance in self.balances.values())

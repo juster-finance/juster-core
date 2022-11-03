@@ -17,9 +17,9 @@ class DefaultEntryTestCase(PoolBaseTestCase):
 
         # b deposit 1 xtz and get 100% shares of the contract, so he owns both 2 xtz:
         self.deposit_liquidity(sender=self.b, amount=1_000_000)
-        self.approve_liquidity(entry_id=0)
+        provider_one = self.approve_liquidity(entry_id=0)
         self.assertEqual(self.get_next_liquidity(), 1_000_000)
-        self.claim_liquidity(sender=self.b, position_id=0, shares=1_000_000)
+        self.claim_liquidity(sender=self.b, provider=provider_one, shares=1_000_000)
         self.assertEqual(self.balances[self.b], 1_000_000)
 
         # someone puts liquidity again:
@@ -27,13 +27,13 @@ class DefaultEntryTestCase(PoolBaseTestCase):
         self.assertEqual(self.get_next_liquidity(), 1_000_000)
 
         self.deposit_liquidity(sender=self.c, amount=2_000_000)
-        self.approve_liquidity(entry_id=1)
+        provider_two = self.approve_liquidity(entry_id=1)
         self.assertEqual(self.storage['totalShares'], 2_000_000)
 
         self.assertEqual(self.get_next_liquidity(), 2_000_000)
         self.default(sender=self.d, amount=2_000_000)
         self.assertEqual(self.get_next_liquidity(), 3_000_000)
 
-        self.claim_liquidity(sender=self.c, position_id=1, shares=2_000_000)
+        self.claim_liquidity(sender=self.c, provider=provider_two, shares=2_000_000)
         self.assertEqual(self.balances[self.c], 4_000_000)
         self.assertEqual(self.balances['contract'], 0)
