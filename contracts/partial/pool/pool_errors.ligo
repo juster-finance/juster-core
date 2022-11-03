@@ -1,10 +1,10 @@
 module PoolErrors is {
     const notEntryOwner : string = "Not entry position owner";
     const entryNotFound : string = "Entry is not found";
-    const positionNotFound : string = "Position is not found";
+    const noSharesToClaim : string = "No shares to claim";
     const eventNotFound : string = "Event is not found";
     const earlyApprove : string = "Cannot approve liquidity before acceptAfter";
-    const notPositionOwner : string = "Not position owner";
+    const notSharesOwner : string = "Not shares owner";
     const noLiquidity : string = "Not enough liquidity to run event";
     const noFreeEventSlots : string = "Max active events limit reached";
     const lineNotFound : string = "Line is not found";

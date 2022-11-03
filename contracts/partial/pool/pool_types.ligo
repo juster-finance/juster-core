@@ -1,6 +1,5 @@
 type lineIdT is nat;
 type eventIdT is nat;
-type positionIdT is nat;
 type entryIdT is nat;
 
 type lineType is record [
@@ -19,14 +18,6 @@ type lineType is record [
     advanceTime : nat;
 ]
 
-type positionType is record [
-    provider : address;
-    shares : nat;
-    (* TODO: is it possible to change entry liquidity units logic to comply with
-        new pool logic? *)
-    entryLiquidityUnits : nat;
-]
-
 type eventType is record [
     result : option(nat);
     (* TODO: consider having isFinished : bool field? Or result as an option
@@ -37,10 +28,7 @@ type eventType is record [
 
 type claimKey is record [
     eventId : eventIdT;
-    (* TODO: if position became only shares map(address, nat)
-        then claimKey can be eventId + providerAddress
-        then claimParams can be simple amount *)
-    positionId : positionIdT;
+    provider : address;
 ]
 
 (*  entry is not accepted yet position including provider address,
@@ -85,8 +73,7 @@ type storage is record [
     lines : big_map(lineIdT, lineType);
     activeEvents : map(eventIdT, lineIdT);
     events : big_map(eventIdT, eventType);
-    positions : big_map(positionIdT, positionType);
-    nextPositionId : positionIdT;
+    shares : big_map(address, nat);
     totalShares : nat;
     activeLiquidityF : nat;
     withdrawableLiquidityF : nat;
@@ -109,7 +96,7 @@ type storage is record [
 
 
 type claimLiquidityParams is record [
-    positionId : positionIdT;
+    provider : address;
     shares : nat;
 ]
 

@@ -80,14 +80,7 @@ block {
         then provided
         else providedF * store.totalShares / liquidityBeforeDepositF;
 
-    const newPosition = record [
-        provider = entry.provider;
-        shares = shares;
-        entryLiquidityUnits = store.liquidityUnits;
-    ];
-
-    store.positions[store.nextPositionId] := newPosition;
-    store.nextPositionId := store.nextPositionId + 1n;
+    store.shares[entry.provider] := getSharesOrZero(entry.provider, store) + shares;
     store.totalShares := store.totalShares + shares;
 
 } with ((nil: list(operation)), store)
@@ -107,6 +100,7 @@ block {
     const entry = getEntry(entryId, store);
     store.entries := Big_map.remove(entryId, store.entries);
 
+    (* TODO: #HIGH this logic blocks from disbanding liquidity *)
     checkSenderIs(entry.provider, PoolErrors.notEntryOwner);
 
     const providedF = entry.amount * store.precision;
@@ -130,17 +124,17 @@ block {
 
     checkNoAmountIncluded(unit);
 
-    const position = getPosition(claim.positionId, store);
+    const shares = getSharesOrZero(claim.provider, store);
 
     (* If contract in disband state -> anyone can claim liquidity for anyone *)
     if not store.isDisbandAllow
-    then checkSenderIs(position.provider, PoolErrors.notPositionOwner)
+    then checkSenderIs(claim.provider, PoolErrors.notSharesOwner)
     else skip;
 
-    if claim.shares > position.shares
+    if claim.shares > shares
     then failwith(PoolErrors.exceedClaimShares)
     else skip;
-    const leftShares = abs(position.shares - claim.shares);
+    const leftShares = abs(shares - claim.shares);
 
     var removedActive := 0n;
 
@@ -153,12 +147,13 @@ block {
 
             const key = record [
                 eventId = eventId;
-                positionId = claim.positionId;
+                provider = claim.provider;
             ];
 
             const alreadyClaimed = getClaimedAmountOrZero(key, store);
 
-            (* TODO: check leftProvided > 0 and raise wrong state? *)
+            (* TODO: check leftProvided > 0 and raise wrong state?
+                [it is very similar test bellow for newClaimed > event.provided] *)
             const leftProvided = abs(event.provided - event.claimed);
             const newClaimF = (
                 store.precision * claim.shares * leftProvided
@@ -180,8 +175,7 @@ block {
         }
     };
 
-    const updatedPosition = position with record [ shares = leftShares ];
-    store.positions[claim.positionId] := updatedPosition;
+    store.shares[claim.provider] := leftShares;
 
     const payoutValue = (
         calcFreeLiquidityF(store) * claim.shares
@@ -212,12 +206,12 @@ block {
     store.activeLiquidityF := abs(store.activeLiquidityF - removedActiveF);
 
     const operations = if payoutValue > 0 then
-        list[prepareOperation(position.provider, abs(payoutValue) * 1mutez)]
+        list[prepareOperation(claim.provider, abs(payoutValue) * 1mutez)]
     else (nil: list(operation));
 
     const newWithdrawal = record [
-        liquidityUnits = abs(store.liquidityUnits - position.entryLiquidityUnits);
-        positionId = claim.positionId;
+        liquidityUnits = 0n;  (* TODO: will be removed soon *)
+        positionId = 0n;  (* TODO: will be removed soon *)
         shares = claim.shares;
     ];
 
@@ -239,7 +233,6 @@ block {
     var sums := (Map.empty : map(address, nat));
     for key in list withdrawRequests block {
         const event = getEvent(key.eventId, store);
-        const position = getPosition(key.positionId, store);
         (* TODO: it might be better to (1) checkEventFinished(event) and then
             (2) use event.result (default: 0 and can't be None) with @inline
             and @inline calcEventReward(shares, event)
@@ -248,7 +241,7 @@ block {
         const claimAmount = getClaim(key, store);
         const eventRewardF = eventResult * claimAmount * store.precision / event.provided;
 
-        sums[position.provider] := case Map.find_opt(position.provider, sums) of [
+        sums[key.provider] := case Map.find_opt(key.provider, sums) of [
         | Some(sum) -> sum + eventRewardF
         | None -> eventRewardF
         ];
@@ -518,11 +511,8 @@ case params of [
 [@view] function getNextEntryId(const _ : unit; const s: storage) is
     s.nextEntryId
 
-[@view] function getPosition(const positionId : nat; const s: storage) is
-    Big_map.find_opt(positionId, s.positions)
-
-[@view] function getNextPositionId(const _ : unit; const s: storage) is
-    s.nextPositionId
+[@view] function getShares(const provider : address; const s: storage) is
+    Big_map.find_opt(provider, s.shares)
 
 [@view] function getClaim(const claimId : claimKey; const s: storage) is
     Big_map.find_opt(claimId, s.claims)

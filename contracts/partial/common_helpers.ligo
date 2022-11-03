@@ -27,6 +27,16 @@ case Big_map.find_opt(key, ledger) of [
 ]
 
 
+function getOrDefault<keyType, valueType>(
+    const key : keyType;
+    const ledger : big_map(keyType, valueType);
+    const defaultValue : valueType) : valueType is
+case Big_map.find_opt(key, ledger) of [
+| Some(value) -> value
+| None -> defaultValue
+]
+
+
 function getReceiver(const a : address) : contract(unit) is
     case (Tezos.get_contract_opt(a): option(contract(unit))) of [
     | Some (con) -> con

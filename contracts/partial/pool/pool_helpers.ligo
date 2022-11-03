@@ -26,8 +26,8 @@ function excludeFee(const liquidityAmount : nat; const newEventFee : nat) is
 function getEntry(const entryId : nat; const store : storage) : entryType is
     getOrFail(entryId, store.entries, PoolErrors.entryNotFound)
 
-function getPosition(const positionId : nat; const store : storage) : positionType is
-    getOrFail(positionId, store.positions, PoolErrors.positionNotFound)
+function getShares(const provider : address; const store : storage) : nat is
+    getOrFail(provider, store.shares, PoolErrors.noSharesToClaim)
 
 function getEvent(const eventId : nat; const store : storage) : eventType is
     getOrFail(eventId, store.events, PoolErrors.eventNotFound)
@@ -160,10 +160,10 @@ block {
 } with config.expirationFee + config.measureStartFee
 
 function getClaimedAmountOrZero(const key : claimKey; const store : storage) is
-    case Big_map.find_opt(key, store.claims) of [
-    | Some(claimAmount) -> claimAmount
-    | None -> 0n
-    ];
+    getOrDefault(key, store.claims, 0n)
+
+function getSharesOrZero(const provider : address; const store : storage) : nat is
+    getOrDefault(provider, store.shares, 0n)
 
 function getEventResult(const event : eventType) is
     case event.result of [
