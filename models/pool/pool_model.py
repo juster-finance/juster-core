@@ -8,7 +8,6 @@ from typing import Iterator
 from typing import Optional
 from typing import Type
 
-from models.pool.claim import Claim
 from models.pool.claim_key import ClaimKey
 from models.pool.entry import Entry
 from models.pool.event import Event
@@ -28,7 +27,7 @@ class PoolModel:
     positions: dict[int, Position] = field(default_factory=dict)
     total_shares: Decimal = Decimal(0)
     events: dict[int, Event] = field(default_factory=dict)
-    claims: dict[ClaimKey, Claim] = field(default_factory=dict)
+    claims: dict[ClaimKey, Decimal] = field(default_factory=dict)
     entries: dict[int, Entry] = field(default_factory=dict)
     max_events: int = 0
     precision: Decimal = Decimal(10**6)
@@ -59,7 +58,7 @@ class PoolModel:
         precision = Decimal(storage['precision'])
 
         claims = {
-            ClaimKey.from_tuple(index): Claim.from_storage(claim)
+            ClaimKey.from_tuple(index): Decimal(claim)
             for index, claim in storage['claims'].items()
         }
 
@@ -155,11 +154,12 @@ class PoolModel:
     ) -> dict[str, Decimal]:
         payouts_f: dict[str, Decimal] = {}
         for claim_key in claim_keys:
-            claim = self.claims[claim_key]
+            claim_amount = self.claims[claim_key]
             event = self.events[claim_key.event_id]
-            payout_f = payouts_f.get(claim.provider, Decimal(0))
-            payout_f += event.get_result_for_provided_f(claim.amount)
-            payouts_f[claim.provider] = payout_f
+            position = self.positions[claim_key.position_id]
+            payout_f = payouts_f.get(position.provider, Decimal(0))
+            payout_f += event.get_result_for_provided_f(claim_amount)
+            payouts_f[position.provider] = payout_f
 
         return payouts_f
 
@@ -207,8 +207,7 @@ class PoolModel:
     ) -> None:
         provider = self.positions[position_id].provider
         claim_key = ClaimKey(event_id, position_id)
-        default_claim = Claim(amount=Decimal(0), provider=provider)
-        claim = self.claims.get(claim_key, default_claim)
+        claim_amount = self.claims.get(claim_key, Decimal(0))
         event = self.events[event_id]
 
         # TODO: maube it is better to have here withdrawn_fraction_f:
@@ -218,8 +217,7 @@ class PoolModel:
             shares * self.precision * left_provided / self.total_shares
         )
         event_claimed = quantize_up(event_claimed_f / self.precision)
-        claim.amount += event_claimed
-        self.claims[claim_key] = claim
+        self.claims[claim_key] = claim_amount + event_claimed
 
         event.claimed += event_claimed
         self.events[event_id] = event

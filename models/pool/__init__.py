@@ -1,4 +1,3 @@
-from models.pool.claim import Claim
 from models.pool.claim_key import ClaimKey
 from models.pool.entry import Entry
 from models.pool.event import Event
