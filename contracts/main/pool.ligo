@@ -44,7 +44,7 @@ block {
 } with ((nil: list(operation)), store)
 
 
-function approveLiquidity(
+function approveEntry(
     const entryId : nat; var store : storage) : (list(operation) * storage) is
 block {
 
@@ -87,7 +87,7 @@ block {
 } with ((nil: list(operation)), store)
 
 
-function cancelLiquidity(
+function cancelEntry(
     const entryId : nat; var store : storage) : (list(operation) * storage) is
 block {
 
@@ -214,8 +214,8 @@ block {
 } with (operations, store)
 
 
-function withdrawLiquidity(
-    const withdrawRequests : withdrawLiquidityParams;
+function withdrawClaims(
+    const withdrawRequests : withdrawClaimsParams;
     var store : storage) : (list(operation) * storage) is
 block {
 
@@ -435,10 +435,10 @@ function disband(var store : storage) is {
 (* entrypoints:
     - addLine: adding new line of typical events, only manager can add new lines
     - depositLiquidity: creating request for adding new liquidity
-    - approveLiquidity: adds requested liquidity to the aggregator
-    - cancelLiquidity: cancels request for adding new liquidity
+    - approveEntry: adds requested liquidity to the aggregator
+    - cancelEntry: cancels request for adding new liquidity
     - claimLiquidity: creates request for withdraw liquidity from all current events
-    - withdrawLiquidity: withdraws claimed events
+    - withdrawClaims: withdraws claimed events
     - payReward: callback that receives withdraws from Juster
     - createEvent: creates new event in line, anyone can call this
     - triggerPauseLine: pauses/unpauses given line by lineId
@@ -454,10 +454,10 @@ function disband(var store : storage) is {
 type action is
 | AddLine of lineType
 | DepositLiquidity of unit
-| ApproveLiquidity of nat
-| CancelLiquidity of nat
+| ApproveEntry of nat
+| CancelEntry of nat
 | ClaimLiquidity of claimLiquidityParams
-| WithdrawLiquidity of withdrawLiquidityParams
+| WithdrawClaims of withdrawClaimsParams
 | PayReward of nat
 | CreateEvent of nat
 | TriggerPauseLine of nat
@@ -474,10 +474,10 @@ function main (const params : action; var s : storage) : (list(operation) * stor
 case params of [
 | AddLine(p) -> addLine(p, s)
 | DepositLiquidity -> depositLiquidity(s)
-| ApproveLiquidity(p) -> approveLiquidity(p, s)
-| CancelLiquidity(p) -> cancelLiquidity(p, s)
+| ApproveEntry(p) -> approveEntry(p, s)
+| CancelEntry(p) -> cancelEntry(p, s)
 | ClaimLiquidity(p) -> claimLiquidity(p, s)
-| WithdrawLiquidity(p) -> withdrawLiquidity(p, s)
+| WithdrawClaims(p) -> withdrawClaims(p, s)
 | PayReward(p) -> payReward(p, s)
 | CreateEvent(p) -> createEvent(p, s)
 | TriggerPauseLine(p) -> triggerPauseLine(p, s)

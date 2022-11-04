@@ -87,5 +87,5 @@ type claimLiquidityParams is record [
     shares : nat;
 ]
 
-type withdrawLiquidityParams is list(claimKey)
+type withdrawClaimsParams is list(claimKey)
 
