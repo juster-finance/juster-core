@@ -786,14 +786,22 @@
                          PAIR ;
                          PAIR ;
                          SWAP ;
-                         PUSH string "Not entry position owner" ;
                          DUP 2 ;
+                         CAR ;
                          CDR ;
-                         PAIR ;
-                         DIG 5 ;
-                         SWAP ;
-                         EXEC ;
-                         DROP ;
+                         CAR ;
+                         CAR ;
+                         CAR ;
+                         NOT ;
+                         IF { PUSH string "Not entry position owner" ;
+                              DUP 2 ;
+                              CDR ;
+                              PAIR ;
+                              DIG 5 ;
+                              SWAP ;
+                              EXEC ;
+                              DROP }
+                            { DIG 4 ; DROP } ;
                          DUP 2 ;
                          CAR ;
                          CDR ;
