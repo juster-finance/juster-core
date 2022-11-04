@@ -78,9 +78,6 @@ def generate_pool_storage(manager):
         'metadata': {'': ''},
         'precision': 1_000_000,
         'proposedManager': manager,
-        'liquidityUnits': 0,
-        'withdrawals': {},
-        'nextWithdrawalId': 0,
         'isDisbandAllow': False,
     }
 

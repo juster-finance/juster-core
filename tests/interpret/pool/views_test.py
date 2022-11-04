@@ -80,32 +80,6 @@ class PoolViewsTestCase(PoolBaseTestCase):
         # check requesting claim that not in contract does not fail:
         self.assertTrue(self.get_claim(event_id=42, provider=self.a) is None)
 
-    def test_get_withdrawal_view(self):
-        self.add_line(max_events=2)
-        self.deposit_liquidity(sender=self.a, amount=1000)
-        self.approve_liquidity()
-        self.claim_liquidity(provider=self.a, sender=self.a, shares=420)
-
-        actual_withdrawal = self.get_withdrawal(withdrawal_id=0)
-        expected_withdrawal = {
-            'liquidityUnits': 0,
-            'positionId': 0,
-            'shares': 420,
-        }
-
-        self.assertDictEqual(expected_withdrawal, actual_withdrawal)
-
-        # check requesting withdrawal that not in contract does not fail:
-        self.assertTrue(self.get_withdrawal(withdrawal_id=42) is None)
-
-    def test_get_next_withdrawal_id_view(self):
-        self.add_line()
-        self.deposit_liquidity(sender=self.a, amount=1000)
-        self.approve_liquidity()
-        self.assertEqual(self.get_next_withdrawal_id(), 0)
-        self.claim_liquidity(provider=self.a, sender=self.a, shares=420)
-        self.assertEqual(self.get_next_withdrawal_id(), 1)
-
     def test_get_active_events_view(self):
         self.add_line()
         self.deposit_liquidity()
@@ -162,23 +136,11 @@ class PoolViewsTestCase(PoolBaseTestCase):
         self.approve_liquidity()
         self.assertEqual(self.get_next_liquidity(), 10)
 
-    def test_get_liquidity_units_view(self):
-        self.current_time = 0
-        self.add_line(max_events=4, measure_period=10, bets_period=10)
-        self.deposit_liquidity(amount=100)
-        self.approve_liquidity()
-        self.assertEqual(self.get_liquidity_units(), 0)
-        self.create_event()
-        # provided * duration / total_shares:
-        expected_liquidity_units = 25 * (10 + 10) / 100
-        self.assertEqual(self.get_liquidity_units(), expected_liquidity_units)
-
     def test_get_state_values_view(self):
         self.add_line(max_events=2)
         self.deposit_liquidity(amount=100)
         self.approve_liquidity()
         self.deposit_liquidity(amount=100)
-        self.assertEqual(self.get_liquidity_units(), 0)
         self.create_event()
 
         precision = self.storage['precision']

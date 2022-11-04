@@ -530,16 +530,6 @@ class PoolBaseTestCase(TestCase):
         key = {'eventId': event_id, 'provider': provider}
         return self.pool.getClaim(key).onchain_view(storage=self.storage)
 
-    def get_withdrawal(self, withdrawal_id):
-        return self.pool.getWithdrawal(withdrawal_id).onchain_view(
-            storage=self.storage
-        )
-
-    def get_next_withdrawal_id(self):
-        return self.pool.getNextWithdrawalId().onchain_view(
-            storage=self.storage
-        )
-
     def get_active_events(self):
         return self.pool.getActiveEvents().onchain_view(storage=self.storage)
 
@@ -559,9 +549,6 @@ class PoolBaseTestCase(TestCase):
 
     def get_total_shares(self):
         return self.pool.getTotalShares().onchain_view(storage=self.storage)
-
-    def get_liquidity_units(self):
-        return self.pool.getLiquidityUnits().onchain_view(storage=self.storage)
 
     def get_state_values(self):
         return self.pool.getStateValues().onchain_view(storage=self.storage)
