@@ -142,6 +142,7 @@ block {
     else skip;
 } with nextBetsCloseTime
 
+(* TODO: consider removing this func as it is not used anymore *)
 function calcDuration(const line : lineType) is
 block {
     const duration =

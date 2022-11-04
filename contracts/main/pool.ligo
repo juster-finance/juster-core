@@ -14,8 +14,6 @@ block {
     onlyManager(store.manager);
     checkLineValid(line);
 
-    (* TODO: consider lines to be list {but then it will be harder to stop them?} *)
-
     store.lines[store.nextLineId] := line;
     store.nextLineId := store.nextLineId + 1n;
     store.maxEvents := store.maxEvents + line.maxEvents;
@@ -55,6 +53,7 @@ block {
     const provided = entry.amount;
     const providedF = entry.amount * store.precision;
 
+    (* TODO: wrap it into checkAcceptTime *)
     if Tezos.get_now() < entry.acceptAfter
     then failwith(PoolErrors.earlyApprove)
     else skip;
@@ -209,17 +208,6 @@ block {
         list[prepareOperation(claim.provider, abs(payoutValue) * 1mutez)]
     else (nil: list(operation));
 
-    const newWithdrawal = record [
-        liquidityUnits = 0n;  (* TODO: will be removed soon *)
-        positionId = 0n;  (* TODO: will be removed soon *)
-        shares = claim.shares;
-    ];
-
-    (* TODO: store = addNewWithdrawal(store, newWithdrawal)
-        and the same might be done in other places *)
-    store.withdrawals[store.nextWithdrawalId] := newWithdrawal;
-    store.nextWithdrawalId := store.nextWithdrawalId + 1n;
-
 } with (operations, store)
 
 
@@ -365,9 +353,6 @@ block {
     store.events[nextEventId] := event;
     store.activeEvents := Map.add(nextEventId, lineId, store.activeEvents);
     store.activeLiquidityF := store.activeLiquidityF + eventCosts * store.precision;
-
-    const newUnits = eventCosts * calcDuration(line) / store.totalShares;
-    store.liquidityUnits := store.liquidityUnits + newUnits;
 
 } with (operations, store)
 
@@ -517,12 +502,6 @@ case params of [
 [@view] function getClaim(const claimId : claimKey; const s: storage) is
     Big_map.find_opt(claimId, s.claims)
 
-[@view] function getWithdrawal(const withdrawalId : nat; const s: storage) is
-    Big_map.find_opt(withdrawalId, s.withdrawals)
-
-[@view] function getNextWithdrawalId(const _ : unit; const s: storage) is
-    s.nextWithdrawalId
-
 [@view] function getEvent(const eventId : nat; const s: storage) is
     Big_map.find_opt(eventId, s.events)
 
@@ -549,9 +528,6 @@ case params of [
 
 [@view] function getNextLiquidity(const _ : unit; const s: storage) is
     calcLiquidityPayout(s)
-
-[@view] function getLiquidityUnits(const _ : unit; const s: storage) is
-    s.liquidityUnits
 
 (* TODO: split this view or add here some info from other views: *)
 [@view] function getStateValues(const _ : unit; const s: storage) is

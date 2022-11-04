@@ -39,16 +39,6 @@ type entryType is record [
     amount : nat;
 ]
 
-type withdrawalType is record [
-    liquidityUnits : nat;
-    positionId : nat;
-    shares : nat;
-    (* TODO: consider adding:
-        - added/withdrawn block/time?
-        - createdEventsCount?
-    *)
-]
-
 (*
     lines - is ledger with all possible event lines that can be created
     activeEvents - is mapping between eventId and lineId
@@ -88,9 +78,6 @@ type storage is record [
     metadata : big_map (string, bytes);
     precision : nat;
     proposedManager : address;
-    liquidityUnits : nat;
-    withdrawals : big_map (nat, withdrawalType);
-    nextWithdrawalId : nat;
     isDisbandAllow : bool;
 ]
 
