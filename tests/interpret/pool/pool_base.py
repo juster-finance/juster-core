@@ -97,6 +97,7 @@ class PoolBaseTestCase(TestCase):
         min_betting_period=0,
         advance_time=0,
         measure_period=3600,
+        is_paused=False,
     ):
 
         sender = sender or self.manager
@@ -111,6 +112,7 @@ class PoolBaseTestCase(TestCase):
             min_betting_period=min_betting_period,
             advance_time=advance_time,
             measure_period=measure_period,
+            is_paused=is_paused,
         )
 
         call = self.pool.addLine(line_params)
@@ -124,7 +126,7 @@ class PoolBaseTestCase(TestCase):
             bets_period=bets_period,
             last_bets_close_time=last_bets_close_time,
             max_events=max_events,
-            is_paused=False,
+            is_paused=is_paused,
             min_betting_period=min_betting_period,
         )
 

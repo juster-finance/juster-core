@@ -92,6 +92,7 @@ def generate_line_params(
     juster_address='KT1D6XTy8oAHkUWdzuQrzySECCDMnANEchQq',
     min_betting_period=0,
     advance_time=0,
+    is_paused=False,
 ):
     return {
         'currencyPair': currency_pair,
@@ -103,7 +104,7 @@ def generate_line_params(
         'betsPeriod': bets_period,
         'lastBetsCloseTime': last_bets_close_time,
         'maxEvents': max_events,
-        'isPaused': False,
+        'isPaused': is_paused,
         'juster': juster_address,
         'minBettingPeriod': min_betting_period,
         'advanceTime': advance_time,
