@@ -121,6 +121,11 @@ class RandomProviderTestCase(PoolBaseTestCase):
 
         self.withdraw_liquidity(claims=claims)
 
-        self.assertTrue(
-            all(abs(balance) <= 1 for balance in self.balances.values())
+        is_all_balance_less_than_mutez = all(
+            abs(balance) <= 1 for balance in self.balances.values()
         )
+
+        # TODO: there is rare case when this assert fails, need to find out rsn
+        if not is_all_balance_less_than_mutez:
+            import pdb; pdb.set_trace()
+        self.assertTrue(is_all_balance_less_than_mutez)
