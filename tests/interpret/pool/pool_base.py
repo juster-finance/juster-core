@@ -222,7 +222,7 @@ class PoolBaseTestCase(TestCase):
         self.check_operation_is(
             operation=result.operations[0],
             amount=entry['amount'],
-            destination=sender,
+            destination=entry['provider'],
         )
 
         self.storage = result.storage
@@ -231,6 +231,7 @@ class PoolBaseTestCase(TestCase):
             result.storage['entryLiquidityF'],
             result_model.calc_entry_liquidity_f(),
         )
+        self.update_balance(entry['provider'], entry['amount'])
 
     def claim_liquidity(
         self, sender=None, provider=None, shares=1_000_000, amount=0
