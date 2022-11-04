@@ -970,7 +970,12 @@
                          CAR ;
                          CAR ;
                          CAR ;
-                         SENDER ;
+                         DUP 2 ;
+                         CAR ;
+                         CDR ;
+                         CAR ;
+                         CDR ;
+                         CDR ;
                          PAIR ;
                          DIG 2 ;
                          SWAP ;
@@ -1033,7 +1038,12 @@
                          CDR ;
                          CAR ;
                          CAR ;
-                         SENDER ;
+                         DUP 2 ;
+                         CAR ;
+                         CDR ;
+                         CAR ;
+                         CDR ;
+                         CDR ;
                          PAIR ;
                          DIG 2 ;
                          SWAP ;
