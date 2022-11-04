@@ -30,7 +30,6 @@ class PoolModel:
     entries: dict[int, Entry] = field(default_factory=dict)
     max_events: int = 0
     precision: Decimal = Decimal(10**6)
-    liquidity_units: Decimal = Decimal(0)
     balance: Decimal = Decimal(0)
     next_entry_id: int = 0
     next_position_id: int = 0
@@ -80,7 +79,6 @@ class PoolModel:
             claims=claims,
             max_events=storage['maxEvents'],
             precision=precision,
-            liquidity_units=Decimal(storage['liquidityUnits']),
             balance=balance,
             next_entry_id=storage['nextEntryId'],
             entry_lock_period=storage['entryLockPeriod'],
@@ -275,13 +273,6 @@ class PoolModel:
         liquidity_f = min(max_liquidity_f, self.calc_free_liquidity_f())
         return quantize(liquidity_f / self.precision)
 
-    def calc_liquidity_units(self, duration: int, amount: Decimal) -> Decimal:
-        liquidity_units = quantize(
-            Decimal(duration) * amount / self.total_shares
-        )
-        assert liquidity_units >= 0
-        return liquidity_units
-
     def create_event(self, line_id: int, next_event_id: int) -> int:
         assert not next_event_id in self.events
         provided_amount = self.calc_next_event_liquidity()
@@ -298,8 +289,6 @@ class PoolModel:
         line = self.lines[line_id]
         line.update_last_bets_close_time(self.now)
         duration = line.calc_duration(self.now)
-        liquidity_units = self.calc_liquidity_units(duration, provided_amount)
-        self.liquidity_units += liquidity_units
         self.balance -= provided_amount
         self.active_events.append(next_event_id)
         assert self.balance >= Decimal(0)
