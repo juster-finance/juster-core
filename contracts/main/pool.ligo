@@ -99,8 +99,9 @@ block {
     const entry = getEntry(entryId, store);
     store.entries := Big_map.remove(entryId, store.entries);
 
-    (* TODO: #HIGH this logic blocks from disbanding liquidity *)
-    checkSenderIs(entry.provider, PoolErrors.notEntryOwner);
+    if not store.isDisbandAllow
+    then checkSenderIs(entry.provider, PoolErrors.notEntryOwner)
+    else skip;
 
     const providedF = entry.amount * store.precision;
     if store.entryLiquidityF < providedF
