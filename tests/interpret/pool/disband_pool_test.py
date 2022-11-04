@@ -40,3 +40,12 @@ class DisbandPoolTestCase(PoolBaseTestCase):
         claims = [{'provider': provider, 'eventId': event_id}]
         amounts = self.withdraw_liquidity(claims=claims, sender=self.b)
         assert self.balances[self.a] == Decimal(0)
+
+    def test_should_allow_to_cancel_others_liquidity_if_pool_in_disbanded_state(self):
+        self.add_line()
+        entry_id = self.deposit_liquidity(sender=self.a)
+        self.trigger_pause_deposit(sender=self.manager)
+        self.disband(sender=self.manager)
+        self.cancel_liquidity(sender=self.b, entry_id=entry_id)
+
+        assert self.balances[self.a] == Decimal(0)
