@@ -16,7 +16,9 @@ block {
 
     store.lines[store.nextLineId] := line;
     store.nextLineId := store.nextLineId + 1n;
-    store.maxEvents := store.maxEvents + line.maxEvents;
+    if not line.isPaused
+    then store.maxEvents := store.maxEvents + line.maxEvents
+    else skip;
 
 } with ((nil: list(operation)), store)
 
