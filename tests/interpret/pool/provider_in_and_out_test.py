@@ -10,7 +10,7 @@ class ProviderInAndOutTestCase(PoolBaseTestCase):
         # providing liquidity:
         provided_amount = 80_000_000
         entry_id = self.deposit_liquidity(self.a, amount=provided_amount)
-        provider_one = self.approve_liquidity(self.a, entry_id=entry_id)
+        provider_one = self.approve_entry(self.a, entry_id=entry_id)
 
         # creating 9 events:
         for next_event_id in range(9):
@@ -19,7 +19,7 @@ class ProviderInAndOutTestCase(PoolBaseTestCase):
 
         # second provider adds some liquidity with 20% shares:
         entry_id = self.deposit_liquidity(self.b, amount=20_000_000)
-        provider_two = self.approve_liquidity(self.a, entry_id=entry_id)
+        provider_two = self.approve_entry(self.a, entry_id=entry_id)
 
         # creating 10th event: 8xtz + 2xtz should be provided:
         self.create_event(line_id=0, next_event_id=9)
@@ -34,7 +34,7 @@ class ProviderInAndOutTestCase(PoolBaseTestCase):
         # so A exchanges 20% of his 9 events for 14.4 xtz (20% * 72 xtz)
 
         entry_id = self.deposit_liquidity(self.c, amount=provided_amount)
-        provider_three = self.approve_liquidity(self.c, entry_id=entry_id)
+        provider_three = self.approve_entry(self.c, entry_id=entry_id)
 
         # should receive the same amount of shares:
         self.assertEqual(

@@ -175,9 +175,9 @@ class PoolBaseTestCase(TestCase):
 
         return entry_id
 
-    def approve_liquidity(self, sender=None, entry_id=0, amount=0):
+    def approve_entry(self, sender=None, entry_id=0, amount=0):
         sender = sender or self.manager
-        call = self.pool.approveLiquidity(entry_id)
+        call = self.pool.approveEntry(entry_id)
         result = call.with_amount(amount).interpret(
             storage=self.storage,
             now=self.current_time,
@@ -189,16 +189,16 @@ class PoolBaseTestCase(TestCase):
         result.storage['entries'].pop(entry_id)
 
         init_model = self.to_model()
-        provider = init_model.approve_liquidity(entry_id)
+        provider = init_model.approve_entry(entry_id)
         result_model = self.to_model(storage=result.storage)
         self.assertEqual(init_model, result_model)
 
         self.storage = result.storage
         return provider
 
-    def cancel_liquidity(self, sender=None, entry_id=0, amount=0):
+    def cancel_entry(self, sender=None, entry_id=0, amount=0):
         sender = sender or self.manager
-        call = self.pool.cancelLiquidity(entry_id)
+        call = self.pool.cancelEntry(entry_id)
         init_balance = self.get_balance(self.address)
         result = call.with_amount(amount).interpret(
             storage=self.storage,
@@ -211,7 +211,7 @@ class PoolBaseTestCase(TestCase):
         result.storage['entries'].pop(entry_id)
 
         init_model = self.to_model()
-        init_model.cancel_liquidity(entry_id)
+        init_model.cancel_entry(entry_id)
 
         entry = self.storage['entries'][entry_id]
         result_model = self.to_model(
@@ -274,12 +274,12 @@ class PoolBaseTestCase(TestCase):
         self.update_balance(provider, payout)
         return payout
 
-    def withdraw_liquidity(self, sender=None, claims=None, amount=0):
+    def withdraw_claims(self, sender=None, claims=None, amount=0):
         sender = sender or self.manager
         default_claims = [dict(provider=self.manager, eventId=0)]
         claims = default_claims if claims is None else claims
 
-        call = self.pool.withdrawLiquidity(claims)
+        call = self.pool.withdrawClaims(claims)
         result = call.with_amount(amount).interpret(
             storage=self.storage,
             now=self.current_time,
@@ -289,7 +289,7 @@ class PoolBaseTestCase(TestCase):
 
         claim_keys = [ClaimKey.from_dict(claim) for claim in claims]
         init_model = self.to_model()
-        payouts = init_model.withdraw_liquidity(claim_keys)
+        payouts = init_model.withdraw_claims(claim_keys)
         new_balance = self.get_balance(self.address) - sum(payouts.values())
 
         for claim in claims:

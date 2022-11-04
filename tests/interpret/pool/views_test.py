@@ -59,7 +59,7 @@ class PoolViewsTestCase(PoolBaseTestCase):
 
         self.add_line()
         self.deposit_liquidity(sender=self.a, amount=1000)
-        self.approve_liquidity()
+        self.approve_entry()
         self.assertEqual(self.get_shares(self.a), 1000)
 
         # check requesting position that not in contract does not fail:
@@ -69,7 +69,7 @@ class PoolViewsTestCase(PoolBaseTestCase):
         # one event in line, so all 1000 mutez goes to this one event
         self.add_line(max_events=1)
         self.deposit_liquidity(sender=self.a, amount=1000)
-        self.approve_liquidity()
+        self.approve_entry()
         self.create_event()
         self.claim_liquidity(provider=self.a, sender=self.a, shares=420)
 
@@ -83,7 +83,7 @@ class PoolViewsTestCase(PoolBaseTestCase):
     def test_get_active_events_view(self):
         self.add_line()
         self.deposit_liquidity()
-        self.approve_liquidity()
+        self.approve_entry()
         self.assertEqual(self.get_active_events(), {})
         self.create_event()
         self.assertEqual(self.get_active_events(), {0: 0})
@@ -91,7 +91,7 @@ class PoolViewsTestCase(PoolBaseTestCase):
     def test_get_event_view(self):
         self.add_line(max_events=1)
         self.deposit_liquidity(sender=self.a, amount=1000)
-        self.approve_liquidity()
+        self.approve_entry()
         self.create_event(next_event_id=777)
 
         actual_event = self.get_event(event_id=777)
@@ -126,20 +126,20 @@ class PoolViewsTestCase(PoolBaseTestCase):
         self.add_line()
         self.deposit_liquidity(amount=100)
         self.assertEqual(self.get_total_shares(), 0)
-        self.approve_liquidity()
+        self.approve_entry()
         self.assertEqual(self.get_total_shares(), 100)
 
     def test_get_next_liquidity_view(self):
         self.add_line(max_events=10)
         self.deposit_liquidity(amount=100)
         self.assertEqual(self.get_next_liquidity(), 0)
-        self.approve_liquidity()
+        self.approve_entry()
         self.assertEqual(self.get_next_liquidity(), 10)
 
     def test_get_state_values_view(self):
         self.add_line(max_events=2)
         self.deposit_liquidity(amount=100)
-        self.approve_liquidity()
+        self.approve_entry()
         self.deposit_liquidity(amount=100)
         self.create_event()
 

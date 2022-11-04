@@ -9,7 +9,7 @@ class CreateEventTestCase(PoolBaseTestCase):
     ):
         self.add_line(max_events=10)
         self.deposit_liquidity(amount=100)
-        self.approve_liquidity()
+        self.approve_entry()
 
         for event_id in range(9):
             self.create_event(line_id=0)
@@ -39,7 +39,7 @@ class CreateEventTestCase(PoolBaseTestCase):
     def test_should_fail_if_next_event_id_is_already_was_an_event_before(self):
         self.add_line(max_events=2)
         self.deposit_liquidity(amount=100)
-        self.approve_liquidity()
+        self.approve_entry()
         self.create_event(line_id=0, next_event_id=42)
         self.wait(3600)
 
@@ -54,7 +54,7 @@ class CreateEventTestCase(PoolBaseTestCase):
             max_events=2, bets_period=100, min_betting_period=40
         )
         self.deposit_liquidity(amount=100)
-        self.approve_liquidity()
+        self.approve_entry()
 
         # current time with 1 sec > than min_betting_period allows:
         self.current_time = 61
@@ -73,7 +73,7 @@ class CreateEventTestCase(PoolBaseTestCase):
     def test_should_allow_to_run_event_if_have_advance_time(self):
         line_id = self.add_line(max_events=2, bets_period=100, advance_time=10)
         self.deposit_liquidity(amount=100)
-        self.approve_liquidity()
+        self.approve_entry()
 
         # current time with 1 sec > than min_betting_period allows:
         self.current_time = 0

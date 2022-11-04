@@ -10,10 +10,10 @@ class BalanceIssueTestCase(PoolBaseTestCase):
     ):
         self.add_line(max_events=3)
         entry_id = self.deposit_liquidity(amount=1_000_000, sender=self.a)
-        provider_one = self.approve_liquidity(entry_id=entry_id)
+        provider_one = self.approve_entry(entry_id=entry_id)
 
         entry_id = self.deposit_liquidity(amount=1_000_001, sender=self.b)
-        provider_two = self.approve_liquidity(entry_id=entry_id)
+        provider_two = self.approve_entry(entry_id=entry_id)
 
         first_event = self.create_event()
         self.wait(3600)
@@ -41,11 +41,11 @@ class BalanceIssueTestCase(PoolBaseTestCase):
             {'provider': provider_two, 'eventId': first_event},
             {'provider': provider_two, 'eventId': second_event},
         ]
-        self.withdraw_liquidity(claims=claims)
+        self.withdraw_claims(claims=claims)
 
         # checing continuality:
         entry_id = self.deposit_liquidity(amount=1_000_000)
-        new_provider = self.approve_liquidity(entry_id=entry_id)
+        new_provider = self.approve_entry(entry_id=entry_id)
         self.assertEqual(
             self.storage['shares'][new_provider], 1_000_000
         )
@@ -59,7 +59,7 @@ class BalanceIssueTestCase(PoolBaseTestCase):
     ):
         self.add_line(max_events=3)
         entry_id = self.deposit_liquidity(amount=1_000_000)
-        provider = self.approve_liquidity(entry_id=entry_id)
+        provider = self.approve_entry(entry_id=entry_id)
 
         first_event = self.create_event()
         self.wait(3600)
@@ -76,7 +76,7 @@ class BalanceIssueTestCase(PoolBaseTestCase):
 
         self.add_line(max_events=2)
         entry_id = self.deposit_liquidity(amount=1000)
-        provider = self.approve_liquidity(entry_id=entry_id)
+        provider = self.approve_entry(entry_id=entry_id)
 
         first_event = self.create_event()
         self.wait(3600)
@@ -84,7 +84,7 @@ class BalanceIssueTestCase(PoolBaseTestCase):
         self.wait(3600)
 
         entry_id = self.deposit_liquidity(amount=1000)
-        self.approve_liquidity(entry_id=entry_id)
+        self.approve_entry(entry_id=entry_id)
 
         # event finished with loss 400, free liquidity is 1000 + 100 = 1100
         self.pay_reward(event_id=first_event, amount=100)
@@ -106,7 +106,7 @@ class BalanceIssueTestCase(PoolBaseTestCase):
 
         self.add_line(max_events=2)
         entry_id = self.deposit_liquidity(amount=1000)
-        provider_one = self.approve_liquidity(entry_id=entry_id)
+        provider_one = self.approve_entry(entry_id=entry_id)
 
         first_event = self.create_event()
         self.wait(3600)
@@ -114,7 +114,7 @@ class BalanceIssueTestCase(PoolBaseTestCase):
         self.wait(3600)
 
         entry_id = self.deposit_liquidity(amount=1000)
-        provider_two = self.approve_liquidity(entry_id=entry_id)
+        provider_two = self.approve_entry(entry_id=entry_id)
 
         self.pay_reward(event_id=first_event, amount=100)
         third_event = self.create_event()
@@ -130,7 +130,7 @@ class BalanceIssueTestCase(PoolBaseTestCase):
 
         self.add_line(max_events=2)
         entry_id = self.deposit_liquidity(amount=1000)
-        provider = self.approve_liquidity(entry_id=entry_id)
+        provider = self.approve_entry(entry_id=entry_id)
 
         first_event = self.create_event()
         self.wait(3600)

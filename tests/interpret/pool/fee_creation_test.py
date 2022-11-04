@@ -18,12 +18,12 @@ class FeeEventCreationTestCase(PoolBaseTestCase):
 
         # providing liquidity:
         self.deposit_liquidity(self.a, amount=4_500_000)
-        provider_one = self.approve_liquidity(self.a, entry_id=0)
+        provider_one = self.approve_entry(self.a, entry_id=0)
         self.assertEqual(self.get_next_liquidity(), 1_500_000)
 
         # second provider adds the same amount of liquidity:
         self.deposit_liquidity(self.b, amount=4_500_000)
-        provider_two = self.approve_liquidity(self.a, entry_id=1)
+        provider_two = self.approve_entry(self.a, entry_id=1)
 
         # and all of this liquidity should go to the events:
         self.assertEqual(self.get_next_liquidity(), 3_000_000)
@@ -68,7 +68,7 @@ class FeeEventCreationTestCase(PoolBaseTestCase):
 
         # providing liquidity that only covers new event fees:
         self.deposit_liquidity(self.a, amount=1_500_000)
-        self.approve_liquidity(self.a, entry_id=0)
+        self.approve_entry(self.a, entry_id=0)
         self.assertEqual(self.get_next_liquidity(), 500_000)
 
         with self.assertRaises(MichelsonRuntimeError) as cm:

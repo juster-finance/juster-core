@@ -10,7 +10,7 @@ class MultipleProvidersResultsTestCase(PoolBaseTestCase):
         # providing liquidity:
         provided_amount = 10_000_000
         self.deposit_liquidity(self.a, amount=provided_amount)
-        provider_one = self.approve_liquidity(self.a, entry_id=0)
+        provider_one = self.approve_entry(self.a, entry_id=0)
 
         # creating event where provider have 100% of the liquidity:
         # as far as max_events is 2: this event should receive 5xtz:
@@ -18,7 +18,7 @@ class MultipleProvidersResultsTestCase(PoolBaseTestCase):
 
         # second provider adds liquidity with the same amount:
         self.deposit_liquidity(self.b, amount=provided_amount)
-        provider_two = self.approve_liquidity(self.a, entry_id=1)
+        provider_two = self.approve_entry(self.a, entry_id=1)
 
         # should receive the same amount of shares:
         self.assertEqual(
@@ -58,7 +58,7 @@ class MultipleProvidersResultsTestCase(PoolBaseTestCase):
             dict(provider=provider_two, eventId=0),
         ]
 
-        amounts = self.withdraw_liquidity(claims=claims, sender=self.a)
+        amounts = self.withdraw_claims(claims=claims, sender=self.a)
         self.assertEqual(amounts[self.a], 3_500_000)
         self.assertEqual(amounts[self.b], 3_500_000)
 
@@ -66,6 +66,6 @@ class MultipleProvidersResultsTestCase(PoolBaseTestCase):
             dict(provider=provider_one, eventId=1),
             dict(provider=provider_two, eventId=1),
         ]
-        amounts = self.withdraw_liquidity(claims=claims, sender=self.b)
+        amounts = self.withdraw_claims(claims=claims, sender=self.b)
         self.assertEqual(amounts[self.a], 5_000_000)
         self.assertEqual(amounts[self.b], 5_000_000)

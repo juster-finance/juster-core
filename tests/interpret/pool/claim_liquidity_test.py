@@ -11,7 +11,7 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
 
         self.add_line()
         self.deposit_liquidity(amount=100)
-        provider = self.approve_liquidity()
+        provider = self.approve_entry()
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.claim_liquidity(provider=provider, shares=101)
@@ -23,8 +23,8 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
         self.add_line(max_events=1)
         self.deposit_liquidity(sender=self.a, amount=100)
         self.deposit_liquidity(sender=self.b, amount=300)
-        provider_one = self.approve_liquidity(entry_id=0)
-        provider_two = self.approve_liquidity(entry_id=1)
+        provider_one = self.approve_entry(entry_id=0)
+        provider_two = self.approve_entry(entry_id=1)
 
         # 400 mutez distributed equallty between two events:
         self.create_event(line_id=0)
@@ -51,7 +51,7 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
     def test_should_return_free_liquidity_share(self):
         self.add_line(max_events=2)
         self.deposit_liquidity(sender=self.a, amount=100)
-        provider = self.approve_liquidity(entry_id=0)
+        provider = self.approve_entry(entry_id=0)
         self.assertEqual(self.balances[self.a], -100)
 
         # 50 mutez used in the first event (100 / 2 max active events):
@@ -65,7 +65,7 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
     def test_should_not_allow_to_claim_others_shares(self):
         self.add_line()
         self.deposit_liquidity(sender=self.a)
-        provider = self.approve_liquidity()
+        provider = self.approve_entry()
         with self.assertRaises(MichelsonRuntimeError) as cm:
             self.claim_liquidity(sender=self.b)
 
@@ -75,7 +75,7 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
     def test_should_not_allow_to_claim_shares_twice(self):
         self.add_line()
         self.deposit_liquidity(amount=100)
-        provider = self.approve_liquidity()
+        provider = self.approve_entry()
         self.claim_liquidity(provider=provider, shares=100)
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
@@ -86,7 +86,7 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
     def test_should_be_possible_to_claim_partial_liquidity(self):
         self.add_line(max_events=2)
         self.deposit_liquidity(amount=100, sender=self.a)
-        provider = self.approve_liquidity()
+        provider = self.approve_entry()
         self.create_event(line_id=0)
 
         self.claim_liquidity(provider=provider, shares=50)
@@ -105,7 +105,7 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
     def test_should_not_create_claims_for_zero_shares(self):
         self.add_line()
         self.deposit_liquidity(amount=100, sender=self.a)
-        provider = self.approve_liquidity()
+        provider = self.approve_entry()
         self.create_event(line_id=0)
 
         self.claim_liquidity(provider=provider, shares=0)
@@ -114,11 +114,11 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
     def test_should_increase_claimed_shares_for_events_created_before_position(self):
         self.add_line(max_events=2)
         self.deposit_liquidity(amount=100, sender=self.a)
-        provider_one = self.approve_liquidity(entry_id=0)
+        provider_one = self.approve_entry(entry_id=0)
         self.create_event(line_id=0)
 
         self.deposit_liquidity(amount=100, sender=self.b)
-        provider_two = self.approve_liquidity(entry_id=1)
+        provider_two = self.approve_entry(entry_id=1)
 
         self.claim_liquidity(provider=provider_two, shares=100, sender=self.b)
         # claimed amount is 100 shares / 200 total shares * 50 provided to event:

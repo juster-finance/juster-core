@@ -22,13 +22,13 @@ class RandomProviderTestCase(PoolBaseTestCase):
             shares = 90_000_000
             total_liquidity = 90_000_000
             self.deposit_liquidity(self.a, amount=total_liquidity)
-            self.approve_liquidity(self.a, entry_id=0)
+            self.approve_entry(self.a, entry_id=0)
 
             for step in range(STEPS):
 
                 if step == ENTER_STEP:
                     self.deposit_liquidity(self.b, amount=total_liquidity)
-                    self.approve_liquidity(self.b, entry_id=1)
+                    self.approve_entry(self.b, entry_id=1)
 
                 created_id = self.create_event()
                 self.wait(3600)
@@ -83,7 +83,7 @@ class RandomProviderTestCase(PoolBaseTestCase):
             for user, enter_step in enter_steps.items():
                 if step == enter_step:
                     entry_id = self.deposit_liquidity(user, amount=AMOUNT)
-                    pos_id = self.approve_liquidity(user, entry_id=entry_id)
+                    pos_id = self.approve_entry(user, entry_id=entry_id)
                     position_ids[user] = pos_id
 
             for line_id, event_create_step in event_create_steps.items():
@@ -119,7 +119,7 @@ class RandomProviderTestCase(PoolBaseTestCase):
             for claim in self.storage['claims']
         ]
 
-        self.withdraw_liquidity(claims=claims)
+        self.withdraw_claims(claims=claims)
 
         is_all_balance_less_than_mutez = all(
             abs(balance) <= 1 for balance in self.balances.values()

@@ -7,7 +7,7 @@ class PrecisionPoolTestCase(PoolBaseTestCase):
     def test_should_calc_withdrawable_f_with_enough_precision(self):
         self.add_line(max_events=1)
         entry_id = self.deposit_liquidity(amount=60, sender=self.a)
-        provider = self.approve_liquidity(entry_id=entry_id)
+        provider = self.approve_entry(entry_id=entry_id)
         event_id = self.create_event()
         self.claim_liquidity(provider=provider, shares=20)
         self.pay_reward(event_id=event_id, amount=60)
@@ -17,7 +17,7 @@ class PrecisionPoolTestCase(PoolBaseTestCase):
             20 * self.storage['precision']
         )
 
-        payouts = self.withdraw_liquidity(
+        payouts = self.withdraw_claims(
             [{'provider': provider, 'eventId': event_id}]
         )
         self.assertEqual(payouts[provider], 20)
@@ -25,7 +25,7 @@ class PrecisionPoolTestCase(PoolBaseTestCase):
     def test_should_not_accumulate_precision_error_in_active_liquidity(self):
         self.add_line(max_events=1)
         entry_id = self.deposit_liquidity(amount=17)
-        provider = self.approve_liquidity(entry_id=entry_id)
+        provider = self.approve_entry(entry_id=entry_id)
         event_id = self.create_event()
         self.claim_liquidity(provider=provider, shares=11)
         self.assertEqual(
@@ -37,11 +37,11 @@ class PrecisionPoolTestCase(PoolBaseTestCase):
     def test_should_not_accumulate_precision_error_in_active_liquidity_B(self):
         self.add_line(max_events=1)
         entry_id = self.deposit_liquidity(amount=40)
-        provider_one = self.approve_liquidity(entry_id=entry_id)
+        provider_one = self.approve_entry(entry_id=entry_id)
         event_id = self.create_event()
 
         entry_id = self.deposit_liquidity(amount=20)
-        provider_two = self.approve_liquidity(entry_id=entry_id)
+        provider_two = self.approve_entry(entry_id=entry_id)
         payout = self.claim_liquidity(provider=provider_two, shares=20)
 
         self.pay_reward(event_id=event_id, amount=40)
@@ -63,7 +63,7 @@ class PrecisionPoolTestCase(PoolBaseTestCase):
             amount=200*SCALE,
             sender=provider_address
         )
-        provider_one = self.approve_liquidity(entry_id=entry_id)
+        provider_one = self.approve_entry(entry_id=entry_id)
 
         # starting two events, each should receive 40 mutez as provided:
         event_one_id = self.create_event()
@@ -75,7 +75,7 @@ class PrecisionPoolTestCase(PoolBaseTestCase):
             amount=100*SCALE,
             sender=provider_address
         )
-        provider_two = self.approve_liquidity(entry_id=entry_id)
+        provider_two = self.approve_entry(entry_id=entry_id)
         instant_payout = self.claim_liquidity(
             provider=provider_two,
             shares=100*SCALE,
@@ -87,7 +87,7 @@ class PrecisionPoolTestCase(PoolBaseTestCase):
         self.pay_reward(event_id=event_two_id, amount=40*SCALE)
 
         # 2nd provider withdraws claims and shouldn't get more than provided:
-        payouts = self.withdraw_liquidity(claims=[
+        payouts = self.withdraw_claims(claims=[
             {'eventId': event_one_id, 'provider': provider_two},
             {'eventId': event_two_id, 'provider': provider_two},
         ])

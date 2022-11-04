@@ -17,7 +17,7 @@ class PayRewardTestCase(PoolBaseTestCase):
     def test_should_fail_if_event_finished_twice(self):
         self.add_line()
         self.deposit_liquidity()
-        self.approve_liquidity()
+        self.approve_entry()
         self.create_event(next_event_id=0)
         self.pay_reward(event_id=0)
 
@@ -29,7 +29,7 @@ class PayRewardTestCase(PoolBaseTestCase):
         # simple test that checks that after event is finished result is writed:
         self.add_line()
         self.deposit_liquidity()
-        self.approve_liquidity()
+        self.approve_entry()
 
         # result before finish should be None:
         self.create_event()
@@ -45,7 +45,7 @@ class PayRewardTestCase(PoolBaseTestCase):
         self.add_line(max_events=1)
         random_amount = randint(10, 20) * 100_000
         self.deposit_liquidity(amount=random_amount)
-        self.approve_liquidity()
+        self.approve_entry()
 
         # as far as there are only one event it should receive all of the liquidity
         self.assertEqual(self.get_next_liquidity(), random_amount)
@@ -62,7 +62,7 @@ class PayRewardTestCase(PoolBaseTestCase):
         # creating simple line with one event that should receive random amount of tez
         self.add_line(max_events=1)
         self.deposit_liquidity(amount=100)
-        self.approve_liquidity()
+        self.approve_entry()
         self.create_event()
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
@@ -74,7 +74,7 @@ class PayRewardTestCase(PoolBaseTestCase):
         self.add_line(max_events=1, juster_address=self.c)
         self.add_line(max_events=1, juster_address=self.d)
         self.deposit_liquidity(amount=100)
-        provider = self.approve_liquidity()
+        provider = self.approve_entry()
         self.create_event(line_id=0)
         self.create_event(line_id=1)
 

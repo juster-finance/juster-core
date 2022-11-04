@@ -12,12 +12,12 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
 
         # providing liquidity:
         self.deposit_liquidity(self.a, amount=80_000_000)
-        self.approve_liquidity(self.a, entry_id=0)
+        self.approve_entry(self.a, entry_id=0)
         provider_one = self.assertEqual(self.get_next_liquidity(), 8_000_000)
 
         # second provider adds some liquidity with 20% shares:
         self.deposit_liquidity(self.b, amount=20_000_000)
-        provider_two = self.approve_liquidity(self.a, entry_id=1)
+        provider_two = self.approve_entry(self.a, entry_id=1)
         self.assertEqual(self.get_next_liquidity(), 10_000_000)
 
         # creating one event:
@@ -51,7 +51,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
 
         # providing liquidity:
         self.deposit_liquidity(self.a, amount=5_000_000)
-        self.approve_liquidity(self.a, entry_id=0)
+        self.approve_entry(self.a, entry_id=0)
 
         for event_id in range(5):
             self.create_event(line_id=0, next_event_id=event_id)
@@ -71,7 +71,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
 
         # providing liquidity, value should not matter:
         self.deposit_liquidity(self.a, amount=random_amount() * 5)
-        self.approve_liquidity(self.a, entry_id=0)
+        self.approve_entry(self.a, entry_id=0)
 
         for event_id in range(5):
             self.create_event(line_id=0)
@@ -93,7 +93,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
 
         # providing liquidity:
         self.deposit_liquidity(self.a, amount=10_000_000)
-        self.approve_liquidity(self.a, entry_id=0)
+        self.approve_entry(self.a, entry_id=0)
         self.assertEqual(self.get_next_liquidity(), 1_000_000)
 
         # creating events for only one line:
@@ -115,7 +115,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
 
         # providing liquidity:
         self.deposit_liquidity(self.a, amount=2_000_000)
-        self.approve_liquidity(self.a, entry_id=0)
+        self.approve_entry(self.a, entry_id=0)
 
         self.create_event()
         self.wait(3600)
@@ -135,7 +135,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
 
         # providing liquidity:
         self.deposit_liquidity(self.a, amount=1_000_000)
-        self.approve_liquidity(self.a, entry_id=0)
+        self.approve_entry(self.a, entry_id=0)
 
         self.create_event(config=custom_config)
         self.assertEqual(self.get_next_liquidity(), 500_000)
@@ -160,7 +160,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
 
         # providing liquidity:
         self.deposit_liquidity(self.a, amount=2_000_000)
-        provider = self.approve_liquidity(self.a, entry_id=0)
+        provider = self.approve_entry(self.a, entry_id=0)
 
         self.create_event()
         self.claim_liquidity(self.a, shares=2_000_000)
@@ -169,7 +169,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
         self.wait(3600)
         self.pay_reward(event_id=0, amount=4_000_000)
 
-        self.withdraw_liquidity(claims=[{'eventId': 0, 'provider': provider}])
+        self.withdraw_claims(claims=[{'eventId': 0, 'provider': provider}])
 
         self.assertEqual(self.get_next_liquidity(), 0)
 
@@ -181,7 +181,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
             self.add_line(max_events=2)
 
         self.deposit_liquidity(self.a, amount=18_000_000)
-        self.approve_liquidity(self.a, entry_id=0)
+        self.approve_entry(self.a, entry_id=0)
 
         self.assertEqual(self.get_next_liquidity(), 1_000_000)
 
@@ -200,7 +200,7 @@ class NextEventLiquidityTestCase(PoolBaseTestCase):
         self.add_line(max_events=2, bets_period=100, measure_period=100)
 
         self.deposit_liquidity(self.a, amount=2_000_000)
-        self.approve_liquidity(self.a, entry_id=0)
+        self.approve_entry(self.a, entry_id=0)
 
         event_0 = self.create_event()
         self.wait(100)

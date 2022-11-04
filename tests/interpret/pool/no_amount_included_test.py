@@ -9,10 +9,10 @@ class NoAmountIncludedTestCase(PoolBaseTestCase):
 
         calls = [
             lambda: self.add_line(sender=self.manager, amount=100),
-            lambda: self.approve_liquidity(sender=self.manager, amount=100),
-            lambda: self.cancel_liquidity(sender=self.manager, amount=100),
+            lambda: self.approve_entry(sender=self.manager, amount=100),
+            lambda: self.cancel_entry(sender=self.manager, amount=100),
             lambda: self.claim_liquidity(sender=self.manager, amount=100),
-            lambda: self.withdraw_liquidity(sender=self.manager, amount=100),
+            lambda: self.withdraw_claims(sender=self.manager, amount=100),
             lambda: self.create_event(sender=self.manager, amount=100),
             lambda: self.trigger_pause_line(sender=self.manager, amount=100),
             lambda: self.trigger_pause_deposit(

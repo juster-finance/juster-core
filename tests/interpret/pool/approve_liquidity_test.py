@@ -4,17 +4,17 @@ from tests.interpret.pool.pool_base import PoolBaseTestCase
 
 
 class ApproveLiquidityTestCase(PoolBaseTestCase):
-    def test_should_fail_when_try_to_approve_liquidity_twice(self):
+    def test_should_fail_when_try_to_approve_entry_twice(self):
 
         # creating default event:
         self.add_line()
 
         # providing liquidity:
         self.deposit_liquidity()
-        self.approve_liquidity(entry_id=0)
+        self.approve_entry(entry_id=0)
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.approve_liquidity(entry_id=0)
+            self.approve_entry(entry_id=0)
         msg = 'Entry is not found'
         self.assertTrue(msg in str(cm.exception))
 
@@ -27,7 +27,7 @@ class ApproveLiquidityTestCase(PoolBaseTestCase):
         self.deposit_liquidity()
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.approve_liquidity(entry_id=12)
+            self.approve_entry(entry_id=12)
         msg = 'Entry is not found'
         self.assertTrue(msg in str(cm.exception))
 
@@ -45,7 +45,7 @@ class ApproveLiquidityTestCase(PoolBaseTestCase):
         self.deposit_liquidity()
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.approve_liquidity(entry_id=0)
+            self.approve_entry(entry_id=0)
         msg = 'Cannot approve liquidity before acceptAfter'
         self.assertTrue(msg in str(cm.exception))
 
@@ -53,13 +53,13 @@ class ApproveLiquidityTestCase(PoolBaseTestCase):
         self.wait(3599)
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.approve_liquidity(entry_id=0)
+            self.approve_entry(entry_id=0)
         msg = 'Cannot approve liquidity before acceptAfter'
         self.assertTrue(msg in str(cm.exception))
 
         # waiting 1 second more and succeed to approve:
         self.wait(1)
-        self.approve_liquidity(entry_id=0)
+        self.approve_entry(entry_id=0)
 
     def test_that_anyone_can_approve_others_liquidity(self):
         # creating default event:
@@ -69,13 +69,13 @@ class ApproveLiquidityTestCase(PoolBaseTestCase):
         self.deposit_liquidity(sender=self.a)
 
         # approving with B:
-        self.approve_liquidity(sender=self.b, entry_id=0)
+        self.approve_entry(sender=self.b, entry_id=0)
 
     def test_should_fail_if_approved_liquidity_amount_more_than_entry_liquidity(
         self,
     ):
         # NOTE: this scenario should not happen under normal conditions
-        # but there are wrong state check in approve_liquidity entrypoint
+        # but there are wrong state check in approve_entry entrypoint
 
         # creating default event:
         self.add_line()
@@ -88,7 +88,7 @@ class ApproveLiquidityTestCase(PoolBaseTestCase):
 
         # approving:
         with self.assertRaises(MichelsonRuntimeError) as cm:
-            self.approve_liquidity(entry_id=0)
+            self.approve_entry(entry_id=0)
         msg = 'Wrong state'
         self.assertTrue(msg in str(cm.exception))
 
@@ -98,7 +98,7 @@ class ApproveLiquidityTestCase(PoolBaseTestCase):
         # scenario with running event where provider decides to go out:
         self.add_line()
         self.deposit_liquidity(sender=self.a, amount=1_000)
-        self.approve_liquidity(entry_id=0)
+        self.approve_entry(entry_id=0)
         self.create_event()
         self.claim_liquidity(sender=self.a, shares=500)
         self.wait(3600)
@@ -106,6 +106,6 @@ class ApproveLiquidityTestCase(PoolBaseTestCase):
 
         # another provider adds 500 mutez and should receive 500 shares:
         self.deposit_liquidity(sender=self.b, amount=500)
-        provider = self.approve_liquidity(entry_id=1)
+        provider = self.approve_entry(entry_id=1)
         received_shares = self.storage['shares'][provider]
         self.assertEqual(received_shares, 500)

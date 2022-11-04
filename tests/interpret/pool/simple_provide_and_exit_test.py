@@ -10,7 +10,7 @@ class SimpleProvideAndExitTest(PoolBaseTestCase):
         # providing liquidity:
         provided_amount = 10_000_000
         self.deposit_liquidity(self.a, amount=provided_amount)
-        self.approve_liquidity(self.a, entry_id=0)
+        self.approve_entry(self.a, entry_id=0)
 
         # removing liquidity:
         withdrawn_amount = self.claim_liquidity(

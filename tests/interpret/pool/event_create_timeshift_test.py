@@ -15,7 +15,7 @@ class EventCreateTimeshiftTestCase(PoolBaseTestCase):
         )
 
         self.deposit_liquidity()
-        self.approve_liquidity()
+        self.approve_entry()
 
         self.create_event()
         shifted_time = self.storage['lines'][0]['lastBetsCloseTime'] % PERIOD

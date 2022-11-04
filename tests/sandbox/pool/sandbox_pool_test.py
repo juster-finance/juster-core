@@ -42,9 +42,9 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
 
         return opg
 
-    def _approve_liquidity(self, user, entry_id):
+    def _approve_entry(self, user, entry_id):
         opg = (
-            user.contract(self.pool.address).approveLiquidity(entry_id).send()
+            user.contract(self.pool.address).approveEntry(entry_id).send()
         )
 
         return opg
@@ -64,11 +64,11 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
 
         return opg
 
-    def _pool_withdraw(self, user, event_id=0, provider=None):
+    def _pool_withdraw_claims(self, user, event_id=0, provider=None):
         provider = provider or pkh(user)
         claims = [{'provider': provider, 'eventId': event_id}]
 
-        opg = user.contract(self.pool.address).withdrawLiquidity(claims).send()
+        opg = user.contract(self.pool.address).withdrawClaims(claims).send()
 
         return opg
 
@@ -85,7 +85,7 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
         self._deposit_liquidity(self.a, shares)
         self.bake_block()
 
-        self._approve_liquidity(self.a, 0)
+        self._approve_entry(self.a, 0)
         self.bake_block()
 
         # A runs event:
@@ -125,7 +125,7 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
         self.bake_block()
 
         # withdrawing for claimed position for A, should be 40% of 10 tez:
-        opg = self._pool_withdraw(self.a, 0, pkh(self.a))
+        opg = self._pool_withdraw_claims(self.a, 0, pkh(self.a))
         self.bake_block()
         result = self._find_call_result_by_hash(self.a, opg.hash())
         op = result.operations[0]
@@ -155,7 +155,7 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
         self._deposit_liquidity(self.a, 10_000_000)
         self.bake_block()
 
-        self._approve_liquidity(self.a, 0)
+        self._approve_entry(self.a, 0)
         self.bake_block()
 
         shares = self.pool.storage['shares'][pkh(self.a)]()
@@ -165,7 +165,7 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
         self._deposit_liquidity(self.a, 10_000_000)
         self.bake_block()
 
-        self._approve_liquidity(self.a, 1)
+        self._approve_entry(self.a, 1)
         self.bake_block()
 
         shares = self.pool.storage['shares'][pkh(self.a)]()
@@ -202,7 +202,7 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
         self.assertEqual(self.pool.storage['nextEntryId'](), len(PROVIDERS))
 
         for entry_id in range(len(PROVIDERS)):
-            self._approve_liquidity(self.a, entry_id)
+            self._approve_entry(self.a, entry_id)
             self.bake_block()
 
         self.assertEqual(len(self.pool.storage['shares']()), len(PROVIDERS))
@@ -240,9 +240,9 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
 
         # withdrawing for participant:
         for event_id in range(LINES):
-            opg = self._pool_withdraw(self.a, event_id, pkh(self.a))
+            opg = self._pool_withdraw_claims(self.a, event_id, pkh(self.a))
             self.bake_block()
-            opg = self._pool_withdraw(self.b, event_id, pkh(self.b))
+            opg = self._pool_withdraw_claims(self.b, event_id, pkh(self.b))
             self.bake_block()
 
         # checking that withdrawal amount for the last event and participant

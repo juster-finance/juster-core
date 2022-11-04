@@ -23,7 +23,7 @@ class TriggerPauseLineTestCase(PoolBaseTestCase):
         line_id = self.add_line(sender=self.manager, max_events=10)
         self.add_line(sender=self.manager, max_events=10)
         entry_id = self.deposit_liquidity(amount=1000)
-        self.approve_liquidity(entry_id=entry_id)
+        self.approve_entry(entry_id=entry_id)
 
         liquidity_before = self.get_next_liquidity()
         self.trigger_pause_line(line_id=line_id, sender=self.manager)
@@ -36,7 +36,7 @@ class TriggerPauseLineTestCase(PoolBaseTestCase):
         self.add_line(sender=self.manager, max_events=10)
         line_id = self.add_line(sender=self.manager, max_events=2)
         entry_id = self.deposit_liquidity(amount=1200)
-        self.approve_liquidity(entry_id=entry_id)
+        self.approve_entry(entry_id=entry_id)
 
         liquidity_before = self.get_next_liquidity()
         events_before = self.storage['maxEvents']
@@ -55,7 +55,7 @@ class TriggerPauseLineTestCase(PoolBaseTestCase):
         # adding line:
         line_id = self.add_line(sender=self.manager, max_events=10)
         entry_id = self.deposit_liquidity(amount=100)
-        self.approve_liquidity(entry_id=entry_id)
+        self.approve_entry(entry_id=entry_id)
         next_event_liquidity_before = self.get_next_liquidity()
 
         # updating line:
@@ -70,7 +70,7 @@ class TriggerPauseLineTestCase(PoolBaseTestCase):
         self.add_line(sender=self.manager, max_events=10)
         line_id = self.add_line(sender=self.manager, max_events=10)
         entry_id = self.deposit_liquidity(amount=1000)
-        self.approve_liquidity(entry_id=entry_id)
+        self.approve_entry(entry_id=entry_id)
         self.trigger_pause_line(line_id=line_id, sender=self.manager)
 
         with self.assertRaises(MichelsonRuntimeError) as cm:
@@ -86,7 +86,7 @@ class TriggerPauseLineTestCase(PoolBaseTestCase):
         line_two = self.add_line(sender=self.manager, max_events=1)
 
         entry_id = self.deposit_liquidity(amount=30, sender=self.a)
-        self.approve_liquidity(entry_id=entry_id)
+        self.approve_entry(entry_id=entry_id)
 
         self.create_event(line_id=line_one)
         self.wait(3600)

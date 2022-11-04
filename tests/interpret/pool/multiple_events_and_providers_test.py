@@ -11,7 +11,7 @@ class MultipleEventsAndProvidersTest(PoolBaseTestCase):
 
         # providing liquidity with first provider:
         self.deposit_liquidity(self.a, amount=3_000_000)
-        provider_one = self.approve_liquidity(self.a, entry_id=0)
+        provider_one = self.approve_entry(self.a, entry_id=0)
         self.assertEqual(self.get_next_liquidity(), 1_000_000)
 
         # running two events, in each should be added 1xtz:
@@ -20,7 +20,7 @@ class MultipleEventsAndProvidersTest(PoolBaseTestCase):
 
         # second provider adds the same amount of liquidity:
         self.deposit_liquidity(self.b, amount=3_000_000)
-        provider_two = self.approve_liquidity(self.a, entry_id=1)
+        provider_two = self.approve_entry(self.a, entry_id=1)
         self.assertEqual(self.get_next_liquidity(), 2_000_000)
 
         # running last event with 2xtz liquidity:

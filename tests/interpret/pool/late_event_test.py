@@ -15,7 +15,7 @@ class LateEventTestCase(PoolBaseTestCase):
 
         # adding some liquidity so it will be possible to create events:
         self.deposit_liquidity(self.a, amount=3_000_000)
-        self.approve_liquidity(self.a, entry_id=0)
+        self.approve_entry(self.a, entry_id=0)
 
         # creating first event:
         self.create_event(line_id=0, next_event_id=0)
