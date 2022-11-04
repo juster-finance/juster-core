@@ -111,7 +111,7 @@ block {
     store.entryLiquidityF := abs(store.entryLiquidityF - providedF);
 
     const operations = if entry.amount > 0n then
-        list[prepareOperation(Tezos.get_sender(), entry.amount * 1mutez)]
+        list[prepareOperation(entry.provider, entry.amount * 1mutez)]
     else (nil: list(operation));
 
 } with (operations, store)
