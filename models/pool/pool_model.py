@@ -182,7 +182,7 @@ class PoolModel:
 
         return entry_id
 
-    def approve_liquidity(self, entry_id: int) -> int:
+    def approve_entry(self, entry_id: int) -> int:
         entry = self.entries[entry_id]
         new_shares = self.calc_deposit_shares(entry.amount)
         existed_shares = self.shares.get(entry.provider, Decimal(0))
@@ -191,7 +191,7 @@ class PoolModel:
         self.entries.pop(entry_id)
         return entry.provider
 
-    def cancel_liquidity(self, entry_id: int) -> None:
+    def cancel_entry(self, entry_id: int) -> None:
         entry = self.entries[entry_id]
         self.entries.pop(entry_id)
         self.balance -= entry.amount
@@ -242,7 +242,7 @@ class PoolModel:
 
         return payout
 
-    def withdraw_liquidity(
+    def withdraw_claims(
         self, claim_keys: list[ClaimKey]
     ) -> dict[str, Decimal]:
         payouts_f = self.calc_withdraw_payouts_f(claim_keys)
