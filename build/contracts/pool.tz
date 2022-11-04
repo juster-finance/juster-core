@@ -11,14 +11,14 @@
                              (nat %rateAboveEq)
                              (nat %rateBelow))
                        (nat %targetDynamics)))
-                (or (nat %approveLiquidity) (nat %cancelLiquidity)))
+                (or (nat %approveEntry) (nat %cancelEntry)))
             (or (or (pair %claimLiquidity (address %provider) (nat %shares)) (nat %createEvent))
                 (or (unit %default) (unit %depositLiquidity))))
         (or (or (or (unit %disband) (nat %payReward))
                 (or (address %proposeManager) (option %setDelegate key_hash)))
             (or (or (nat %setEntryLockPeriod) (unit %triggerPauseDeposit))
                 (or (nat %triggerPauseLine)
-                    (list %withdrawLiquidity (pair (nat %eventId) (address %provider))))))) ;
+                    (list %withdrawClaims (pair (nat %eventId) (address %provider))))))) ;
   storage
     (pair (pair (pair (pair (pair (map %activeEvents nat nat) (nat %activeLiquidityF))
                             (big_map %claims (pair (nat %eventId) (address %provider)) nat)
