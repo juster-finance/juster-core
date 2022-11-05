@@ -2,6 +2,7 @@ type lineIdT is nat;
 type eventIdT is nat;
 type entryIdT is nat;
 
+(* TODO: lineType -> lineT, eventType -> eventT *)
 type lineType is record [
     currencyPair : string;
     targetDynamics : nat;
@@ -37,6 +38,12 @@ type entryType is record [
     provider : address;
     acceptAfter : timestamp;
     amount : nat;
+]
+
+(* durationPoints is integrated amount of shares holded by providers *)
+type durationPointsT is record [
+    amount : nat;
+    updateLevel : nat;
 ]
 
 (*
@@ -79,6 +86,8 @@ type storage is record [
     precision : nat;
     proposedManager : address;
     isDisbandAllow : bool;
+    durationPoints : big_map(address, durationPointsT);
+    totalDurationPoints : nat;
 ]
 
 

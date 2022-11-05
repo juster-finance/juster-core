@@ -6,6 +6,25 @@
 #include "../partial/pool/pool_helpers.ligo"
 
 
+function updateDurationPoints(const provider : address; const s : storage) is {
+    const initPoints : durationPointsT = record [
+        amount = 0n;
+        updateLevel = Tezos.get_level();
+    ];
+    const lastPoints = getOrDefault(provider, s.durationPoints, initPoints);
+    const shares = getSharesOrZero(provider, s);
+    const newBlocks = absPositive(Tezos.get_level() - lastPoints.updateLevel);
+    const newPoints : durationPointsT = record [
+        amount = lastPoints.amount + shares*newBlocks;
+        updateLevel = Tezos.get_level();
+    ];
+    const updStore = s with record [
+        durationPoints = Big_map.update(provider, Some(newPoints), s.durationPoints);
+        totalDurationPoints = s.totalDurationPoints;
+    ]
+} with updStore
+
+
 function addLine(
     const line : lineType;
     var store : storage) : (list(operation) * storage) is
@@ -52,6 +71,8 @@ block {
 
     const entry = getEntry(entryId, store);
     store.entries := Big_map.remove(entryId, store.entries);
+
+    store := updateDurationPoints(entry.provider, store);
     const provided = entry.amount;
     const providedF = entry.amount * store.precision;
 
@@ -125,6 +146,7 @@ function claimLiquidity(
 block {
 
     checkNoAmountIncluded(unit);
+    store := updateDurationPoints(claim.provider, store);
 
     const shares = getSharesOrZero(claim.provider, store);
 
@@ -449,6 +471,7 @@ function disband(var store : storage) is {
     - SetDelegate: allows to change delegate
     - Default: allows to receive funds from delegate
     - disband: allows anyone to claimLiquidity for everyone, used to emtpy pool
+    - updateDurationPoints: forced update of provider integrated shares
 *)
 
 type action is
@@ -468,6 +491,7 @@ type action is
 | SetDelegate of option (key_hash)
 | Default of unit
 | Disband of unit
+| UpdateDurationPoints of address
 
 
 function main (const params : action; var s : storage) : (list(operation) * storage) is
@@ -488,6 +512,7 @@ case params of [
 | SetDelegate(p) -> setDelegate(p, s)
 | Default -> default(s)
 | Disband -> disband(s)
+| UpdateDurationPoints(p) -> (noOps, updateDurationPoints(p, s))
 ]
 
 [@view] function getLine (const lineId : nat; const s: storage) is
@@ -531,6 +556,12 @@ case params of [
 
 [@view] function getNextLiquidity(const _ : unit; const s: storage) is
     calcLiquidityPayout(s)
+
+[@view] function getDurationPoints(const provider : address; const s: storage) is
+    Big_map.find_opt(provider, s.durationPoints)
+
+[@view] function getTotalDurationPoints(const _ : unit; const s: storage) is
+    s.totalDurationPoints
 
 (* TODO: split this view or add here some info from other views: *)
 [@view] function getStateValues(const _ : unit; const s: storage) is

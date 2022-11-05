@@ -1,3 +1,6 @@
+const noOps : list(operation) = nil;
+
+
 function checkNoAmountIncluded(const _p : unit) : unit is
     if Tezos.get_amount() > 0tez
     then failwith(Errors.disallowAmount)
