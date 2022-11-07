@@ -1,42 +1,42 @@
-function calcFreeLiquidityF(const store : storage) : int is
-    Tezos.get_balance()/1mutez * store.precision
-    - store.withdrawableLiquidityF
-    - store.entryLiquidityF
+function calcFreeLiquidityF(const s : storageT) : int is
+    Tezos.get_balance()/1mutez * s.precision
+    - s.withdrawableLiquidityF
+    - s.entryLiquidityF
 
-function calcTotalLiquidityF(const store : storage) : int is
-    calcFreeLiquidityF(store) + store.activeLiquidityF;
+function calcTotalLiquidityF(const s : storageT) : int is
+    calcFreeLiquidityF(s) + s.activeLiquidityF;
 
-function calcLiquidityPayout(const store : storage) is
+function calcLiquidityPayout(const s : storageT) is
     block {
 
-        const maxLiquidityF = calcTotalLiquidityF(store) / store.maxEvents;
-        const freeLiquidityF = calcFreeLiquidityF(store);
+        const maxLiquidityF = calcTotalLiquidityF(s) / s.maxEvents;
+        const freeLiquidityF = calcFreeLiquidityF(s);
 
         const liquidityAmountF = if maxLiquidityF > freeLiquidityF
             then freeLiquidityF
             else maxLiquidityF;
 
-    } with abs(liquidityAmountF / store.precision)
+    } with abs(liquidityAmountF / s.precision)
 
 function excludeFee(const liquidityAmount : nat; const newEventFee : nat) is
     if liquidityAmount > newEventFee
     then abs(liquidityAmount - newEventFee)
     else (failwith(PoolErrors.noLiquidity) : nat)
 
-function getEntry(const entryId : nat; const store : storage) : entryType is
-    getOrFail(entryId, store.entries, PoolErrors.entryNotFound)
+function getEntry(const entryId : nat; const s : storageT) : entryT is
+    getOrFail(entryId, s.entries, PoolErrors.entryNotFound)
 
-function getShares(const provider : address; const store : storage) : nat is
-    getOrFail(provider, store.shares, PoolErrors.noSharesToClaim)
+function getShares(const provider : address; const s : storageT) : nat is
+    getOrFail(provider, s.shares, PoolErrors.noSharesToClaim)
 
-function getEvent(const eventId : nat; const store : storage) : eventType is
-    getOrFail(eventId, store.events, PoolErrors.eventNotFound)
+function getEvent(const eventId : nat; const s : storageT) : eventT is
+    getOrFail(eventId, s.events, PoolErrors.eventNotFound)
 
-function getLine(const lineId : nat; const store : storage) : lineType is
-    getOrFail(lineId, store.lines, PoolErrors.lineNotFound)
+function getLine(const lineId : nat; const s : storageT) : lineT is
+    getOrFail(lineId, s.lines, PoolErrors.lineNotFound)
 
-function getClaim(const key : claimKey; const store : storage) : nat is
-    getOrFail(key, store.claims, PoolErrors.claimNotFound)
+function getClaim(const key : claimKeyT; const s : storageT) : nat is
+    getOrFail(key, s.claims, PoolErrors.claimNotFound)
 
 (* TODO: replace with absOr(const value : int; const default : nat) ? *)
 function absPositive(const value : int) is if value >= 0 then abs(value) else 0n
@@ -44,28 +44,28 @@ function absPositive(const value : int) is if value >= 0 then abs(value) else 0n
 function absOrFail(const value : int; const msg : string) is
     if value >= 0 then abs(value) else (failwith(msg) : nat)
 
-function calcFreeEventSlots(const store : storage) is
-    store.maxEvents - Map.size(store.activeEvents)
+function calcFreeEventSlots(const s : storageT) is
+    s.maxEvents - Map.size(s.activeEvents)
 
-function checkHaveFreeEventSlots(const store : storage) is
-    if calcFreeEventSlots(store) <= 0
+function checkHaveFreeEventSlots(const s : storageT) is
+    if calcFreeEventSlots(s) <= 0
     then failwith(PoolErrors.noFreeEventSlots)
     else unit;
 
-function checkLineIsNotPaused(const line : lineType) is
+function checkLineIsNotPaused(const line : lineT) is
     if line.isPaused
     then failwith(PoolErrors.lineIsPaused)
     else unit
 
-function checkLineValid(const line : lineType) is
+function checkLineValid(const line : lineT) is
     (* TODO: add check that betsPeriod > 0? *)
     (* TODO: check that advanceTime < minBettingPeriod? *)
     if line.maxEvents = 0n
     then failwith(PoolErrors.emptyLine)
     else unit
 
-function checkDepositIsNotPaused(const store : storage) is
-    if store.isDepositPaused
+function checkDepositIsNotPaused(const s : storageT) is
+    if s.isDepositPaused
     then failwith(PoolErrors.depositIsPaused)
     else unit
 
@@ -95,35 +95,35 @@ function getProvideLiquidityEntry(const justerAddress : address) is
     | Some(con) -> con
     ]
 
-function getLineIdByEventId(const eventId : nat; const store : storage) is
-    case Map.find_opt(eventId, store.activeEvents) of [
+function getLineIdByEventId(const eventId : nat; const s : storageT) is
+    case Map.find_opt(eventId, s.activeEvents) of [
     | Some(id) -> id
     | None -> (failwith(PoolErrors.activeNotFound) : nat)
     ]
 
-function checkEventNotDuplicated(const eventId : nat; const store : storage) is
-    if Big_map.mem(eventId, store.events)
+function checkEventNotDuplicated(const eventId : nat; const s : storageT) is
+    if Big_map.mem(eventId, s.events)
     then failwith(PoolErrors.eventIdTaken)
     else unit
 
 function checkLineHaveFreeSlots(
     const lineId : nat;
-    const line : lineType;
-    const store : storage) is
+    const line : lineT;
+    const s : storageT) is
 block {
     function countEvents (const count : nat; const ids : nat*nat) : nat is
         if ids.1 = lineId then count + 1n else count;
-    const activeEventsInLine = Map.fold(countEvents, store.activeEvents, 0n);
+    const activeEventsInLine = Map.fold(countEvents, s.activeEvents, 0n);
 } with if activeEventsInLine > line.maxEvents
     then failwith(PoolErrors.noFreeEventSlots)
     else unit;
 
-function checkReadyToEmitEvent(const line : lineType) is
+function checkReadyToEmitEvent(const line : lineT) is
     if Tezos.get_now() < line.lastBetsCloseTime - int(line.advanceTime)
     then failwith(PoolErrors.eventNotReady)
     else unit;
 
-function calcBetsCloseTime(const line : lineType) is
+function calcBetsCloseTime(const line : lineT) is
 block {
     var periods := (Tezos.get_now() - line.lastBetsCloseTime) / line.betsPeriod + 1n;
 
@@ -143,7 +143,7 @@ block {
 } with nextBetsCloseTime
 
 (* TODO: consider removing this func as it is not used anymore *)
-function calcDuration(const line : lineType) is
+function calcDuration(const line : lineT) is
 block {
     const duration =
         int(line.measurePeriod)
@@ -160,13 +160,13 @@ block {
     const config = getConfig(justerAddress);
 } with config.expirationFee + config.measureStartFee
 
-function getClaimedAmountOrZero(const key : claimKey; const store : storage) is
-    getOrDefault(key, store.claims, 0n)
+function getClaimedAmountOrZero(const key : claimKeyT; const s : storageT) is
+    getOrDefault(key, s.claims, 0n)
 
-function getSharesOrZero(const provider : address; const store : storage) : nat is
-    getOrDefault(provider, store.shares, 0n)
+function getSharesOrZero(const provider : address; const s : storageT) : nat is
+    getOrDefault(provider, s.shares, 0n)
 
-function getEventResult(const event : eventType) is
+function getEventResult(const event : eventT) is
     case event.result of [
     | Some(result) -> result
     | None -> (failwith(PoolErrors.eventNotFinished) : nat)

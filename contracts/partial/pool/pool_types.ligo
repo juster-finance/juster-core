@@ -2,8 +2,7 @@ type lineIdT is nat;
 type eventIdT is nat;
 type entryIdT is nat;
 
-(* TODO: lineType -> lineT, eventType -> eventT *)
-type lineType is record [
+type lineT is record [
     currencyPair : string;
     targetDynamics : nat;
     liquidityPercent : nat;
@@ -19,7 +18,7 @@ type lineType is record [
     advanceTime : nat;
 ]
 
-type eventType is record [
+type eventT is record [
     result : option(nat);
     (* TODO: consider having isFinished : bool field? Or result as an option
         is enough? *)
@@ -27,14 +26,14 @@ type eventType is record [
     claimed : nat;
 ]
 
-type claimKey is record [
+type claimKeyT is record [
     eventId : eventIdT;
     provider : address;
 ]
 
 (*  entry is not accepted yet position including provider address,
     timestamp when liquidity can be accepted and amount of this liquidity *)
-type entryType is record [
+type entryT is record [
     provider : address;
     acceptAfter : timestamp;
     amount : nat;
@@ -65,20 +64,20 @@ type durationPointsT is record [
 *)
 (* TODO: consider moving `entryLockPeriod` to `configs` and having configs ledger *)
 
-type storage is record [
+type storageT is record [
     nextLineId: lineIdT;
-    lines : big_map(lineIdT, lineType);
+    lines : big_map(lineIdT, lineT);
     activeEvents : map(eventIdT, lineIdT);
-    events : big_map(eventIdT, eventType);
+    events : big_map(eventIdT, eventT);
     shares : big_map(address, nat);
     totalShares : nat;
     activeLiquidityF : nat;
     withdrawableLiquidityF : nat;
     entryLiquidityF : nat;
     entryLockPeriod : nat;
-    entries : big_map(entryIdT, entryType);
+    entries : big_map(entryIdT, entryT);
     nextEntryId : entryIdT;
-    claims : big_map(claimKey, nat);
+    claims : big_map(claimKeyT, nat);
     manager : address;
     maxEvents : nat;
     isDepositPaused : bool;
@@ -91,10 +90,10 @@ type storage is record [
 ]
 
 
-type claimLiquidityParams is record [
+type claimLiquidityParamsT is record [
     provider : address;
     shares : nat;
 ]
 
-type withdrawClaimsParams is list(claimKey)
+type withdrawClaimsParamsT is list(claimKeyT)
 
