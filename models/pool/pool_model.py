@@ -11,6 +11,7 @@ from typing import Type
 from models.pool.claim_key import ClaimKey
 from models.pool.entry import Entry
 from models.pool.event import Event
+from models.pool.duration_points import DurationPoints
 from models.pool.helpers import quantize
 from models.pool.helpers import quantize_up
 from models.pool.line import Line
@@ -39,6 +40,9 @@ class PoolModel:
     withdrawable_liquidity_f: Decimal = Decimal(0)
     lines: dict[int, Line] = field(default_factory=dict)
     next_line_id: int = 0
+    duration_points: dict[str, DurationPoints] = field(default_factory=dict)
+    total_duration_points: Decimal = Decimal(0)
+    level: int = 0
 
     @classmethod
     def from_storage(
@@ -46,6 +50,7 @@ class PoolModel:
         storage: AnyStorage,
         balance: Decimal = Decimal(0),
         now: int = 0,
+        level: int = 0,
     ) -> PoolModel:
         def convert(cls: Any, items: AnyStorage):
             return {
@@ -89,6 +94,9 @@ class PoolModel:
             ),
             lines=convert(Line, storage['lines']),
             next_line_id=storage['nextLineId'],
+            duration_points=convert(DurationPoints, storage['durationPoints']),
+            total_duration_points=Decimal(storage['totalDurationPoints']),
+            level=level,
         )
 
     def trigger_pause_line(self, line_id: int) -> bool:
@@ -172,6 +180,20 @@ class PoolModel:
             for address, payout_f in payouts_f.items()
         }
 
+    def update_duration_points(self, provider: str) -> None:
+        init_points = DurationPoints(amount=0, update_level=self.level)
+        last_points = self.duration_points.get(provider, init_points)
+
+        shares_amount = self.shares.get(provider, Decimal(0))
+        duration = self.level - last_points.update_level
+
+        added_amount = shares_amount * duration
+        self.duration_points[provider] = DurationPoints(
+            amount=last_points.amount + added_amount,
+            update_level=self.level,
+        )
+        self.total_duration_points += added_amount
+
     def deposit_liquidity(self, user: str, amount: Decimal) -> int:
         accept_after = self.now + self.entry_lock_period
         entry = Entry(user, amount, accept_after)
@@ -184,6 +206,7 @@ class PoolModel:
 
     def approve_entry(self, entry_id: int) -> int:
         entry = self.entries[entry_id]
+        self.update_duration_points(entry.provider)
         new_shares = self.calc_deposit_shares(entry.amount)
         existed_shares = self.shares.get(entry.provider, Decimal(0))
         self.shares[entry.provider] = existed_shares + new_shares
@@ -228,6 +251,7 @@ class PoolModel:
         if shares == 0:
             return Decimal(0)
 
+        self.update_duration_points(provider)
         payout = self.calc_claim_payout(shares)
         self.shares[provider] -= shares
 
