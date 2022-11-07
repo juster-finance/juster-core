@@ -22,14 +22,19 @@ JUSTER_ADDRESS = 'KT1Feq9iRBBhpSBdPF1Y7Sd7iJu7uLqqRf1A'
 LINES_FN = 'scripts/event_lines/ghostnet.json'
 
 with open('metadata/pool_metadata.json', 'r') as metadata_file:
-    METADATA = metadata_file.read()
+    METADATA = json.loads(metadata_file.read())
 
 
 def to_hex(string):
     return string.encode().hex()
 
 
-def generate_pool_storage(manager, juster_address):
+def generate_pool_storage(manager, juster_address, pool_name=None):
+    metadata = METADATA.copy()
+    if pool_name:
+        metadata['name'] += f': {pool_name}'
+
+    metadata_json = json.dumps(metadata)
     return {
         'nextLineId': 0,
         'lines': {},
@@ -49,7 +54,7 @@ def generate_pool_storage(manager, juster_address):
         'isDepositPaused': False,
         'metadata': {
             '': to_hex('tezos-storage:contents'),
-            'contents': to_hex(METADATA),
+            'contents': to_hex(metadata_json),
         },
         'precision': 1_000_000,
         'proposedManager': manager,
@@ -75,18 +80,30 @@ def try_multiple_times(unstable_func, max_attempts=25):
     raise Exception('too many attempts')
 
 
-def deploy_pool(client):
-    print(f'deploying pool...')
+def generate_pool_name(line_params):
+    currency_pair = line_params['currency_pair']
+    timeframe_seconds = line_params['measure_period']
+    timeframe_hours = timeframe_seconds // 3600
+    return f'{currency_pair}-{timeframe_hours}H'
+
+
+def deploy_pool(client, line_params):
     contract = CONTRACTS['pool'].using(key=KEY, shell=SHELL)
+    pool_name = generate_pool_name(line_params)
+    print(f'deploying {pool_name} pool...')
     storage = generate_pool_storage(
-        manager=client.key.public_key_hash(), juster_address=JUSTER_ADDRESS
+        manager=client.key.public_key_hash(),
+        juster_address=JUSTER_ADDRESS,
+        pool_name=pool_name,
     )
 
     opg = try_multiple_times(
         lambda: contract.originate(initial_storage=storage).send()
     )
     print(f'success: {opg.hash()}')
-    client.wait(opg)
+    opg = try_multiple_times(
+        lambda: client.wait(opg)
+    )
 
     # Searching for Pool contract address:
     opg = try_multiple_times(
@@ -122,7 +139,9 @@ def add_line(client, pool_address, line_params):
     opg = try_multiple_times(
         lambda: pool.addLine(convert_to_line_params(line_params)).send()
     )
-    client.wait(opg)
+    opg = try_multiple_times(
+        lambda: client.wait(opg)
+    )
     print(f'line succesfully added')
 
 
@@ -135,6 +154,6 @@ if __name__ == '__main__':
 
     print(f'deploying {len(lines)} pools, one for each line')
     for line_params in lines:
-        pool_address = deploy_pool(client)
+        pool_address = deploy_pool(client, line_params)
         add_line(client, pool_address, line_params)
 
