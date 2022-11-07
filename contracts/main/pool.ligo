@@ -92,9 +92,21 @@ block {
     const liquidityBeforeDepositF = absOrFail(
         totalLiquidityF - providedF, PoolWrongState.negativeTotalLiquidity);
 
+    (* TODO: consider providing x1000 shares instead to increase precision? *)
     const shares = if s.totalShares = 0n
         then provided
         else providedF * s.totalShares / liquidityBeforeDepositF;
+
+    (* Should it be allowed to add 0 shares? In the case if share
+        price is significantly higher than mutez it might be a minor issue.
+        However precision errors may lead to some unpredictable problems,
+        so probably it is better to have failwith here:
+    *)
+    if shares = 0n
+    then failwith(PoolErrors.approveZeroShares)
+    else skip;
+    (* TODO: failed to be added liquidity will be freeze on contract.
+        Probably bad idea trying to return this back to entry.provider *)
 
     s.shares[entry.provider] := getSharesOrZero(entry.provider, s) + shares;
     s.totalShares := s.totalShares + shares;
