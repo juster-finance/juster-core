@@ -1354,19 +1354,20 @@
                              CAR ;
                              PAIR ;
                              SWAP ;
-                             DUP 2 ;
-                             CDR ;
-                             CAR ;
-                             CAR ;
-                             CAR ;
+                             PUSH string "Wrong state: negative payout" ;
                              DUP 3 ;
                              CDR ;
+                             CAR ;
+                             CAR ;
+                             CAR ;
+                             DUP 4 ;
+                             CDR ;
                              CDR ;
                              CAR ;
-                             DUP 5 ;
+                             DUP 6 ;
                              CDR ;
-                             DUP 5 ;
-                             DIG 8 ;
+                             DUP 6 ;
+                             DIG 9 ;
                              SWAP ;
                              EXEC ;
                              MUL ;
@@ -1376,11 +1377,10 @@
                              EDIV ;
                              IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
                              CAR ;
-                             PUSH int 0 ;
-                             DUP 2 ;
-                             COMPARE ;
-                             LT ;
-                             IF { PUSH string "Wrong state: negative payout" ; FAILWITH } {} ;
+                             PAIR ;
+                             DUP 5 ;
+                             SWAP ;
+                             EXEC ;
                              DUP 3 ;
                              DUP ;
                              CDR ;
@@ -1395,7 +1395,7 @@
                              CAR ;
                              SUB ;
                              PAIR ;
-                             DIG 6 ;
+                             DUP 7 ;
                              SWAP ;
                              EXEC ;
                              PAIR ;
@@ -1414,16 +1414,6 @@
                              CAR ;
                              DIG 2 ;
                              MUL ;
-                             DUP ;
-                             DUP 4 ;
-                             CAR ;
-                             CAR ;
-                             CAR ;
-                             CAR ;
-                             CDR ;
-                             COMPARE ;
-                             LT ;
-                             IF { PUSH string "Wrong state: negative active liquidity" ; FAILWITH } {} ;
                              DUP 3 ;
                              DUP ;
                              CDR ;
@@ -1439,15 +1429,19 @@
                              CAR ;
                              CAR ;
                              CDR ;
-                             DIG 5 ;
-                             DIG 7 ;
+                             PUSH string "Wrong state: negative active liquidity" ;
+                             DIG 6 ;
+                             DIG 8 ;
                              CAR ;
                              CAR ;
                              CAR ;
                              CAR ;
                              CDR ;
                              SUB ;
-                             ABS ;
+                             PAIR ;
+                             DIG 8 ;
+                             SWAP ;
+                             EXEC ;
                              DIG 5 ;
                              CAR ;
                              CAR ;
@@ -1460,7 +1454,7 @@
                              PAIR ;
                              PAIR ;
                              SWAP ;
-                             PUSH int 0 ;
+                             PUSH nat 0 ;
                              DUP 2 ;
                              COMPARE ;
                              GT ;
@@ -1469,7 +1463,6 @@
                                   NIL operation ;
                                   PUSH mutez 1 ;
                                   DIG 2 ;
-                                  ABS ;
                                   MUL ;
                                   DIG 3 ;
                                   CAR ;
@@ -2741,7 +2734,6 @@
                  SWAP } }
            { DIG 2 ;
              DIG 3 ;
-             DIG 4 ;
              DIG 5 ;
              DIG 6 ;
              DIG 8 ;
@@ -2753,10 +2745,10 @@
              DIG 15 ;
              DIG 16 ;
              DIG 18 ;
-             DROP 14 ;
+             DROP 13 ;
              SWAP ;
              UNIT ;
-             DIG 5 ;
+             DIG 6 ;
              SWAP ;
              EXEC ;
              DROP ;
@@ -2766,7 +2758,7 @@
                     DUP 2 ;
                     CAR ;
                     PAIR ;
-                    DUP 5 ;
+                    DUP 6 ;
                     SWAP ;
                     EXEC ;
                     DUP ;
@@ -2848,7 +2840,7 @@
                     PAIR ;
                     PAIR ;
                     SWAP } ;
-             DIG 2 ;
+             DIG 3 ;
              DROP ;
              NIL operation ;
              SWAP ;
@@ -2868,25 +2860,20 @@
                     DUP 2 ;
                     COMPARE ;
                     GT ;
-                    IF { DIG 3 ; SWAP ; DIG 2 ; PAIR ; DUP 5 ; SWAP ; EXEC ; CONS ; SWAP }
+                    IF { DIG 3 ; SWAP ; DIG 2 ; PAIR ; DUP 6 ; SWAP ; EXEC ; CONS ; SWAP }
                        { DROP 2 } ;
                     DUP 3 ;
-                    CDR ;
-                    CDR ;
-                    CDR ;
-                    DUP 2 ;
-                    COMPARE ;
-                    GT ;
-                    IF { PUSH string "Wrong state: negative withdrawable liquidity" ; FAILWITH }
-                       {} ;
-                    DUP 3 ;
-                    SWAP ;
-                    DIG 3 ;
+                    PUSH string "Wrong state: negative withdrawable liquidity" ;
+                    DIG 2 ;
+                    DIG 4 ;
                     CDR ;
                     CDR ;
                     CDR ;
                     SUB ;
-                    ABS ;
+                    PAIR ;
+                    DUP 4 ;
+                    SWAP ;
+                    EXEC ;
                     DUP 2 ;
                     CDR ;
                     CDR ;
@@ -2901,7 +2888,8 @@
                     PAIR ;
                     SWAP } ;
              DIG 2 ;
-             DROP } ;
+             DIG 3 ;
+             DROP 2 } ;
          PAIR } ;
   view "getLine"
        nat
