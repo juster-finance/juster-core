@@ -2707,7 +2707,7 @@
                              CAR ;
                              PAIR ;
                              PAIR }
-                           { DIG 3 ; DIG 4 ; DIG 5 ; DROP 3 ; PAIR ; EXEC } } ;
+                           { DIG 3 ; DIG 4 ; DROP 2 ; UNIT ; DIG 4 ; SWAP ; EXEC ; DROP ; PAIR ; EXEC } } ;
                      NIL operation } } }
            { DIG 2 ;
              DIG 3 ;
