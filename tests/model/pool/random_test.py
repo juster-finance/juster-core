@@ -38,8 +38,9 @@ class RandomTester:
         )
         active_liquidity_sum_f = active_liquidity_sum * self.model.precision
         assert self.model.active_liquidity_f == active_liquidity_sum_f
-        # TODO: sum of claims for finished events equals to withdrawable liquidity
-        # TODO: sum of entries equal to entries liquidity
+
+        # TODO: there might be more invariants to check
+        # TODO: sum of claims for finished events equals to withdrawable liquidity (?)
 
     def random_user(self):
         return choice(self.users)
