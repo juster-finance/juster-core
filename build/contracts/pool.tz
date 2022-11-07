@@ -84,6 +84,7 @@
              TRANSFER_TOKENS } ;
          PUSH string "Max active events limit reached" ;
          PUSH string "Wrong state: negative entry liquidity" ;
+         PUSH string "Wrong state: claimed exceed provided" ;
          LAMBDA
            (pair (pair (pair (pair (pair (map nat nat) nat)
                                    (big_map (pair nat address) nat)
@@ -292,6 +293,15 @@
              GE ;
              IF { ABS } { DROP ; PUSH nat 0 } } ;
          LAMBDA
+           (pair int string)
+           nat
+           { UNPAIR ;
+             PUSH int 0 ;
+             DUP 2 ;
+             COMPARE ;
+             GE ;
+             IF { SWAP ; DROP ; ABS } { DROP ; FAILWITH } } ;
+         LAMBDA
            (pair address
                  (pair (pair (pair (pair (map nat nat) nat)
                                    (big_map (pair nat address) nat)
@@ -482,22 +492,23 @@
              SWAP ;
              CAR ;
              PAIR } ;
-         DUP 3 ;
+         DUP 4 ;
          DUP 3 ;
          PAIR ;
          APPLY ;
-         DIG 15 ;
+         DIG 17 ;
          UNPAIR ;
          IF_LEFT
            { IF_LEFT
-               { DIG 4 ;
+               { DIG 5 ;
                  DROP ;
                  IF_LEFT
-                   { DIG 4 ;
-                     DIG 5 ;
-                     DIG 8 ;
+                   { DIG 5 ;
+                     DIG 6 ;
+                     DIG 9 ;
                      DIG 10 ;
-                     DROP 4 ;
+                     DIG 12 ;
+                     DROP 5 ;
                      IF_LEFT
                        { DIG 2 ;
                          DIG 3 ;
@@ -505,7 +516,8 @@
                          DIG 5 ;
                          DIG 6 ;
                          DIG 7 ;
-                         DROP 6 ;
+                         DIG 8 ;
+                         DROP 7 ;
                          IF_LEFT
                            { DIG 2 ;
                              DROP 2 ;
@@ -714,22 +726,22 @@
                                   PAIR ;
                                   PAIR }
                                 { SWAP ; DROP } } }
-                       { DIG 8 ;
+                       { DIG 9 ;
                          DROP ;
                          IF_LEFT
-                           { DIG 7 ;
-                             DIG 8 ;
+                           { DIG 8 ;
+                             DIG 9 ;
                              DROP 2 ;
                              SWAP ;
                              UNIT ;
-                             DIG 8 ;
+                             DIG 9 ;
                              SWAP ;
                              EXEC ;
                              DROP ;
                              DUP ;
                              DUP 3 ;
                              PAIR ;
-                             DIG 5 ;
+                             DIG 6 ;
                              SWAP ;
                              EXEC ;
                              DUP 2 ;
@@ -792,16 +804,6 @@
                              LT ;
                              IF { PUSH string "Cannot approve liquidity before acceptAfter" ; FAILWITH }
                                 {} ;
-                             DUP ;
-                             DUP 4 ;
-                             CAR ;
-                             CAR ;
-                             CDR ;
-                             CAR ;
-                             CDR ;
-                             COMPARE ;
-                             LT ;
-                             IF { DIG 5 ; FAILWITH } { DIG 5 ; DROP } ;
                              DUP 3 ;
                              DUP ;
                              CDR ;
@@ -813,15 +815,19 @@
                              CAR ;
                              CDR ;
                              CDR ;
-                             DUP 5 ;
-                             DIG 7 ;
+                             DIG 10 ;
+                             DUP 6 ;
+                             DIG 8 ;
                              CAR ;
                              CAR ;
                              CDR ;
                              CAR ;
                              CDR ;
                              SUB ;
-                             ABS ;
+                             PAIR ;
+                             DUP 9 ;
+                             SWAP ;
+                             EXEC ;
                              DUP 5 ;
                              CAR ;
                              CAR ;
@@ -839,19 +845,17 @@
                              PAIR ;
                              DUG 2 ;
                              DUP 3 ;
+                             DIG 6 ;
+                             SWAP ;
+                             EXEC ;
+                             PUSH string "Wrong state: negative total liquidity" ;
+                             DUP 3 ;
+                             DIG 2 ;
+                             SUB ;
+                             PAIR ;
                              DIG 5 ;
                              SWAP ;
                              EXEC ;
-                             DUP 2 ;
-                             INT ;
-                             DUP 2 ;
-                             COMPARE ;
-                             LT ;
-                             IF { PUSH string "Wrong state: negative total liquidity" ; FAILWITH } {} ;
-                             DUP 2 ;
-                             SWAP ;
-                             SUB ;
-                             ABS ;
                              PUSH nat 0 ;
                              DUP 5 ;
                              CDR ;
@@ -930,11 +934,11 @@
                              PAIR }
                            { DIG 2 ;
                              DIG 3 ;
-                             DIG 5 ;
+                             DIG 6 ;
                              DROP 3 ;
                              SWAP ;
                              UNIT ;
-                             DIG 7 ;
+                             DIG 8 ;
                              SWAP ;
                              EXEC ;
                              DROP ;
@@ -949,7 +953,7 @@
                              DUP ;
                              DUP 3 ;
                              PAIR ;
-                             DIG 3 ;
+                             DIG 4 ;
                              SWAP ;
                              EXEC ;
                              DUP 2 ;
@@ -1000,11 +1004,11 @@
                                   DUP 2 ;
                                   CDR ;
                                   PAIR ;
-                                  DIG 5 ;
+                                  DIG 6 ;
                                   SWAP ;
                                   EXEC ;
                                   DROP }
-                                { DIG 4 ; DROP } ;
+                                { DIG 5 ; DROP } ;
                              DUP 2 ;
                              CDR ;
                              CAR ;
@@ -1014,16 +1018,6 @@
                              CAR ;
                              CDR ;
                              MUL ;
-                             DUP ;
-                             DUP 4 ;
-                             CAR ;
-                             CAR ;
-                             CDR ;
-                             CAR ;
-                             CDR ;
-                             COMPARE ;
-                             LT ;
-                             IF { DIG 3 ; FAILWITH } { DIG 3 ; DROP } ;
                              DUP 3 ;
                              DUP ;
                              CDR ;
@@ -1035,15 +1029,19 @@
                              CAR ;
                              CDR ;
                              CDR ;
-                             DIG 4 ;
-                             DIG 6 ;
+                             DIG 8 ;
+                             DIG 5 ;
+                             DIG 7 ;
                              CAR ;
                              CAR ;
                              CDR ;
                              CAR ;
                              CDR ;
                              SUB ;
-                             ABS ;
+                             PAIR ;
+                             DIG 6 ;
+                             SWAP ;
+                             EXEC ;
                              DUP 5 ;
                              CAR ;
                              CAR ;
@@ -1084,19 +1082,19 @@
                                 { DIG 2 ; DROP 2 ; SWAP } ;
                              SWAP } } ;
                      SWAP }
-                   { DIG 6 ;
-                     DIG 9 ;
-                     DIG 12 ;
+                   { DIG 7 ;
+                     DIG 11 ;
+                     DIG 14 ;
                      DROP 3 ;
                      IF_LEFT
                        { IF_LEFT
-                           { DIG 4 ;
-                             DIG 6 ;
-                             DIG 8 ;
+                           { DIG 5 ;
+                             DIG 7 ;
+                             DIG 10 ;
                              DROP 3 ;
                              SWAP ;
                              UNIT ;
-                             DIG 9 ;
+                             DIG 11 ;
                              SWAP ;
                              EXEC ;
                              DROP ;
@@ -1124,29 +1122,27 @@
                                   DUP 4 ;
                                   CAR ;
                                   PAIR ;
-                                  DIG 7 ;
+                                  DIG 9 ;
                                   SWAP ;
                                   EXEC ;
                                   DROP }
-                                { DIG 6 ; DROP } ;
-                             DUP ;
+                                { DIG 8 ; DROP } ;
+                             PUSH string "Claim shares is exceed position shares" ;
                              DUP 4 ;
                              CDR ;
-                             COMPARE ;
-                             GT ;
-                             IF { PUSH string "Claim shares is exceed position shares" ; FAILWITH } {} ;
-                             DUP 3 ;
-                             CDR ;
-                             SWAP ;
+                             DIG 2 ;
                              SUB ;
-                             ABS ;
+                             PAIR ;
+                             DUP 4 ;
+                             SWAP ;
+                             EXEC ;
                              PUSH nat 0 ;
                              PUSH nat 0 ;
                              DUP 5 ;
                              CDR ;
                              COMPARE ;
                              EQ ;
-                             IF { DIG 4 ; DROP }
+                             IF { DIG 5 ; DIG 7 ; DROP 2 }
                                 { DUP 3 ;
                                   CAR ;
                                   CAR ;
@@ -1157,7 +1153,7 @@
                                          DUP 4 ;
                                          DUP 2 ;
                                          PAIR ;
-                                         DUP 7 ;
+                                         DUP 8 ;
                                          SWAP ;
                                          EXEC ;
                                          DUP 6 ;
@@ -1167,14 +1163,18 @@
                                          DUP 6 ;
                                          DUP 2 ;
                                          PAIR ;
-                                         DUP 3 ;
-                                         CAR ;
-                                         CAR ;
+                                         DUP 12 ;
                                          DUP 4 ;
+                                         CAR ;
+                                         CAR ;
+                                         DUP 5 ;
                                          CAR ;
                                          CDR ;
                                          SUB ;
-                                         ABS ;
+                                         PAIR ;
+                                         DUP 10 ;
+                                         SWAP ;
+                                         EXEC ;
                                          DUP 8 ;
                                          CDR ;
                                          CDR ;
@@ -1272,7 +1272,7 @@
                                          DUP 2 ;
                                          COMPARE ;
                                          GT ;
-                                         IF { PUSH string "Wrong state: locked exceed total" ; FAILWITH } {} ;
+                                         IF { DUP 11 ; FAILWITH } {} ;
                                          DUP 6 ;
                                          DUP ;
                                          CDR ;
@@ -1319,8 +1319,9 @@
                                          PAIR ;
                                          PAIR ;
                                          DUG 2 } ;
-                                  DIG 4 ;
-                                  DROP } ;
+                                  DIG 5 ;
+                                  DIG 7 ;
+                                  DROP 2 } ;
                              DUP 3 ;
                              DUP ;
                              CDR ;
@@ -1365,7 +1366,7 @@
                              DUP 5 ;
                              CDR ;
                              DUP 5 ;
-                             DIG 7 ;
+                             DIG 8 ;
                              SWAP ;
                              EXEC ;
                              MUL ;
@@ -1380,28 +1381,23 @@
                              COMPARE ;
                              LT ;
                              IF { PUSH string "Wrong state: negative payout" ; FAILWITH } {} ;
-                             DUP 4 ;
-                             CDR ;
-                             DUP 4 ;
-                             CDR ;
-                             CDR ;
-                             CAR ;
-                             COMPARE ;
-                             LT ;
-                             IF { PUSH string "Wrong state: negative total shares" ; FAILWITH } {} ;
                              DUP 3 ;
                              DUP ;
                              CDR ;
                              CDR ;
                              CDR ;
-                             DUP 6 ;
+                             PUSH string "Wrong state: negative total shares" ;
+                             DUP 7 ;
                              CDR ;
-                             DIG 5 ;
+                             DIG 6 ;
                              CDR ;
                              CDR ;
                              CAR ;
                              SUB ;
-                             ABS ;
+                             PAIR ;
+                             DIG 6 ;
+                             SWAP ;
+                             EXEC ;
                              PAIR ;
                              DUP 2 ;
                              CDR ;
@@ -1485,11 +1481,13 @@
                                 { DIG 2 ; DIG 3 ; DROP 3 ; SWAP } }
                            { DIG 2 ;
                              DIG 3 ;
-                             DIG 5 ;
+                             DIG 4 ;
+                             DIG 6 ;
                              DIG 9 ;
-                             DIG 10 ;
+                             DIG 11 ;
                              DIG 12 ;
-                             DROP 6 ;
+                             DIG 14 ;
+                             DROP 8 ;
                              SWAP ;
                              DUP ;
                              DUP 3 ;
@@ -1993,7 +1991,9 @@
                          DIG 9 ;
                          DIG 10 ;
                          DIG 11 ;
-                         DROP 10 ;
+                         DIG 12 ;
+                         DIG 13 ;
+                         DROP 12 ;
                          IF_LEFT
                            { DROP }
                            { DROP ;
@@ -2148,16 +2148,18 @@
                              PAIR } ;
                          SWAP } } }
                { DIG 3 ;
-                 DIG 7 ;
                  DIG 8 ;
                  DIG 9 ;
                  DIG 10 ;
                  DIG 11 ;
                  DIG 12 ;
-                 DROP 7 ;
+                 DIG 13 ;
+                 DIG 14 ;
+                 DROP 8 ;
                  IF_LEFT
                    { DIG 2 ;
-                     DROP ;
+                     DIG 3 ;
+                     DROP 2 ;
                      IF_LEFT
                        { IF_LEFT
                            { DIG 2 ;
@@ -2477,14 +2479,15 @@
                              SET_DELEGATE ;
                              CONS ;
                              SWAP } } }
-                   { DIG 3 ;
-                     DIG 5 ;
-                     DIG 7 ;
+                   { DIG 4 ;
+                     DIG 6 ;
+                     DIG 8 ;
                      DROP 3 ;
                      IF_LEFT
                        { DIG 2 ;
                          DIG 3 ;
-                         DROP 2 ;
+                         DIG 4 ;
+                         DROP 3 ;
                          IF_LEFT
                            { SWAP ;
                              UNIT ;
@@ -2580,7 +2583,7 @@
                              DROP ;
                              SWAP ;
                              UNIT ;
-                             DIG 5 ;
+                             DIG 6 ;
                              SWAP ;
                              EXEC ;
                              DROP ;
@@ -2590,14 +2593,14 @@
                              CAR ;
                              CDR ;
                              CDR ;
-                             DIG 4 ;
+                             DIG 5 ;
                              SWAP ;
                              EXEC ;
                              DROP ;
                              DUP ;
                              DUP 3 ;
                              PAIR ;
-                             DIG 3 ;
+                             DIG 4 ;
                              SWAP ;
                              EXEC ;
                              DUP 2 ;
@@ -2619,7 +2622,9 @@
                              CAR ;
                              CDR ;
                              CDR ;
-                             IF { DUP 5 ;
+                             IF { DIG 7 ;
+                                  DROP ;
+                                  DUP 5 ;
                                   CAR ;
                                   CDR ;
                                   CDR ;
@@ -2644,11 +2649,10 @@
                                   CAR ;
                                   CAR ;
                                   SUB ;
-                                  PUSH int 0 ;
-                                  DUP 2 ;
-                                  COMPARE ;
-                                  GE ;
-                                  IF { SWAP ; DROP ; ABS } { DROP ; FAILWITH } } ;
+                                  PAIR ;
+                                  DIG 7 ;
+                                  SWAP ;
+                                  EXEC } ;
                              PAIR ;
                              PAIR ;
                              DUP 3 ;
@@ -2723,21 +2727,33 @@
                              CAR ;
                              PAIR ;
                              PAIR }
-                           { DIG 3 ; DIG 4 ; DROP 2 ; UNIT ; DIG 4 ; SWAP ; EXEC ; DROP ; PAIR ; EXEC } } } ;
+                           { DIG 3 ;
+                             DIG 4 ;
+                             DIG 5 ;
+                             DROP 3 ;
+                             UNIT ;
+                             DIG 4 ;
+                             SWAP ;
+                             EXEC ;
+                             DROP ;
+                             PAIR ;
+                             EXEC } } } ;
                  SWAP } }
            { DIG 2 ;
              DIG 3 ;
              DIG 4 ;
              DIG 5 ;
-             DIG 7 ;
+             DIG 6 ;
              DIG 8 ;
              DIG 9 ;
              DIG 10 ;
              DIG 11 ;
+             DIG 12 ;
              DIG 13 ;
-             DIG 14 ;
+             DIG 15 ;
              DIG 16 ;
-             DROP 12 ;
+             DIG 18 ;
+             DROP 14 ;
              SWAP ;
              UNIT ;
              DIG 5 ;
