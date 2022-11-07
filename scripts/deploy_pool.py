@@ -35,8 +35,7 @@ def generate_pool_storage(manager, juster_address):
         'lines': {},
         'activeEvents': {},
         'events': {},
-        'positions': {},
-        'nextPositionId': 0,
+        'shares': {},
         'totalShares': 0,
         'claims': {},
         'manager': manager,
@@ -54,10 +53,9 @@ def generate_pool_storage(manager, juster_address):
         },
         'precision': 1_000_000,
         'proposedManager': manager,
-        'liquidityUnits': 0,
-        'withdrawals': {},
-        'nextWithdrawalId': 0,
         'isDisbandAllow': False,
+        'durationPoints': {},
+        'totalDurationPoints': 0,
     }
 
 
@@ -69,6 +67,9 @@ def try_multiple_times(unstable_func, max_attempts=25):
             return unstable_func()
         except ConnectTimeout as e:
             print(f'failed with ConnectionTimeout, attempt #{attempt}')
+            pass
+        except StopIteration as e:
+            print(f'failed with StopIteration ({str(e)}), attempt #{attempt}')
             pass
 
     raise Exception('too many attempts')
