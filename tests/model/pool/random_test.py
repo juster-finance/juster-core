@@ -30,9 +30,16 @@ class RandomTester:
             points.amount for points in self.model.duration_points.values()
         )
         assert calculated_dps == self.model.total_duration_points
-        # TODO: active liquidity equals to the amount in juster core
+
+        active_liquidity_sum = sum(
+            event.provided - event.claimed
+            for event in self.model.events.values()
+            if event.result is None
+        )
+        active_liquidity_sum_f = active_liquidity_sum * self.model.precision
+        assert self.model.active_liquidity_f == active_liquidity_sum_f
         # TODO: sum of claims for finished events equals to withdrawable liquidity
-        # TODO: ?
+        # TODO: sum of entries equal to entries liquidity
 
     def random_user(self):
         return choice(self.users)
