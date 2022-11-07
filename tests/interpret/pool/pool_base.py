@@ -121,7 +121,9 @@ class PoolBaseTestCase(TestCase):
 
         call = self.pool.addLine(line_params)
         result = call.with_amount(amount).interpret(
-            storage=self.storage, now=self.current_time, sender=sender
+            storage=self.storage,
+            now=self.current_time,
+            sender=sender,
         )
 
         init_model = self.to_model()
@@ -187,6 +189,7 @@ class PoolBaseTestCase(TestCase):
             now=self.current_time,
             sender=sender,
             balance=self.get_balance(self.address),
+            level=self.level,
         )
 
         self.assertTrue(result.storage['entries'][entry_id] is None)
@@ -252,6 +255,7 @@ class PoolBaseTestCase(TestCase):
             now=self.current_time,
             sender=sender,
             balance=self.get_balance(self.address),
+            level=self.level,
         )
 
         init_model = self.to_model()
@@ -511,6 +515,26 @@ class PoolBaseTestCase(TestCase):
         )
         self.assertEqual(len(result.operations), 0)
         assert result.storage['isDisbandAllow']
+        self.storage = result.storage
+
+    def update_duration_points(self, sender=None, provider=None, amount=0):
+        sender = sender or self.manager
+        provider = provider or self.manager
+
+        call = self.pool.updateDurationPoints(provider)
+        result = call.with_amount(amount).interpret(
+            now=self.current_time,
+            storage=self.storage,
+            sender=sender,
+            level=self.level,
+        )
+        self.assertEqual(len(result.operations), 0)
+
+        init_model = self.to_model()
+        init_model.update_duration_points(provider=provider)
+        result_model = self.to_model(storage=result.storage)
+        self.assertEqual(init_model, result_model)
+
         self.storage = result.storage
 
     def get_line(self, line_id):
