@@ -180,3 +180,14 @@ function ceilDiv(const num: nat; const denom: nat) is
     | Some(result, remainder) -> if remainder > 0n then result + 1n else result
     | None -> (failwith("DIV / 0"): nat)
     ];
+
+function checkAcceptTime(const entry : entryT) is
+    if Tezos.get_now() < entry.acceptAfter
+    then failwith(PoolErrors.earlyApprove)
+    else unit;
+
+function checkCancelAllowed(const s : storageT) is
+    (* cancel allowed only when deposit is paused *)
+    if not s.isDepositPaused
+    then failwith(PoolErrors.cancelIsNotAllowed)
+    else unit;

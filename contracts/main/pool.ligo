@@ -78,27 +78,19 @@ block {
     const provided = entry.amount;
     const providedF = entry.amount * s.precision;
 
-    (* TODO: wrap it into checkAcceptTime *)
-    if Tezos.get_now() < entry.acceptAfter
-    then failwith(PoolErrors.earlyApprove)
-    else skip;
+    checkAcceptTime(entry);
 
     (* s.entryLiquidity is the sum of all entries, so the following
         condition should not be true but it is better to check *)
-    if s.entryLiquidityF < providedF
-    then failwith(PoolWrongState.negativeEntryLiquidity)
-    else skip;
+    s.entryLiquidityF := absOrFail(
+        s.entryLiquidityF - providedF, PoolWrongState.negativeEntryLiquidity);
 
-    s.entryLiquidityF := abs(s.entryLiquidityF - providedF);
     const totalLiquidityF = calcTotalLiquidityF(s);
 
     (* totalLiquidity includes provided liquidity so the following condition
         should not be true but it is better to check *)
-    if totalLiquidityF < int(providedF)
-    then failwith(PoolWrongState.negativeTotalLiquidity)
-    else skip;
-
-    const liquidityBeforeDepositF = abs(totalLiquidityF - providedF);
+    const liquidityBeforeDepositF = absOrFail(
+        totalLiquidityF - providedF, PoolWrongState.negativeTotalLiquidity);
 
     const shares = if s.totalShares = 0n
         then provided
@@ -114,11 +106,7 @@ function cancelEntry(const entryId : nat; var s : storageT) : returnT is
 block {
 
     checkNoAmountIncluded(unit);
-
-    (* Cancel liquidity allowed only when deposit is set on pause: *)
-    if not s.isDepositPaused
-    then failwith(PoolErrors.cancelIsNotAllowed)
-    else skip;
+    checkCancelAllowed(s);
 
     const entry = getEntry(entryId, s);
     s.entries := Big_map.remove(entryId, s.entries);
@@ -128,11 +116,9 @@ block {
     else skip;
 
     const providedF = entry.amount * s.precision;
-    if s.entryLiquidityF < providedF
-    then failwith(PoolWrongState.negativeEntryLiquidity)
-    else skip;
 
-    s.entryLiquidityF := abs(s.entryLiquidityF - providedF);
+    s.entryLiquidityF := absOrFail(
+        s.entryLiquidityF - providedF, PoolWrongState.negativeEntryLiquidity);
 
     const operations = if entry.amount > 0n then
         list[prepareOperation(entry.provider, entry.amount * 1mutez)]
@@ -156,10 +142,8 @@ block {
     then checkSenderIs(claim.provider, PoolErrors.notSharesOwner)
     else skip;
 
-    if claim.shares > shares
-    then failwith(PoolErrors.exceedClaimShares)
-    else skip;
-    const leftShares = abs(shares - claim.shares);
+    const leftShares = absOrFail(
+        shares - claim.shares, PoolErrors.exceedClaimShares);
 
     var removedActive := 0n;
 
@@ -177,9 +161,11 @@ block {
 
             const alreadyClaimed = getClaimedAmountOrZero(key, s);
 
-            (* TODO: check leftProvided > 0 and raise wrong state?
-                [it is very similar test bellow for newClaimed > event.provided] *)
-            const leftProvided = abs(event.provided - event.claimed);
+            const leftProvided = absOrFail(
+                event.provided - event.claimed,
+                PoolWrongState.claimedExceedProvided
+            );
+
             const newClaimF = (
                 s.precision * claim.shares * leftProvided
                 / s.totalShares
@@ -190,8 +176,9 @@ block {
             removedActive := removedActive + newClaim;
 
             const newClaimed = event.claimed + newClaim;
+
             if newClaimed > event.provided
-            then failwith(PoolWrongState.lockedExceedTotal)
+            then failwith(PoolWrongState.claimedExceedProvided)
             else skip;
 
             s.events[eventId] := event with record [
@@ -213,16 +200,9 @@ block {
     then failwith(PoolWrongState.negativePayout)
     else skip;
 
-    (* Another impossible condition that is better to check: *)
-    if s.totalShares < claim.shares
-    then failwith(PoolWrongState.negativeTotalShares)
-    else skip;
+    s.totalShares := absOrFail(
+        s.totalShares - claim.shares, PoolWrongState.negativeTotalShares);
 
-    (* TODO: this block with failwith can be replaced with absOrFail *)
-    s.totalShares := abs(s.totalShares - claim.shares);
-
-    (* TODO: does this high precision still required for active liquidity calc?
-        looks like it is not, consider removing it *)
     const removedActiveF = removedActive * s.precision;
     if s.activeLiquidityF < removedActiveF
     then failwith(PoolWrongState.negativeActiveLiquidity)

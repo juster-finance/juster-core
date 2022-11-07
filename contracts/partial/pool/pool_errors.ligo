@@ -37,5 +37,5 @@ module PoolWrongState is {
     const negativeActiveLiquidity : string = "Wrong state: negative active liquidity";
     const negativeWithdrawableLiquidity : string = "Wrong state: negative withdrawable liquidity";
     const negativeDuration : string = "Wrong state: negative duration";
-    const lockedExceedTotal : string = "Wrong state: locked exceed total";
+    const claimedExceedProvided : string = "Wrong state: claimed exceed provided";
 }
