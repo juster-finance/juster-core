@@ -14,13 +14,14 @@ function updateDurationPoints(const provider : address; const s : storage) is {
     const lastPoints = getOrDefault(provider, s.durationPoints, initPoints);
     const shares = getSharesOrZero(provider, s);
     const newBlocks = absPositive(Tezos.get_level() - lastPoints.updateLevel);
+    const addedPoints = shares*newBlocks;
     const newPoints : durationPointsT = record [
-        amount = lastPoints.amount + shares*newBlocks;
+        amount = lastPoints.amount + addedPoints;
         updateLevel = Tezos.get_level();
     ];
     const updStore = s with record [
         durationPoints = Big_map.update(provider, Some(newPoints), s.durationPoints);
-        totalDurationPoints = s.totalDurationPoints;
+        totalDurationPoints = s.totalDurationPoints + addedPoints;
     ]
 } with updStore
 
