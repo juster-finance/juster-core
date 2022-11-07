@@ -45,14 +45,14 @@ class RandomTester:
         entry_id = choice(list(self.model.entries.keys()))
         entry = self.model.entries[entry_id]
         self.balances[entry.provider] += entry.amount
-        self.model.cancel_liquidity(entry_id=entry_id)
+        self.model.cancel_entry(entry_id=entry_id)
 
     def random_approve(self):
         if not len(self.model.entries):
             return
         entry_id = choice(list(self.model.entries.keys()))
         entry = self.model.entries[entry_id]
-        self.model.approve_liquidity(entry_id=entry_id)
+        self.model.approve_entry(entry_id=entry_id)
 
     def random_claim(self):
         if not len(self.model.shares):
@@ -89,7 +89,7 @@ class RandomTester:
         while len(claim_keys) > claims_count:
             claim_keys.pop(rand_from_zero_to(len(claim_keys) - 1))
 
-        payouts = self.model.withdraw_liquidity(claim_keys)
+        payouts = self.model.withdraw_claims(claim_keys)
         for user, payout in payouts.items():
             self.balances[user] += payout
 
