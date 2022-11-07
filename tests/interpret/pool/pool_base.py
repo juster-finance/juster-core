@@ -584,5 +584,11 @@ class PoolBaseTestCase(TestCase):
     def get_state_values(self):
         return self.pool.getStateValues().onchain_view(storage=self.storage)
 
+    def get_duration_points(self, provider):
+        return self.pool.getDurationPoints(provider).onchain_view(storage=self.storage)
+
+    def get_total_duration_points(self):
+        return self.pool.getTotalDurationPoints().onchain_view(storage=self.storage)
+
     def wait(self, wait_time=0):
         self.current_time += wait_time
