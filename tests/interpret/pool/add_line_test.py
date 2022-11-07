@@ -27,3 +27,9 @@ class AddLineTestCase(PoolBaseTestCase):
         assert self.storage['maxEvents'] == 0
         self.trigger_pause_line(line_id=line_id, sender=self.manager)
         assert self.storage['maxEvents'] == 42
+
+    def test_should_not_allow_add_zero_bet_period_line(self):
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.add_line(sender=self.manager, bets_period=0)
+        self.assertTrue('betsPeriod should be more than 0' in str(cm.exception))
+
