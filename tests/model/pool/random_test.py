@@ -26,6 +26,10 @@ class RandomTester:
 
     def check_invariants(self):
         assert sum(self.balances.values()) + self.model.balance == 0
+        calculated_dps = sum(
+            points.amount for points in self.model.duration_points.values()
+        )
+        assert calculated_dps == self.model.total_duration_points
         # TODO: active liquidity equals to the amount in juster core
         # TODO: sum of claims for finished events equals to withdrawable liquidity
         # TODO: ?
@@ -133,6 +137,7 @@ class RandomTester:
 
         for iteration in range(iterations):
             self.random_action()
+            self.model.increase_level()
             self.check_invariants()
 
 class PoolRandomModelTest(TestCase):

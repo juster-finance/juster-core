@@ -329,3 +329,6 @@ class PoolModel:
             for attr_name, attr_value in self.__dict__.items()
             if attr_value != getattr(other, attr_name)
         ]
+
+    def increase_level(self) -> None:
+        self.level += 1
