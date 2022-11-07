@@ -24,6 +24,7 @@ module PoolErrors is {
     const zeroAmount : string = "Should provide tez";
     const eventNotFinished : string = "Event result is not received yet";
     const claimNotFound : string = "Claim is not found";
+    const zeroBetsPeriod : string = "betsPeriod should be more than 0";
 }
 
 module PoolWrongState is {

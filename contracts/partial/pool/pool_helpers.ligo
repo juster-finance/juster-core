@@ -57,12 +57,15 @@ function checkLineIsNotPaused(const line : lineT) is
     then failwith(PoolErrors.lineIsPaused)
     else unit
 
-function checkLineValid(const line : lineT) is
-    (* TODO: add check that betsPeriod > 0? *)
-    (* TODO: check that advanceTime < minBettingPeriod? *)
+function checkLineValid(const line : lineT) is {
+    if line.betsPeriod = 0n
+    then failwith(PoolErrors.zeroBetsPeriod)
+    else skip;
+
     if line.maxEvents = 0n
     then failwith(PoolErrors.emptyLine)
-    else unit
+    else skip;
+} with unit
 
 function checkDepositIsNotPaused(const s : storageT) is
     if s.isDepositPaused
