@@ -49,3 +49,18 @@ class DurationPointsTestCase(PoolBaseTestCase):
         assert self.storage['durationPoints'][provider]['updateLevel'] == 301
         assert self.storage['durationPoints'][provider]['amount'] == 5_000
         assert self.storage['totalDurationPoints'] == 5_000
+
+    def test_should_allow_anyone_to_update_duration_points(self):
+        # creating default event:
+        self.add_line()
+
+        # providing liquidity:
+        provider = self.a
+        entry_id = self.deposit_liquidity(sender=provider, amount=1)
+        self.approve_entry(entry_id=entry_id)
+
+        self.level += 100
+        self.update_duration_points(sender=self.b, provider=provider)
+        assert self.storage['durationPoints'][provider]['updateLevel'] == self.level
+        assert self.storage['durationPoints'][provider]['amount'] == 100
+        assert self.storage['totalDurationPoints'] == 100
