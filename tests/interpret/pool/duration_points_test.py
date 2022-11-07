@@ -2,6 +2,19 @@ from tests.interpret.pool.pool_base import PoolBaseTestCase
 
 
 class DurationPointsTestCase(PoolBaseTestCase):
+    def test_should_give_zero_duration_points_to_new_provider(self):
+        # creating default event:
+        self.add_line()
+
+        # providing liquidity:
+        provider = self.a
+        entry_id = self.deposit_liquidity(sender=provider)
+        self.level = 33
+        self.approve_entry(entry_id=entry_id)
+        assert self.storage['durationPoints'][provider]['updateLevel'] == 33
+        assert self.storage['durationPoints'][provider]['amount'] == 0
+        assert self.storage['totalDurationPoints'] == 0
+
     def test_duration_points_calculation(self):
         # creating default event:
         self.add_line()
@@ -9,15 +22,18 @@ class DurationPointsTestCase(PoolBaseTestCase):
         # providing liquidity:
         provider = self.a
         self.level = 1
-        self.deposit_liquidity(sender=provider, amount=30)
-        self.approve_entry(entry_id=0)
-        assert self.storage['durationPoints'][provider]['updateLevel'] == 1
-        assert self.storage['durationPoints'][provider]['amount'] == 0
-        assert self.storage['totalDurationPoints'] == 0
+        entry_id = self.deposit_liquidity(sender=provider, amount=30)
+        self.approve_entry(entry_id=entry_id)
 
         # updates liquidity after 100 blocks, should have 30*100 DPs:
         self.level = 101
-        self.claim_liquidity(provider=provider, shares=10)
+        entry_id = self.deposit_liquidity(sender=provider, amount=10)
+        self.approve_entry(entry_id=entry_id)
+        assert self.storage['durationPoints'][provider]['updateLevel'] == 101
+        assert self.storage['durationPoints'][provider]['amount'] == 3_000
+
+        # claims liquidity in the same block/level as approve, same DPs
+        self.claim_liquidity(provider=provider, shares=20)
         assert self.storage['durationPoints'][provider]['updateLevel'] == 101
         assert self.storage['durationPoints'][provider]['amount'] == 3_000
 
