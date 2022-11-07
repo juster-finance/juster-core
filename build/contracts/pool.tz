@@ -577,6 +577,15 @@
                              PUSH nat 0 ;
                              DUP 3 ;
                              CAR ;
+                             CAR ;
+                             CAR ;
+                             CDR ;
+                             COMPARE ;
+                             EQ ;
+                             IF { PUSH string "betsPeriod should be more than 0" ; FAILWITH } {} ;
+                             PUSH nat 0 ;
+                             DUP 3 ;
+                             CAR ;
                              CDR ;
                              CDR ;
                              CDR ;
