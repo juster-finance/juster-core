@@ -44,6 +44,7 @@ class PoolBaseTestCase(TestCase):
 
         self.juster_address = 'KT1SUP27JhX24Kvr11oUdWswk7FnCW78ZyUn'
         self.current_time = RUN_TIME
+        self.level = 1
 
         self.init_storage = generate_pool_storage(manager=self.manager)
 
@@ -55,7 +56,10 @@ class PoolBaseTestCase(TestCase):
             Decimal(self.balances['contract']) if balance is None else balance
         )
         return PoolModel.from_storage(
-            storage=storage, balance=balance, now=self.current_time
+            storage=storage,
+            balance=balance,
+            now=self.current_time,
+            level=self.level,
         )
 
     def get_balance(self, address=None):

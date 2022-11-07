@@ -79,6 +79,8 @@ def generate_pool_storage(manager):
         'precision': 1_000_000,
         'proposedManager': manager,
         'isDisbandAllow': False,
+        'durationPoints': {},
+        'totalDurationPoints': 0,
     }
 
 
