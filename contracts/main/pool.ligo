@@ -26,6 +26,11 @@ function updateDurationPoints(const provider : address; const s : storage) is {
 } with updStore
 
 
+function updateDurationPointsEntry(const provider : address; const s : storage) is {
+    checkNoAmountIncluded(unit);
+} with (noOps, updateDurationPoints(provider, s))
+
+
 function addLine(
     const line : lineType;
     var store : storage) : (list(operation) * storage) is
@@ -513,7 +518,7 @@ case params of [
 | SetDelegate(p) -> setDelegate(p, s)
 | Default -> default(s)
 | Disband -> disband(s)
-| UpdateDurationPoints(p) -> (noOps, updateDurationPoints(p, s))
+| UpdateDurationPoints(p) -> updateDurationPointsEntry(p, s)
 ]
 
 [@view] function getLine (const lineId : nat; const s: storage) is
