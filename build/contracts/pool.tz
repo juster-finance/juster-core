@@ -51,7 +51,8 @@
                 (nat %totalDurationPoints))
           (nat %totalShares)
           (nat %withdrawableLiquidityF)) ;
-  code { LAMBDA
+  code { NIL operation ;
+         LAMBDA
            unit
            unit
            { DROP ;
@@ -485,7 +486,7 @@
          DUP 3 ;
          PAIR ;
          APPLY ;
-         DIG 14 ;
+         DIG 15 ;
          UNPAIR ;
          IF_LEFT
            { IF_LEFT
@@ -703,8 +704,7 @@
                                   CAR ;
                                   PAIR ;
                                   PAIR }
-                                { SWAP ; DROP } } ;
-                         NIL operation }
+                                { SWAP ; DROP } } }
                        { DIG 8 ;
                          DROP ;
                          IF_LEFT
@@ -918,8 +918,7 @@
                              PAIR ;
                              SWAP ;
                              CAR ;
-                             PAIR ;
-                             NIL operation }
+                             PAIR }
                            { DIG 2 ;
                              DIG 3 ;
                              DIG 5 ;
@@ -1058,7 +1057,9 @@
                              CDR ;
                              COMPARE ;
                              GT ;
-                             IF { NIL operation ;
+                             IF { DIG 3 ;
+                                  DROP ;
+                                  NIL operation ;
                                   PUSH mutez 1 ;
                                   DUP 3 ;
                                   CAR ;
@@ -1071,7 +1072,9 @@
                                   SWAP ;
                                   EXEC ;
                                   CONS }
-                                { DIG 2 ; DROP 2 ; NIL operation } } } }
+                                { DIG 2 ; DROP 2 ; SWAP } ;
+                             SWAP } } ;
+                     SWAP }
                    { DIG 6 ;
                      DIG 9 ;
                      DIG 12 ;
@@ -1456,7 +1459,9 @@
                              DUP 2 ;
                              COMPARE ;
                              GT ;
-                             IF { NIL operation ;
+                             IF { DIG 4 ;
+                                  DROP ;
+                                  NIL operation ;
                                   PUSH mutez 1 ;
                                   DIG 2 ;
                                   ABS ;
@@ -1468,13 +1473,14 @@
                                   SWAP ;
                                   EXEC ;
                                   CONS }
-                                { DIG 2 ; DIG 3 ; DROP 3 ; NIL operation } }
+                                { DIG 2 ; DIG 3 ; DROP 3 ; SWAP } }
                            { DIG 2 ;
                              DIG 3 ;
                              DIG 5 ;
                              DIG 9 ;
                              DIG 10 ;
-                             DROP 5 ;
+                             DIG 12 ;
+                             DROP 6 ;
                              SWAP ;
                              DUP ;
                              DUP 3 ;
@@ -2131,7 +2137,7 @@
                              PAIR ;
                              PAIR ;
                              PAIR } ;
-                         NIL operation } } }
+                         SWAP } } }
                { DIG 3 ;
                  DIG 7 ;
                  DIG 8 ;
@@ -2397,8 +2403,7 @@
                              PAIR ;
                              PAIR } ;
                          PAIR ;
-                         PAIR ;
-                         NIL operation }
+                         PAIR }
                        { DIG 2 ;
                          DIG 3 ;
                          DIG 4 ;
@@ -2439,9 +2444,10 @@
                              PAIR ;
                              SWAP ;
                              CAR ;
-                             PAIR ;
-                             NIL operation }
-                           { SWAP ;
+                             PAIR }
+                           { DIG 4 ;
+                             DROP ;
+                             SWAP ;
                              UNIT ;
                              DIG 4 ;
                              SWAP ;
@@ -2460,7 +2466,8 @@
                              NIL operation ;
                              DIG 2 ;
                              SET_DELEGATE ;
-                             CONS } } }
+                             CONS ;
+                             SWAP } } }
                    { DIG 3 ;
                      DIG 5 ;
                      DIG 7 ;
@@ -2707,8 +2714,8 @@
                              CAR ;
                              PAIR ;
                              PAIR }
-                           { DIG 3 ; DIG 4 ; DROP 2 ; UNIT ; DIG 4 ; SWAP ; EXEC ; DROP ; PAIR ; EXEC } } ;
-                     NIL operation } } }
+                           { DIG 3 ; DIG 4 ; DROP 2 ; UNIT ; DIG 4 ; SWAP ; EXEC ; DROP ; PAIR ; EXEC } } } ;
+                 SWAP } }
            { DIG 2 ;
              DIG 3 ;
              DIG 4 ;
@@ -2720,7 +2727,8 @@
              DIG 11 ;
              DIG 13 ;
              DIG 14 ;
-             DROP 11 ;
+             DIG 16 ;
+             DROP 12 ;
              SWAP ;
              UNIT ;
              DIG 5 ;
