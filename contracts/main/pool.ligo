@@ -31,9 +31,7 @@ function updateDurationPointsEntry(const provider : address; const s : storageT)
 } with (noOps, updateDurationPoints(provider, s))
 
 
-function addLine(
-    const line : lineT;
-    var s : storageT) : (list(operation) * storageT) is
+function addLine(const line : lineT; var s : storageT) : returnT is
 block {
     checkNoAmountIncluded(unit);
     onlyManager(s.manager);
@@ -45,11 +43,10 @@ block {
     then s.maxEvents := s.maxEvents + line.maxEvents
     else skip;
 
-} with ((nil: list(operation)), s)
+} with (noOps, s)
 
 
-function depositLiquidity(
-    var s : storageT) : (list(operation) * storageT) is
+function depositLiquidity(var s : storageT) : returnT is
 block {
 
     checkDepositIsNotPaused(s);
@@ -66,11 +63,10 @@ block {
     s.nextEntryId := s.nextEntryId + 1n;
     s.entryLiquidityF := s.entryLiquidityF + providedAmount * s.precision;
 
-} with ((nil: list(operation)), s)
+} with (noOps, s)
 
 
-function approveEntry(
-    const entryId : nat; var s : storageT) : (list(operation) * storageT) is
+function approveEntry(const entryId : nat; var s : storageT) : returnT is
 block {
 
     checkNoAmountIncluded(unit);
@@ -111,11 +107,10 @@ block {
     s.shares[entry.provider] := getSharesOrZero(entry.provider, s) + shares;
     s.totalShares := s.totalShares + shares;
 
-} with ((nil: list(operation)), s)
+} with (noOps, s)
 
 
-function cancelEntry(
-    const entryId : nat; var s : storageT) : (list(operation) * storageT) is
+function cancelEntry(const entryId : nat; var s : storageT) : returnT is
 block {
 
     checkNoAmountIncluded(unit);
@@ -141,14 +136,14 @@ block {
 
     const operations = if entry.amount > 0n then
         list[prepareOperation(entry.provider, entry.amount * 1mutez)]
-    else (nil: list(operation));
+    else noOps;
 
 } with (operations, s)
 
 
 function claimLiquidity(
     const claim : claimLiquidityParamsT;
-    var s : storageT) : (list(operation) * storageT) is
+    var s : storageT) : returnT is
 block {
 
     checkNoAmountIncluded(unit);
@@ -237,14 +232,14 @@ block {
 
     const operations = if payoutValue > 0 then
         list[prepareOperation(claim.provider, abs(payoutValue) * 1mutez)]
-    else (nil: list(operation));
+    else noOps;
 
 } with (operations, s)
 
 
 function withdrawClaims(
     const withdrawRequests : withdrawClaimsParamsT;
-    var s : storageT) : (list(operation) * storageT) is
+    var s : storageT) : returnT is
 block {
 
     checkNoAmountIncluded(unit);
@@ -290,7 +285,7 @@ block {
 
 function payReward(
     const eventId : nat;
-    var s : storageT) : (list(operation) * storageT) is
+    var s : storageT) : returnT is
 block {
     (* NOTE: this method based on assumption that payReward only called by
         Juster when event is finished / canceled *)
@@ -318,12 +313,12 @@ block {
         it is better to cap it on zero if it somehow goes negative: *)
     s.activeLiquidityF := absPositive(s.activeLiquidityF - remainedLiquidityF);
 
-} with ((nil: list(operation)), s)
+} with (noOps, s)
 
 
 function createEvent(
     const lineId : nat;
-    var s : storageT) : (list(operation) * storageT) is
+    var s : storageT) : returnT is
 block {
 
     var line := getLine(lineId, s);
@@ -404,7 +399,7 @@ block {
 
     s.lines[lineId] := line with record [isPaused = not line.isPaused];
 
-} with ((nil: list(operation)), s)
+} with (noOps, s)
 
 
 function triggerPauseDeposit(var s : storageT) is
@@ -412,7 +407,7 @@ block {
     checkNoAmountIncluded(unit);
     onlyManager(s.manager);
     s.isDepositPaused := not s.isDepositPaused;
-} with ((nil: list(operation)), s)
+} with (noOps, s)
 
 
 function setEntryLockPeriod(const newPeriod : nat; var s : storageT) is
@@ -420,7 +415,7 @@ block {
     checkNoAmountIncluded(unit);
     onlyManager(s.manager);
     s.entryLockPeriod := newPeriod;
-} with ((nil: list(operation)), s)
+} with (noOps, s)
 
 
 function proposeManager(
@@ -430,7 +425,7 @@ block {
     checkNoAmountIncluded(unit);
     onlyManager(s.manager);
     s.proposedManager := proposedManager;
-} with ((nil: list(operation)), s)
+} with (noOps, s)
 
 
 function acceptOwnership(var s : storageT) is
@@ -438,7 +433,7 @@ block {
     checkNoAmountIncluded(unit);
     checkSenderIs(s.proposedManager, Errors.notProposedManager);
     s.manager := s.proposedManager;
-} with ((nil: list(operation)), s)
+} with (noOps, s)
 
 
 function setDelegate(
@@ -451,13 +446,13 @@ block {
 } with (operations, s)
 
 
-function default(var s : storageT) is ((nil: list(operation)), s)
+function default(var s : storageT) is (noOps, s)
 
 
 function disband(var s : storageT) is {
     checkNoAmountIncluded(unit);
     onlyManager(s.manager);
-} with ((nil: list(operation)), s with record [isDisbandAllow = true])
+} with (noOps, s with record [isDisbandAllow = true])
 
 
 (* entrypoints:
@@ -500,7 +495,7 @@ type action is
 | UpdateDurationPoints of address
 
 
-function main (const params : action; var s : storageT) : (list(operation) * storageT) is
+function main (const params : action; var s : storageT) : returnT is
 case params of [
 | AddLine(p) -> addLine(p, s)
 | DepositLiquidity -> depositLiquidity(s)

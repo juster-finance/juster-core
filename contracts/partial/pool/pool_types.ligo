@@ -97,3 +97,4 @@ type claimLiquidityParamsT is record [
 
 type withdrawClaimsParamsT is list(claimKeyT)
 
+type returnT is (list(operation) * storageT)
