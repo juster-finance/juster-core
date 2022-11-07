@@ -3,7 +3,7 @@ from pytezos import MichelsonRuntimeError
 from tests.interpret.pool.pool_base import PoolBaseTestCase
 
 
-class ApproveLiquidityTestCase(PoolBaseTestCase):
+class ApproveEntryTestCase(PoolBaseTestCase):
     def test_should_fail_when_try_to_approve_entry_twice(self):
 
         # creating default event:
@@ -109,3 +109,24 @@ class ApproveLiquidityTestCase(PoolBaseTestCase):
         provider = self.approve_entry(entry_id=1)
         received_shares = self.storage['shares'][provider]
         self.assertEqual(received_shares, 500)
+
+    def test_should_disallow_approving_zero_shares(self):
+        self.add_line(max_events=1)
+        entry_one_id = self.deposit_liquidity(sender=self.a, amount=1000)
+        self.approve_entry(entry_id=entry_one_id)
+
+        # decreasing liquidity by 1 mutez to make share price 1001/1000
+        event_id = self.create_event()
+        self.pay_reward(event_id=0, amount=1001)
+
+        # trying to deposit 1 mutez fail, because floor(0.999) = 0 shares added:
+        entry_two_id = self.deposit_liquidity(sender=self.b, amount=1)
+        with self.assertRaises(MichelsonRuntimeError) as cm:
+            self.approve_entry(entry_id=entry_two_id)
+        msg = 'Approve 0 shares dissalowed'
+        self.assertTrue(msg in str(cm.exception))
+
+        # trying to deposit 2 mutez succeed and adds 1 share:
+        entry_three_id = self.deposit_liquidity(sender=self.b, amount=2)
+        self.approve_entry(entry_id=entry_three_id)
+        assert self.storage['shares'][self.b] == 1
