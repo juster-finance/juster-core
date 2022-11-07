@@ -873,6 +873,11 @@
                                   EDIV ;
                                   IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
                                   CAR } ;
+                             PUSH nat 0 ;
+                             DUP 2 ;
+                             COMPARE ;
+                             EQ ;
+                             IF { PUSH string "Approve 0 shares dissalowed" ; FAILWITH } {} ;
                              DUP 3 ;
                              DUP ;
                              CDR ;
