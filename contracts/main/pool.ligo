@@ -81,14 +81,14 @@ block {
     checkAcceptTime(entry);
 
     (* s.entryLiquidity is the sum of all entries, so the following
-        condition should not be true but it is better to check *)
+        condition should be positive but it is better to check *)
     s.entryLiquidityF := absOrFail(
         s.entryLiquidityF - providedF, PoolWrongState.negativeEntryLiquidity);
 
     const totalLiquidityF = calcTotalLiquidityF(s);
 
     (* totalLiquidity includes provided liquidity so the following condition
-        should not be true but it is better to check *)
+        should be positive but it is better to check *)
     const liquidityBeforeDepositF = absOrFail(
         totalLiquidityF - providedF, PoolWrongState.negativeTotalLiquidity);
 
@@ -189,29 +189,22 @@ block {
 
     s.shares[claim.provider] := leftShares;
 
-    const payoutValue = (
-        calcFreeLiquidityF(s) * claim.shares
-        / s.totalShares / s.precision
-    );
-
     (* Having negative payoutValue should not be possible,
-        but it is better to check: *)
-    if payoutValue < 0
-    then failwith(PoolWrongState.negativePayout)
-    else skip;
+        but it is better to fail if it is: *)
+    const payoutValue = absOrFail(
+        calcFreeLiquidityF(s) * claim.shares / s.totalShares / s.precision,
+        PoolWrongState.negativePayout
+    );
 
     s.totalShares := absOrFail(
         s.totalShares - claim.shares, PoolWrongState.negativeTotalShares);
 
     const removedActiveF = removedActive * s.precision;
-    if s.activeLiquidityF < removedActiveF
-    then failwith(PoolWrongState.negativeActiveLiquidity)
-    else skip;
+    s.activeLiquidityF := absOrFail(
+        s.activeLiquidityF - removedActiveF, PoolWrongState.negativeActiveLiquidity);
 
-    s.activeLiquidityF := abs(s.activeLiquidityF - removedActiveF);
-
-    const operations = if payoutValue > 0 then
-        list[prepareOperation(claim.provider, abs(payoutValue) * 1mutez)]
+    const operations = if payoutValue > 0n then
+        list[prepareOperation(claim.provider, payoutValue * 1mutez)]
     else noOps;
 
 } with (operations, s)
@@ -252,12 +245,11 @@ block {
 
         (* withdrawableLiquidity forms from Juster payments as a percentage for
             all locked claims so it should not be less than withdrawSum, so
-            next case should not be possible: *)
-        if withdrawSumF > s.withdrawableLiquidityF
-        then failwith(PoolWrongState.negativeWithdrawableLiquidity)
-        else skip;
-
-        s.withdrawableLiquidityF := abs(s.withdrawableLiquidityF - withdrawSumF);
+            this should not fail, but it is better to have this check: *)
+        s.withdrawableLiquidityF := absOrFail(
+            s.withdrawableLiquidityF - withdrawSumF,
+            PoolWrongState.negativeWithdrawableLiquidity
+        );
     }
 
 } with (operations, s)
@@ -496,7 +488,7 @@ case params of [
 | UpdateDurationPoints(p) -> updateDurationPointsEntry(p, s)
 ]
 
-[@view] function getLine (const lineId : nat; const s: storageT) is
+[@view] function getLine(const lineId : nat; const s: storageT) is
     Big_map.find_opt(lineId, s.lines)
 
 [@view] function getEntry(const entryId : nat; const s: storageT) is
@@ -523,7 +515,7 @@ case params of [
 [@view] function getNextLineId(const _ : unit; const s: storageT) is
     s.nextLineId
 
-[@view] function getBalance (const _ : unit ; const _s: storageT) is
+[@view] function getBalance(const _ : unit ; const _s: storageT) is
     Tezos.get_balance()
 
 [@view] function isDepositPaused(const _ : unit; const s: storageT) is
