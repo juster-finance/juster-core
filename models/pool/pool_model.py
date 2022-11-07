@@ -194,8 +194,9 @@ class PoolModel:
         )
         self.total_duration_points += added_amount
 
-    def deposit_liquidity(self, user: str, amount: Decimal) -> int:
+    def deposit_liquidity(self, user: str, amount: Union[Decimal, int]) -> int:
         accept_after = self.now + self.entry_lock_period
+        amount = Decimal(amount)
         entry = Entry(user, amount, accept_after)
         entry_id = self.next_entry_id
         self.entries[entry_id] = entry
@@ -247,8 +248,9 @@ class PoolModel:
             free_liquidity_f * shares / self.total_shares / self.precision
         )
 
-    def claim_liquidity(self, provider: str, shares: Decimal) -> Decimal:
-        if shares == 0:
+    def claim_liquidity(self, provider: str, shares: Union[Decimal, int]) -> Decimal:
+        shares = Decimal(shares)
+        if shares == Decimal(0):
             return Decimal(0)
 
         self.update_duration_points(provider)
@@ -276,9 +278,9 @@ class PoolModel:
         self.balance -= sum(payouts.values())
         return payouts
 
-    def pay_reward(self, event_id: int, amount: Decimal) -> None:
+    def pay_reward(self, event_id: int, amount: Union[Decimal, int]) -> None:
         event = self.events[event_id]
-        event.result = amount
+        event.result = Decimal(amount)
 
         locked_amount_f = event.get_result_for_provided_f(event.claimed)
         self.withdrawable_liquidity_f += locked_amount_f
@@ -319,8 +321,8 @@ class PoolModel:
 
         return next_event_id
 
-    def default(self, amount: Decimal) -> None:
-        self.balance += amount
+    def default(self, amount: Union[Decimal, int]) -> None:
+        self.balance += Decimal(amount)
 
     def diff_with(self, other: PoolModel) -> list[str]:
         """Returns attributes that different with other"""
