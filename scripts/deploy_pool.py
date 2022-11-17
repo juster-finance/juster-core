@@ -5,6 +5,7 @@ import json
 import time
 from requests.exceptions import ConnectTimeout
 from getpass import getpass
+from pool_name import generate_pool_name
 
 from pytezos import ContractInterface
 from pytezos import pytezos
@@ -80,13 +81,6 @@ def try_multiple_times(unstable_func, max_attempts=25):
     raise Exception('too many attempts')
 
 
-def generate_pool_name(line_params):
-    currency_pair = line_params['currency_pair']
-    timeframe_seconds = line_params['measure_period']
-    timeframe_hours = timeframe_seconds // 3600
-    return f'{currency_pair}-{timeframe_hours}H'
-
-
 def deploy_pool(client, line_params):
     contract = CONTRACTS['pool'].using(key=KEY, shell=SHELL)
     pool_name = generate_pool_name(line_params)
@@ -101,7 +95,7 @@ def deploy_pool(client, line_params):
         lambda: contract.originate(initial_storage=storage).send()
     )
     print(f'success: {opg.hash()}')
-    opg = try_multiple_times(
+    _ = try_multiple_times(
         lambda: client.wait(opg)
     )
 
@@ -139,7 +133,7 @@ def add_line(client, pool_address, line_params):
     opg = try_multiple_times(
         lambda: pool.addLine(convert_to_line_params(line_params)).send()
     )
-    opg = try_multiple_times(
+    _ = try_multiple_times(
         lambda: client.wait(opg)
     )
     print(f'line succesfully added')
