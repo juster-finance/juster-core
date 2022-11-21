@@ -10,7 +10,8 @@
         "shift": 0,
         "pool_a_ratio": 1,
         "pool_b_ratio": 1,
-        "runs_in_pool": true
+        "allow_bypass_pool_creation": false,
+        "allow_extra_liquidity_adding": true
     },
     {
         "currency_pair": "XTZ-USD",
@@ -23,7 +24,8 @@
         "shift": 0,
         "pool_a_ratio": 1,
         "pool_b_ratio": 1,
-        "runs_in_pool": true
+        "allow_bypass_pool_creation": false,
+        "allow_extra_liquidity_adding": true
     },
     {
         "currency_pair": "XTZ-USD",
@@ -36,7 +38,8 @@
         "shift": 0,
         "pool_a_ratio": 1,
         "pool_b_ratio": 1,
-        "runs_in_pool": true
+        "allow_bypass_pool_creation": false,
+        "allow_extra_liquidity_adding": true
     },
     {
         "currency_pair": "BTC-USD",
@@ -49,7 +52,8 @@
         "shift": 1200,
         "pool_a_ratio": 1,
         "pool_b_ratio": 1,
-        "runs_in_pool": true
+        "allow_bypass_pool_creation": false,
+        "allow_extra_liquidity_adding": true
     },
     {
         "currency_pair": "BTC-USD",
@@ -62,7 +66,8 @@
         "shift": 7200,
         "pool_a_ratio": 1,
         "pool_b_ratio": 1,
-        "runs_in_pool": true
+        "allow_bypass_pool_creation": false,
+        "allow_extra_liquidity_adding": true
     },
     {
         "currency_pair": "BTC-USD",
@@ -75,7 +80,8 @@
         "shift": 28800,
         "pool_a_ratio": 1,
         "pool_b_ratio": 1,
-        "runs_in_pool": true
+        "allow_bypass_pool_creation": false,
+        "allow_extra_liquidity_adding": true
     },
     {
         "currency_pair": "ETH-USD",
@@ -88,7 +94,8 @@
         "shift": 2400,
         "pool_a_ratio": 1,
         "pool_b_ratio": 1,
-        "runs_in_pool": true
+        "allow_bypass_pool_creation": false,
+        "allow_extra_liquidity_adding": true
     },
     {
         "currency_pair": "ETH-USD",
@@ -101,7 +108,8 @@
         "shift": 14400,
         "pool_a_ratio": 1,
         "pool_b_ratio": 1,
-        "runs_in_pool": true
+        "allow_bypass_pool_creation": false,
+        "allow_extra_liquidity_adding": true
     },
     {
         "currency_pair": "ETH-USD",
@@ -114,6 +122,7 @@
         "shift": 57600,
         "pool_a_ratio": 1,
         "pool_b_ratio": 1,
-        "runs_in_pool": true
+        "allow_bypass_pool_creation": false,
+        "allow_extra_liquidity_adding": true
     }
 ]
