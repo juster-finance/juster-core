@@ -276,7 +276,7 @@ class PoolModel:
     ) -> dict[str, Decimal]:
         payouts_f = self.calc_withdraw_payouts_f(claim_keys)
         payouts = self.calc_withdraw_payouts(claim_keys)
-        [self.claims.pop(key) for key in claim_keys]
+        _ = [self.claims.pop(key) for key in claim_keys]
         self.withdrawable_liquidity_f -= sum(payouts_f.values())
         self.balance -= sum(payouts.values())
         return payouts
@@ -305,7 +305,6 @@ class PoolModel:
     def create_event(self, line_id: int, next_event_id: int) -> int:
         assert not next_event_id in self.events
         provided_amount = self.calc_next_event_liquidity()
-        active_fraction_f = quantize_up(self.precision / self.max_events)
 
         self.events[next_event_id] = Event(
             claimed=Decimal(0),
@@ -317,7 +316,6 @@ class PoolModel:
         self.active_liquidity_f += provided_amount * self.precision
         line = self.lines[line_id]
         line.update_last_bets_close_time(self.now)
-        duration = line.calc_duration(self.now)
         self.balance -= provided_amount
         self.active_events.append(next_event_id)
         assert self.balance >= Decimal(0)
