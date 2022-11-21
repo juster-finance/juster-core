@@ -1,5 +1,6 @@
-from pytezos import MichelsonRuntimeError
 from decimal import Decimal
+
+from pytezos import MichelsonRuntimeError
 
 from tests.interpret.pool.pool_base import PoolBaseTestCase
 
@@ -46,9 +47,7 @@ class BalanceIssueTestCase(PoolBaseTestCase):
         # checing continuality:
         entry_id = self.deposit_liquidity(amount=1_000_000)
         new_provider = self.approve_entry(entry_id=entry_id)
-        self.assertEqual(
-            self.storage['shares'][new_provider], 1_000_000
-        )
+        self.assertEqual(self.storage['shares'][new_provider], 1_000_000)
 
         self.claim_liquidity(shares=1_000_000, provider=new_provider)
         # allowing 1 mutez on the contract:

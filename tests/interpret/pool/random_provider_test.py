@@ -1,4 +1,5 @@
-from random import randint, seed
+from random import randint
+from random import seed
 
 from tests.interpret.pool.pool_base import PoolBaseTestCase
 
@@ -39,7 +40,9 @@ class RandomProviderTestCase(PoolBaseTestCase):
                 total_liquidity += PROFIT_LOSS
 
                 if step == EXIT_STEP:
-                    self.claim_liquidity(self.b, provider=self.b, shares=shares)
+                    self.claim_liquidity(
+                        self.b, provider=self.b, shares=shares
+                    )
 
             provider_profit_loss = (
                 (EXIT_STEP - ENTER_STEP + 1) * PROFIT_LOSS / 2
@@ -110,9 +113,7 @@ class RandomProviderTestCase(PoolBaseTestCase):
                 if step == exit_step:
                     pos_id = position_ids[user]
                     shares = self.storage['shares'][user]
-                    self.claim_liquidity(
-                        user, provider=user, shares=shares
-                    )
+                    self.claim_liquidity(user, provider=user, shares=shares)
 
         claims = [
             dict(provider=claim[1], eventId=claim[0])
@@ -125,7 +126,4 @@ class RandomProviderTestCase(PoolBaseTestCase):
             abs(balance) <= 1 for balance in self.balances.values()
         )
 
-        # TODO: there is rare case when this assert fails, need to find out rsn
-        if not is_all_balance_less_than_mutez:
-            import pdb; pdb.set_trace()
         self.assertTrue(is_all_balance_less_than_mutez)

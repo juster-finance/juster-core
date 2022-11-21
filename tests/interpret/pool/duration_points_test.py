@@ -61,6 +61,9 @@ class DurationPointsTestCase(PoolBaseTestCase):
 
         self.level += 100
         self.update_duration_points(sender=self.b, provider=provider)
-        assert self.storage['durationPoints'][provider]['updateLevel'] == self.level
+        assert (
+            self.storage['durationPoints'][provider]['updateLevel']
+            == self.level
+        )
         assert self.storage['durationPoints'][provider]['amount'] == 100
         assert self.storage['totalDurationPoints'] == 100

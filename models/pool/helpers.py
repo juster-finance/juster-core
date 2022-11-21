@@ -9,6 +9,7 @@ def quantize(value: Decimal) -> Decimal:
         Decimal(1), context=Context(rounding=ROUND_DOWN)
     )
 
+
 def quantize_up(value: Decimal) -> Decimal:
     return Decimal(value).quantize(
         Decimal(1), context=Context(rounding=ROUND_UP)

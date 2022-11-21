@@ -1,8 +1,10 @@
 from decimal import Decimal
+from random import choice
+from random import randint
+from random import seed
 from unittest import TestCase
 
 from models.pool import PoolModel
-from random import choice, randint, seed
 
 
 def rand_from_zero_to(value_to):
@@ -74,8 +76,7 @@ class RandomTester:
         random_shares = rand_from_zero_to(provider_shares)
 
         payout = self.model.claim_liquidity(
-            provider=provider,
-            shares=random_shares
+            provider=provider, shares=random_shares
         )
         self.balances[provider] += payout
 
@@ -147,6 +148,7 @@ class RandomTester:
             self.random_action()
             self.model.increase_level()
             self.check_invariants()
+
 
 class PoolRandomModelTest(TestCase):
     def test_should_preserve_all_invariants(self):

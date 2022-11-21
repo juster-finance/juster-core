@@ -1,4 +1,5 @@
 from decimal import Decimal
+
 from pytezos import MichelsonRuntimeError
 
 from tests.interpret.pool.pool_base import PoolBaseTestCase
@@ -15,7 +16,9 @@ class DisbandPoolTestCase(PoolBaseTestCase):
         msg = 'Not a contract manager'
         self.assertTrue(msg in str(cm.exception))
 
-    def test_should_allow_to_claim_others_liquidity_if_pool_in_disbanded_state(self):
+    def test_should_allow_to_claim_others_liquidity_if_pool_in_disbanded_state(
+        self,
+    ):
         self.add_line()
         entry_id = self.deposit_liquidity(sender=self.a)
         provider = self.approve_entry(entry_id=entry_id)
@@ -41,7 +44,9 @@ class DisbandPoolTestCase(PoolBaseTestCase):
         amounts = self.withdraw_claims(claims=claims, sender=self.b)
         assert self.balances[self.a] == Decimal(0)
 
-    def test_should_allow_to_cancel_others_liquidity_if_pool_in_disbanded_state(self):
+    def test_should_allow_to_cancel_others_liquidity_if_pool_in_disbanded_state(
+        self,
+    ):
         self.add_line()
         entry_id = self.deposit_liquidity(sender=self.a)
         self.trigger_pause_deposit(sender=self.manager)

@@ -222,8 +222,7 @@ class PoolBaseTestCase(TestCase):
 
         entry = self.storage['entries'][entry_id]
         result_model = self.to_model(
-            storage=result.storage,
-            balance=init_balance - entry['amount']
+            storage=result.storage, balance=init_balance - entry['amount']
         )
         self.assertEqual(init_model, result_model)
 
@@ -550,9 +549,7 @@ class PoolBaseTestCase(TestCase):
         return self.pool.getNextEntryId().onchain_view(storage=self.storage)
 
     def get_shares(self, provider):
-        return self.pool.getShares(provider).onchain_view(
-            storage=self.storage
-        )
+        return self.pool.getShares(provider).onchain_view(storage=self.storage)
 
     def get_next_position_id(self):
         return self.pool.getNextPositionId().onchain_view(storage=self.storage)
@@ -585,10 +582,14 @@ class PoolBaseTestCase(TestCase):
         return self.pool.getStateValues().onchain_view(storage=self.storage)
 
     def get_duration_points(self, provider):
-        return self.pool.getDurationPoints(provider).onchain_view(storage=self.storage)
+        return self.pool.getDurationPoints(provider).onchain_view(
+            storage=self.storage
+        )
 
     def get_total_duration_points(self):
-        return self.pool.getTotalDurationPoints().onchain_view(storage=self.storage)
+        return self.pool.getTotalDurationPoints().onchain_view(
+            storage=self.storage
+        )
 
     def wait(self, wait_time=0):
         self.current_time += wait_time

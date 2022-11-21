@@ -43,9 +43,7 @@ class SandboxPoolTestCase(SandboxedJusterTestCase):
         return opg
 
     def _approve_entry(self, user, entry_id):
-        opg = (
-            user.contract(self.pool.address).approveEntry(entry_id).send()
-        )
+        opg = user.contract(self.pool.address).approveEntry(entry_id).send()
 
         return opg
 

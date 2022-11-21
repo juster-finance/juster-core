@@ -17,4 +17,3 @@ class DurationPoints:
             amount=Decimal(storage['amount']),
             update_level=int(storage['updateLevel']),
         )
-

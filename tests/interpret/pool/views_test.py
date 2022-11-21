@@ -162,7 +162,7 @@ class PoolViewsTestCase(PoolBaseTestCase):
         self.approve_entry(entry_id=entry_id)
         self.assertDictEqual(
             self.get_duration_points(provider),
-            {'amount': 0, 'updateLevel': self.level}
+            {'amount': 0, 'updateLevel': self.level},
         )
 
         # 10 shares * 42 blocks = 420
@@ -170,7 +170,7 @@ class PoolViewsTestCase(PoolBaseTestCase):
         self.update_duration_points(provider=provider)
         self.assertDictEqual(
             self.get_duration_points(provider),
-            {'amount': 420, 'updateLevel': self.level}
+            {'amount': 420, 'updateLevel': self.level},
         )
 
     def test_get_total_duration_points_test(self):
@@ -183,5 +183,7 @@ class PoolViewsTestCase(PoolBaseTestCase):
         self.level += 1
 
         # +1 level for 1_000_000 shares:
-        self.claim_liquidity(sender=provider, provider=provider, shares=1_000_000)
+        self.claim_liquidity(
+            sender=provider, provider=provider, shares=1_000_000
+        )
         self.assertEqual(self.storage['totalDurationPoints'], 1_000_000)

@@ -56,7 +56,9 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
 
         # 50 mutez used in the first event (100 / 2 max active events):
         self.create_event(line_id=0)
-        payout = self.claim_liquidity(sender=self.a, provider=provider, shares=100)
+        payout = self.claim_liquidity(
+            sender=self.a, provider=provider, shares=100
+        )
 
         # 50 mutez unused liquidity should be returned:
         self.assertEqual(payout, 50)
@@ -111,7 +113,9 @@ class ClaimLiquidityTestCase(PoolBaseTestCase):
         self.claim_liquidity(provider=provider, shares=0)
         self.assertEqual(len(self.storage['claims']), 0)
 
-    def test_should_increase_claimed_shares_for_events_created_before_position(self):
+    def test_should_increase_claimed_shares_for_events_created_before_position(
+        self,
+    ):
         self.add_line(max_events=2)
         self.deposit_liquidity(amount=100, sender=self.a)
         provider_one = self.approve_entry(entry_id=0)

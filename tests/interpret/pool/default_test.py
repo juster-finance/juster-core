@@ -19,7 +19,9 @@ class DefaultEntryTestCase(PoolBaseTestCase):
         self.deposit_liquidity(sender=self.b, amount=1_000_000)
         provider_one = self.approve_entry(entry_id=0)
         self.assertEqual(self.get_next_liquidity(), 1_000_000)
-        self.claim_liquidity(sender=self.b, provider=provider_one, shares=1_000_000)
+        self.claim_liquidity(
+            sender=self.b, provider=provider_one, shares=1_000_000
+        )
         self.assertEqual(self.balances[self.b], 1_000_000)
 
         # someone puts liquidity again:
@@ -34,6 +36,8 @@ class DefaultEntryTestCase(PoolBaseTestCase):
         self.default(sender=self.d, amount=2_000_000)
         self.assertEqual(self.get_next_liquidity(), 3_000_000)
 
-        self.claim_liquidity(sender=self.c, provider=provider_two, shares=2_000_000)
+        self.claim_liquidity(
+            sender=self.c, provider=provider_two, shares=2_000_000
+        )
         self.assertEqual(self.balances[self.c], 4_000_000)
         self.assertEqual(self.balances['contract'], 0)

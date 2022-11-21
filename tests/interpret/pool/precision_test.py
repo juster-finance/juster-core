@@ -14,7 +14,7 @@ class PrecisionPoolTestCase(PoolBaseTestCase):
 
         self.assertEqual(
             self.storage['withdrawableLiquidityF'],
-            20 * self.storage['precision']
+            20 * self.storage['precision'],
         )
 
         payouts = self.withdraw_claims(
@@ -29,8 +29,7 @@ class PrecisionPoolTestCase(PoolBaseTestCase):
         event_id = self.create_event()
         self.claim_liquidity(provider=provider, shares=11)
         self.assertEqual(
-            self.storage['activeLiquidityF'],
-            6 * self.storage['precision']
+            self.storage['activeLiquidityF'], 6 * self.storage['precision']
         )
         self.pay_reward(event_id=event_id, amount=17)
 
@@ -60,8 +59,7 @@ class PrecisionPoolTestCase(PoolBaseTestCase):
 
         self.add_line(max_events=5)
         entry_id = self.deposit_liquidity(
-            amount=200*SCALE,
-            sender=provider_address
+            amount=200 * SCALE, sender=provider_address
         )
         provider_one = self.approve_entry(entry_id=entry_id)
 
@@ -72,26 +70,27 @@ class PrecisionPoolTestCase(PoolBaseTestCase):
 
         # second provider adds 100 shares and claims it instantly:
         entry_id = self.deposit_liquidity(
-            amount=100*SCALE,
-            sender=provider_address
+            amount=100 * SCALE, sender=provider_address
         )
         provider_two = self.approve_entry(entry_id=entry_id)
         instant_payout = self.claim_liquidity(
             provider=provider_two,
-            shares=100*SCALE,
+            shares=100 * SCALE,
             sender=provider_address,
         )
 
         # two events finishes without profit/loss:
-        self.pay_reward(event_id=event_one_id, amount=40*SCALE)
-        self.pay_reward(event_id=event_two_id, amount=40*SCALE)
+        self.pay_reward(event_id=event_one_id, amount=40 * SCALE)
+        self.pay_reward(event_id=event_two_id, amount=40 * SCALE)
 
         # 2nd provider withdraws claims and shouldn't get more than provided:
-        payouts = self.withdraw_claims(claims=[
-            {'eventId': event_one_id, 'provider': provider_two},
-            {'eventId': event_two_id, 'provider': provider_two},
-        ])
+        payouts = self.withdraw_claims(
+            claims=[
+                {'eventId': event_one_id, 'provider': provider_two},
+                {'eventId': event_two_id, 'provider': provider_two},
+            ]
+        )
 
         payout_sum = instant_payout + payouts[provider_address]
-        diff = abs(payout_sum - 100*SCALE)
+        diff = abs(payout_sum - 100 * SCALE)
         self.assertTrue(diff <= 1)

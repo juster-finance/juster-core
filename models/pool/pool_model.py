@@ -4,14 +4,13 @@ from dataclasses import dataclass
 from dataclasses import field
 from decimal import Decimal
 from typing import Any
-from typing import Iterator
-from typing import Optional
 from typing import Type
+from typing import Union
 
 from models.pool.claim_key import ClaimKey
+from models.pool.duration_points import DurationPoints
 from models.pool.entry import Entry
 from models.pool.event import Event
-from models.pool.duration_points import DurationPoints
 from models.pool.helpers import quantize
 from models.pool.helpers import quantize_up
 from models.pool.line import Line
@@ -181,7 +180,9 @@ class PoolModel:
         }
 
     def update_duration_points(self, provider: str) -> None:
-        init_points = DurationPoints(amount=0, update_level=self.level)
+        init_points = DurationPoints(
+            amount=Decimal(0), update_level=self.level
+        )
         last_points = self.duration_points.get(provider, init_points)
 
         shares_amount = self.shares.get(provider, Decimal(0))
@@ -205,7 +206,7 @@ class PoolModel:
 
         return entry_id
 
-    def approve_entry(self, entry_id: int) -> int:
+    def approve_entry(self, entry_id: int) -> str:
         entry = self.entries[entry_id]
         self.update_duration_points(entry.provider)
         new_shares = self.calc_deposit_shares(entry.amount)
@@ -248,7 +249,9 @@ class PoolModel:
             free_liquidity_f * shares / self.total_shares / self.precision
         )
 
-    def claim_liquidity(self, provider: str, shares: Union[Decimal, int]) -> Decimal:
+    def claim_liquidity(
+        self, provider: str, shares: Union[Decimal, int]
+    ) -> Decimal:
         shares = Decimal(shares)
         if shares == Decimal(0):
             return Decimal(0)

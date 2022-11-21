@@ -13,5 +13,5 @@ class ClaimKey:
         return cls(event_id=tpl[0], provider=tpl[1])
 
     @classmethod
-    def from_dict(cls, dct: dict[str, str]) -> ClaimKey:
+    def from_dict(cls, dct: dict) -> ClaimKey:
         return cls(event_id=dct['eventId'], provider=dct['provider'])
