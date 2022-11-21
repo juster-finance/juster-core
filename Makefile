@@ -10,7 +10,7 @@ install:
 lint: isort black mypy pylint
 
 mypy:
-	poetry run mypy models/ tests/
+	poetry run mypy models/ tests/ scripts/
 
 isort:
 	poetry run isort tests/ models/ scripts/
@@ -22,7 +22,7 @@ black:
 	poetry run black models/ tests/ scripts/
 
 test:
-	poetry run pytest
+	poetry run pytest --ignore=projects
 
 compile:
 	${LIGO_COMPILER} compile contract contracts/main/reward_program.ligo -e main > build/contracts/reward_program.tz
