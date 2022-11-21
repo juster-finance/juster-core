@@ -1,7 +1,6 @@
-key*.json
 **/.ipynb_checkpoints/*
 **/__pycache__/*
-**/test-keys/*
+**/keys/*
 *.log
 *.gzip
 projects/
