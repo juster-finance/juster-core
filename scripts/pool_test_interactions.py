@@ -1,4 +1,8 @@
 # Creates test pools and runs interactions to make data for indexing and testing
+import os
+import sys
+
+sys.path.append(os.path.join(sys.path[0], '..'))
 
 import time
 
@@ -207,7 +211,6 @@ def deploy_fake_contract_that_should_not_be_indexed(
 
 
 if __name__ == '__main__':
-
     manager_client = pytezos.using(key=MANAGER_KEY, shell=SHELL)
     user_client = pytezos.using(key=USER_KEY, shell=SHELL)
     deploy_test_contract_with_interactions(manager_client, user_client)

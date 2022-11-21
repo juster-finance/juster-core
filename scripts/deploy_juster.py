@@ -1,3 +1,8 @@
+import os
+import sys
+
+sys.path.append(os.path.join(sys.path[0], '..'))
+
 from pytezos import pytezos
 from pytezos.client import PyTezosClient
 from pytezos.contract.interface import ContractInterface

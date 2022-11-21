@@ -9,7 +9,7 @@ ONE_DAY = ONE_HOUR * 24
 
 SHELL = 'https://rpc.tzkt.io/ghostnet/'
 MANAGER_KEY = 'keys/manager-key-ghostnet.json'
-USER_KEY = 'key-ithaca.json'
+USER_KEY = 'keys/user-key-ghostnet.json'
 
 CONTRACTS = {
     'pool': ContractInterface.from_file('build/contracts/pool.tz'),
