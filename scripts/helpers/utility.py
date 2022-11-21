@@ -1,21 +1,40 @@
+from typing import Callable, Optional
+from typing import TypeVar
+
 from requests.exceptions import ConnectTimeout
 
+SomeReturn = TypeVar('SomeReturn')
 
-def try_multiple_times(unstable_func, max_attempts=25):
-    attempt = 0
+
+class TooManyAttempts(Exception):
+    pass
+
+
+def try_multiple_times(
+    unstable_func: Callable[[], SomeReturn],
+    suppress: Optional[tuple] = None,
+    max_attempts=25,
+) -> SomeReturn:
+    """Runs given function multiple times if it fails with allowed exceptions
+    :param unstable_func: callable function
+    :param suppress: tuple of suppressed exceptions
+    :param max_attempts: maximum attempts before failing to run
+    :raises: TooManyAttempts if failed to run max_attempts times
+    """
+
+    attempt: int = 0
+    suppress = suppress or (ConnectTimeout, StopIteration)
+
     while attempt < max_attempts:
         try:
             attempt += 1
             return unstable_func()
-        except ConnectTimeout as e:
-            print(f'failed with ConnectionTimeout, attempt #{attempt}')
-            pass
-        except StopIteration as e:
-            print(f'failed with StopIteration ({str(e)}), attempt #{attempt}')
-            pass
+        except suppress as e:
+            print(f'failed with type(e), attempt #{attempt}, error: {str(e)}')
 
-    raise Exception('too many attempts')
+    raise TooManyAttempts('Failed {max_attempts} times')
 
 
-def to_hex(string):
+def to_hex(string: str) -> str:
+    """Converts given string to bytes and then hex"""
     return string.encode().hex()

@@ -1,8 +1,11 @@
-import time
 from getpass import getpass
 
-from pytezos import ContractInterface
 from pytezos import pytezos
+from pytezos.client import PyTezosClient
+from pytezos.contract.interface import ContractInterface
+from pytezos.operation.group import OperationGroup
+
+from scripts.helpers.utility import to_hex
 
 ONE_HOUR = 60 * 60
 ONE_DAY = ONE_HOUR * 24
@@ -19,12 +22,8 @@ ORACLE_ADDRESS = 'KT1ENe4jbDE1QVG1euryp23GsAeWuEwJutQX'
 CONTRACT_METADATA_URI = 'ipfs://QmYVr7eBFXkW9uaFWs1jAX2CwrSdwFyZYrpE3Z2AbZSYY5'
 
 
-def to_hex(string):
-    return string.encode().hex()
-
-
-def generate_storage(manager, oracle_address):
-    config = {
+def generate_storage(manager: str, oracle_address: str) -> dict:
+    config: dict = {
         'expirationFee': 100_000,
         'minLiquidityPercent': 0,
         'maxLiquidityPercent': 300_000,  # 30% for 1_000_000 liquidityPrecision
@@ -41,7 +40,7 @@ def generate_storage(manager, oracle_address):
         'isEventCreationPaused': False,
     }
 
-    storage = {
+    storage: dict = {
         'events': {},
         'betsAboveEq': {},
         'betsBelow': {},
@@ -70,45 +69,45 @@ def generate_storage(manager, oracle_address):
     return storage
 
 
-def activate_and_reveal(client):
-    print(f'activating account...')
-    op = client.activate_account().send()
+def activate_and_reveal(client: PyTezosClient) -> None:
+    print(f'activating account {client.key.public_key_hash()}...')
+    op: OperationGroup = client.activate_account().send()
     client.wait(op)
 
     op = client.reveal().send()
     client.wait(op)
 
 
-def deploy_juster(client):
-    print(f'deploying juster...')
-    contract = CONTRACTS['juster'].using(key=KEY, shell=SHELL)
-    storage = generate_storage(
+def deploy_juster(client: PyTezosClient) -> str:
+    print('deploying juster...')
+    contract: ContractInterface = CONTRACTS['juster'].using(
+        key=KEY, shell=SHELL
+    )
+    storage: dict = generate_storage(
         manager=client.key.public_key_hash(), oracle_address=ORACLE_ADDRESS
     )
 
-    opg = contract.originate(initial_storage=storage).send()
+    opg: OperationGroup = contract.originate(initial_storage=storage).send()
     print(f'success: {opg.hash()}')
     client.wait(opg)
 
     # Searching for Juster contract address:
-    opg = client.shell.blocks[-10:].find_operation(opg.hash())
-    op_result = opg['contents'][0]['metadata']['operation_result']
-    address = op_result['originated_contracts'][0]
+    op: dict = client.shell.blocks[-10:].find_operation(
+        operation_group_hash=opg.hash()
+    )
+    op_result: dict = op['contents'][0]['metadata']['operation_result']
+    address: str = op_result['originated_contracts'][0]
     print(f'juster address: {address}')
     return address
 
 
 if __name__ == '__main__':
 
-    client = pytezos.using(key=KEY, shell=SHELL)
+    manager_client = pytezos.using(key=KEY, shell=SHELL)
 
-    """
-    1. If key hasn't been used before, this function will allow to activate key:
-    """
-    if client.balance() < 1e-5:
-        activate_and_reveal(client)
+    # 1. If key hasn't been used before, this function will allow to activate key:
+    if manager_client.balance() < 1e-5:
+        activate_and_reveal(manager_client)
 
-    """
-    2. Juster deploy
-    """
-    juster_address = deploy_juster(client)
+    # 2. Juster deploy:
+    juster_address = deploy_juster(manager_client)

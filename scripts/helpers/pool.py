@@ -1,8 +1,14 @@
-from helpers.utility import try_multiple_times
-from helpers.utility import to_hex
+import json
+
+from pytezos.client import PyTezosClient
+from pytezos.contract.interface import ContractInterface
+from pytezos.operation.group import OperationGroup
+
+from scripts.helpers.utility import to_hex
+from scripts.helpers.utility import try_multiple_times
 
 
-def name_period(seconds):
+def name_period(seconds: int) -> str:
     minutes = seconds // 60
     seconds = seconds % 60
     hours = minutes // 60
@@ -10,35 +16,40 @@ def name_period(seconds):
     days = hours // 24
     hours = hours % 24
 
-    return ''.join([
-        f'{days}D' if days > 0 else '',
-        f'{hours}H' if hours > 0 else '',
-        f'{minutes}M' if minutes > 0 else '',
-        f'{seconds}S' if seconds > 0 else '',
-    ])
+    return ''.join(
+        [
+            f'{days}D' if days > 0 else '',
+            f'{hours}H' if hours > 0 else '',
+            f'{minutes}M' if minutes > 0 else '',
+            f'{seconds}S' if seconds > 0 else '',
+        ]
+    )
+
 
 assert name_period(3600) == '1H'
 assert name_period(3600 * 6) == '6H'
 assert name_period(30 * 60) == '30M'
 assert name_period(1 * 60) == '1M'
 assert name_period(3601) == '1H1S'
-assert name_period(24*3600) == '1D'
-assert name_period(72*3600) == '3D'
-assert name_period(36*3600) == '1D12H'
+assert name_period(24 * 3600) == '1D'
+assert name_period(72 * 3600) == '3D'
+assert name_period(36 * 3600) == '1D12H'
 
 
-def generate_pool_name(line_params):
-    currency_pair = line_params['currency_pair']
-    timeframe_seconds = line_params['measure_period']
+def generate_pool_name(line_params: dict) -> str:
+    currency_pair: str = line_params['currency_pair']
+    timeframe_seconds: int = line_params['measure_period']
     return f'{currency_pair}-{name_period(timeframe_seconds)}'
 
 
-def generate_pool_storage(manager, juster_address, pool_name=None):
-    metadata = METADATA.copy()
+def generate_pool_storage(
+    manager: str, metadata: dict, pool_name=None
+) -> dict:
+    metadata = metadata.copy()
     if pool_name:
         metadata['name'] += f': {pool_name}'
 
-    metadata_json = json.dumps(metadata)
+    metadata_json: str = json.dumps(metadata)
     return {
         'nextLineId': 0,
         'lines': {},
@@ -68,35 +79,37 @@ def generate_pool_storage(manager, juster_address, pool_name=None):
     }
 
 
-def deploy_pool(client, line_params):
-    contract = CONTRACTS['pool'].using(key=KEY, shell=SHELL)
+def deploy_pool(
+    client: PyTezosClient,
+    contract: ContractInterface,
+    line_params: dict,
+    metadata: dict,
+) -> str:
     pool_name = generate_pool_name(line_params)
     print(f'deploying {pool_name} pool...')
     storage = generate_pool_storage(
         manager=client.key.public_key_hash(),
-        juster_address=JUSTER_ADDRESS,
+        metadata=metadata,
         pool_name=pool_name,
     )
 
-    opg = try_multiple_times(
+    opg: OperationGroup = try_multiple_times(
         lambda: contract.originate(initial_storage=storage).send()
     )
     print(f'success: {opg.hash()}')
-    _ = try_multiple_times(
-        lambda: client.wait(opg)
-    )
+    _ = try_multiple_times(lambda: client.wait(opg))
 
     # Searching for Pool contract address:
-    opg = try_multiple_times(
+    op: dict = try_multiple_times(
         lambda: client.shell.blocks[-10:].find_operation(opg.hash())
     )
-    op_result = opg['contents'][0]['metadata']['operation_result']
-    address = op_result['originated_contracts'][0]
+    op_result: dict = op['contents'][0]['metadata']['operation_result']
+    address: str = op_result['originated_contracts'][0]
     print(f'pool address: {address}')
     return address
 
 
-def convert_to_line_params(line):
+def convert_to_line_params(line, juster_address) -> dict:
     return {
         'betsPeriod': line['bets_period'],
         'currencyPair': line['currency_pair'],
@@ -108,19 +121,22 @@ def convert_to_line_params(line):
         'rateAboveEq': line['pool_a_ratio'],
         'rateBelow': line['pool_b_ratio'],
         'targetDynamics': int(line['target_dynamics'] * 1_000_000),
-        'juster': JUSTER_ADDRESS,
-        'minBettingPeriod': 30*60,
-        'advanceTime': 60
+        'juster': juster_address,
+        'minBettingPeriod': 30 * 60,
+        'advanceTime': 60,
     }
 
 
-def add_line(client, pool_address, line_params):
+def add_line(
+    client: PyTezosClient,
+    pool_address: str,
+    line_params: dict,
+    juster_address: str,
+) -> None:
+
     print(f'adding line to {pool_address}, {line_params}')
     pool = client.contract(pool_address)
-    opg = try_multiple_times(
-        lambda: pool.addLine(convert_to_line_params(line_params)).send()
-    )
-    _ = try_multiple_times(
-        lambda: client.wait(opg)
-    )
-    print(f'line succesfully added')
+    line_params = convert_to_line_params(line_params, juster_address)
+    opg = try_multiple_times(lambda: pool.addLine(line_params).send())
+    _ = try_multiple_times(lambda: client.wait(opg))
+    print(f'line succesfully added, hash: {opg.hash()}')
