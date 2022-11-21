@@ -108,11 +108,11 @@ def deploy_pool(
     return address
 
 
-def convert_to_line_params(line, juster_address) -> dict:
+def convert_to_line_params(line, juster_address, is_paused=False) -> dict:
     return {
         'betsPeriod': line['bets_period'],
         'currencyPair': line['currency_pair'],
-        'isPaused': False,
+        'isPaused': is_paused,
         'lastBetsCloseTime': line['shift'],
         'liquidityPercent': int(line['liquidity_percent'] * 1_000_000),
         'maxEvents': 2,
@@ -131,11 +131,14 @@ def add_line(
     pool_address: str,
     line_params: dict,
     juster_address: str,
+    is_paused=False,
 ) -> None:
 
     print(f'adding line to {pool_address}, {line_params}')
     pool = client.contract(pool_address)
-    line_params = convert_to_line_params(line_params, juster_address)
+    line_params = convert_to_line_params(
+        line_params, juster_address, is_paused
+    )
     opg = try_multiple_times(lambda: pool.addLine(line_params).send())
     _ = try_multiple_times(lambda: client.wait(opg))
     print(f'line succesfully added, hash: {opg.hash()}')

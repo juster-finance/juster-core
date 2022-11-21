@@ -21,21 +21,18 @@ from scripts.helpers.pool import deploy_pool
 from scripts.helpers.utility import try_multiple_times
 
 
-def generate_line_params(juster_address: str, is_paused: bool = False) -> dict:
+def generate_line_params(juster_address: str) -> dict:
     return {
-        'betsPeriod': 300,
-        'currencyPair': 'XTZ-USD',
-        'isPaused': is_paused,
-        'lastBetsCloseTime': 0,
-        'liquidityPercent': 100_000,
-        'maxEvents': 2,
-        'measurePeriod': 300,
-        'rateAboveEq': 1,
-        'rateBelow': 1,
-        'targetDynamics': 1_000_000,
-        'juster': juster_address,
-        'minBettingPeriod': 300,
-        'advanceTime': 0,
+        "currency_pair": "XTZ-USD",
+        "target_dynamics": 1.0,
+        "bets_period": 300,
+        "measure_period": 300,
+        "liquidity_percent": 0.15,
+        "expiration_fee": 100000,
+        "measure_start_fee": 100000,
+        "shift": 0,
+        "pool_a_ratio": 1,
+        "pool_b_ratio": 1,
     }
 
 
@@ -97,8 +94,14 @@ def deploy_test_contract_with_interactions(
     time.sleep(60)
 
     print('adding paused line with line_id: 0')
-    line_params = generate_line_params(JUSTER_ADDRESS, is_paused=True)
-    add_line(manager_client, pool_address, line_params, JUSTER_ADDRESS)
+    line_params = generate_line_params(JUSTER_ADDRESS)
+    add_line(
+        manager_client,
+        pool_address,
+        line_params,
+        JUSTER_ADDRESS,
+        is_paused=True,
+    )
     time.sleep(60)
 
     print('unpausing line_id: 0')
@@ -106,8 +109,14 @@ def deploy_test_contract_with_interactions(
     time.sleep(60)
 
     print('adding unpaused line with line_id: 1')
-    line_params = generate_line_params(JUSTER_ADDRESS, is_paused=False)
-    add_line(manager_client, pool_address, line_params, JUSTER_ADDRESS)
+    line_params = generate_line_params(JUSTER_ADDRESS)
+    add_line(
+        manager_client,
+        pool_address,
+        line_params,
+        JUSTER_ADDRESS,
+        is_paused=False,
+    )
     time.sleep(60)
 
     print('pausing line_id: 0 again')
@@ -205,8 +214,10 @@ def deploy_fake_contract_that_should_not_be_indexed(
     time.sleep(60)
 
     print('adding line with line_id: 0')
-    line_params = generate_line_params(JUSTER_ADDRESS, is_paused=False)
-    add_line(client, pool_address, line_params, JUSTER_ADDRESS)
+    line_params = generate_line_params(JUSTER_ADDRESS)
+    add_line(
+        client, pool_address, line_params, JUSTER_ADDRESS, is_paused=False
+    )
     time.sleep(60)
 
 
