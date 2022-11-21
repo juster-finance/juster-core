@@ -82,10 +82,9 @@ def generate_pool_storage(
 def deploy_pool(
     client: PyTezosClient,
     contract: ContractInterface,
-    line_params: dict,
+    pool_name: str,
     metadata: dict,
 ) -> str:
-    pool_name = generate_pool_name(line_params)
     print(f'deploying {pool_name} pool...')
     storage = generate_pool_storage(
         manager=client.key.public_key_hash(),

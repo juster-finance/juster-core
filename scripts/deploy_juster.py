@@ -1,15 +1,14 @@
-from scripts.helpers.consts import CONTRACTS
-from scripts.helpers.consts import JUSTER_METADATA_URI
-from scripts.helpers.consts import KEY
-from scripts.helpers.consts import ONE_DAY
-from scripts.helpers.consts import ORACLE_ADDRESS
-from scripts.helpers.consts import SHELL
-
 from pytezos import pytezos
 from pytezos.client import PyTezosClient
 from pytezos.contract.interface import ContractInterface
 from pytezos.operation.group import OperationGroup
 
+from scripts.helpers.consts import CONTRACTS
+from scripts.helpers.consts import JUSTER_METADATA_URI
+from scripts.helpers.consts import MANAGER_KEY
+from scripts.helpers.consts import ONE_DAY
+from scripts.helpers.consts import ORACLE_ADDRESS
+from scripts.helpers.consts import SHELL
 from scripts.helpers.utility import to_hex
 
 
@@ -72,7 +71,7 @@ def activate_and_reveal(client: PyTezosClient) -> None:
 def deploy_juster(client: PyTezosClient) -> str:
     print('deploying juster...')
     contract: ContractInterface = CONTRACTS['juster'].using(
-        key=KEY, shell=SHELL
+        key=client.key, shell=client.shell
     )
     storage: dict = generate_storage(
         manager=client.key.public_key_hash(), oracle_address=ORACLE_ADDRESS
@@ -94,7 +93,7 @@ def deploy_juster(client: PyTezosClient) -> str:
 
 if __name__ == '__main__':
 
-    manager_client = pytezos.using(key=KEY, shell=SHELL)
+    manager_client = pytezos.using(key=MANAGER_KEY, shell=SHELL)
 
     # 1. If key hasn't been used before, this function will allow to activate key:
     if manager_client.balance() < 1e-5:
