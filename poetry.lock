@@ -1483,6 +1483,25 @@ docs = ["myst-parser", "pydata-sphinx-theme", "sphinx"]
 test = ["pre-commit", "pytest"]
 
 [[package]]
+name = "types-requests"
+version = "2.28.11.5"
+description = "Typing stubs for requests"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+types-urllib3 = "<1.27"
+
+[[package]]
+name = "types-urllib3"
+version = "1.26.25.4"
+description = "Typing stubs for urllib3"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "typing-extensions"
 version = "4.4.0"
 description = "Backported and Experimental Type Hints for Python 3.7+"
@@ -1543,7 +1562,7 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.10"
-content-hash = "e72e63935f7b8f5cc1502c55c6bef49234edd8dc3d5cec9758a28b7ae460d65c"
+content-hash = "06e7af73d53233b7b2eec29060d58d0b577534f9be2a7345afaa10bae9964499"
 
 [metadata.files]
 anyio = []
@@ -2112,6 +2131,8 @@ toolz = []
 tornado = []
 tqdm = []
 traitlets = []
+types-requests = []
+types-urllib3 = []
 typing-extensions = []
 urllib3 = []
 wcwidth = [
