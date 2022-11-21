@@ -1,4 +1,9 @@
-from getpass import getpass
+from scripts.helpers.consts import CONTRACTS
+from scripts.helpers.consts import JUSTER_METADATA_URI
+from scripts.helpers.consts import KEY
+from scripts.helpers.consts import ONE_DAY
+from scripts.helpers.consts import ORACLE_ADDRESS
+from scripts.helpers.consts import SHELL
 
 from pytezos import pytezos
 from pytezos.client import PyTezosClient
@@ -6,20 +11,6 @@ from pytezos.contract.interface import ContractInterface
 from pytezos.operation.group import OperationGroup
 
 from scripts.helpers.utility import to_hex
-
-ONE_HOUR = 60 * 60
-ONE_DAY = ONE_HOUR * 24
-SHELL = 'https://rpc.tzkt.io/ithacanet/'
-KEY = getpass()
-CONTRACTS = {
-    'juster': ContractInterface.from_file('build/contracts/juster.tz'),
-}
-
-# Hangzhou2 Harbinger normalizer address:
-ORACLE_ADDRESS = 'KT1ENe4jbDE1QVG1euryp23GsAeWuEwJutQX'
-
-# URI to metadata:
-CONTRACT_METADATA_URI = 'ipfs://QmYVr7eBFXkW9uaFWs1jAX2CwrSdwFyZYrpE3Z2AbZSYY5'
 
 
 def generate_storage(manager: str, oracle_address: str) -> dict:
@@ -63,7 +54,7 @@ def generate_storage(manager: str, oracle_address: str) -> dict:
         'retainedProfits': 0,
         'proposedManager': None,
         'isWithdrawn': {},
-        'metadata': {"": to_hex(CONTRACT_METADATA_URI)},
+        'metadata': {"": to_hex(JUSTER_METADATA_URI)},
     }
 
     return storage

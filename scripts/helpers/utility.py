@@ -1,4 +1,5 @@
-from typing import Callable, Optional
+from typing import Callable
+from typing import Optional
 from typing import TypeVar
 
 from requests.exceptions import ConnectTimeout
