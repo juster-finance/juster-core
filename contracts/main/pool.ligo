@@ -93,6 +93,11 @@ block {
         totalLiquidityF - providedF, PoolWrongState.negativeTotalLiquidity);
 
     (* TODO: consider providing x1000 shares instead to increase precision? *)
+    (* TODO: consider use totalLiquidity amount as initial shares instead of
+        provided amount to make sure share price is always start with 1 tez
+        (the case if someone deposited liquidity to the pool when it
+        have no participants)
+    *)
     const shares = if s.totalShares = 0n
         then provided
         else providedF * s.totalShares / liquidityBeforeDepositF;
