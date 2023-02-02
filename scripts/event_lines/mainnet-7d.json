@@ -1,0 +1,16 @@
+[
+    {
+        "currency_pair": "BTC-USD",
+        "target_dynamics": 1.0,
+        "bets_period": 604800,
+        "measure_period": 604800,
+        "liquidity_percent": 0.10,
+        "expiration_fee": 10000,
+        "measure_start_fee": 10000,
+        "shift": 0,
+        "pool_a_ratio": 1,
+        "pool_b_ratio": 1,
+        "allow_bypass_pool_creation": true,
+        "allow_extra_liquidity_adding": true
+    }
+]
